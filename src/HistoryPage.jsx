@@ -1,10 +1,12 @@
-import React, { useEffect, useState, useMemo } from 'react';
+// src/HistoryPage.jsx
+
+import React, { useEffect, useMemo, useState } from 'react';
 import { db } from './firebaseConfig';
 import {
     collection,
     getDocs,
-    query,
-    orderBy
+    orderBy,
+    query
 } from 'firebase/firestore';
 
 function HistoryPage({ onBack }) {
@@ -15,88 +17,64 @@ function HistoryPage({ onBack }) {
     const [selectedExercise, setSelectedExercise] = useState('');
 
     useEffect(() => {
-        const fetchHistory = async () => {
-            setLoading(true);
-
+        async function loadHistory() {
             try {
                 const sessionsRef = collection(db, 'workout_sessions');
                 const q = query(sessionsRef, orderBy('completedAt', 'asc'));
-                const snap = await getDocs(q);
+                const snapshot = await getDocs(q);
 
-                const historyMap = {};
-                const templateSet = new Set();
+                const historyByExercise = {};
+                const templateNames = new Set();
 
-                snap.forEach(docSnap => {
+                snapshot.forEach((docSnap) => {
                     const data = docSnap.data();
+                    const templateName = data.templateName || 'Treino';
+                    templateNames.add(templateName);
+
+                    let completedAt = data.completedAt;
+                    let completedDate;
+
+                    if (completedAt && typeof completedAt.toDate === 'function') {
+                        completedDate = completedAt.toDate();
+                    } else if (data.createdAt) {
+                        completedDate = new Date(data.createdAt);
+                    } else {
+                        completedDate = new Date();
+                    }
+
                     const results = data.results || {};
-                    const templateName = data.templateName || '';
-                    const timestamp = data.completedAt;
-                    let date = null;
 
-                    if (templateName) {
-                        templateSet.add(templateName);
-                    }
-
-                    if (timestamp && typeof timestamp.toDate === 'function') {
-                        date = timestamp.toDate();
-                    }
-
-                    Object.entries(results).forEach(([exerciseName, info]) => {
-                        const weight = info.weight || 0;
-                        const target = info.target || '';
-                        const note = info.note || '';
-
-                        if (!historyMap[exerciseName]) {
-                            historyMap[exerciseName] = [];
+                    Object.entries(results).forEach(([exerciseName, result]) => {
+                        if (!historyByExercise[exerciseName]) {
+                            historyByExercise[exerciseName] = [];
                         }
 
-                        historyMap[exerciseName].push({
-                            date,
+                        historyByExercise[exerciseName].push({
+                            id: docSnap.id,
+                            date: completedDate,
                             templateName,
-                            weight,
-                            target,
-                            note
+                            weight: typeof result.weight === 'number'
+                                ? result.weight
+                                : Number(result.weight) || 0,
+                            target: result.target || ''
                         });
                     });
                 });
 
-                Object.keys(historyMap).forEach(name => {
-                    historyMap[name].sort((a, b) => {
-                        if (!a.date || !b.date) {
-                            return 0;
-                        }
-                        return a.date.getTime() - b.date.getTime();
-                    });
+                Object.keys(historyByExercise).forEach((name) => {
+                    historyByExercise[name].sort((a, b) => a.date - b.date);
                 });
 
-                setExerciseHistory(historyMap);
-
-                const templateList = Array.from(templateSet).sort((a, b) =>
-                    a.localeCompare(b)
-                );
-                setTemplates(templateList);
-
-                const exerciseNames = Object.keys(historyMap);
-                if (exerciseNames.length > 0) {
-                    const firstExercise = exerciseNames.sort((a, b) =>
-                        a.localeCompare(b)
-                    )[0];
-
-                    setSelectedExercise(prev => {
-                        if (prev && historyMap[prev]) {
-                            return prev;
-                        }
-                        return firstExercise || '';
-                    });
-                }
+                setExerciseHistory(historyByExercise);
+                setTemplates(['todos', ...Array.from(templateNames).sort()]);
             } catch (error) {
-                console.error('Erro ao carregar histórico: ', error);
+                console.error('Erro ao carregar histórico', error);
             } finally {
                 setLoading(false);
             }
-        };
+        }
 
-        fetchHistory();
+        loadHistory();
     }, []);
 
     const allExerciseNames = useMemo(
@@ -109,9 +87,9 @@ function HistoryPage({ onBack }) {
             return allExerciseNames;
         }
 
-        return allExerciseNames.filter(name => {
+        return allExerciseNames.filter((name) => {
             const entries = exerciseHistory[name] || [];
-            return entries.some(e => e.templateName === selectedTemplate);
+            return entries.some((entry) => entry.templateName === selectedTemplate);
         });
     }, [allExerciseNames, exerciseHistory, selectedTemplate]);
 
@@ -121,153 +99,131 @@ function HistoryPage({ onBack }) {
         }
 
         const base = exerciseHistory[selectedExercise];
+
         if (selectedTemplate === 'todos') {
             return base;
         }
-        return base.filter(e => e.templateName === selectedTemplate);
+
+        return base.filter((entry) => entry.templateName === selectedTemplate);
     }, [exerciseHistory, selectedExercise, selectedTemplate]);
 
     const formatDate = (date) => {
         if (!date) {
-            return 'Sem data';
+            return '';
         }
-        return date.toLocaleDateString('pt-BR', {
+
+        const d = date instanceof Date ? date : new Date(date);
+        return d.toLocaleDateString('pt-BR', {
             day: '2-digit',
             month: '2-digit',
-            year: 'numeric'
+            year: '2-digit'
         });
     };
 
+    const formatWeight = (value) => {
+        if (!value) {
+            return '-';
+        }
+        return `${value.toFixed(1)} kg`;
+    };
+
     const renderChart = () => {
-        const entries = currentExerciseEntries.filter(e => e.weight > 0);
-        if (entries.length === 0) {
+        const entries = currentExerciseEntries;
+
+        if (!entries.length) {
             return (
                 <p className="history-chart-empty">
-                    Ainda não há dados suficientes para montar o gráfico deste exercício.
+                    Selecione um exercício para ver a evolução das cargas.
                 </p>
             );
         }
 
-        const maxWeight = entries.reduce(
-            (max, e) => (e.weight > max ? e.weight : max),
-            0
-        );
+        if (entries.length === 1) {
+            return (
+                <p className="history-chart-empty">
+                    Faça mais sessões com este exercício para ver o gráfico de evolução.
+                </p>
+            );
+        }
 
-        const width = 360;
+        const weights = entries.map((e) => e.weight || 0);
+        const minWeight = Math.min(...weights);
+        const maxWeight = Math.max(...weights);
+
+        const width = 320;
         const height = 160;
-        const paddingX = 30;
-        const paddingY = 20;
+        const paddingX = 32;
+        const paddingY = 24;
 
-        const usableWidth = width - paddingX * 2;
-        const usableHeight = height - paddingY * 2;
+        const range = maxWeight - minWeight || 1;
 
         const points = entries.map((entry, index) => {
             const x =
                 entries.length === 1
-                    ? paddingX + usableWidth / 2
-                    : paddingX + (usableWidth * index) / (entries.length - 1);
+                    ? width / 2
+                    : paddingX +
+                    ((width - paddingX * 2) * index) /
+                    (entries.length - 1);
 
-            const ratio = maxWeight > 0 ? entry.weight / maxWeight : 0;
-            const y = paddingY + usableHeight - ratio * usableHeight;
+            const normalized = (entry.weight - minWeight) / range;
+            const y = height - paddingY - normalized * (height - paddingY * 2);
 
-            return `${x},${y}`;
+            return { x, y, entry };
         });
 
-        const valuesForTicks = [
-            maxWeight,
-            Math.round(maxWeight * 0.66),
-            Math.round(maxWeight * 0.33)
-        ].filter(v => v > 0);
+        const polylinePoints = points.map((p) => `${p.x},${p.y}`).join(' ');
 
         return (
             <svg
-                viewBox={`0 0 ${width} ${height}`}
                 className="history-chart"
+                viewBox={`0 0 ${width} ${height}`}
+                preserveAspectRatio="none"
             >
                 <line
                     x1={paddingX}
-                    y1={paddingY + usableHeight}
-                    x2={paddingX + usableWidth}
-                    y2={paddingY + usableHeight}
+                    y1={height - paddingY}
+                    x2={width - paddingX}
+                    y2={height - paddingY}
                     className="history-chart-axis"
                 />
                 <line
                     x1={paddingX}
                     y1={paddingY}
                     x2={paddingX}
-                    y2={paddingY + usableHeight}
+                    y2={height - paddingY}
                     className="history-chart-axis"
                 />
 
-                {valuesForTicks.map((value, index) => {
-                    const ratio = maxWeight > 0 ? value / maxWeight : 0;
-                    const y =
-                        paddingY + usableHeight - ratio * usableHeight;
-
-                    return (
-                        <g key={index}>
-                            <line
-                                x1={paddingX}
-                                y1={y}
-                                x2={paddingX + usableWidth}
-                                y2={y}
-                                className="history-chart-grid"
-                            />
-                            <text
-                                x={paddingX - 6}
-                                y={y + 4}
-                                className="history-chart-label"
-                            >
-                                {value} kg
-                            </text>
-                        </g>
-                    );
-                })}
-
                 <polyline
-                    points={points.join(' ')}
+                    points={polylinePoints}
                     className="history-chart-line"
                     fill="none"
                 />
 
-                {entries.map((entry, index) => {
-                    const x =
-                        entries.length === 1
-                            ? paddingX + usableWidth / 2
-                            : paddingX +
-                            (usableWidth * index) / (entries.length - 1);
-
-                    const ratio =
-                        maxWeight > 0 ? entry.weight / maxWeight : 0;
-                    const y =
-                        paddingY + usableHeight - ratio * usableHeight;
-
-                    return (
-                        <g key={index}>
-                            <circle
-                                cx={x}
-                                cy={y}
-                                r={3}
-                                className="history-chart-point"
-                            />
-                            <text
-                                x={x}
-                                y={height - 4}
-                                className="history-chart-date"
-                            >
-                                {entry.date
-                                    ? entry.date.toLocaleDateString(
-                                        'pt-BR',
-                                        {
-                                            day: '2-digit',
-                                            month: '2-digit'
-                                        }
-                                    )
-                                    : ''}
-                            </text>
-                        </g>
-                    );
-                })}
+                {points.map((p, index) => (
+                    <g key={index}>
+                        <circle
+                            cx={p.x}
+                            cy={p.y}
+                            r={3.2}
+                            className="history-chart-point"
+                        />
+                        <text
+                            x={p.x}
+                            y={p.y - 8}
+                            className="history-chart-label"
+                        >
+                            {p.entry.weight}
+                        </text>
+                        <text
+                            x={p.x}
+                            y={height - paddingY + 14}
+                            className="history-chart-date"
+                        >
+                            {formatDate(p.entry.date)}
+                        </text>
+                    </g>
+                ))}
             </svg>
         );
     };
@@ -275,49 +231,54 @@ function HistoryPage({ onBack }) {
     if (loading) {
         return (
             <div className="history-page">
-                <button className="btn-back" onClick={onBack}>
-                    {'< Voltar'}
+                <button className="btn-back-primary" onClick={onBack}>
+                    Voltar
                 </button>
                 <h2>Históricos</h2>
-                <p>Carregando histórico...</p>
+                <p className="history-intro">Carregando histórico...</p>
             </div>
         );
     }
 
-    if (allExerciseNames.length === 0) {
+    if (!allExerciseNames.length) {
         return (
             <div className="history-page">
-                <button className="btn-back" onClick={onBack}>
-                    {'< Voltar'}
+                <button className="btn-back-primary" onClick={onBack}>
+                    Voltar
                 </button>
                 <h2>Históricos</h2>
-                <p>Ainda não há sessões salvas para exibir.</p>
+                <p className="history-intro">
+                    Ainda não há treinos registrados. Salve um treino para começar a ver a evolução.
+                </p>
             </div>
         );
     }
 
     return (
         <div className="history-page">
-            <button className="btn-back" onClick={onBack}>
-                {'< Voltar'}
+            <button className="btn-back-primary" onClick={onBack}>
+                Voltar
             </button>
+
             <h2>Históricos</h2>
             <p className="history-intro">
-                Acompanhe sua evolução filtrando por treino e escolhendo um exercício específico para visualizar a curva de progressão.
+                Aqui eu acompanho como meus pesos evoluíram em cada exercício ao longo do tempo.
             </p>
 
             <div className="history-filters">
                 <div className="history-filter-row">
                     <div className="history-filter">
-                        <label>Treino</label>
+                        <label>Filtrar por treino</label>
                         <select
                             value={selectedTemplate}
-                            onChange={(e) => setSelectedTemplate(e.target.value)}
+                            onChange={(e) => {
+                                setSelectedTemplate(e.target.value);
+                                setSelectedExercise('');
+                            }}
                         >
-                            <option value="todos">Todos os treinos</option>
-                            {templates.map((name) => (
-                                <option key={name} value={name}>
-                                    {name}
+                            {templates.map((tpl) => (
+                                <option key={tpl} value={tpl}>
+                                    {tpl === 'todos' ? 'Todos os treinos' : tpl}
                                 </option>
                             ))}
                         </select>
@@ -327,13 +288,9 @@ function HistoryPage({ onBack }) {
                         <label>Exercício</label>
                         <select
                             value={selectedExercise}
-                            onChange={(e) =>
-                                setSelectedExercise(e.target.value)
-                            }
+                            onChange={(e) => setSelectedExercise(e.target.value)}
                         >
-                            <option value="">
-                                Selecione um exercício
-                            </option>
+                            <option value="">Selecione um exercício</option>
                             {filteredExercises.map((name) => (
                                 <option key={name} value={name}>
                                     {name}
@@ -344,23 +301,28 @@ function HistoryPage({ onBack }) {
                 </div>
             </div>
 
-            {selectedExercise && (
-                <div className="history-chart-card">
-                    <h3>Evolução do exercício</h3>
-                    <p className="history-chart-title">
-                        {selectedExercise}{' '}
-                        {selectedTemplate !== 'todos' &&
-                            `• ${selectedTemplate}`}
-                    </p>
-                    {renderChart()}
-                </div>
-            )}
+            <div className="history-chart-card">
+                <h3>Evolução do peso</h3>
+                <p className="history-chart-title">
+                    {selectedExercise
+                        ? `Exercício: ${selectedExercise}`
+                        : 'Selecione um exercício para visualizar o gráfico.'}
+                </p>
+                {renderChart()}
+            </div>
 
             {selectedExercise && currentExerciseEntries.length > 0 && (
                 <div className="history-card">
                     <div className="history-card-header">
-                        <h3>Registro detalhado</h3>
+                        <h3>Histórico detalhado</h3>
+                        <span>
+              {selectedExercise} ·{' '}
+                            {selectedTemplate === 'todos'
+                                ? 'Todos os treinos'
+                                : `Treino ${selectedTemplate}`}
+            </span>
                     </div>
+
                     <div className="history-table-wrapper">
                         <table className="history-table">
                             <thead>
@@ -368,20 +330,16 @@ function HistoryPage({ onBack }) {
                                 <th>Data</th>
                                 <th>Treino</th>
                                 <th>Peso</th>
-                                <th>Observação</th>
+                                <th>Meta</th>
                             </tr>
                             </thead>
                             <tbody>
-                            {currentExerciseEntries.map((entry, idx) => (
-                                <tr key={idx}>
+                            {currentExerciseEntries.map((entry) => (
+                                <tr key={entry.id + String(entry.date)}>
                                     <td>{formatDate(entry.date)}</td>
                                     <td>{entry.templateName}</td>
-                                    <td>
-                                        {entry.weight
-                                            ? `${entry.weight} kg`
-                                            : 'sem registro'}
-                                    </td>
-                                    <td>{entry.note}</td>
+                                    <td>{formatWeight(entry.weight)}</td>
+                                    <td>{entry.target}</td>
                                 </tr>
                             ))}
                             </tbody>
