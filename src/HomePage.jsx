@@ -76,7 +76,7 @@ function HomePage({ onSelectWorkout }) {
         <div className="homepage">
             {nextWorkout && (
                 <>
-                    <h2>Seu próximo treino:</h2>
+                    <h2>Seu próximo treino: </h2>
                     <button
                         className="template-button-next"
                         onClick={() => onSelectWorkout(nextWorkout.id)}
