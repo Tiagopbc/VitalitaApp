@@ -1,4 +1,5 @@
 // src/App.jsx
+
 import React, { useState } from 'react';
 import HomePage from './HomePage';
 import WorkoutSession from './WorkoutSession';
@@ -7,64 +8,59 @@ import MethodsPage from './MethodsPage';
 import './style.css';
 
 function App() {
-    const [activeWorkoutId, setActiveWorkoutId] = useState(() => {
-        if (typeof window === 'undefined') {
-            return null;
-        }
-        return localStorage.getItem('activeWorkoutId');
-    });
-    const [showHistory, setShowHistory] = useState(false);
-    const [showMethods, setShowMethods] = useState(false);
+    const [activePage, setActivePage] = useState('home'); // 'home' | 'session' | 'history' | 'methods'
+    const [activeWorkoutId, setActiveWorkoutId] = useState(null);
+    const [focusedMethod, setFocusedMethod] = useState('');
 
     const handleSelectWorkout = (id) => {
-        setShowHistory(false);
-        setShowMethods(false);
         setActiveWorkoutId(id);
-        localStorage.setItem('activeWorkoutId', id);
+        setActivePage('session');
     };
 
     const handleBackToHome = () => {
         setActiveWorkoutId(null);
-        localStorage.removeItem('activeWorkoutId');
-        setShowHistory(false);
-        setShowMethods(false);
+        setActivePage('home');
     };
 
     const handleOpenHistory = () => {
-        setShowHistory(true);
-        setShowMethods(false);
-        setActiveWorkoutId(null);
-    };
-
-    const handleOpenMethods = () => {
-        setShowMethods(true);
-        setShowHistory(false);
-        setActiveWorkoutId(null);
+        setActivePage('history');
     };
 
     const handleCloseHistory = () => {
-        setShowHistory(false);
+        setActivePage('home');
+    };
+
+    const handleOpenMethods = (methodName = '') => {
+        setFocusedMethod(methodName);
+        setActivePage('methods');
     };
 
     const handleCloseMethods = () => {
-        setShowMethods(false);
+        setFocusedMethod('');
+        setActivePage('home');
     };
 
     let content;
 
-    if (showHistory) {
+    if (activePage === 'history') {
         content = <HistoryPage onBack={handleCloseHistory} />;
-    } else if (showMethods) {
-        content = <MethodsPage onBack={handleCloseMethods} />;
-    } else if (!activeWorkoutId) {
-        content = <HomePage onSelectWorkout={handleSelectWorkout} />;
-    } else {
+    } else if (activePage === 'methods') {
+        content = (
+            <MethodsPage
+                onBack={handleCloseMethods}
+                initialMethod={focusedMethod}
+            />
+        );
+    } else if (activePage === 'session' && activeWorkoutId) {
         content = (
             <WorkoutSession
                 workoutId={activeWorkoutId}
                 onBack={handleBackToHome}
+                onOpenMethod={handleOpenMethods}
             />
         );
+    } else {
+        content = <HomePage onSelectWorkout={handleSelectWorkout} />;
     }
 
     return (
@@ -74,21 +70,26 @@ function App() {
                 <p className="App-subtitle">
                     Seu diário inteligente de treinos
                 </p>
+
                 <div className="header-actions">
                     <button
                         className="header-secondary-button"
-                        onClick={handleOpenMethods}
+                        type="button"
+                        onClick={() => handleOpenMethods()}
                     >
                         Métodos de treino
                     </button>
+
                     <button
                         className="header-history-button"
+                        type="button"
                         onClick={handleOpenHistory}
                     >
                         Ver históricos
                     </button>
                 </div>
             </header>
+
             <main>{content}</main>
         </div>
     );
