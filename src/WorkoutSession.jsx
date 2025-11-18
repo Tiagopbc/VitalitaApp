@@ -13,16 +13,13 @@ import {
     limit,
     getDocs,
     setDoc,
-    where,
     deleteDoc
 } from 'firebase/firestore';
 
-// se quiser, depois dá para unificar este ID com o do workoutStorage.js
-const USER_PROFILE_ID = 'Tiago';
-const USER_ID = 'tiago';
 const DRAFT_COLLECTION = 'workout_session_drafts';
+const USER_ID = 'tiago';
 
-function WorkoutSession({ workoutId, onBack, onOpenMethod }) {
+function WorkoutSession({ workoutId, onBack, onOpenMethod, userProfileId }) {
     const [template, setTemplate] = useState(null);
     const [loading, setLoading] = useState(true);
     const [weights, setWeights] = useState({});
@@ -30,7 +27,9 @@ function WorkoutSession({ workoutId, onBack, onOpenMethod }) {
     const [saving, setSaving] = useState(false);
     const [checkedExercises, setCheckedExercises] = useState({});
 
-    // carrega template, rascunho e última sessão concluída
+    const profileId = userProfileId || 'Tiago';
+
+    // carrega template, rascunho e, se precisar, a última sessão concluída
     useEffect(() => {
         async function fetchWorkoutData() {
             setLoading(true);
@@ -52,11 +51,11 @@ function WorkoutSession({ workoutId, onBack, onOpenMethod }) {
                 const newNotes = {};
                 const newChecked = {};
 
-                // 1. tenta carregar rascunho da sessão em andamento
+                // tenta carregar rascunho de sessão em andamento
                 const draftRef = doc(
                     db,
                     DRAFT_COLLECTION,
-                    `${USER_PROFILE_ID}_${workoutId}`
+                    `${profileId}_${workoutId}`
                 );
                 const draftSnap = await getDoc(draftRef);
                 const draftData = draftSnap.exists() ? draftSnap.data() : null;
@@ -64,10 +63,9 @@ function WorkoutSession({ workoutId, onBack, onOpenMethod }) {
                 const draftNotes = draftData?.notes || {};
                 const draftChecked = draftData?.checkedExercises || {};
 
-                // 2. busca última sessão concluída deste treino
+                // busca última sessão concluída, para usar como base se não houver rascunho
                 const lastSessionQuery = query(
                     collection(db, 'workout_sessions'),
-                    where('templateId', '==', workoutId),
                     orderBy('completedAt', 'desc'),
                     limit(1)
                 );
@@ -102,9 +100,9 @@ function WorkoutSession({ workoutId, onBack, onOpenMethod }) {
         }
 
         fetchWorkoutData();
-    }, [workoutId]);
+    }, [workoutId, profileId]);
 
-    // salvamento parcial em nuvem
+    // salvamento parcial em nuvem enquanto você edita
     useEffect(() => {
         if (!template) {
             return;
@@ -124,13 +122,14 @@ function WorkoutSession({ workoutId, onBack, onOpenMethod }) {
                 const draftRef = doc(
                     db,
                     DRAFT_COLLECTION,
-                    `${USER_PROFILE_ID}_${workoutId}`
+                    `${profileId}_${workoutId}`
                 );
 
                 await setDoc(
                     draftRef,
                     {
                         userId: USER_ID,
+                        profileId,
                         templateId: workoutId,
                         templateName: template.name,
                         weights,
@@ -146,7 +145,7 @@ function WorkoutSession({ workoutId, onBack, onOpenMethod }) {
         };
 
         persistDraft();
-    }, [weights, notes, checkedExercises, template, workoutId]);
+    }, [weights, notes, checkedExercises, template, workoutId, profileId]);
 
     const handleWeightChange = (exerciseName, weight) => {
         setWeights((prev) => ({
@@ -187,7 +186,6 @@ function WorkoutSession({ workoutId, onBack, onOpenMethod }) {
         });
 
         try {
-            // salva sessão concluída com modelo compatível com HistoryPage e workoutStorage
             await addDoc(collection(db, 'workout_sessions'), {
                 templateId: workoutId,
                 templateName: template.name,
@@ -197,8 +195,7 @@ function WorkoutSession({ workoutId, onBack, onOpenMethod }) {
                 results: sessionResults
             });
 
-            // atualiza perfil para o próximo treino na Home
-            const userProfileRef = doc(db, 'user_profile', USER_PROFILE_ID);
+            const userProfileRef = doc(db, 'user_profile', profileId);
             await setDoc(
                 userProfileRef,
                 {
@@ -212,7 +209,7 @@ function WorkoutSession({ workoutId, onBack, onOpenMethod }) {
                 const draftRef = doc(
                     db,
                     DRAFT_COLLECTION,
-                    `${USER_PROFILE_ID}_${workoutId}`
+                    `${profileId}_${workoutId}`
                 );
                 await deleteDoc(draftRef);
             } catch (error) {
