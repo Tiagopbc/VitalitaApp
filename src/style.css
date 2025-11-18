@@ -1,232 +1,494 @@
 :root {
     --bg-body: #010409;
+    --bg-surface: #050816;
     --bg-card: #0b1120;
+    --bg-card-soft: #020617;
     --accent: #3abff8;
     --accent-strong: #0ea5e9;
     --accent-deep: #1d4ed8;
     --accent-soft: #dbeafe;
+    --accent-soft-alpha: rgba(59, 130, 246, 0.24);
     --text-primary: #e5e7eb;
     --text-secondary: #94a3b8;
     --text-muted: #64748b;
+    --border-soft: #1e293b;
+    --border-strong: #38bdf8;
     --shadow-soft: 0 34px 120px rgba(15, 23, 42, 0.95);
     --radius-lg: 24px;
     --radius-md: 16px;
     --radius-pill: 999px;
-    --font-sans: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+    --font-sans: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text",
+    "Segoe UI", sans-serif;
 }
 
-/* base */
-html, body {
+/* fundo base */
+
+html,
+body {
     margin: 0;
     padding: 0;
-    min-height: 100vh;
+    min-height: 100%;
+    height: 100%;
     font-family: var(--font-sans);
     background: radial-gradient(circle at top, #020617 0%, #000 55%);
     color: var(--text-primary);
 }
 
-/* layout geral */
-.app-shell {
-    display: flex;
-    justify-content: center;
-    padding: 32px 16px 40px;
-}
-.app-inner {
-    width: 100%;
-    max-width: 1101px;
+#root {
+    min-height: 100vh;
 }
 
-/* header */
+/* layout geral */
+
+.app-shell {
+    min-height: 100vh;
+    padding: 32px 16px 40px;
+    background: radial-gradient(circle at top, #020617 0%, #000 55%);
+    color: var(--text-primary);
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+}
+
+.app-inner {
+    width: 100%;
+    max-width: 1120px;
+}
+
+/* header principal */
+
 .app-header {
     text-align: center;
     margin-bottom: 32px;
 }
+
 .app-logo-name {
     font-size: 1.6rem;
     font-weight: 700;
     letter-spacing: 0.12em;
     text-transform: uppercase;
+    color: #f9fafb;
+    margin-bottom: 6px;
 }
+
 .app-header-subtitle {
     font-size: 0.95rem;
     color: var(--text-secondary);
 }
+
+.app-header-card {
+    margin-top: 20px;
+    padding: 18px 24px;
+    border-radius: var(--radius-lg);
+    border: 1px solid rgba(15, 23, 42, 0.9);
+    background:
+            radial-gradient(circle at top left, rgba(59, 130, 246, 0.25), transparent 55%),
+            radial-gradient(circle at top right, rgba(14, 165, 233, 0.2), transparent 60%),
+            linear-gradient(135deg, #020617 0%, #000 70%);
+    box-shadow: var(--shadow-soft);
+}
+
 .header-actions {
-    margin-top: 16px;
     display: flex;
     justify-content: center;
     gap: 12px;
 }
 
 /* botões principais */
-.button-main {
+
+.header-secondary-button,
+.header-history-button,
+.btn-save-session {
     border-radius: var(--radius-pill);
-    border: 1px solid rgba(56, 189, 248, 0.8);
-    background: radial-gradient(circle at top left, var(--accent) 0, var(--accent-strong) 42%, var(--accent-deep) 100%);
-    color: #fff;
-    font-size: 0.8rem;
+    border: 1px solid rgba(148, 163, 184, 0.3);
+    padding: 12px 24px;
+    font-size: 0.78rem;
     font-weight: 600;
-    letter-spacing: 0.12em;
+    letter-spacing: 0.16em;
     text-transform: uppercase;
-    padding: 12px 26px;
     cursor: pointer;
-    transition: all 0.15s ease;
+    transition: transform 0.12s ease, box-shadow 0.15s ease, opacity 0.12s ease,
+    border-color 0.16s ease, background 0.16s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.header-secondary-button {
+    background: transparent;
+    color: var(--text-secondary);
+}
+
+.header-secondary-button:hover {
+    border-color: rgba(148, 163, 184, 0.7);
+    color: #e2e8f0;
+    transform: translateY(-1px);
+}
+
+.header-history-button,
+.btn-save-session {
+    border-color: rgba(56, 189, 248, 0.8);
+    background:
+            radial-gradient(circle at top left, var(--accent) 0, var(--accent-strong) 42%, var(--accent-deep) 100%);
+    color: white;
     box-shadow: 0 18px 45px rgba(37, 99, 235, 0.85);
 }
-.button-main:hover {
+
+.header-history-button:hover,
+.btn-save-session:hover {
     transform: translateY(-1px);
     box-shadow: 0 24px 60px rgba(37, 99, 235, 0.95);
 }
-.button-main:active {
+
+.header-history-button:active,
+.btn-save-session:active {
     transform: translateY(0);
     box-shadow: 0 10px 26px rgba(15, 23, 42, 0.95);
+    opacity: 0.95;
 }
 
-/* botão secundário */
-.button-secondary {
+/* botão voltar */
+
+.btn-back-primary {
     border-radius: var(--radius-pill);
     border: 1px solid rgba(148, 163, 184, 0.35);
-    padding: 10px 22px;
-    background: transparent;
-    color: var(--text-secondary);
+    padding: 9px 18px;
     font-size: 0.76rem;
     font-weight: 600;
-    text-transform: uppercase;
     letter-spacing: 0.16em;
+    text-transform: uppercase;
     cursor: pointer;
-    transition: all 0.15s ease;
-}
-.button-secondary:hover {
-    color: #e2e8f0;
-    border-color: rgba(148, 163, 184, 0.7);
+    background: transparent;
+    color: var(--text-secondary);
+    margin-bottom: 18px;
+    transition: transform 0.12s ease, box-shadow 0.15s ease, color 0.12s ease,
+    border-color 0.12s ease;
 }
 
-/* ---------- HOME PAGE ---------- */
+.btn-back-primary:hover {
+    border-color: rgba(148, 163, 184, 0.7);
+    color: #e2e8f0;
+    transform: translateY(-1px);
+    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.8);
+}
+
+/* tela inicial */
 
 .homepage {
     margin-top: 18px;
-    padding: 24px;
+    padding: 20px 24px;
     border-radius: var(--radius-lg);
-    border: 1px solid rgba(15, 23, 42, 0.9);
-    background: linear-gradient(145deg, #020617 0%, #000 70%);
+    border: 1px solid rgba(15, 23, 42, 0.95);
+    background:
+            radial-gradient(circle at top, rgba(30, 64, 175, 0.55), transparent 65%),
+            linear-gradient(145deg, #020617 0%, #000 70%);
     box-shadow: var(--shadow-soft);
 }
+
 .homepage h2 {
     margin: 0 0 10px;
     font-size: 1.05rem;
-    color: #f9fafb;
+    color: #e5e7eb;
 }
+
 .homepage hr {
     margin: 18px 0;
     border: none;
-    border-top: 1px solid rgba(30, 41, 59, 0.8);
+    border-top: 1px solid rgba(30, 41, 59, 0.9);
 }
 
-/* próximo treino */
+/* próximo treino na home */
+
 .template-button-next {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    margin-top: 8px;
-    padding: 12px 22px;
+    margin-top: 6px;
+    padding: 10px 18px;
     border-radius: var(--radius-pill);
     border: 1px solid rgba(56, 189, 248, 0.85);
-    background: radial-gradient(circle at top left, var(--accent) 0, var(--accent-strong) 42%, var(--accent-deep) 100%);
-    color: #fff;
-    font-size: 0.85rem;
+    background:
+            radial-gradient(circle at top left, var(--accent) 0, var(--accent-strong) 42%, var(--accent-deep) 100%);
+    color: #f9fafb;
+    font-size: 0.86rem;
     font-weight: 600;
-    text-transform: uppercase;
     cursor: pointer;
-    letter-spacing: 0.1em;
-    box-shadow: 0 16px 40px rgba(37, 99, 235, 0.9);
-    transition: all 0.15s ease;
-}
-.template-button-next:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 22px 60px rgba(37, 99, 235, 1);
-}
-.template-button-next:active {
-    transform: translateY(0);
-    box-shadow: 0 10px 26px rgba(15, 23, 42, 0.9);
-}
-.template-button-next .button-subtitle {
-    color: var(--accent-soft);
-    text-transform: none;
-    letter-spacing: 0.03em;
+    box-shadow: 0 14px 36px rgba(37, 99, 235, 0.9);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    transition: transform 0.12s ease, box-shadow 0.15s ease, opacity 0.12s ease;
 }
 
-/* outros treinos */
+.template-button-next:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 18px 50px rgba(37, 99, 235, 1);
+}
+
+.template-button-next:active {
+    transform: translateY(0);
+    box-shadow: 0 10px 26px rgba(15, 23, 42, 0.95);
+    opacity: 0.95;
+}
+
+.template-button-next .button-title {
+    font-weight: 600;
+}
+
+.template-button-next .button-subtitle {
+    font-weight: 400;
+    text-transform: none;
+    letter-spacing: 0.03em;
+    color: var(--accent-soft);
+}
+
+/* outros treinos na home */
+
 .template-list-others {
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
     margin-top: 6px;
 }
+
 .template-button {
     border-radius: 999px;
     border: 1px solid rgba(148, 163, 184, 0.45);
-    background: rgba(15, 23, 42, 0.9);
+    background: rgba(15, 23, 42, 0.92);
     color: var(--text-secondary);
     padding: 6px 12px;
     font-size: 0.78rem;
     cursor: pointer;
-    transition: all 0.14s ease;
+    display: inline-flex;
+    align-items: center;
+    transition: border-color 0.14s ease, background 0.14s ease,
+    color 0.14s ease, transform 0.1s ease;
 }
+
 .template-button:hover {
     border-color: rgba(148, 163, 184, 0.9);
     background: rgba(15, 23, 42, 1);
     color: #e5e7eb;
+    transform: translateY(-1px);
 }
 
-/* ---------- WORKOUT SESSION ---------- */
+/* ====================== */
+/* TELA INICIAL / HOMEPAGE */
+/* ====================== */
+
+.homepage {
+    background: linear-gradient(135deg, #0a0f1a, #000000);
+    padding: 24px;
+    border-radius: 24px;
+    box-shadow: 0 22px 50px rgba(0, 0, 0, 0.7);
+    border: 1px solid var(--border-soft);
+    margin-top: 12px;
+}
+
+/* títulos dentro da home */
+
+.homepage h2 {
+    color: var(--text-primary);
+    border-bottom: 1px solid var(--border-soft);
+    padding-bottom: 6px;
+    margin: 0 0 18px 0;
+    font-size: 1.05rem;
+}
+
+/* espaço entre o título "Seu próximo treino" e o botão azul */
+
+.homepage h2 + .template-button-next {
+    margin-top: 8px;
+    margin-bottom: 24px;
+}
+
+/* bloco dos "Outros treinos" */
+
+.template-list-others {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-top: 10px;
+}
+
+/* responsivo para celular */
+
+@media (max-width: 720px) {
+    .homepage {
+        padding: 18px 14px;
+        border-radius: 20px;
+    }
+
+    .template-list-others {
+        grid-template-columns: 1fr;
+    }
+}
+
+
+/* cartão de treino atual */
 
 .workout-session {
-    background: linear-gradient(145deg, #020617 0%, #000 70%);
+    background:
+            radial-gradient(circle at top, rgba(30, 64, 175, 0.6), transparent 65%),
+            linear-gradient(145deg, #020617 0%, #020617 40%, #000 100%);
     border-radius: var(--radius-lg);
     padding: 24px;
-    border: 1px solid rgba(15, 23, 42, 0.9);
+    border: 1px solid rgba(15, 23, 42, 0.95);
     box-shadow: var(--shadow-soft);
 }
+
 .workout-session > h2 {
     font-size: 1.3rem;
     margin: 4px 0 18px;
+    color: #f9fafb;
 }
 
-/* grid de exercícios */
+/* lista de exercícios */
+
 .session-exercises {
     display: flex;
     flex-direction: column;
     gap: 14px;
     margin-bottom: 24px;
 }
+
 .session-exercise-item {
     display: grid;
-    grid-template-columns: auto minmax(0, 1.4fr) minmax(0, 2.4fr);
+    grid-template-columns: auto minmax(0, 1.7fr) minmax(0, 2fr);
     column-gap: 16px;
     row-gap: 8px;
     padding: 14px 16px;
     border-radius: 16px;
-    border: 1px solid rgba(15, 23, 42, 0.9);
-    background: linear-gradient(135deg, #020617 0%, #050816 55%, #000 100%);
-}
-.session-exercise-item.completed {
-    border-color: rgba(34, 197, 94, 0.6);
+    border: 1px solid rgba(15, 23, 42, 0.95);
+    background:
+            radial-gradient(circle at top left, rgba(30, 64, 175, 0.35), transparent 60%),
+            linear-gradient(135deg, #020617 0%, #050816 55%, #000 100%);
+    position: relative;
 }
 
-/* inputs peso/reps/obs */
+.session-exercise-item.completed {
+    border-color: rgba(34, 197, 94, 0.6);
+    box-shadow: 0 0 0 1px rgba(34, 197, 94, 0.1);
+    opacity: 0.98;
+}
+
+/* checkbox de conclusão */
+
+.exercise-checkbox {
+    display: flex;
+    align-items: flex-start;
+    padding-top: 4px;
+}
+
+.exercise-checkbox input[type="checkbox"] {
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    border-radius: 999px;
+    border: 1px solid rgba(148, 163, 184, 0.7);
+    background: rgba(15, 23, 42, 0.9);
+    cursor: pointer;
+    position: relative;
+    transition: border-color 0.12s ease, background 0.12s ease,
+    box-shadow 0.15s ease, transform 0.1s ease;
+}
+
+.exercise-checkbox input[type="checkbox"]:checked {
+    border-color: rgba(34, 197, 94, 0.9);
+    background: radial-gradient(
+            circle at center,
+            rgba(34, 197, 94, 1) 0,
+            rgba(22, 163, 74, 1) 45%,
+            rgba(21, 128, 61, 1) 100%
+    );
+    box-shadow: 0 0 0 1px rgba(34, 197, 94, 0.3);
+}
+
+.exercise-checkbox input[type="checkbox"]::after {
+    content: "";
+    position: absolute;
+    inset: 4px;
+    border-radius: inherit;
+    background: transparent;
+}
+
+.exercise-checkbox input[type="checkbox"]:checked::after {
+    background:
+            url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="10" height="8" viewBox="0 0 12 9"><path fill="white" d="M4.4 8.7L.7 4.8 2.2 3.3 4.4 5.7 9.8.3 11.3 1.8z"/></svg>')
+            center center no-repeat;
+}
+
+/* info textual do exercício */
+
+.exercise-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.exercise-group {
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    color: var(--text-muted);
+}
+
+.exercise-name {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #f9fafb;
+}
+
+.exercise-target {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+/* botão ver metodo */
+
+.exercise-method-button {
+    margin-top: 6px;
+    align-self: flex-start;
+    border-radius: 999px;
+    border: 1px solid rgba(148, 163, 184, 0.4);
+    padding: 5px 10px;
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    background: rgba(15, 23, 42, 0.75);
+    color: var(--text-secondary);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    transition: border-color 0.14s ease, color 0.14s ease,
+    background 0.14s ease, transform 0.1s ease;
+}
+
+.exercise-method-button:hover {
+    border-color: rgba(148, 163, 184, 0.9);
+    color: #e5e7eb;
+    transform: translateY(-1px);
+    background: rgba(15, 23, 42, 0.95);
+}
+
+/* inputs de peso, reps e observações no desktop */
+
 .exercise-input {
     display: grid;
-    grid-template-columns: 1fr 1fr 1.6fr;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     column-gap: 10px;
     row-gap: 8px;
     align-items: flex-end;
 }
+
 .exercise-input label {
     display: flex;
     flex-direction: column;
     font-size: 0.75rem;
     color: var(--text-secondary);
 }
+
 .exercise-weight-input,
 .exercise-note-input {
     margin-top: 4px;
@@ -237,99 +499,355 @@ html, body {
     padding: 8px 10px;
     font-size: 0.85rem;
     outline: none;
+    transition: border-color 0.14s ease, box-shadow 0.16s ease,
+    background 0.14s ease;
 }
+
 .exercise-weight-input:focus,
 .exercise-note-input:focus {
     border-color: rgba(59, 130, 246, 0.9);
     box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.7);
+    background: rgba(15, 23, 42, 1);
 }
 
-/* observações ocupa linha completa */
+/* observações ocupa linha inteira no desktop */
+
 .exercise-note-wrapper {
     grid-column: 1 / 4;
     width: 100%;
 }
 
-/* sugestão de carga */
+/* sugestão de progressão */
+
 .exercise-suggestion {
-    grid-column: 3 / 4;
+    grid-column: 1 / 4;
     margin-top: 8px;
     padding: 8px 12px;
     border-radius: 14px;
     border: 1px solid rgba(56, 189, 248, 0.5);
-    background: linear-gradient(135deg, rgba(15, 23, 42, 0.96), rgba(15, 23, 42, 0.98));
+    background:
+            radial-gradient(circle at top left, rgba(59, 130, 246, 0.25), transparent 60%),
+            radial-gradient(circle at bottom right, rgba(14, 165, 233, 0.16), transparent 60%),
+            linear-gradient(135deg, rgba(15, 23, 42, 0.96), rgba(15, 23, 42, 0.98));
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 10px;
     font-size: 0.8rem;
     color: var(--text-secondary);
-    max-width: 520px;
 }
+
 .exercise-suggestion-text strong {
     color: var(--accent-soft);
 }
+
+/* botão da sugestão */
+
 .exercise-suggestion-apply {
     padding: 6px 14px;
     border-radius: 999px;
     border: 1px solid rgba(59, 130, 246, 0.9);
-    background: radial-gradient(circle at top left, var(--accent) 0, var(--accent-strong) 40%, var(--accent-deep) 100%);
-    color: #fff;
+    background:
+            radial-gradient(circle at top left, var(--accent) 0, var(--accent-strong) 40%, var(--accent-deep) 100%);
+    color: white;
     font-size: 0.68rem;
     font-weight: 600;
     letter-spacing: 0.14em;
     text-transform: uppercase;
     cursor: pointer;
+    white-space: nowrap;
     box-shadow: 0 10px 26px rgba(37, 99, 235, 0.9);
-    transition: all 0.15s ease;
+    transition: transform 0.12s ease, box-shadow 0.15s ease, opacity 0.12s ease;
 }
+
 .exercise-suggestion-apply:hover {
     transform: translateY(-1px);
     box-shadow: 0 16px 40px rgba(37, 99, 235, 1);
 }
 
-/* ---------- HISTÓRICO ---------- */
+.exercise-suggestion-apply:active {
+    transform: translateY(0);
+    box-shadow: 0 8px 22px rgba(15, 23, 42, 0.95);
+    opacity: 0.95;
+}
+
+/* histórico */
 
 .history-page {
-    background: linear-gradient(160deg, #020617 0%, #000 70%);
+    background:
+            radial-gradient(circle at top, rgba(30, 64, 175, 0.55), transparent 60%),
+            linear-gradient(160deg, #020617 0%, #000 70%);
     border-radius: var(--radius-lg);
     padding: 24px;
-    border: 1px solid rgba(15, 23, 42, 0.9);
+    border: 1px solid rgba(15, 23, 42, 0.95);
     box-shadow: var(--shadow-soft);
 }
+
 .history-page h2 {
     margin: 4px 0 12px;
 }
 
-/* ---------- RESPONSIVO ---------- */
+.history-intro {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+.history-content {
+    margin-top: 18px;
+    display: grid;
+    grid-template-columns: minmax(0, 1.2fr) minmax(0, 1.5fr);
+    gap: 18px;
+}
+
+.history-filters {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.history-filter-group label {
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+    display: block;
+}
+
+.history-filter-group select {
+    width: 100%;
+    border-radius: 12px;
+    border: 1px solid rgba(30, 64, 175, 0.6);
+    background: rgba(15, 23, 42, 0.95);
+    color: var(--text-primary);
+    padding: 8px 10px;
+    font-size: 0.86rem;
+    outline: none;
+}
+
+.history-chart-card,
+.history-card {
+    border-radius: var(--radius-md);
+    border: 1px solid rgba(15, 23, 42, 0.96);
+    background: radial-gradient(circle at top left, rgba(15, 23, 42, 0.75), #020617);
+    padding: 14px 14px 16px;
+}
+
+.history-chart-card h3,
+.history-card-header h3 {
+    margin: 0 0 8px;
+    font-size: 0.98rem;
+}
+
+.history-chart-empty {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+/* gráfico simples */
+
+.history-chart {
+    width: 100%;
+    height: auto;
+}
+
+.history-chart-axis {
+    stroke: rgba(51, 65, 85, 0.95);
+    stroke-width: 1;
+}
+
+.history-chart-tick {
+    stroke: rgba(51, 65, 85, 0.95);
+    stroke-width: 1;
+}
+
+.history-chart-axis-label {
+    fill: var(--text-muted);
+    font-size: 0.72rem;
+}
+
+.history-chart-tick-label {
+    fill: var(--text-muted);
+    font-size: 0.7rem;
+}
+
+.history-chart-line {
+    fill: none;
+    stroke: var(--accent-strong);
+    stroke-width: 1.7;
+}
+
+.history-chart-point {
+    fill: #e5e7eb;
+}
+
+.history-chart-label {
+    fill: var(--accent-soft);
+    font-size: 0.68rem;
+}
+
+.history-chart-date-label {
+    fill: transparent;
+}
+
+/* tabela */
+
+.history-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+
+.history-card-header span {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+.history-table-wrapper {
+    max-height: 260px;
+    overflow: auto;
+}
+
+.history-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.8rem;
+}
+
+.history-table th,
+.history-table td {
+    padding: 6px 8px;
+    border-bottom: 1px solid rgba(30, 41, 59, 0.9);
+}
+
+.history-table th {
+    text-align: left;
+    font-weight: 500;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    font-size: 0.7rem;
+}
+
+.history-table tbody tr:nth-child(odd) {
+    background: rgba(15, 23, 42, 0.55);
+}
+
+/* página de métodos */
+
+.methods-page {
+    background:
+            radial-gradient(circle at top, rgba(30, 64, 175, 0.6), transparent 60%),
+            linear-gradient(150deg, #020617 0%, #000 70%);
+    border-radius: var(--radius-lg);
+    padding: 24px;
+    border: 1px solid rgba(15, 23, 42, 0.95);
+    box-shadow: var(--shadow-soft);
+}
+
+.methods-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+    margin-top: 12px;
+}
+
+.method-card {
+    border-radius: var(--radius-md);
+    border: 1px solid rgba(15, 23, 42, 0.96);
+    background: radial-gradient(circle at top left, #020617, #000);
+    padding: 14px;
+}
+
+.method-card h3 {
+    margin: 0 0 6px;
+    font-size: 0.98rem;
+}
+
+.method-card p {
+    margin: 0;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+/* responsivo */
 
 @media (max-width: 768px) {
     .app-shell {
         padding: 20px 12px 28px;
     }
-    .homepage {
-        padding: 16px 14px;
+
+    .app-header-card {
+        margin-top: 14px;
+        padding: 14px 18px;
     }
-    .template-button-next,
+
+    .homepage {
+        padding: 16px 14px 18px;
+    }
+
+    .template-button-next {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .template-list-others {
+        flex-direction: column;
+    }
+
     .template-button {
         width: 100%;
         justify-content: center;
     }
+
+    .workout-session,
+    .history-page,
+    .methods-page {
+        padding: 18px 14px 20px;
+    }
+
     .session-exercise-item {
         grid-template-columns: auto minmax(0, 1fr);
         grid-template-rows: auto auto auto auto;
+        padding: 12px 12px;
     }
+
     .exercise-input {
         grid-column: 1 / 3;
         display: flex;
         flex-direction: column;
         gap: 8px;
     }
+
+    .exercise-note-wrapper {
+        width: 100%;
+    }
+
     .exercise-suggestion {
         grid-column: 1 / 3;
         flex-direction: column;
         align-items: flex-start;
+        padding: 8px 10px;
+    }
+
+    .header-actions {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .header-secondary-button,
+    .header-history-button,
+    .btn-save-session {
         width: 100%;
-        max-width: 100%;
+    }
+
+    .history-content {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .methods-grid {
+        grid-template-columns: minmax(0, 1fr);
     }
 }
