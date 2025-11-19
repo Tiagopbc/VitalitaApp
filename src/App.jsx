@@ -125,9 +125,9 @@ function App() {
 
     return (
         <div className="App">
-            <header className="App-header">
+            <header className="app-header">
                 <h1>Vitalità</h1>
-                <p className="App-subtitle">
+                <p className="app-subtitle">
                     Seu diário inteligente de treinos
                 </p>
 
