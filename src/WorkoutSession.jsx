@@ -566,16 +566,15 @@ function WorkoutSession({ workoutId, onBack, onOpenMethod, user }) {
                                                 −
                                             </button>
                                             <input
-                                                className="exercise-weight-input"
+                                                className={`exercise-weight-input exercise-number-input ${
+                                                    weights[ex.name] ? 'filled' : ''
+                                                }`}
                                                 type="number"
                                                 step="0.5"
                                                 inputMode="decimal"
                                                 value={weights[ex.name] || ''}
                                                 onChange={(e) =>
-                                                    handleWeightChange(
-                                                        ex.name,
-                                                        e.target.value
-                                                    )
+                                                    handleWeightChange(ex.name, e.target.value)
                                                 }
                                             />
                                             <button
@@ -612,16 +611,15 @@ function WorkoutSession({ workoutId, onBack, onOpenMethod, user }) {
                                                 −
                                             </button>
                                             <input
-                                                className="exercise-weight-input"
+                                                className={`exercise-weight-input exercise-number-input ${
+                                                    reps[ex.name] ? 'filled' : ''
+                                                }`}
                                                 type="number"
                                                 step="1"
                                                 inputMode="numeric"
                                                 value={reps[ex.name] || ''}
                                                 onChange={(e) =>
-                                                    handleRepsChange(
-                                                        ex.name,
-                                                        e.target.value
-                                                    )
+                                                    handleRepsChange(ex.name, e.target.value)
                                                 }
                                             />
                                             <button
