@@ -29,7 +29,7 @@ body {
     padding: 0;
     min-height: 100%;
     height: 100%;
-    font-family: var(--font-sans);
+    font-family: var(--font-sans), sans-serif;
     background: radial-gradient(circle at top, #020617 0%, #000 55%);
     color: var(--text-primary);
 }
@@ -357,7 +357,7 @@ body {
     grid-template-columns: auto minmax(0, 1.7fr) minmax(0, 2fr);
     column-gap: 16px;
     row-gap: 8px;
-    padding: 14px 16px;
+    padding: 14px 24px 16px 16px; /* mais espaço na direita */
     border-radius: 16px;
     border: 1px solid rgba(15, 23, 42, 0.95);
     background:
@@ -472,14 +472,32 @@ body {
     background: rgba(15, 23, 42, 0.95);
 }
 
-/* inputs de peso, reps e observações no desktop */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+input[type="number"] {
+    -moz-appearance: textfield; /* Firefox */
+    appearance: textfield;      /* padrão */
+}
+
+/* bloco de inputs de peso, reps e observações */
 
 .exercise-input {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    column-gap: 10px;
-    row-gap: 8px;
+    grid-template-columns: repeat(2, minmax(0, 260px));
+    column-gap: 20px;
+    row-gap: 10px;
     align-items: flex-end;
+    justify-content: flex-start;
+}
+
+/* peso e reps ocupam uma coluna cada */
+
+.exercise-input > div {
+    width: 100%;
 }
 
 .exercise-input label {
@@ -489,34 +507,22 @@ body {
     color: var(--text-secondary);
 }
 
-.exercise-weight-input,
+/* inputs */
+
+.exercise-weight-input {
+    width: 40px;
+}
+
 .exercise-note-input {
-    margin-top: 4px;
-    border-radius: 12px;
-    border: 1px solid rgba(30, 64, 175, 0.6);
-    background: rgba(15, 23, 42, 0.9);
-    color: var(--text-primary);
-    padding: 8px 10px;
-    font-size: 0.85rem;
-    outline: none;
-    transition: border-color 0.14s ease, box-shadow 0.16s ease,
-    background 0.14s ease;
-}
-
-.exercise-weight-input:focus,
-.exercise-note-input:focus {
-    border-color: rgba(59, 130, 246, 0.9);
-    box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.7);
-    background: rgba(15, 23, 42, 1);
-}
-
-/* observações ocupa linha inteira no desktop */
-
-.exercise-note-wrapper {
-    grid-column: 1 / 4;
     width: 100%;
 }
 
+/* observações ocupa linha inteira abaixo */
+
+.exercise-note-wrapper {
+    grid-column: 1 / 3;
+    width: 100%;
+}
 /* linha horizontal com botões e input */
 
 .exercise-input-row {
@@ -526,14 +532,14 @@ body {
     margin-top: 4px;
 }
 
-/* botões de incremento rápido */
+/* botões de incremento rápido com cara de botão do app */
 
 .btn-adjust {
     border-radius: 999px;
     border: 1px solid rgba(148, 163, 184, 0.6);
     background: rgba(15, 23, 42, 0.9);
     color: var(--text-secondary);
-    padding: 4px 8px;
+    padding: 4px 10px;
     font-size: 0.72rem;
     cursor: pointer;
     min-width: 40px;
@@ -918,9 +924,13 @@ body {
 
     .exercise-input {
         grid-column: 1 / 3;
-        display: flex;
         flex-direction: column;
+        align-items: stretch;
         gap: 8px;
+    }
+
+    .exercise-input > div {
+        flex: 1 1 auto;
     }
 
     .exercise-note-wrapper {

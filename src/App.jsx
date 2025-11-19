@@ -7,10 +7,15 @@ import HistoryPage from './HistoryPage';
 import MethodsPage from './MethodsPage';
 import './style.css';
 
+// por enquanto, um usuário fixo
 const USER_PROFILE_ID = 'Tiago';
 
+const MOCK_USER = {
+    uid: USER_PROFILE_ID,
+    email: 'tiago@local'
+};
+
 function App() {
-    // lê o localStorage uma vez só, na criação do estado
     const [activeWorkoutId, setActiveWorkoutId] = useState(() => {
         const saved = localStorage.getItem('activeWorkoutId');
         return saved || null;
@@ -40,21 +45,18 @@ function App() {
         setCurrentView('history');
     }
 
-    // abrir métodos pelo cabeçalho
     function handleOpenMethodsFromHeader() {
         setMethodsContext({ from: 'home' });
         setInitialMethod('');
         setCurrentView('methods');
     }
 
-    // abrir métodos a partir de um exercício do treino
     function handleOpenMethodsFromWorkout(methodName) {
         setMethodsContext({ from: 'workout' });
         setInitialMethod(methodName || '');
         setCurrentView('methods');
     }
 
-    // voltar da tela de métodos
     function handleBackFromMethods() {
         if (methodsContext.from === 'workout' && activeWorkoutId) {
             setCurrentView('workout');
@@ -63,7 +65,6 @@ function App() {
         }
     }
 
-    // voltar da tela de histórico
     function handleBackFromHistory() {
         if (activeWorkoutId) {
             setCurrentView('workout');
@@ -82,52 +83,60 @@ function App() {
             />
         );
     } else if (currentView === 'history') {
-        content = <HistoryPage onBack={handleBackFromHistory} />;
+        content = (
+            <HistoryPage
+                onBack={handleBackFromHistory}
+                user={MOCK_USER}
+            />
+        );
     } else if (currentView === 'workout' && activeWorkoutId) {
         content = (
             <WorkoutSession
                 workoutId={activeWorkoutId}
                 onBack={handleBackToHome}
                 onOpenMethod={handleOpenMethodsFromWorkout}
-                userProfileId={USER_PROFILE_ID}
+                user={MOCK_USER}
             />
         );
     } else {
         content = (
             <HomePage
                 onSelectWorkout={handleSelectWorkout}
+                user={MOCK_USER}
             />
         );
     }
 
     return (
-        <div className="App">
-            <header className="App-header">
-                <h1>Vitalità</h1>
-                <p className="App-subtitle">
-                    Seu diário inteligente de treinos
-                </p>
+        <div className="app-shell">
+            <div className="app-inner">
+                <header className="app-header">
+                    <div className="app-logo-name">Vitalità</div>
+                    <p className="app-header-subtitle">
+                        Seu diário inteligente de treinos
+                    </p>
 
-                <div className="header-actions">
-                    <button
-                        type="button"
-                        className="header-secondary-button"
-                        onClick={handleOpenMethodsFromHeader}
-                    >
-                        Métodos de treino
-                    </button>
+                    <div className="header-actions">
+                        <button
+                            type="button"
+                            className="header-secondary-button"
+                            onClick={handleOpenMethodsFromHeader}
+                        >
+                            Métodos de treino
+                        </button>
 
-                    <button
-                        type="button"
-                        className="header-history-button"
-                        onClick={handleOpenHistory}
-                    >
-                        Ver históricos
-                    </button>
-                </div>
-            </header>
+                        <button
+                            type="button"
+                            className="header-history-button"
+                            onClick={handleOpenHistory}
+                        >
+                            Ver históricos
+                        </button>
+                    </div>
+                </header>
 
-            <main>{content}</main>
+                <main>{content}</main>
+            </div>
         </div>
     );
 }

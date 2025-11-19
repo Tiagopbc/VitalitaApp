@@ -26,21 +26,16 @@ function WorkoutSession({ workoutId, onBack, onOpenMethod, user }) {
     const [notes, setNotes] = useState({});
     const [saving, setSaving] = useState(false);
     const [checkedExercises, setCheckedExercises] = useState({});
-    const [progressionSuggestions, setProgressionSuggestions] =
-        useState({});
+    const [progressionSuggestions, setProgressionSuggestions] = useState({});
     const [setTypes, setSetTypes] = useState({});
     const [supersets, setSupersets] = useState({});
 
     const profileId = user.uid;
 
     const toNumber = (value) => {
-        if (typeof value === 'number') {
-            return value;
-        }
+        if (typeof value === 'number') return value;
         const n = Number(value);
-        if (Number.isNaN(n)) {
-            return 0;
-        }
+        if (Number.isNaN(n)) return 0;
         return n;
     };
 
@@ -49,11 +44,7 @@ function WorkoutSession({ workoutId, onBack, onOpenMethod, user }) {
             setLoading(true);
 
             try {
-                const templateRef = doc(
-                    db,
-                    'workout_templates',
-                    workoutId
-                );
+                const templateRef = doc(db, 'workout_templates', workoutId);
                 const templateSnap = await getDoc(templateRef);
 
                 if (!templateSnap.exists()) {
@@ -78,19 +69,14 @@ function WorkoutSession({ workoutId, onBack, onOpenMethod, user }) {
                     `${profileId}_${workoutId}`
                 );
                 const draftSnap = await getDoc(draftRef);
-                const draftData = draftSnap.exists()
-                    ? draftSnap.data()
-                    : null;
+                const draftData = draftSnap.exists() ? draftSnap.data() : null;
 
                 const draftWeights = draftData?.weights || {};
                 const draftReps = draftData?.reps || {};
                 const draftNotes = draftData?.notes || {};
-                const draftChecked =
-                    draftData?.checkedExercises || {};
-                const draftSetTypes =
-                    draftData?.setTypes || {};
-                const draftSupersets =
-                    draftData?.supersets || {};
+                const draftChecked = draftData?.checkedExercises || {};
+                const draftSetTypes = draftData?.setTypes || {};
+                const draftSupersets = draftData?.supersets || {};
 
                 const sessionsQuery = query(
                     collection(db, 'workout_sessions'),
@@ -114,27 +100,20 @@ function WorkoutSession({ workoutId, onBack, onOpenMethod, user }) {
                 }
 
                 templateData.exercises.forEach((ex) => {
-                    const lastForExercise =
-                        lastSessionResults[ex.name];
+                    const lastForExercise = lastSessionResults[ex.name];
 
                     newWeights[ex.name] =
                         draftWeights[ex.name] ??
-                        (lastForExercise
-                            ? lastForExercise.weight
-                            : '') ??
+                        (lastForExercise ? lastForExercise.weight : '') ??
                         '';
 
                     newReps[ex.name] =
                         draftReps[ex.name] ??
-                        (lastForExercise
-                            ? lastForExercise.reps
-                            : '') ??
+                        (lastForExercise ? lastForExercise.reps : '') ??
                         '';
 
-                    newNotes[ex.name] =
-                        draftNotes[ex.name] ?? '';
-                    newChecked[ex.name] =
-                        draftChecked[ex.name] ?? false;
+                    newNotes[ex.name] = draftNotes[ex.name] ?? '';
+                    newChecked[ex.name] = draftChecked[ex.name] ?? false;
 
                     newSetTypes[ex.name] =
                         draftSetTypes[ex.name] ??
@@ -160,30 +139,23 @@ function WorkoutSession({ workoutId, onBack, onOpenMethod, user }) {
                     templateData.exercises.forEach((ex) => {
                         const entries = recentSessions
                             .map((session) => {
-                                const results =
-                                    session.results || {};
+                                const results = session.results || {};
                                 const r = results[ex.name];
-                                if (!r) {
-                                    return null;
-                                }
+                                if (!r) return null;
                                 const w = toNumber(r.weight);
                                 const rep = toNumber(r.reps);
                                 const min =
                                     ex.minReps ??
-                                    (typeof r.minReps ===
-                                    'number'
+                                    (typeof r.minReps === 'number'
                                         ? r.minReps
                                         : null);
                                 const max =
                                     ex.maxReps ??
-                                    (typeof r.maxReps ===
-                                    'number'
+                                    (typeof r.maxReps === 'number'
                                         ? r.maxReps
                                         : null);
 
-                                if (!w || w <= 0) {
-                                    return null;
-                                }
+                                if (!w || w <= 0) return null;
 
                                 return {
                                     weight: w,
@@ -195,28 +167,21 @@ function WorkoutSession({ workoutId, onBack, onOpenMethod, user }) {
                             .filter(Boolean)
                             .slice(0, 3);
 
-                        if (entries.length < 2) {
-                            return;
-                        }
+                        if (entries.length < 2) return;
 
                         const last = entries[0];
                         const prev = entries[1];
 
                         const minReps =
-                            last.minReps ??
-                            prev.minReps ??
-                            null;
+                            last.minReps ?? prev.minReps ?? null;
                         const maxReps =
-                            last.maxReps ??
-                            prev.maxReps ??
-                            null;
+                            last.maxReps ?? prev.maxReps ?? null;
 
                         if (!maxReps) {
                             const lastW = last.weight;
                             const prevW = prev.weight;
                             if (lastW && prevW && lastW === prevW) {
-                                const increment =
-                                    lastW < 40 ? 2.5 : 5;
+                                const increment = lastW < 40 ? 2.5 : 5;
                                 progression[ex.name] = {
                                     direction: 'up',
                                     weight: lastW + increment
@@ -227,24 +192,17 @@ function WorkoutSession({ workoutId, onBack, onOpenMethod, user }) {
 
                         const lastWeight = last.weight;
 
-                        const recentSameWeightEntries =
-                            entries.filter(
-                                (e) => e.weight === lastWeight
-                            );
+                        const recentSameWeightEntries = entries.filter(
+                            (e) => e.weight === lastWeight
+                        );
 
                         const reachedTopCount =
                             recentSameWeightEntries.filter(
-                                (e) =>
-                                    e.reps &&
-                                    e.reps >= maxReps
+                                (e) => e.reps && e.reps >= maxReps
                             ).length;
 
-                        if (
-                            reachedTopCount >= 2 &&
-                            lastWeight > 0
-                        ) {
-                            const increment =
-                                lastWeight < 40 ? 2.5 : 5;
+                        if (reachedTopCount >= 2 && lastWeight > 0) {
+                            const increment = lastWeight < 40 ? 2.5 : 5;
                             progression[ex.name] = {
                                 direction: 'up',
                                 weight: lastWeight + increment
@@ -252,8 +210,7 @@ function WorkoutSession({ workoutId, onBack, onOpenMethod, user }) {
                             return;
                         }
 
-                        const limitForLow =
-                            minReps ?? maxReps;
+                        const limitForLow = minReps ?? maxReps;
 
                         const belowMinCount =
                             recentSameWeightEntries.filter(
@@ -262,12 +219,8 @@ function WorkoutSession({ workoutId, onBack, onOpenMethod, user }) {
                                     e.reps < limitForLow
                             ).length;
 
-                        if (
-                            belowMinCount >= 2 &&
-                            lastWeight > 0
-                        ) {
-                            const decrement =
-                                lastWeight <= 20 ? 2.5 : 5;
+                        if (belowMinCount >= 2 && lastWeight > 0) {
+                            const decrement = lastWeight <= 20 ? 2.5 : 5;
                             const newWeight = Math.max(
                                 0,
                                 lastWeight - decrement
@@ -294,27 +247,17 @@ function WorkoutSession({ workoutId, onBack, onOpenMethod, user }) {
     }, [workoutId, profileId, user.uid]);
 
     useEffect(() => {
-        if (!template) {
-            return;
-        }
+        if (!template) return;
 
         const hasAnyData =
             Object.values(weights).some((w) => w && w !== '') ||
             Object.values(reps).some((r) => r && r !== '') ||
-            Object.values(notes).some(
-                (n) => n && n.trim() !== ''
-            ) ||
+            Object.values(notes).some((n) => n && n.trim() !== '') ||
             Object.values(checkedExercises).some((c) => !!c) ||
-            Object.values(setTypes).some(
-                (t) => t && t !== 'normal'
-            ) ||
-            Object.values(supersets).some(
-                (s) => s && s !== ''
-            );
+            Object.values(setTypes).some((t) => t && t !== 'normal') ||
+            Object.values(supersets).some((s) => s && s !== '');
 
-        if (!hasAnyData) {
-            return;
-        }
+        if (!hasAnyData) return;
 
         const persistDraft = async () => {
             try {
@@ -391,10 +334,7 @@ function WorkoutSession({ workoutId, onBack, onOpenMethod, user }) {
         }));
     };
 
-    const handleApplySuggestion = (
-        exerciseName,
-        suggestedWeight
-    ) => {
+    const handleApplySuggestion = (exerciseName, suggestedWeight) => {
         setWeights((prev) => ({
             ...prev,
             [exerciseName]: String(suggestedWeight)
@@ -424,11 +364,12 @@ function WorkoutSession({ workoutId, onBack, onOpenMethod, user }) {
     const adjustWeight = (exerciseName, delta) => {
         setWeights((prev) => {
             const current = toNumber(prev[exerciseName]) || 0;
-            const next = Math.max(0, current + delta);
+            let next = current + delta;
+            if (next < 0) next = 0;
+            next = Math.round(next * 2) / 2; // trava em 0,5 em 0,5
             return {
                 ...prev,
-                [exerciseName]:
-                    next === 0 ? '' : String(next)
+                [exerciseName]: next === 0 ? '' : String(next)
             };
         });
     };
@@ -436,19 +377,17 @@ function WorkoutSession({ workoutId, onBack, onOpenMethod, user }) {
     const adjustReps = (exerciseName, delta) => {
         setReps((prev) => {
             const current = toNumber(prev[exerciseName]) || 0;
-            const next = Math.max(0, current + delta);
+            let next = current + delta;
+            if (next < 0) next = 0;
             return {
                 ...prev,
-                [exerciseName]:
-                    next === 0 ? '' : String(next)
+                [exerciseName]: next === 0 ? '' : String(next)
             };
         });
     };
 
     const handleSaveSession = async () => {
-        if (!template) {
-            return;
-        }
+        if (!template) return;
 
         setSaving(true);
 
@@ -478,11 +417,7 @@ function WorkoutSession({ workoutId, onBack, onOpenMethod, user }) {
                 results: sessionResults
             });
 
-            const userProfileRef = doc(
-                db,
-                'user_profile',
-                profileId
-            );
+            const userProfileRef = doc(db, 'user_profile', profileId);
             await setDoc(
                 userProfileRef,
                 {
@@ -516,12 +451,8 @@ function WorkoutSession({ workoutId, onBack, onOpenMethod, user }) {
     };
 
     const handleOpenMethodClick = (methodName) => {
-        if (!methodName) {
-            return;
-        }
-        if (onOpenMethod) {
-            onOpenMethod(methodName);
-        }
+        if (!methodName) return;
+        if (onOpenMethod) onOpenMethod(methodName);
     };
 
     if (loading || !template) {
@@ -553,31 +484,23 @@ function WorkoutSession({ workoutId, onBack, onOpenMethod, user }) {
 
             <div className="session-exercises">
                 {template.exercises.map((ex) => {
-                    const completed =
-                        checkedExercises[ex.name];
-                    const suggestion =
-                        progressionSuggestions[ex.name];
-                    const suggestionWeight =
-                        suggestion?.weight;
-                    const currentWeight =
-                        toNumber(weights[ex.name]) || 0;
+                    const completed = checkedExercises[ex.name];
+                    const suggestion = progressionSuggestions[ex.name];
+                    const suggestionWeight = suggestion?.weight;
+                    const currentWeight = toNumber(weights[ex.name]) || 0;
 
                     const shouldShowSuggestion =
                         suggestionWeight &&
                         suggestionWeight !== currentWeight;
 
-                    const direction =
-                        suggestion?.direction || 'up';
+                    const direction = suggestion?.direction || 'up';
 
-                    const currentSetType =
-                        setTypes[ex.name] || 'normal';
-                    const currentSuperset =
-                        supersets[ex.name] || '';
+                    const currentSetType = setTypes[ex.name] || 'normal';
+                    const currentSuperset = supersets[ex.name] || '';
 
-                    const otherExercises =
-                        template.exercises.filter(
-                            (e) => e.name !== ex.name
-                        );
+                    const otherExercises = template.exercises.filter(
+                        (e) => e.name !== ex.name
+                    );
 
                     return (
                         <div
@@ -591,16 +514,12 @@ function WorkoutSession({ workoutId, onBack, onOpenMethod, user }) {
                                 <input
                                     id={`chk-${ex.name}`}
                                     type="checkbox"
-                                    checked={
-                                        !!checkedExercises[ex.name]
-                                    }
+                                    checked={!!checkedExercises[ex.name]}
                                     onChange={() =>
                                         handleCheckToggle(ex.name)
                                     }
                                 />
-                                <label
-                                    htmlFor={`chk-${ex.name}`}
-                                />
+                                <label htmlFor={`chk-${ex.name}`} />
                             </div>
 
                             <div className="exercise-info">
@@ -612,9 +531,7 @@ function WorkoutSession({ workoutId, onBack, onOpenMethod, user }) {
                                 </span>
                                 <span className="exercise-target">
                                     Série: {ex.target}
-                                    {ex.method
-                                        ? ` (${ex.method})`
-                                        : ''}
+                                    {ex.method ? ` (${ex.method})` : ''}
                                 </span>
 
                                 {ex.method && (
@@ -622,9 +539,7 @@ function WorkoutSession({ workoutId, onBack, onOpenMethod, user }) {
                                         type="button"
                                         className="exercise-method-button"
                                         onClick={() =>
-                                            handleOpenMethodClick(
-                                                ex.method
-                                            )
+                                            handleOpenMethodClick(ex.method)
                                         }
                                     >
                                         Ver método →
@@ -633,6 +548,7 @@ function WorkoutSession({ workoutId, onBack, onOpenMethod, user }) {
                             </div>
 
                             <div className="exercise-input">
+                                {/* Peso */}
                                 <div>
                                     <label>
                                         Peso em kg
@@ -643,32 +559,18 @@ function WorkoutSession({ workoutId, onBack, onOpenMethod, user }) {
                                                 onClick={() =>
                                                     adjustWeight(
                                                         ex.name,
-                                                        -2.5
+                                                        -0.5
                                                     )
                                                 }
                                             >
-                                                −2,5
-                                            </button>
-                                            <button
-                                                type="button"
-                                                className="btn-adjust"
-                                                onClick={() =>
-                                                    adjustWeight(
-                                                        ex.name,
-                                                        -1
-                                                    )
-                                                }
-                                            >
-                                                −1
+                                                −
                                             </button>
                                             <input
                                                 className="exercise-weight-input"
                                                 type="number"
+                                                step="0.5"
                                                 inputMode="decimal"
-                                                value={
-                                                    weights[ex.name] ||
-                                                    ''
-                                                }
+                                                value={weights[ex.name] || ''}
                                                 onChange={(e) =>
                                                     handleWeightChange(
                                                         ex.name,
@@ -682,28 +584,17 @@ function WorkoutSession({ workoutId, onBack, onOpenMethod, user }) {
                                                 onClick={() =>
                                                     adjustWeight(
                                                         ex.name,
-                                                        1
+                                                        0.5
                                                     )
                                                 }
                                             >
-                                                +1
-                                            </button>
-                                            <button
-                                                type="button"
-                                                className="btn-adjust"
-                                                onClick={() =>
-                                                    adjustWeight(
-                                                        ex.name,
-                                                        2.5
-                                                    )
-                                                }
-                                            >
-                                                +2,5
+                                                +
                                             </button>
                                         </div>
                                     </label>
                                 </div>
 
+                                {/* Repetições */}
                                 <div>
                                     <label>
                                         Repetições
@@ -714,31 +605,18 @@ function WorkoutSession({ workoutId, onBack, onOpenMethod, user }) {
                                                 onClick={() =>
                                                     adjustReps(
                                                         ex.name,
-                                                        -2
-                                                    )
-                                                }
-                                            >
-                                                −2
-                                            </button>
-                                            <button
-                                                type="button"
-                                                className="btn-adjust"
-                                                onClick={() =>
-                                                    adjustReps(
-                                                        ex.name,
                                                         -1
                                                     )
                                                 }
                                             >
-                                                −1
+                                                −
                                             </button>
                                             <input
                                                 className="exercise-weight-input"
                                                 type="number"
+                                                step="1"
                                                 inputMode="numeric"
-                                                value={
-                                                    reps[ex.name] || ''
-                                                }
+                                                value={reps[ex.name] || ''}
                                                 onChange={(e) =>
                                                     handleRepsChange(
                                                         ex.name,
@@ -756,33 +634,20 @@ function WorkoutSession({ workoutId, onBack, onOpenMethod, user }) {
                                                     )
                                                 }
                                             >
-                                                +1
-                                            </button>
-                                            <button
-                                                type="button"
-                                                className="btn-adjust"
-                                                onClick={() =>
-                                                    adjustReps(
-                                                        ex.name,
-                                                        2
-                                                    )
-                                                }
-                                            >
-                                                +2
+                                                +
                                             </button>
                                         </div>
                                     </label>
                                 </div>
 
+                                {/* Observações */}
                                 <div className="exercise-note-wrapper">
                                     <label>
                                         Observações
                                         <input
                                             className="exercise-note-input"
                                             type="text"
-                                            value={
-                                                notes[ex.name] || ''
-                                            }
+                                            value={notes[ex.name] || ''}
                                             onChange={(e) =>
                                                 handleNoteChange(
                                                     ex.name,
@@ -793,14 +658,13 @@ function WorkoutSession({ workoutId, onBack, onOpenMethod, user }) {
                                     </label>
                                 </div>
 
+                                {/* Tipo de série e super série */}
                                 <div className="exercise-extra-row">
                                     <div className="exercise-set-type">
                                         <label>
                                             Tipo de série
                                             <select
-                                                value={
-                                                    currentSetType
-                                                }
+                                                value={currentSetType}
                                                 onChange={(e) =>
                                                     handleSetTypeChange(
                                                         ex.name,
@@ -824,47 +688,40 @@ function WorkoutSession({ workoutId, onBack, onOpenMethod, user }) {
                                         </label>
                                     </div>
 
-                                    {currentSetType ===
-                                        'superserie' && (
-                                            <div className="exercise-superset">
-                                                <label>
-                                                    Com qual exercício
-                                                    <select
-                                                        value={
-                                                            currentSuperset
-                                                        }
-                                                        onChange={(e) =>
-                                                            handleSupersetChange(
-                                                                ex.name,
-                                                                e.target.value
-                                                            )
-                                                        }
-                                                    >
-                                                        <option value="">
-                                                            Selecionar
-                                                        </option>
-                                                        {otherExercises.map(
-                                                            (
-                                                                other
-                                                            ) => (
-                                                                <option
-                                                                    key={
-                                                                        other.name
-                                                                    }
-                                                                    value={
-                                                                        other.name
-                                                                    }
-                                                                >
-                                                                    {
-                                                                        other.name
-                                                                    }
-                                                                </option>
-                                                            )
-                                                        )}
-                                                    </select>
-                                                </label>
-                                            </div>
-                                        )}
+                                    {currentSetType === 'superserie' && (
+                                        <div className="exercise-superset">
+                                            <label>
+                                                Com qual exercício
+                                                <select
+                                                    value={currentSuperset}
+                                                    onChange={(e) =>
+                                                        handleSupersetChange(
+                                                            ex.name,
+                                                            e.target.value
+                                                        )
+                                                    }
+                                                >
+                                                    <option value="">
+                                                        Selecionar
+                                                    </option>
+                                                    {otherExercises.map(
+                                                        (other) => (
+                                                            <option
+                                                                key={
+                                                                    other.name
+                                                                }
+                                                                value={
+                                                                    other.name
+                                                                }
+                                                            >
+                                                                {other.name}
+                                                            </option>
+                                                        )
+                                                    )}
+                                                </select>
+                                            </label>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
 
