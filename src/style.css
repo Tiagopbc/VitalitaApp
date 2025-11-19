@@ -1087,4 +1087,14 @@ input[type="number"] {
     .methods-grid {
         grid-template-columns: minmax(0, 1fr);
     }
+    /* checkbox maior no mobile */
+    .exercise-checkbox {
+        padding-top: 2px;           /* opcional, só para alinhar melhor */
+    }
+
+    .exercise-checkbox input[type="checkbox"] {
+        width: 22px;
+        height: 22px;
+        border-width: 2px;
+    }
 }
