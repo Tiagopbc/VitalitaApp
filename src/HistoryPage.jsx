@@ -1,280 +1,102 @@
 // src/HistoryPage.jsx
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { db } from './firebaseConfig';
 import {
     collection,
-    getDocs,
+    query,
+    where,
     orderBy,
-    query
+    getDocs
 } from 'firebase/firestore';
 
-function HistoryPage({ onBack, initialExercise }) {
-    const [loading, setLoading] = useState(true);
-
-    // mapa: nomeExercicio -> lista de registros
-    const [exerciseHistory, setExerciseHistory] = useState({});
-    const [exerciseList, setExerciseList] = useState([]);
-
-    // filtros
-    const [selectedExercise, setSelectedExercise] = useState('');
+function HistoryPage({ onBack, initialTemplate, initialExercise }) {
     const [templates, setTemplates] = useState([]);
-    const [selectedTemplate, setSelectedTemplate] = useState('todos');
+    const [selectedTemplate, setSelectedTemplate] = useState(initialTemplate || '');
+    const [selectedExercise, setSelectedExercise] = useState(initialExercise || '');
+    const [historyRows, setHistoryRows] = useState([]);
+    const [prRows, setPrRows] = useState([]);
+    const [loading, setLoading] = useState(false);
 
+    // se o App mudar os valores iniciais enquanto a tela estiver aberta
+    useEffect(() => {
+        if (initialTemplate) {
+            setSelectedTemplate(initialTemplate);
+        }
+        if (initialExercise) {
+            setSelectedExercise(initialExercise);
+        }
+    }, [initialTemplate, initialExercise]);
+
+    // carrega lista de templates para o seletor
+    useEffect(() => {
+        async function loadTemplates() {
+            const snap = await getDocs(collection(db, 'workout_templates'));
+            const list = snap.docs.map(d => d.data().name || d.id);
+            setTemplates(list.sort());
+        }
+        loadTemplates();
+    }, []);
+
+    // sempre que filtro mudar, recarrega histórico
     useEffect(() => {
         async function loadHistory() {
-            setLoading(true);
+            if (!selectedTemplate || !selectedExercise) {
+                setHistoryRows([]);
+                setPrRows([]);
+                return;
+            }
 
+            setLoading(true);
             try {
-                // busca sessões de treino
-                const sessionsQ = query(
-                    collection(db, 'workout_sessions'),
+                const sessionsRef = collection(db, 'workout_sessions');
+                const q = query(
+                    sessionsRef,
+                    where('templateName', '==', selectedTemplate),
                     orderBy('completedAt', 'desc')
                 );
-                const sessionsSnap = await getDocs(sessionsQ);
+                const snap = await getDocs(q);
 
-                const historyMap = {};
-                const templateNamesSet = new Set();
+                const rows = [];
+                const prsMap = {};
 
-                sessionsSnap.forEach((docSnap) => {
+                snap.forEach(docSnap => {
                     const data = docSnap.data();
                     const results = data.results || {};
-                    const templateName = data.templateName || data.templateId || 'Sem nome';
-                    const completedAt = data.completedAt?.toDate
-                        ? data.completedAt.toDate()
-                        : null;
+                    const result = results[selectedExercise];
+                    if (!result) return;
 
-                    templateNamesSet.add(templateName);
+                    const weight = result.weight || 0;
+                    const reps = result.reps || 0;
+                    const date = data.completedAt?.toDate?.() || null;
 
-                    Object.entries(results).forEach(([exerciseName, r]) => {
-                        const weight = Number(r.weight) || 0;
-                        const reps = Number(r.reps) || 0;
-                        const target = r.target || '';
-                        const note = r.note || '';
-
-                        if (!historyMap[exerciseName]) {
-                            historyMap[exerciseName] = [];
-                        }
-
-                        historyMap[exerciseName].push({
-                            date: completedAt,
-                            weight,
-                            reps,
-                            volume: weight * reps,
-                            templateName,
-                            target,
-                            note
-                        });
-                    });
-                });
-
-                // calcula PR por exercício e marca no histórico
-                Object.keys(historyMap).forEach((exerciseName) => {
-                    const list = historyMap[exerciseName];
-
-                    let bestWeight = 0;
-                    let bestReps = 0;
-
-                    list.forEach((entry) => {
-                        if (entry.weight > bestWeight) {
-                            bestWeight = entry.weight;
-                            bestReps = entry.reps;
-                        } else if (
-                            entry.weight === bestWeight &&
-                            entry.reps > bestReps
-                        ) {
-                            bestReps = entry.reps;
-                        }
+                    rows.push({
+                        id: docSnap.id,
+                        date,
+                        weight,
+                        reps,
+                        note: result.note || ''
                     });
 
-                    historyMap[exerciseName] = list
-                        .map((entry) => ({
-                            ...entry,
-                            isPr:
-                                bestWeight > 0 &&
-                                entry.weight === bestWeight &&
-                                entry.reps === bestReps
-                        }))
-                        .sort((a, b) => {
-                            const tA = a.date ? a.date.getTime() : 0;
-                            const tB = b.date ? b.date.getTime() : 0;
-                            return tB - tA;
-                        });
+                    // PR simples por carga
+                    const key = String(weight);
+                    if (!prsMap[key] || reps > prsMap[key].reps) {
+                        prsMap[key] = { weight, reps };
+                    }
                 });
 
-                const exerciseNames = Object.keys(historyMap).sort((a, b) =>
-                    a.localeCompare(b, 'pt-BR')
-                );
+                setHistoryRows(rows);
 
-                setExerciseHistory(historyMap);
-                setExerciseList(exerciseNames);
-                setTemplates(['todos', ...Array.from(templateNamesSet).sort()]);
-                setSelectedExercise(
-                    initialExercise && exerciseNames.includes(initialExercise)
-                        ? initialExercise
-                        : exerciseNames[0] || ''
-                );
-            } catch (error) {
-                console.error('Erro ao carregar histórico', error);
+                const prs = Object.values(prsMap)
+                    .sort((a, b) => a.weight - b.weight);
+                setPrRows(prs);
             } finally {
                 setLoading(false);
             }
         }
 
         loadHistory();
-    }, [initialExercise]);
-
-    const filteredEntries = useMemo(() => {
-        if (!selectedExercise || !exerciseHistory[selectedExercise]) {
-            return [];
-        }
-
-        const base = exerciseHistory[selectedExercise];
-
-        if (selectedTemplate === 'todos') {
-            return base;
-        }
-
-        return base.filter(
-            (entry) => entry.templateName === selectedTemplate
-        );
-    }, [exerciseHistory, selectedExercise, selectedTemplate]);
-
-    const formatDate = (date) => {
-        if (!date) {
-            return 'sem data';
-        }
-        return date.toLocaleDateString('pt-BR', {
-            day: '2-digit',
-            month: '2-digit',
-            year: '2-digit'
-        });
-    };
-
-    const formatWeight = (w) => {
-        if (!w) return '0 kg';
-        return `${w.toFixed(1).replace('.', ',')} kg`;
-    };
-
-    // dados do gráfico, usa só os últimos 12 registros para ficar limpo
-    const chartData = useMemo(() => {
-        if (!filteredEntries.length) return [];
-
-        const recent = [...filteredEntries]
-            .slice()
-            .reverse()
-            .slice(-12);
-
-        return recent;
-    }, [filteredEntries]);
-
-    const renderChart = () => {
-        if (!chartData.length) {
-            return (
-                <p className="history-chart-empty">
-                    Sem dados suficientes para gráfico deste exercício.
-                </p>
-            );
-        }
-
-        const width = 280;
-        const height = 140;
-        const paddingX = 24;
-        const paddingY = 20;
-
-        const maxWeight = Math.max(
-            ...chartData.map((e) => e.weight),
-            1
-        );
-
-        const usableWidth = width - paddingX * 2;
-        const usableHeight = height - paddingY * 2;
-
-        const stepX =
-            chartData.length > 1
-                ? usableWidth / (chartData.length - 1)
-                : 0;
-
-        const points = chartData.map((entry, index) => {
-            const x = paddingX + index * stepX;
-            const y =
-                paddingY +
-                usableHeight * (1 - entry.weight / maxWeight);
-            return { x, y, weight: entry.weight, reps: entry.reps };
-        });
-
-        const pathD =
-            points.length > 1
-                ? points
-                    .map((p, index) =>
-                        index === 0
-                            ? `M ${p.x} ${p.y}`
-                            : `L ${p.x} ${p.y}`
-                    )
-                    .join(' ')
-                : '';
-
-        return (
-            <svg
-                className="history-chart"
-                viewBox={`0 0 ${width} ${height}`}
-                role="img"
-                aria-label="Gráfico de evolução de carga"
-            >
-                {/* eixo base */}
-                <line
-                    x1={paddingX}
-                    y1={height - paddingY}
-                    x2={width - paddingX}
-                    y2={height - paddingY}
-                    className="history-chart-axis"
-                />
-
-                {/* linha de peso */}
-                {pathD && (
-                    <path
-                        d={pathD}
-                        className="history-chart-line"
-                    />
-                )}
-
-                {/* pontos */}
-                {points.map((p, index) => (
-                    <g key={index}>
-                        <circle
-                            cx={p.x}
-                            cy={p.y}
-                            r={3}
-                            className="history-chart-point"
-                        />
-                        <text
-                            x={p.x}
-                            y={p.y - 6}
-                            className="history-chart-label"
-                            textAnchor="middle"
-                        >
-                            {p.weight.toFixed(1).replace('.', ',')}
-                        </text>
-                    </g>
-                ))}
-            </svg>
-        );
-    };
-
-    if (loading) {
-        return (
-            <div className="history-page">
-                <button
-                    type="button"
-                    className="btn-back-primary"
-                    onClick={onBack}
-                >
-                    Voltar
-                </button>
-                <p>Carregando histórico de exercícios...</p>
-            </div>
-        );
-    }
+    }, [selectedTemplate, selectedExercise]);
 
     return (
         <div className="history-page">
@@ -286,60 +108,49 @@ function HistoryPage({ onBack, initialExercise }) {
                 Voltar
             </button>
 
-            <h2>Histórico por exercício</h2>
+            <h2>Histórico</h2>
 
             <p className="history-intro">
-                Selecione um exercício para ver a evolução de carga, repetições e recordes pessoais.
+                Veja a evolução das suas cargas e repetições para cada exercício.
             </p>
 
             <div className="history-content">
-                {/* filtros */}
                 <div className="history-filters">
-                    {/* primeiro a rotina */}
                     <div className="history-filter-group">
-                        <label htmlFor="template-select">Rotina</label>
+                        <label>Rotina</label>
                         <select
-                            id="template-select"
-                            value={selectedTemplate}
-                            onChange={(e) => setSelectedTemplate(e.target.value)}
+                            value={selectedTemplate || ''}
+                            onChange={(e) => {
+                                setSelectedTemplate(e.target.value);
+                                setSelectedExercise('');
+                            }}
                         >
-                            {templates.map((tpl) => (
-                                <option key={tpl} value={tpl}>
-                                    {tpl === 'todos' ? 'Todas' : tpl}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
-
-                    {/* depois o exercício */}
-                    <div className="history-filter-group">
-                        <label htmlFor="exercise-select">Exercício</label>
-                        <select
-                            id="exercise-select"
-                            value={selectedExercise}
-                            onChange={(e) => setSelectedExercise(e.target.value)}
-                        >
-                            {exerciseList.map((name) => (
+                            <option value="">Selecionar</option>
+                            {templates.map((name) => (
                                 <option key={name} value={name}>
                                     {name}
                                 </option>
                             ))}
                         </select>
                     </div>
-                </div>
 
-                {/* gráfico e tabela */}
-                <div className="history-chart-card">
-                    <h3>Evolução da carga</h3>
-                    {renderChart()}
+                    <div className="history-filter-group">
+                        <label>Exercício</label>
+                        {/* aqui você pode receber a lista de exercícios pelo App
+                ou por outra consulta ao Firestore, se quiser refinar */}
+                        <input
+                            type="text"
+                            value={selectedExercise || ''}
+                            onChange={(e) => setSelectedExercise(e.target.value)}
+                            placeholder="Nome exato do exercício"
+                        />
+                    </div>
                 </div>
 
                 <div className="history-card">
                     <div className="history-card-header">
-                        <h3>Sessões registradas</h3>
-                        <span>
-              {filteredEntries.length} registros
-            </span>
+                        <h3>Sessões recentes</h3>
+                        {loading && <span>Carregando…</span>}
                     </div>
 
                     <div className="history-table-wrapper">
@@ -347,39 +158,55 @@ function HistoryPage({ onBack, initialExercise }) {
                             <thead>
                             <tr>
                                 <th>Data</th>
-                                <th>Rotina</th>
-                                <th>Peso</th>
+                                <th>Carga</th>
                                 <th>Reps</th>
-                                <th>Volume</th>
-                                <th>PR</th>
+                                <th>Obs</th>
                             </tr>
                             </thead>
                             <tbody>
-                            {filteredEntries.map((entry, index) => (
-                                <tr
-                                    key={index}
-                                    className={
-                                        entry.isPr ? 'history-row-pr' : ''
-                                    }
-                                >
-                                    <td>{formatDate(entry.date)}</td>
-                                    <td>{entry.templateName}</td>
-                                    <td>{formatWeight(entry.weight)}</td>
-                                    <td>{entry.reps}</td>
-                                    <td>{entry.volume}</td>
-                                    <td>{entry.isPr ? '★' : ''}</td>
+                            {historyRows.map((row) => (
+                                <tr key={row.id}>
+                                    <td>
+                                        {row.date
+                                            ? row.date.toLocaleDateString('pt-BR')
+                                            : '—'}
+                                    </td>
+                                    <td>{row.weight}</td>
+                                    <td>{row.reps}</td>
+                                    <td>{row.note}</td>
                                 </tr>
                             ))}
-                            {filteredEntries.length === 0 && (
+
+                            {historyRows.length === 0 && !loading && (
                                 <tr>
-                                    <td colSpan={6}>
-                                        Nenhum registro encontrado para este filtro.
-                                    </td>
+                                    <td colSpan={4}>Nenhum registro para este filtro.</td>
                                 </tr>
                             )}
                             </tbody>
                         </table>
                     </div>
+
+                    {prRows.length > 0 && (
+                        <div className="history-pr-table-wrapper">
+                            <h4>Reps máximas por carga</h4>
+                            <table className="history-pr-table">
+                                <thead>
+                                <tr>
+                                    <th>Carga</th>
+                                    <th>Reps máx</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                {prRows.map((row) => (
+                                    <tr key={row.weight}>
+                                        <td>{row.weight}</td>
+                                        <td>{row.reps}</td>
+                                    </tr>
+                                ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
                 </div>
             </div>
         </div>

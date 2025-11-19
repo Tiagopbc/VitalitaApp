@@ -18,7 +18,13 @@ import {
 
 const DRAFT_COLLECTION = 'workout_session_drafts';
 
-function WorkoutSession({ workoutId, onBack, onOpenMethod, user }) {
+function WorkoutSession({
+                            workoutId,
+                            onBack,
+                            onOpenMethod,
+                            onOpenHistory,   // nova prop
+                            user
+                        }) {
     const [template, setTemplate] = useState(null);
     const [loading, setLoading] = useState(true);
 
@@ -40,7 +46,7 @@ function WorkoutSession({ workoutId, onBack, onOpenMethod, user }) {
         return n;
     };
 
-    // carregar template + últimos treinos + rascunho
+    // carregar template, últimos treinos, rascunho
     useEffect(() => {
         async function fetchWorkoutData() {
             setLoading(true);
@@ -126,7 +132,7 @@ function WorkoutSession({ workoutId, onBack, onOpenMethod, user }) {
                 });
                 setPersonalRecords(records);
 
-                // preencher valores iniciais peso / reps / notas / checkbox
+                // preencher valores iniciais
                 templateData.exercises.forEach((ex) => {
                     const lastForExercise = lastSessionResults[ex.name];
 
@@ -194,7 +200,7 @@ function WorkoutSession({ workoutId, onBack, onOpenMethod, user }) {
                         const minReps = last.minReps ?? prev.minReps ?? null;
                         const maxReps = last.maxReps ?? prev.maxReps ?? null;
 
-                        // se não tiver faixa alvo, só sugere aumento quando repete peso igual em 2 treinos
+                        // sem faixa alvo, sugere aumento quando repete peso igual em dois treinos
                         if (!maxReps) {
                             const lastW = last.weight;
                             const prevW = prev.weight;
@@ -524,17 +530,31 @@ function WorkoutSession({ workoutId, onBack, onOpenMethod, user }) {
                                     {ex.method ? ` (${ex.method})` : ''}
                 </span>
 
-                                {ex.method && (
-                                    <button
-                                        type="button"
-                                        className="exercise-method-button"
-                                        onClick={() =>
-                                            handleOpenMethodClick(ex.method)
-                                        }
-                                    >
-                                        Ver método →
-                                    </button>
-                                )}
+                                <div className="exercise-actions-row">
+                                    {ex.method && (
+                                        <button
+                                            type="button"
+                                            className="exercise-method-button"
+                                            onClick={() =>
+                                                handleOpenMethodClick(ex.method)
+                                            }
+                                        >
+                                            Ver método →
+                                        </button>
+                                    )}
+
+                                    {onOpenHistory && (
+                                        <button
+                                            type="button"
+                                            className="exercise-history-button"
+                                            onClick={() =>
+                                                onOpenHistory(template.name, ex.name)
+                                            }
+                                        >
+                                            Ver histórico
+                                        </button>
+                                    )}
+                                </div>
                             </div>
 
                             <div className="exercise-input">
