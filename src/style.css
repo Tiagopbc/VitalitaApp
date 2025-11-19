@@ -538,8 +538,9 @@ input[type="number"] {
 }
 
 .btn-adjust,
-.exercise-number-input {
-    pointer-events: auto; /* reativa cliques somente nos elementos corretos */
+.exercise-number-input,
+.exercise-note-input {
+    pointer-events: auto;
 }
 
 /* botões de incremento rápido */
