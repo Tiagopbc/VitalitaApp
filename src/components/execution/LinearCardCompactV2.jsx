@@ -1,7 +1,7 @@
 /**
  * LinearCardCompactV2.jsx
- * Compact exercise card for execution view.
- * Handles set logging, weight/rep adjustments, and visual progress tracking.
+ * Cartão de exercício compacto para visualização de execução.
+ * Lida com registro de séries, ajustes de peso/repetição e rastreamento visual de progresso.
  */
 import React, { useState, useMemo } from 'react';
 import { Minus, Plus, CheckCircle2, Info, Check, Zap } from 'lucide-react';
