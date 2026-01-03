@@ -122,6 +122,9 @@ export default function CreateWorkoutPage({ onBack, user, initialData }) {
 
         setLoading(true);
         try {
+            // DEBUG: Alert to confirm start
+            // alert(`Iniciando salvamento. User: ${user.uid}`);
+
             if (initialData?.id) {
                 // UPDATE
                 const docRef = doc(db, 'workout_templates', initialData.id);
@@ -136,13 +139,15 @@ export default function CreateWorkoutPage({ onBack, user, initialData }) {
                     name: workoutName,
                     exercises: exercises,
                     createdBy: user.uid,
-                    userId: user.uid, // Add both for safety or standarization
+                    userId: user.uid,
                     createdAt: serverTimestamp(),
                 });
             }
+            // alert('Treino salvo com sucesso!'); // Feedback visual
             onBack();
         } catch (err) {
             console.error('Erro ao salvar:', err);
+            alert(`ERRO AO SALVAR: ${err.message}\nVerifique o console para mais detalhes.`);
         } finally {
             setLoading(false);
         }
