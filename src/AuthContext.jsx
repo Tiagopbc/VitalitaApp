@@ -1,4 +1,9 @@
 // src/AuthContext.jsx
+/**
+ * AuthContext.jsx
+ * Provides a React Context for user authentication state (User object, loading state).
+ * Wraps Firebase Auth listener to manage sessions globally.
+ */
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { auth } from './firebaseConfig';
 import {
