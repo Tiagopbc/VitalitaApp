@@ -6,7 +6,7 @@
 import React, { useState, useEffect } from 'react';
 import { db } from './firebaseConfig';
 import { collection, addDoc, updateDoc, doc, serverTimestamp } from 'firebase/firestore';
-import { ArrowLeft, Trash2, Plus, GripVertical } from 'lucide-react';
+import { Trash2, Plus, ArrowLeft, GripVertical, X } from 'lucide-react';
 import { Button } from './components/design-system/Button';
 
 const muscleGroups = [
@@ -103,7 +103,9 @@ export default function CreateWorkoutPage({ onBack, user, initialData }) {
             name: exerciseToEdit.name || '',
             sets: exerciseToEdit.sets || '3',
             reps: exerciseToEdit.reps || '12',
-            method: exerciseToEdit.method || 'Convencional'
+            method: exerciseToEdit.method || 'Convencional',
+            rest: exerciseToEdit.rest || '',
+            notes: exerciseToEdit.notes || ''
         });
         setShowAddExercise(true);
     }
@@ -204,8 +206,14 @@ export default function CreateWorkoutPage({ onBack, user, initialData }) {
                                     {index + 1}. {ex.name}
                                 </div>
                                 <div className="text-[0.8rem] text-slate-400 font-medium">
-                                    {ex.sets || '?'} séries × {ex.reps || '?'} reps • {ex.method || 'Convencional'}
+                                    {ex.sets || '?'} sets × {ex.reps || '?'} reps • {ex.method || 'Convencional'}
+                                    {ex.rest && <span className="text-slate-500 ml-1">• ⏱ {ex.rest}</span>}
                                 </div>
+                                {ex.notes && (
+                                    <div className="text-[0.75rem] text-slate-500 italic mt-0.5 truncate">
+                                        Obs: {ex.notes}
+                                    </div>
+                                )}
                             </div>
                             <div className="flex-shrink-0">
                                 <Button
@@ -243,12 +251,14 @@ export default function CreateWorkoutPage({ onBack, user, initialData }) {
                                         name: '',
                                         sets: '3',
                                         reps: '12',
-                                        method: 'Convencional'
+                                        method: 'Convencional',
+                                        rest: '',
+                                        notes: ''
                                     });
                                 }}
                                 className="text-slate-400 hover:text-white transition-colors"
                             >
-                                <Trash2 className="rotate-45" size={24} /> {/* Using Trash2 rotated as close icon as X is not imported, or reuse a simple X if available? Ah, user has X in other file but maybe not here. Let's check imports. CreateWorkoutPage imports Trash2, Plus, ArrowLeft, GripVertical. I'll just use "Cancelar" button or add X icon if I import it. Let's just use the Cancel button at bottom and maybe no top X for simplicity, or re-import X. Let's stick to simple Cancel button at bottom. */}
+                                <X size={24} />
                             </button>
                         </div>
 
@@ -267,28 +277,22 @@ export default function CreateWorkoutPage({ onBack, user, initialData }) {
 
                             <label className="flex flex-col gap-2 text-xs font-bold text-slate-400 uppercase tracking-wider">
                                 Exercício
-                                <select
-                                    value={newExercise.name}
-                                    onChange={(e) => setNewExercise({ ...newExercise, name: e.target.value })}
-                                    disabled={!newExercise.muscleGroup}
-                                    className="w-full rounded-xl border border-slate-600 bg-slate-800/50 text-white px-4 py-3 text-sm outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/50 transition-all appearance-none disabled:opacity-50"
-                                >
-                                    <option value="">Selecione...</option>
-                                    {newExercise.muscleGroup && (
-                                        <>
-                                            {/* Render available exercises */}
-                                            {exercisesByMuscle[newExercise.muscleGroup]?.map(ex => (
-                                                <option key={ex} value={ex}>{ex}</option>
-                                            ))}
-                                            {/* Render legacy/custom exercise if not in list */}
-                                            {newExercise.name &&
-                                                exercisesByMuscle[newExercise.muscleGroup] &&
-                                                !exercisesByMuscle[newExercise.muscleGroup].includes(newExercise.name) && (
-                                                    <option value={newExercise.name}>{newExercise.name}</option>
-                                                )}
-                                        </>
-                                    )}
-                                </select>
+                                <div className="relative">
+                                    <input
+                                        type="text"
+                                        list="exercise-suggestions"
+                                        value={newExercise.name}
+                                        onChange={(e) => setNewExercise({ ...newExercise, name: e.target.value })}
+                                        disabled={!newExercise.muscleGroup}
+                                        placeholder={newExercise.muscleGroup ? "Selecione ou digite..." : "Selecione o grupo muscular primeiro"}
+                                        className="w-full rounded-xl border border-slate-600 bg-slate-800/50 text-white px-4 py-3 text-sm outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/50 transition-all disabled:opacity-50"
+                                    />
+                                    <datalist id="exercise-suggestions">
+                                        {newExercise.muscleGroup && exercisesByMuscle[newExercise.muscleGroup]?.map(ex => (
+                                            <option key={ex} value={ex} />
+                                        ))}
+                                    </datalist>
+                                </div>
                             </label>
 
                             <div className="grid grid-cols-2 gap-4">
@@ -312,15 +316,38 @@ export default function CreateWorkoutPage({ onBack, user, initialData }) {
                                 </label>
                             </div>
 
+                            <div className="grid grid-cols-2 gap-4">
+                                <label className="flex flex-col gap-2 text-xs font-bold text-slate-400 uppercase tracking-wider">
+                                    Método
+                                    <select
+                                        value={newExercise.method}
+                                        onChange={(e) => setNewExercise({ ...newExercise, method: e.target.value })}
+                                        className="w-full rounded-xl border border-slate-600 bg-slate-800/50 text-white px-4 py-3 text-sm outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/50 transition-all appearance-none"
+                                    >
+                                        {methods.map(m => <option key={m} value={m}>{m}</option>)}
+                                    </select>
+                                </label>
+                                <label className="flex flex-col gap-2 text-xs font-bold text-slate-400 uppercase tracking-wider">
+                                    Descanso
+                                    <input
+                                        type="text"
+                                        value={newExercise.rest}
+                                        onChange={(e) => setNewExercise({ ...newExercise, rest: e.target.value })}
+                                        placeholder="Ex: 60s"
+                                        className="w-full rounded-xl border border-slate-600 bg-slate-800/50 text-white px-4 py-3 text-sm text-center outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/50 transition-all"
+                                    />
+                                </label>
+                            </div>
+
                             <label className="flex flex-col gap-2 text-xs font-bold text-slate-400 uppercase tracking-wider">
-                                Método
-                                <select
-                                    value={newExercise.method}
-                                    onChange={(e) => setNewExercise({ ...newExercise, method: e.target.value })}
-                                    className="w-full rounded-xl border border-slate-600 bg-slate-800/50 text-white px-4 py-3 text-sm outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/50 transition-all appearance-none"
-                                >
-                                    {methods.map(m => <option key={m} value={m}>{m}</option>)}
-                                </select>
+                                Observação
+                                <textarea
+                                    value={newExercise.notes}
+                                    onChange={(e) => setNewExercise({ ...newExercise, notes: e.target.value })}
+                                    rows={2}
+                                    placeholder="Detalhes sobre a execução..."
+                                    className="w-full rounded-xl border border-slate-600 bg-slate-800/50 text-white px-4 py-3 text-sm outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/50 transition-all resize-none"
+                                />
                             </label>
 
                             <div className="grid grid-cols-2 gap-3 mt-4">
@@ -333,7 +360,9 @@ export default function CreateWorkoutPage({ onBack, user, initialData }) {
                                             name: '',
                                             sets: '3',
                                             reps: '12',
-                                            method: 'Convencional'
+                                            method: 'Convencional',
+                                            rest: '',
+                                            notes: ''
                                         });
                                     }}
                                     variant="secondary"
@@ -365,7 +394,9 @@ export default function CreateWorkoutPage({ onBack, user, initialData }) {
                             name: '',
                             sets: '3',
                             reps: '12',
-                            method: 'Convencional'
+                            method: 'Convencional',
+                            rest: '',
+                            notes: ''
                         });
                         setShowAddExercise(true);
                     }}
