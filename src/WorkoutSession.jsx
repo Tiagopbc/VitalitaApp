@@ -1,5 +1,9 @@
 // src/WorkoutSession.jsx
-
+/**
+ * WorkoutSession.jsx
+ * Interface legada de execução de treino.
+ * Gerencia o estado da sessão, inputs de peso/reps, timer e salvamento de rascunhos.
+ */
 import React, { useState, useEffect } from 'react';
 import { db } from './firebaseConfig';
 import {
@@ -19,12 +23,12 @@ import {
 const DRAFT_COLLECTION = 'workout_session_drafts';
 
 function WorkoutSession({
-                            workoutId,
-                            onBack,
-                            onOpenMethod,
-                            onOpenHistory,
-                            user
-                        }) {
+    workoutId,
+    onBack,
+    onOpenMethod,
+    onOpenHistory,
+    user
+}) {
     const [template, setTemplate] = useState(null);
     const [loading, setLoading] = useState(true);
 
@@ -536,25 +540,25 @@ function WorkoutSession({
                             </div>
 
                             <div className="exercise-info">
-                <span className="exercise-group">
-                  {ex.group}
-                </span>
+                                <span className="exercise-group">
+                                    {ex.group}
+                                </span>
 
                                 <div className="exercise-name-row">
-                  <span className="exercise-name">
-                    {ex.name}
-                  </span>
+                                    <span className="exercise-name">
+                                        {ex.name}
+                                    </span>
                                     {isPr && (
                                         <span className="pr-badge">
-                      PR
-                    </span>
+                                            PR
+                                        </span>
                                     )}
                                 </div>
 
                                 <span className="exercise-target">
-                  Série: {ex.target}
+                                    Série: {ex.target}
                                     {ex.method ? ` (${ex.method})` : ''}
-                </span>
+                                </span>
 
                                 <div className="exercise-actions-row">
                                     {ex.method && (
@@ -599,9 +603,8 @@ function WorkoutSession({
                                                 −
                                             </button>
                                             <input
-                                                className={`exercise-weight-input exercise-number-input ${
-                                                    weights[ex.name] ? 'filled' : ''
-                                                }`}
+                                                className={`exercise-weight-input exercise-number-input ${weights[ex.name] ? 'filled' : ''
+                                                    }`}
                                                 type="number"
                                                 step="0.5"
                                                 inputMode="decimal"
@@ -641,9 +644,8 @@ function WorkoutSession({
                                                 −
                                             </button>
                                             <input
-                                                className={`exercise-weight-input exercise-number-input ${
-                                                    reps[ex.name] ? 'filled' : ''
-                                                }`}
+                                                className={`exercise-weight-input exercise-number-input ${reps[ex.name] ? 'filled' : ''
+                                                    }`}
                                                 type="number"
                                                 step="1"
                                                 inputMode="numeric"
@@ -689,13 +691,13 @@ function WorkoutSession({
 
                             {shouldShowSuggestion && (
                                 <div className="exercise-suggestion">
-                  <span className="exercise-suggestion-text">
-                    Sugestão,{' '}
-                      {suggestion?.direction === 'down'
-                          ? 'reduzir para '
-                          : 'aumentar para '}
-                      <strong>{suggestionWeight} kg</strong>
-                  </span>
+                                    <span className="exercise-suggestion-text">
+                                        Sugestão,{' '}
+                                        {suggestion?.direction === 'down'
+                                            ? 'reduzir para '
+                                            : 'aumentar para '}
+                                        <strong>{suggestionWeight} kg</strong>
+                                    </span>
                                     <button
                                         type="button"
                                         className="exercise-suggestion-apply"
