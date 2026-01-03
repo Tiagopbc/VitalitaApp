@@ -1,7 +1,7 @@
 /**
  * HomeDashboardUXOptimized.jsx
- * Main dashboard view displaying user progress, streaks, and suggested next workout.
- * Fetches and aggregates user statistics and workout templates from Firestore.
+ * Visualização principal do painel exibindo progresso do usuário, sequências (streaks) e sugestão de próximo treino.
+ * Busca e agrega estatísticas do usuário e modelos de treino do Firestore.
  */
 import React, { useState, useEffect } from 'react';
 import {
