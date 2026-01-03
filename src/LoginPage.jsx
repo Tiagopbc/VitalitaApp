@@ -1,9 +1,9 @@
 // src/LoginPage.jsx
 /**
  * LoginPage.jsx
- * Authentication page component handling both Login and Sign Up flows.
- * Integrates with Firebase Auth for email/password and Google provider.
- * Validates user input for registration (password strength, birth date, physical data).
+ * Componente da página de autenticação que gerencia fluxos de Login e Cadastro.
+ * Integra com Firebase Auth para provedor de e-mail/senha e Google.
+ * Valida a entrada do usuário para registro (força da senha, data de nascimento, dados físicos).
  */
 import React, { useMemo, useState } from 'react';
 import {
