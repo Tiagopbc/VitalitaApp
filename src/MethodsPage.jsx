@@ -1,7 +1,7 @@
 /**
  * MethodsPage.jsx
- * Educational page listing various training methods (e.g., Drop-set, Bi-set).
- * Provides descriptions, execution guides, and usage tips for each method.
+ * Página educacional listando vários métodos de treinamento (ex: Drop-set, Bi-set).
+ * Fornece descrições, guias de execução e dicas de uso para cada método.
  */
 import React from 'react';
 import { ArrowLeft } from 'lucide-react';
