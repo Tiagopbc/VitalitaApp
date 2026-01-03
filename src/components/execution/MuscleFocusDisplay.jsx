@@ -1,7 +1,7 @@
 /**
  * MuscleFocusDisplay.jsx
- * Displays the primary muscle group focus for an exercise.
- * Uses color coding to indicate emphasis level (high, medium, low).
+ * Exibe o foco do grupo muscular primário para um exercício.
+ * Usa codificação de cores para indicar o nível de ênfase (alto, médio, baixo).
  */
 import React from 'react';
 import { Zap } from 'lucide-react';
