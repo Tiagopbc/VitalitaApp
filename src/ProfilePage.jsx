@@ -1,7 +1,7 @@
 /**
  * ProfilePage.jsx
- * User profile management screen.
- * Allows viewing and editing personal stats (weight, height, age) and goals.
+ * Tela de gerenciamento de perfil do usuário.
+ * Permite visualizar e editar estatísticas pessoais (peso, altura, idade) e objetivos.
  */
 import React, { useState, useEffect } from 'react';
 import { db } from './firebaseConfig';
