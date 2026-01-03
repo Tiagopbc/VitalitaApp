@@ -1,8 +1,8 @@
 // src/main.jsx
 /**
  * main.jsx
- * Entry point of the React application.
- * Initializes the root element and wraps the App component with StrictMode and AuthProvider.
+ * Ponto de entrada da aplicação React.
+ * Inicializa o elemento raiz e envolve o componente App com StrictMode e AuthProvider.
  */
 import React from 'react';
 import ReactDOM from 'react-dom/client';
