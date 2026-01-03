@@ -1,7 +1,7 @@
 /**
  * BottomNavEnhanced.jsx
- * Enhanced mobile bottom navigation bar with animated FAB (Floating Action Button).
- * Manages active tab state and visual feedback for touch interactions.
+ * Barra de navegação inferior aprimorada para mobile com FAB (Botão de Ação Flutuante) animado.
+ * Gerencia o estado da aba ativa e fornece feedback visual para interações de toque.
  */
 import React, { useState } from 'react';
 import { Home, Dumbbell, Plus, History, User } from 'lucide-react';
