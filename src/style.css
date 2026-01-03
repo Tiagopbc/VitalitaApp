@@ -1,35 +1,57 @@
+/**
+ * style.css
+ * Global stylesheet containing legacy styles, custom tokens, and component-specific
+ * styles not yet migrated to Tailwind utility classes.
+ */
 @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@500&display=swap');
 
+/* ====================== */
+/*        TOKENS          */
+/* ====================== */
+
 :root {
+    /* Backgrounds */
     --bg-body: #010409;
     --bg-surface: #050816;
     --bg-card: #0b1120;
     --bg-card-soft: #020617;
 
+    /* Accent (Azul Vitalità) */
     --accent: #3abff8;
     --accent-strong: #0ea5e9;
     --accent-deep: #1d4ed8;
     --accent-soft: #dbeafe;
     --accent-soft-alpha: rgba(59, 130, 246, 0.24);
 
+    /* Textos */
     --text-primary: #e5e7eb;
     --text-secondary: #94a3b8;
     --text-muted: #64748b;
 
+    /* Bordas */
     --border-soft: #1e293b;
     --border-strong: #38bdf8;
 
+    /* Sombras */
     --shadow-soft: 0 34px 120px rgba(15, 23, 42, 0.95);
 
+    /* Raios */
     --radius-lg: 24px;
     --radius-md: 16px;
     --radius-pill: 999px;
 
     --font-sans: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text",
-    "Segoe UI", sans-serif;
+        "Segoe UI", sans-serif;
+
+    /* Auth buttons sizing */
+    --auth-btn-min-height: 52px;
+    --auth-btn-padding-y: 12px;
+    --auth-btn-padding-x: 24px;
 }
 
-/* fundo base */
+/* ====================== */
+/*      BASE GLOBAL       */
+/* ====================== */
 
 html,
 body {
@@ -46,16 +68,18 @@ body {
     min-height: 100vh;
 }
 
-/* layout geral */
+/* ====================== */
+/*     LAYOUT GERAL       */
+/* ====================== */
 
 .app-shell {
-    min-height: 100vh;
-    padding: 32px 16px 40px;
-    background: radial-gradient(circle at top, #020617 0%, #000 55%);
-    color: var(--text-primary);
     display: flex;
     justify-content: center;
     align-items: flex-start;
+    background: radial-gradient(circle at top, #020617 0%, #000 55%);
+    min-height: 100vh;
+    padding: 24px;
+    color: var(--text-primary);
 }
 
 .app-inner {
@@ -63,7 +87,9 @@ body {
     max-width: 1120px;
 }
 
-/* header principal */
+/* ====================== */
+/*        HEADER          */
+/* ====================== */
 
 .app-header {
     text-align: center;
@@ -99,9 +125,9 @@ body {
     border-radius: var(--radius-lg);
     border: 0.75px solid rgba(15, 23, 42, 0.9);
     background:
-            radial-gradient(circle at top left, rgba(59, 130, 246, 0.25), transparent 55%),
-            radial-gradient(circle at top right, rgba(14, 165, 233, 0.2), transparent 60%),
-            linear-gradient(135deg, #020617 0%, #000 70%);
+        radial-gradient(circle at top left, rgba(59, 130, 246, 0.25), transparent 55%),
+        radial-gradient(circle at top right, rgba(14, 165, 233, 0.2), transparent 60%),
+        linear-gradient(135deg, #020617 0%, #000 70%);
     box-shadow: var(--shadow-soft);
 }
 
@@ -110,50 +136,10 @@ body {
     justify-content: center;
     gap: 12px;
 }
-.google-button {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
 
-    padding: 10px 24px;
-
-    border-radius: 999px;
-    background-color: #ffffff;
-    border: 1px solid #747775;
-
-    font-family: 'Roboto', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    font-weight: 500;
-    font-size: 14px;
-    line-height: 20px;
-    color: #1f1f1f;
-
-    cursor: pointer;
-    transition: background-color 0.15s ease, box-shadow 0.15s ease;
-}
-
-.google-button:hover:not(:disabled) {
-    background-color: #f7f8f8;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-}
-
-.google-button:disabled {
-    opacity: 0.7;
-    cursor: default;
-    box-shadow: none;
-}
-
-.google-button-icon {
-    width: 18px;
-    height: 18px;
-    flex-shrink: 0;
-}
-
-.google-button-text {
-    white-space: nowrap;
-}
-
-/* botões principais topo */
+/* ====================== */
+/*        BOTOES          */
+/* ====================== */
 
 .header-secondary-button,
 .header-history-button,
@@ -167,7 +153,7 @@ body {
     text-transform: uppercase;
     cursor: pointer;
     transition: transform 0.12s ease, box-shadow 0.15s ease, opacity 0.12s ease,
-    border-color 0.16s ease, background 0.16s ease;
+        border-color 0.16s ease, background 0.16s ease;
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -187,17 +173,26 @@ body {
 
 .header-history-button,
 .btn-save-session {
-    border-color: rgba(56, 189, 248, 0.8);
-    background:
-            radial-gradient(circle at top left, var(--accent) 0, var(--accent-strong) 42%, var(--accent-deep) 100%);
+    border-radius: var(--radius-pill);
+    border: 1px solid rgba(56, 189, 248, 0.8);
+    background: radial-gradient(circle at top left,
+            #3abff8 0%,
+            #0ea5e9 42%,
+            #1d4ed8 100%);
     color: white;
-    box-shadow: 0 18px 45px rgba(37, 99, 235, 0.85);
+    box-shadow: 0 8px 20px rgba(37, 99, 235, 0.4);
+
+    padding: 12px 24px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
 }
 
 .header-history-button:hover,
 .btn-save-session:hover {
     transform: translateY(-1px);
-    box-shadow: 0 24px 60px rgba(37, 99, 235, 0.95);
+    box-shadow: 0 12px 30px rgba(37, 99, 235, 0.5);
 }
 
 .header-history-button:active,
@@ -207,170 +202,23 @@ body {
     opacity: 0.95;
 }
 
-.login-form {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    margin: 16px 0 18px;
-}
+/* ====================== */
+/*          LOGIN         */
+/* ====================== */
 
-.login-form label {
-    display: flex;
-    flex-direction: column;
-    font-size: 0.85rem;
-    color: var(--text-secondary);
-    gap: 6px;
-}
+/* .login-card removed (migrated to Tailwind) */
 
-.login-form input {
-    border-radius: 10px;
-    border: 1px solid rgba(30, 64, 175, 0.6);
-    background: rgba(15, 23, 42, 0.95);
-    color: var(--text-primary);
-    padding: 8px 10px;
-    font-size: 0.9rem;
-    outline: none;
-}
+/* .login-form and children removed (migrated to Tailwind) */
 
-.login-form input:focus {
-    border-color: rgba(59, 130, 246, 0.95);
-    box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.7);
-}
+/* Botao Google */
 
-.login-error {
-    font-size: 0.8rem;
-    color: #fecaca;
-}
+/* Google and toggle buttons migrated to Tailwind */
 
-.login-card {
-    /* se ainda não tiver algo assim, ajuda a centralizar */
-    max-width: 420px;
-    margin: 0 auto;
-}
+/* Auth Sizing removed */
 
-.login-divider {
-    margin-top: 16px;
-    margin-bottom: 8px;
-    text-align: center;
-    font-size: 12px;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    opacity: 0.7;
-}
-
-.login-actions {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    align-items: center; /* centraliza horizontalmente os filhos */
-}
-
-.google-image-button {
-    border: none;
-    padding: 0;
-    background: transparent;
-    cursor: pointer;
-    display: flex;              /* garante centralização do svg */
-    justify-content: center;
-}
-
-.google-image-button img {
-    display: block;
-    height: 40px;
-    width: auto;
-}
-
-/* botão Google ocupando toda a largura do card */
-.google-button {
-    width: 100%;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 12px;
-
-    padding: 10px 24px;
-
-    border-radius: 999px;
-    background-color: #ffffff;
-    border: 1px solid #747775;
-
-    font-family: 'Roboto', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    font-weight: 500;
-    font-size: 14px;
-    line-height: 20px;
-    color: #1f1f1f;
-
-    cursor: pointer;
-    transition: background-color 0.15s ease, box-shadow 0.15s ease;
-}
-
-.google-button:hover:not(:disabled) {
-    background-color: #f7f8f8;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-}
-
-.google-button:disabled {
-    opacity: 0.7;
-    cursor: default;
-    box-shadow: none;
-}
-
-.google-button-icon {
-    width: 18px;
-    height: 18px;
-    flex-shrink: 0;
-}
-
-.google-button-text {
-    white-space: nowrap;
-}
-
-
-.google-image-button {
-    border: none;
-    padding: 0;
-    background: transparent;
-    cursor: pointer;
-    display: inline-block;
-}
-
-.google-image-button img {
-    display: block;
-    height: 40px; /* se quiser controlar o tamanho */
-    width: auto;
-}
-
-.google-image-button:disabled {
-    cursor: default;
-    opacity: 0.8;
-}
-
-
-/* botão de alternar modo login/cadastro preenchendo a largura, com estilo mais discreto */
-.login-toggle-button {
-    width: 100%;
-    padding: 8px 16px;
-    border-radius: 999px;
-    border: 1px solid transparent;
-    background: transparent;
-    color: #ffffff;
-    font-size: 13px;
-    cursor: pointer;
-    opacity: 0.85;
-    transition: opacity 0.15s ease, background-color 0.15s ease;
-}
-
-.login-toggle-button:hover:not(:disabled) {
-    opacity: 1;
-    background-color: rgba(255, 255, 255, 0.05);
-}
-
-.login-toggle-button:disabled {
-    opacity: 0.6;
-    cursor: default;
-}
-
-/* botão voltar, com destaque dentro do treino */
+/* ====================== */
+/*     BOTAO VOLTAR       */
+/* ====================== */
 
 .btn-back-primary {
     border-radius: var(--radius-pill);
@@ -385,19 +233,16 @@ body {
     color: var(--text-secondary);
     margin-bottom: 18px;
     transition: transform 0.12s ease, box-shadow 0.15s ease, color 0.12s ease,
-    border-color 0.12s ease, background 0.12s ease;
+        border-color 0.12s ease, background 0.12s ease;
 }
 
-/* botão Voltar destacado em treino, histórico e métodos */
 .workout-session .btn-back-primary,
 .history-page .btn-back-primary,
 .methods-page .btn-back-primary {
     border-color: rgba(56, 189, 248, 0.8);
-    background: radial-gradient(
-            circle at top left,
+    background: radial-gradient(circle at top left,
             rgba(56, 189, 248, 0.18),
-            rgba(15, 23, 42, 0.96)
-    );
+            rgba(15, 23, 42, 0.96));
     color: #e5f0ff;
 }
 
@@ -412,107 +257,7 @@ body {
 /*        HOME PAGE       */
 /* ====================== */
 
-.homepage {
-    margin-top: 12px;
-    padding: 24px;
-    border-radius: 24px;
-    border: 0.75px solid var(--border-soft);
-    background: linear-gradient(135deg, #0a0f1a, #000000);
-    box-shadow: 0 22px 50px rgba(0, 0, 0, 0.7);
-}
-
-.homepage h2 {
-    color: var(--text-primary);
-    border-bottom: 1px solid var(--border-soft);
-    padding-bottom: 6px;
-    margin: 0 0 18px 0;
-    font-size: 1.05rem;
-}
-
-.homepage hr {
-    margin: 18px 0;
-    border: none;
-    border-top: 1px solid rgba(30, 41, 59, 0.9);
-}
-
-/* próximo treino */
-
-.homepage h2 + .template-button-next {
-    margin-top: 8px;
-    margin-bottom: 24px;
-}
-
-.template-button-next {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    margin-top: 6px;
-    padding: 10px 18px;
-    border-radius: var(--radius-pill);
-    border: 1px solid rgba(56, 189, 248, 0.85);
-    background:
-            radial-gradient(circle at top left, var(--accent) 0, var(--accent-strong) 42%, var(--accent-deep) 100%);
-    color: #f9fafb;
-    font-size: 0.86rem;
-    font-weight: 600;
-    cursor: pointer;
-    box-shadow: 0 14px 36px rgba(37, 99, 235, 0.9);
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    transition: transform 0.12s ease, box-shadow 0.15s ease, opacity 0.12s ease;
-}
-
-.template-button-next:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 18px 50px rgba(37, 99, 235, 1);
-}
-
-.template-button-next:active {
-    transform: translateY(0);
-    box-shadow: 0 10px 26px rgba(15, 23, 42, 0.95);
-    opacity: 0.95;
-}
-
-.template-button-next .button-title {
-    font-weight: 600;
-}
-
-.template-button-next .button-subtitle {
-    font-weight: 400;
-    text-transform: none;
-    letter-spacing: 0.03em;
-    color: var(--accent-soft);
-}
-
-/* outros treinos */
-
-.template-list-others {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-    margin-top: 10px;
-}
-
-.template-button {
-    border-radius: 999px;
-    border: 1px solid rgba(148, 163, 184, 0.45);
-    background: rgba(15, 23, 42, 0.92);
-    color: var(--text-secondary);
-    padding: 6px 12px;
-    font-size: 0.78rem;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    transition: border-color 0.14s ease, background 0.14s ease,
-    color 0.14s ease, transform 0.1s ease;
-}
-
-.template-button:hover {
-    border-color: rgba(148, 163, 184, 0.9);
-    background: rgba(15, 23, 42, 1);
-    color: #e5e7eb;
-    transform: translateY(-1px);
-}
+/* .homepage and children removed (migrated to Tailwind) */
 
 /* ====================== */
 /*     TREINO ATUAL       */
@@ -520,21 +265,21 @@ body {
 
 .workout-session {
     background:
-            radial-gradient(circle at top, rgba(30, 64, 175, 0.6), transparent 65%),
-            linear-gradient(145deg, #020617 0%, #020617 40%, #000 100%);
+        radial-gradient(circle at top, rgba(30, 64, 175, 0.6), transparent 65%),
+        linear-gradient(145deg, #020617 0%, #020617 40%, #000 100%);
     border-radius: var(--radius-lg);
     padding: 24px;
     border: 0.75px solid rgba(15, 23, 42, 0.95);
     box-shadow: var(--shadow-soft);
 }
 
-.workout-session > h2 {
+.workout-session>h2 {
     font-size: 1.3rem;
     margin: 4px 0 18px;
     color: #f9fafb;
 }
 
-/* lista de exercícios */
+/* Lista de exercicios */
 
 .session-exercises {
     display: flex;
@@ -552,36 +297,32 @@ body {
     border-radius: 18px;
     border: 0.75px solid rgba(15, 23, 42, 0.95);
     background:
-            radial-gradient(circle at top left, rgba(30, 64, 175, 0.35), transparent 60%),
-            linear-gradient(135deg, #020617 0%, #050816 55%, #000 100%);
+        radial-gradient(circle at top left, rgba(30, 64, 175, 0.35), transparent 60%),
+        linear-gradient(135deg, #020617 0%, #050816 55%, #000 100%);
     position: relative;
 }
-
-/* card concluído */
 
 .session-exercise-item.completed {
     border-color: rgba(16, 185, 129, 0.75);
     background:
-            radial-gradient(circle at top left, rgba(16, 185, 129, 0.18), transparent 60%),
-            radial-gradient(circle at bottom right, rgba(5, 150, 105, 0.16), transparent 65%),
-            linear-gradient(135deg, rgba(10, 20, 20, 0.85), rgba(5, 15, 15, 0.70));
+        radial-gradient(circle at top left, rgba(16, 185, 129, 0.18), transparent 60%),
+        radial-gradient(circle at bottom right, rgba(5, 150, 105, 0.16), transparent 65%),
+        linear-gradient(135deg, rgba(10, 20, 20, 0.85), rgba(5, 15, 15, 0.70));
     box-shadow: 0 0 14px rgba(16, 185, 129, 0.18);
     opacity: 1;
     transition: background 0.25s ease, box-shadow 0.25s ease;
 }
 
-/* card com PR */
-
 .session-exercise-item.pr-achieved {
     border-color: rgba(250, 204, 21, 0.9);
     background:
-            radial-gradient(circle at top left, rgba(250, 204, 21, 0.22), transparent 55%),
-            radial-gradient(circle at bottom right, rgba(245, 158, 11, 0.20), transparent 60%),
-            linear-gradient(135deg, rgba(15, 23, 42, 0.96), rgba(15, 23, 42, 0.9));
+        radial-gradient(circle at top left, rgba(250, 204, 21, 0.22), transparent 55%),
+        radial-gradient(circle at bottom right, rgba(245, 158, 11, 0.20), transparent 60%),
+        linear-gradient(135deg, rgba(15, 23, 42, 0.96), rgba(15, 23, 42, 0.9));
     box-shadow: 0 0 18px rgba(250, 204, 21, 0.25);
 }
 
-/* checkbox de conclusão */
+/* Checkbox */
 
 .exercise-checkbox {
     display: flex;
@@ -599,17 +340,15 @@ body {
     cursor: pointer;
     position: relative;
     transition: border-color 0.12s ease, background 0.12s ease,
-    box-shadow 0.15s ease, transform 0.1s ease;
+        box-shadow 0.15s ease, transform 0.1s ease;
 }
 
 .exercise-checkbox input[type="checkbox"]:checked {
     border-color: rgba(34, 197, 94, 0.9);
-    background: radial-gradient(
-            circle at center,
+    background: radial-gradient(circle at center,
             rgba(34, 197, 94, 1) 0,
             rgba(22, 163, 74, 1) 45%,
-            rgba(21, 128, 61, 1) 100%
-    );
+            rgba(21, 128, 61, 1) 100%);
     box-shadow: 0 0 0 1px rgba(34, 197, 94, 0.3);
 }
 
@@ -623,11 +362,10 @@ body {
 
 .exercise-checkbox input[type="checkbox"]:checked::after {
     background:
-            url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="10" height="8" viewBox="0 0 12 9"><path fill="white" d="M4.4 8.7L.7 4.8 2.2 3.3 4.4 5.7 9.8.3 11.3 1.8z"/></svg>')
-            center center no-repeat;
+        url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="10" height="8" viewBox="0 0 12 9"><path fill="white" d="M4.4 8.7L.7 4.8 2.2 3.3 4.4 5.7 9.8.3 11.3 1.8z"/></svg>') center center no-repeat;
 }
 
-/* info textual do exercício */
+/* Texto do exercicio */
 
 .exercise-info {
     display: flex;
@@ -659,13 +397,13 @@ body {
     color: var(--text-secondary);
 }
 
-/* badge PR */
+/* Badge */
 
 .pr-badge {
     padding: 3px 10px;
     border-radius: 999px;
     background:
-            radial-gradient(circle at top, rgba(250, 204, 21, 0.9), rgba(245, 158, 11, 0.9));
+        radial-gradient(circle at top, rgba(250, 204, 21, 0.9), rgba(245, 158, 11, 0.9));
     border: 1px solid rgba(250, 204, 21, 0.9);
     font-size: 0.65rem;
     font-weight: 700;
@@ -675,7 +413,7 @@ body {
     box-shadow: 0 0 14px rgba(250, 204, 21, 0.45);
 }
 
-/* linha de botões método e histórico */
+/* Acoes */
 
 .exercise-actions-row {
     display: flex;
@@ -698,10 +436,8 @@ body {
     justify-content: center;
     gap: 4px;
     transition: border-color 0.14s ease, color 0.14s ease,
-    background 0.14s ease, transform 0.1s ease;
+        background 0.14s ease, transform 0.1s ease;
 }
-
-/* método, visual neutro */
 
 .exercise-method-button {
     background: rgba(15, 23, 42, 0.75);
@@ -715,12 +451,10 @@ body {
     background: rgba(15, 23, 42, 0.95);
 }
 
-/* histórico com gradiente suave, inspirado no botão principal */
-
 .exercise-history-button {
     background:
-            radial-gradient(circle at top left, rgba(59, 130, 246, 0.2), transparent 55%),
-            linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(15, 23, 42, 0.98));
+        radial-gradient(circle at top left, rgba(59, 130, 246, 0.2), transparent 55%),
+        linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(15, 23, 42, 0.98));
     color: var(--text-secondary);
 }
 
@@ -729,11 +463,11 @@ body {
     color: #e5e7eb;
     transform: translateY(-1px);
     background:
-            radial-gradient(circle at top left, rgba(59, 130, 246, 0.35), transparent 60%),
-            linear-gradient(135deg, rgba(15, 23, 42, 0.98), rgba(15, 23, 42, 1));
+        radial-gradient(circle at top left, rgba(59, 130, 246, 0.35), transparent 60%),
+        linear-gradient(135deg, rgba(15, 23, 42, 0.98), rgba(15, 23, 42, 1));
 }
 
-/* inputs numéricos sem setas */
+/* Inputs numericos */
 
 input[type="number"]::-webkit-outer-spin-button,
 input[type="number"]::-webkit-inner-spin-button {
@@ -746,7 +480,7 @@ input[type="number"] {
     appearance: textfield;
 }
 
-/* agrupamento de peso, reps e observações */
+/* Agrupamento de peso */
 
 .exercise-input {
     display: grid;
@@ -755,32 +489,24 @@ input[type="number"] {
     row-gap: 10px;
     align-items: flex-end;
     justify-content: flex-start;
-    pointer-events: none;   /* bloqueia clique no contêiner e no espaço vazio */
+    pointer-events: none;
 }
 
-/* cada coluna de peso e reps */
-
-.exercise-input > div {
+.exercise-input>div {
     width: 100%;
 }
-
-/* rótulos */
 
 .exercise-input label {
     display: flex;
     flex-direction: column;
-    gap: 6px;              /* aqui você aumenta o espaço entre o texto e o campo */
+    gap: 6px;
     font-size: 0.75rem;
     color: var(--text-secondary);
 }
 
-/* campo numérico */
-
 .exercise-weight-input {
     width: 52px;
 }
-
-/* base dos inputs de peso e reps */
 
 .exercise-number-input {
     height: 26px;
@@ -794,21 +520,15 @@ input[type="number"] {
     color: #020617;
 }
 
-/* impede zoom automático do iPhone */
-
 .exercise-number-input,
 .exercise-note-input {
     font-size: 16px !important;
 }
 
-/* placeholder */
-
 .exercise-number-input::placeholder {
     color: var(--text-muted);
     opacity: 0.7;
 }
-
-/* quando tiver valor, micro glow na caixa */
 
 .exercise-number-input.filled {
     font-weight: 600;
@@ -821,8 +541,6 @@ input[type="number"] {
     border-radius: 999px;
 }
 
-/* área de observações */
-
 .exercise-note-input {
     width: 100%;
     border-radius: 12px;
@@ -832,7 +550,7 @@ input[type="number"] {
     padding: 8px 10px;
     outline: none;
     transition: border-color 0.14s ease, box-shadow 0.16s ease,
-    background 0.14s ease;
+        background 0.14s ease;
 }
 
 .exercise-note-input:focus {
@@ -841,24 +559,20 @@ input[type="number"] {
     background: rgba(15, 23, 42, 1);
 }
 
-/* observações ocupa linha inteira */
-
 .exercise-note-wrapper {
     grid-column: 1 / 3;
     width: 100%;
 }
-
-/* linha horizontal com botões e input */
 
 .exercise-input-row {
     display: inline-flex;
     align-items: center;
     gap: 6px;
     margin-top: 4px;
-    padding: 4px 6px;                       /* bem pequeno */
+    padding: 4px 6px;
     border-radius: 999px;
     background: rgba(15, 23, 42, 0.9);
-    width: fit-content;                     /* abraça só os filhos */
+    width: fit-content;
 }
 
 .btn-adjust,
@@ -866,8 +580,6 @@ input[type="number"] {
 .exercise-note-input {
     pointer-events: auto;
 }
-
-/* botões de incremento */
 
 .btn-adjust {
     border-radius: 999px;
@@ -884,7 +596,7 @@ input[type="number"] {
     align-items: center;
     justify-content: center;
     transition: border-color 0.12s ease, background 0.12s ease,
-    color 0.12s ease, transform 0.1s ease;
+        color 0.12s ease, transform 0.1s ease;
 }
 
 .btn-adjust:hover {
@@ -894,7 +606,7 @@ input[type="number"] {
     transform: translateY(-1px);
 }
 
-/* sugestão de progressão */
+/* Sugestao */
 
 .exercise-suggestion {
     grid-column: 1 / 4;
@@ -903,9 +615,9 @@ input[type="number"] {
     border-radius: 14px;
     border: 0.75px solid rgba(56, 189, 248, 0.5);
     background:
-            radial-gradient(circle at top left, rgba(59, 130, 246, 0.25), transparent 60%),
-            radial-gradient(circle at bottom right, rgba(14, 165, 233, 0.16), transparent 60%),
-            linear-gradient(135deg, rgba(15, 23, 42, 0.96), rgba(15, 23, 42, 0.98));
+        radial-gradient(circle at top left, rgba(59, 130, 246, 0.25), transparent 60%),
+        radial-gradient(circle at bottom right, rgba(14, 165, 233, 0.16), transparent 60%),
+        linear-gradient(135deg, rgba(15, 23, 42, 0.96), rgba(15, 23, 42, 0.98));
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -923,7 +635,7 @@ input[type="number"] {
     border-radius: 999px;
     border: 1px solid rgba(59, 130, 246, 0.9);
     background:
-            radial-gradient(circle at top left, var(--accent) 0, var(--accent-strong) 40%, var(--accent-deep) 100%);
+        radial-gradient(circle at top left, var(--accent) 0, var(--accent-strong) 40%, var(--accent-deep) 100%);
     color: white;
     font-size: 0.68rem;
     font-weight: 600;
@@ -947,13 +659,13 @@ input[type="number"] {
 }
 
 /* ====================== */
-/*        HISTÓRICO       */
+/*        HISTORICO       */
 /* ====================== */
 
 .history-page {
     background:
-            radial-gradient(circle at top, rgba(30, 64, 175, 0.55), transparent 60%),
-            linear-gradient(160deg, #020617 0%, #000 70%);
+        radial-gradient(circle at top, rgba(30, 64, 175, 0.55), transparent 60%),
+        linear-gradient(160deg, #020617 0%, #000 70%);
     border-radius: var(--radius-lg);
     padding: 24px;
     border: 0.75px solid rgba(15, 23, 42, 0.95);
@@ -1021,14 +733,10 @@ input[type="number"] {
     color: var(--text-secondary);
 }
 
-/* gráfico simples */
-
 .history-chart {
     width: 100%;
     height: auto;
 }
-
-/* tabela */
 
 .history-card-header {
     display: flex;
@@ -1073,21 +781,17 @@ input[type="number"] {
     background: rgba(15, 23, 42, 0.55);
 }
 
-/* linha de PR na tabela */
-
 .history-row-pr {
     background:
-            radial-gradient(circle at top left, rgba(250, 204, 21, 0.22), transparent 55%),
-            radial-gradient(circle at bottom right, rgba(245, 158, 11, 0.18), transparent 60%),
-            linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(15, 23, 42, 0.90));
+        radial-gradient(circle at top left, rgba(250, 204, 21, 0.22), transparent 55%),
+        radial-gradient(circle at bottom right, rgba(245, 158, 11, 0.18), transparent 60%),
+        linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(15, 23, 42, 0.90));
 }
 
 .history-row-pr td {
     font-weight: 600;
     color: #fef3c7;
 }
-
-/* tabela de reps máx */
 
 .history-pr-table-wrapper {
     margin-top: 10px;
@@ -1117,13 +821,13 @@ input[type="number"] {
 }
 
 /* ====================== */
-/*     PÁGINA MÉTODOS     */
+/*     PAGINA METODOS     */
 /* ====================== */
 
 .methods-page {
     background:
-            radial-gradient(circle at top, rgba(30, 64, 175, 0.6), transparent 60%),
-            linear-gradient(150deg, #020617 0%, #000 70%);
+        radial-gradient(circle at top, rgba(30, 64, 175, 0.6), transparent 60%),
+        linear-gradient(150deg, #020617 0%, #000 70%);
     border-radius: var(--radius-lg);
     padding: 24px;
     border: 0.75px solid rgba(15, 23, 42, 0.95);
@@ -1155,12 +859,155 @@ input[type="number"] {
     color: var(--text-secondary);
 }
 
-/* mobile geral */
-@media (max-width: 768px) {
+/* ====================== */
+/*        CADASTRO        */
+/* ====================== */
 
-    /* espaçamento da página */
+.signup-steps {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin: 10px 0 14px;
+}
+
+.signup-step {
+    width: 44px;
+    height: 4px;
+    border-radius: 999px;
+    background: rgba(148, 163, 184, 0.22);
+}
+
+.signup-step.is-active {
+    background: rgba(56, 189, 248, 0.95);
+    box-shadow: 0 10px 20px rgba(56, 189, 248, 0.22);
+}
+
+.signup-step.is-done {
+    background: rgba(56, 189, 248, 0.55);
+}
+
+.signup-title {
+    text-align: center;
+    margin: 0 0 16px;
+    font-size: 1.45rem;
+    font-weight: 700;
+    color: rgba(226, 232, 240, 0.95);
+}
+
+.signup-grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.signup-grid-3 {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 12px;
+}
+
+@media (max-width: 520px) {
+
+    .signup-grid-2,
+    .signup-grid-3 {
+        grid-template-columns: 1fr;
+    }
+}
+
+.signup-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    margin-top: 24px;
+}
+
+.signup-actions .header-history-button {
+    border-radius: 999px;
+    letter-spacing: 0.22em;
+    font-weight: 700;
+    box-shadow: 0 22px 60px rgba(37, 99, 235, 0.26), inset 0 0 0 1px rgba(248, 250, 252, 0.12);
+}
+
+.signup-actions .header-secondary-button {
+    border-radius: 999px;
+    letter-spacing: 0.22em;
+    font-weight: 700;
+    background: rgba(2, 6, 23, 0.25);
+    border: 1px solid rgba(148, 163, 184, 0.22);
+    color: rgba(226, 232, 240, 0.70);
+    box-shadow: inset 0 0 0 1px rgba(2, 6, 23, 0.35);
+}
+
+.birth-group {
+    display: grid;
+    gap: 6px;
+}
+
+.signup-grid-3 .login-label {
+    gap: 6px;
+}
+
+#signup-gender.login-input {
+    appearance: none;
+    -webkit-appearance: none;
+}
+
+#signup-gender.login-input option {
+    background: #0b1220;
+    color: rgba(248, 250, 252, 0.92);
+}
+
+.password-rules {
+    margin: 10px 0 6px;
+    padding: 10px 12px;
+    border-radius: 14px;
+    border: 1px solid rgba(148, 163, 184, 0.18);
+    background: rgba(2, 6, 23, 0.25);
+}
+
+.password-rules-title {
+    margin: 0 0 8px;
+    font-size: 0.82rem;
+    color: rgba(226, 232, 240, 0.78);
+}
+
+.password-rules-list {
+    margin: 0;
+    padding-left: 18px;
+    display: grid;
+    gap: 6px;
+    font-size: 0.82rem;
+}
+
+.password-rules-list li {
+    color: rgba(148, 163, 184, 0.75);
+}
+
+.password-rules-list li.is-ok {
+    color: rgba(34, 197, 94, 0.92);
+}
+
+.password-rules-list li.is-pending {
+    color: rgba(148, 163, 184, 0.72);
+}
+
+/* ====================== */
+/*        MOBILE          */
+/* ====================== */
+
+@media (max-width: 768px) {
+    :root {
+        --auth-btn-min-height: 48px;
+        --auth-btn-padding-y: 12px;
+        --auth-btn-padding-x: 16px;
+    }
+
     .app-shell {
         padding: 20px 12px 28px;
+    }
+
+    .app-inner {
+        transform: translateY(clamp(-24px, -3vh, -8px));
     }
 
     .app-header-card {
@@ -1168,14 +1015,12 @@ input[type="number"] {
         padding: 14px 18px;
     }
 
-    /* card da home mais solto nas laterais */
     .homepage {
         padding: 18px 16px 20px;
         border-radius: 20px;
         margin: 18px 14px 0;
     }
 
-    /* botão do próximo treino um pouco menor */
     .template-button-next {
         width: 100%;
         justify-content: center;
@@ -1183,7 +1028,6 @@ input[type="number"] {
         font-size: 0.8rem;
     }
 
-    /* outros treinos em uma coluna, um embaixo do outro */
     .template-list-others {
         grid-template-columns: 1fr;
         gap: 10px;
@@ -1197,14 +1041,12 @@ input[type="number"] {
         font-size: 0.8rem;
     }
 
-    /* cartões principais */
     .workout-session,
     .history-page,
     .methods-page {
         padding: 18px 14px 20px;
     }
 
-    /* card do exercício */
     .session-exercise-item {
         grid-template-columns: auto minmax(0, 1fr);
         grid-template-rows: auto auto auto auto;
@@ -1215,13 +1057,11 @@ input[type="number"] {
         overflow: hidden;
     }
 
-    /* checkbox maior no mobile */
     .exercise-checkbox input[type="checkbox"] {
         width: 20px;
         height: 20px;
     }
 
-    /* bloco de peso + reps + observações */
     .exercise-input {
         grid-column: 1 / 3;
         grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1232,7 +1072,7 @@ input[type="number"] {
         background: rgba(15, 23, 42, 0.85);
     }
 
-    .exercise-input > div {
+    .exercise-input>div {
         width: 100%;
     }
 
@@ -1241,12 +1081,11 @@ input[type="number"] {
         margin-bottom: 2px;
     }
 
-    /* caixa de observações */
     .exercise-note-wrapper {
         grid-column: 1 / 3;
         width: 100%;
-        padding-left: 2px;    /* inicio alinhado com peso */
-        padding-right: 2px;  /* mais folga do lado direito */
+        padding-left: 2px;
+        padding-right: 2px;
         margin-top: 4px;
     }
 
@@ -1261,7 +1100,6 @@ input[type="number"] {
         border-radius: 10px;
     }
 
-    /* sugestão de progressão mais compacta */
     .exercise-suggestion {
         grid-column: 1 / 3;
         flex-direction: column;
@@ -1270,7 +1108,6 @@ input[type="number"] {
         gap: 6px;
     }
 
-    /* ações do cabeçalho */
     .header-actions {
         flex-direction: column;
         gap: 8px;
@@ -1283,13 +1120,196 @@ input[type="number"] {
         justify-content: center;
     }
 
-    /* histórico em uma coluna só */
     .history-content {
         grid-template-columns: minmax(0, 1fr);
     }
 
-    /* cards de métodos empilhados */
     .methods-grid {
         grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+.field-error {
+    margin: 8px 0 0;
+    font-size: 0.78rem;
+    color: #fecaca;
+}
+
+.modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.62);
+    backdrop-filter: blur(6px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 18px;
+    z-index: 9999;
+}
+
+.modal-card {
+    width: 92vw;
+    max-width: 520px;
+    border-radius: var(--radius-lg);
+    border: 0.75px solid rgba(15, 23, 42, 0.9);
+    background:
+        radial-gradient(circle at top left, rgba(59, 130, 246, 0.22), transparent 55%),
+        radial-gradient(circle at top right, rgba(14, 165, 233, 0.16), transparent 60%),
+        linear-gradient(135deg, #020617 0%, #000 70%);
+    box-shadow: var(--shadow-soft);
+    padding: 18px 18px 16px;
+}
+
+.modal-title {
+    margin: 0 0 10px;
+    font-size: 1.25rem;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+    color: rgba(248, 250, 252, 0.96);
+    text-align: center;
+}
+
+.modal-message {
+    margin: 0 0 10px;
+    font-size: 0.95rem;
+    color: rgba(226, 232, 240, 0.88);
+    text-align: center;
+    line-height: 1.45;
+}
+
+.modal-meta {
+    margin: 0 0 14px;
+    color: rgba(148, 163, 184, 0.9);
+    font-size: 0.85rem;
+    text-align: center;
+}
+
+.modal-meta p {
+    margin: 6px 0 0;
+}
+
+.modal-actions {
+    display: grid;
+    gap: 10px;
+}
+
+.modal-countdown {
+    margin: 0;
+    text-align: center;
+    font-size: 0.85rem;
+    color: rgba(148, 163, 184, 0.95);
+}
+
+.modal-countdown-cancel {
+    background: transparent;
+    border: none;
+    padding: 0;
+    color: rgba(226, 232, 240, 0.92);
+    cursor: pointer;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-decoration: underline;
+}
+
+
+/* ====================== */
+/*      WELCOME MODAL     */
+/* ====================== */
+
+.welcome-modal-overlay,
+.welcome-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px 16px;
+    background: rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(8px);
+}
+
+.welcome-modal-card,
+.welcome-modal {
+    width: 100%;
+    max-width: 420px;
+    box-sizing: border-box;
+    border-radius: var(--radius-lg);
+    padding: 18px 22px 20px;
+    border: 0.75px solid rgba(15, 23, 42, 0.9);
+    background:
+        radial-gradient(circle at top left, rgba(59, 130, 246, 0.20), transparent 55%),
+        radial-gradient(circle at top right, rgba(14, 165, 233, 0.16), transparent 60%),
+        linear-gradient(135deg, #020617 0%, #000 70%);
+    box-shadow: var(--shadow-soft);
+    text-align: left;
+}
+
+.welcome-modal-title,
+.welcome-title {
+    margin: 0 0 10px;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: rgba(226, 232, 240, 0.95);
+}
+
+.welcome-modal-message,
+.welcome-message,
+.welcome-text {
+    margin: 0 0 10px;
+    font-size: 0.9rem;
+    color: rgba(226, 232, 240, 0.86);
+    line-height: 1.35;
+}
+
+.welcome-modal-notes,
+.welcome-small {
+    margin: 0 0 14px;
+    display: grid;
+    gap: 6px;
+}
+
+.welcome-modal-notes p,
+.welcome-small p {
+    margin: 0;
+    font-size: 0.82rem;
+    color: rgba(148, 163, 184, 0.85);
+}
+
+.welcome-modal-countdown,
+.welcome-countdown {
+    margin-top: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    font-size: 0.82rem;
+    color: rgba(148, 163, 184, 0.9);
+}
+
+.welcome-modal-cancel,
+.welcome-cancel {
+    border: none;
+    background: transparent;
+    padding: 6px 8px;
+    border-radius: 999px;
+    cursor: pointer;
+    color: rgba(226, 232, 240, 0.82);
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.welcome-modal-cancel:hover {
+    background: rgba(255, 255, 255, 0.06);
+}
+
+@media (max-width: 768px) {
+    .welcome-modal-overlay {
+        padding: 18px 12px;
+    }
+
+    .welcome-modal-card {
+        padding: 16px 18px 18px;
     }
 }
