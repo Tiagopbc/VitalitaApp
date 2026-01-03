@@ -1,0 +1,58 @@
+export default {
+    content: [
+        "./index.html",
+        "./src/**/*.{js,ts,jsx,tsx}",
+    ],
+    theme: {
+        extend: {
+            colors: {
+                bg: {
+                    body: '#010409',
+                    surface: '#050816',
+                    card: '#0b1120',
+                    'card-soft': '#020617',
+                },
+                accent: {
+                    DEFAULT: '#3abff8',
+                    strong: '#0ea5e9',
+                    deep: '#1d4ed8',
+                    soft: '#dbeafe',
+                    'soft-alpha': 'rgba(59, 130, 246, 0.24)',
+                },
+                text: {
+                    primary: '#e5e7eb',
+                    secondary: '#94a3b8',
+                    muted: '#64748b',
+                },
+                border: {
+                    soft: '#1e293b',
+                    strong: '#38bdf8',
+                },
+            },
+            boxShadow: {
+                soft: '0 34px 120px rgba(15, 23, 42, 0.95)',
+                'glow-btn': '0 8px 20px rgba(37, 99, 235, 0.4)',
+                'glow-btn-hover': '0 12px 30px rgba(37, 99, 235, 0.5)',
+                'glow-btn-active': '0 10px 26px rgba(15, 23, 42, 0.95)',
+                'glow-input-focus': '0 0 0 1px rgba(37, 99, 235, 0.7)',
+                'google-hover': '0 1px 2px rgba(0, 0, 0, 0.1)',
+            },
+            borderRadius: {
+                lg: '24px',
+                md: '16px',
+                pill: '999px',
+            },
+            backgroundImage: {
+                'card-gradient': 'linear-gradient(180deg, rgba(30, 58, 138, 0.2) 0%, rgba(2, 6, 23, 1) 40%)',
+                'btn-primary-gradient': 'linear-gradient(90deg, #22d3ee 0%, #2563eb 100%)',
+                'btn-radial': 'radial-gradient(circle at top left, #3abff8 0%, #0ea5e9 42%, #1d4ed8 100%)',
+                'app-bg': '#020617',
+                'login-card-bg': 'radial-gradient(circle at top left, rgba(59, 130, 246, 0.25), transparent 55%), radial-gradient(circle at top right, rgba(14, 165, 233, 0.2), transparent 60%), linear-gradient(135deg, #020617 0%, #000 70%)',
+                'challenge-card-bg': 'radial-gradient(circle at top right, rgba(139, 92, 246, 0.15), transparent 70%), linear-gradient(135deg, #0b1120, #000)',
+                'action-card-bg': 'radial-gradient(circle at top right, rgba(59, 130, 246, 0.08), transparent 70%), linear-gradient(135deg, #0b1120, #000)',
+                'page-gradient': 'radial-gradient(circle at top, #020617 0%, #000 55%)',
+            },
+        },
+    },
+    plugins: [],
+}
