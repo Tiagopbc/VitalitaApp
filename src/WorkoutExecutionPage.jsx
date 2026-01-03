@@ -761,7 +761,7 @@ export function WorkoutExecutionPage({ workoutId, onFinish, user }) {
                                     exerciseName={ex.name}
                                     muscleGroup={ex.muscleFocus?.primary || ex.group || 'Geral'}
                                     method={ex.method || "Convencional"}
-                                    repsGoal={ex.reps || "12"}
+                                    repsGoal={ex.reps || (ex.target ? ex.target.replace(/^\d+\s*x\s*/i, '').trim() : "12")}
                                     currentSet={safeIdx + 1}
                                     totalSets={ex.sets.length}
                                     completedSets={ex.sets.map(s => s.completed)}
@@ -794,7 +794,7 @@ export function WorkoutExecutionPage({ workoutId, onFinish, user }) {
                                     exerciseName={ex.name}
                                     muscleGroup={ex.muscleFocus?.primary || ex.group || 'Geral'}
                                     method={ex.method || "Convencional"}
-                                    repsGoal={ex.reps || "12"}
+                                    repsGoal={ex.reps || (ex.target ? ex.target.replace(/^\d+\s*x\s*/i, '').trim() : "12")}
                                     currentSet={safeIdx + 1}
                                     totalSets={ex.sets.length}
                                     completedSets={ex.sets.map(s => s.completed)}
