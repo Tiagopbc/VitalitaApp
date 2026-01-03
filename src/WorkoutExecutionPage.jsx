@@ -769,7 +769,7 @@ export function WorkoutExecutionPage({ workoutId, onFinish, user }) {
                                     actualReps={activeSet.reps}
                                     observation={ex.notes}
                                     suggestedWeight={activeSet.targetWeight || activeSet.weight}
-                                    suggestedReps={activeSet.targetReps || ex.reps}
+                                    suggestedReps={activeSet.targetReps || ex.reps || (ex.target ? ex.target.replace(/^\d+\s*x\s*/i, '').trim() : "12")}
                                     onWeightChange={(val) => handleUpdateSet(ex.id, activeSet.id, 'weight', val)}
                                     onRepsChange={(val) => handleUpdateSet(ex.id, activeSet.id, 'reps', val)}
                                     onObservationChange={(val) => handleUpdateNotes(ex.id, val)}
@@ -802,7 +802,7 @@ export function WorkoutExecutionPage({ workoutId, onFinish, user }) {
                                     actualReps={activeSet.reps}
                                     observation={ex.notes}
                                     suggestedWeight={activeSet.targetWeight || activeSet.weight}
-                                    suggestedReps={activeSet.targetReps || ex.reps}
+                                    suggestedReps={activeSet.targetReps || ex.reps || (ex.target ? ex.target.replace(/^\d+\s*x\s*/i, '').trim() : "12")}
                                     onWeightChange={(val) => handleUpdateSet(ex.id, activeSet.id, 'weight', val)}
                                     onRepsChange={(val) => handleUpdateSet(ex.id, activeSet.id, 'reps', val)}
                                     onObservationChange={(val) => handleUpdateNotes(ex.id, val)}
