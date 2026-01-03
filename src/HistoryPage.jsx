@@ -1,7 +1,7 @@
 /**
  * HistoryPage.jsx
- * Displays user's workout history and analytics.
- * Features a 'Journal' view for past sessions and 'Analytics' for progress tracking.
+ * Exibe o histórico de treinos e análises do usuário.
+ * Apresenta uma visualização de 'Diário' para sessões passadas e 'Análises' para rastreamento de progresso.
  */
 import React, { useState, useEffect, useRef } from 'react';
 import { db } from './firebaseConfig';
