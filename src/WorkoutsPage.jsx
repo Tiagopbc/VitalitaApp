@@ -1,7 +1,7 @@
 /**
  * WorkoutsPage.jsx
- * Displays a grid of workout templates available to the user.
- * Supports searching, filtering (by push/pull/legs/etc), and sorting templates.
+ * Exibe uma grade de modelos de treino disponíveis para o usuário.
+ * Suporta pesquisa, filtragem (por empurrar/puxar/pernas/etc) e classificação de modelos.
  */
 import React, { useState, useRef, useEffect } from 'react';
 import { db } from './firebaseConfig';
