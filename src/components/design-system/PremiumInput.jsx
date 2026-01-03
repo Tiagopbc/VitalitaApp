@@ -1,7 +1,7 @@
 /**
  * PremiumInput.jsx
- * Styled input field with floating label and animated bottom border.
- * Provides visual feedback on focus and value presence.
+ * Campo de entrada estilizado com rótulo flutuante e borda inferior animada.
+ * Fornece feedback visual no foco e presença de valor.
  */
 import React, { useState } from 'react';
 
