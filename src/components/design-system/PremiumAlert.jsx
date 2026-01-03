@@ -1,7 +1,7 @@
 /**
  * PremiumAlert.jsx
- * Custom alert modal component replacing native alerts.
- * Supports different types (danger, warning, info) with varied styling.
+ * Componente modal de alerta personalizado substituindo alertas nativos.
+ * Suporta diferentes tipos (danger, warning, info) com estilos variados.
  */
 import React from 'react';
 import { X, AlertTriangle } from 'lucide-react';
