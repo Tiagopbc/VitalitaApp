@@ -1,7 +1,7 @@
 /**
  * CreateWorkoutPage.jsx
- * Interface for creating and editing workout templates.
- * Allows users to add exercises, define sets/reps/methods, and save to Firestore.
+ * Interface para criar e editar modelos de treino.
+ * Permite aos usuários adicionar exercícios, definir séries/repetições/métodos e salvar no Firestore.
  */
 import React, { useState, useEffect } from 'react';
 import { db } from './firebaseConfig';
