@@ -1,4 +1,9 @@
 // src/HomePage.jsx
+/**
+ * HomePage.jsx
+ * Página inicial legada.
+ * Exibe lista de templates de treino e sugestão do próximo treino na sequência.
+ */
 import React, { useState, useEffect } from 'react';
 import { db } from './firebaseConfig';
 import {
