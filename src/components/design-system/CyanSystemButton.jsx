@@ -1,7 +1,7 @@
 /**
  * CyanSystemButton.jsx
- * Standalone holographic premium button with animated gradient.
- * Used for primary call-to-actions like "Finish Workout".
+ * Botão premium holográfico independente com gradiente animado.
+ * Usado para chamadas de ação primárias como "Finalizar Treino".
  */
 
 import React, { useState } from 'react';
