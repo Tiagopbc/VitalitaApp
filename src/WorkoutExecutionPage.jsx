@@ -339,12 +339,48 @@ export function WorkoutExecutionPage({ workoutId, onFinish, user }) {
     const navigate = (path) => { if (path === -1 && onFinish) onFinish(); };
     const profileId = user?.uid;
 
+    // --- PERSISTENCE: LOCAL STORAGE KEY ---
+    const backupKey = `workout_backup_${profileId}_${workoutId}`;
+
+    // --- PERSISTENCE: RESTORE BACKUP OR FETCH DATA ---
     useEffect(() => {
         if (!workoutId || !profileId) return;
 
         async function fetchData() {
             setLoading(true);
             try {
+                // 1. Try to restore from LocalStorage first
+                const savedBackup = localStorage.getItem(backupKey);
+                let restoredFromBackup = false;
+
+                if (savedBackup) {
+                    try {
+                        const parsedBackup = JSON.parse(savedBackup);
+                        // Check if backup is valid and recent (optional: add expiration logic here)
+                        // For now, we trust the user wants to resume if it exists
+                        if (parsedBackup.exercises && Array.isArray(parsedBackup.exercises)) {
+                            console.log('Restoring from LocalStorage backup');
+                            setExercises(parsedBackup.exercises);
+                            setElapsedSeconds(parsedBackup.elapsedSeconds || 0);
+
+                            // Load template just for metadata (name, etc) without overwriting exercises
+                            const templateDoc = await getDoc(doc(db, 'workout_templates', workoutId));
+                            if (templateDoc.exists()) {
+                                setTemplate({ id: templateDoc.id, ...templateDoc.data() });
+                            }
+
+                            restoredFromBackup = true;
+                        }
+                    } catch (e) {
+                        console.error('Failed to parse backup', e);
+                        localStorage.removeItem(backupKey);
+                    }
+                }
+
+                if (restoredFromBackup) return;
+
+
+                // 2. Normal Load (Firestore)
                 const templateDoc = await getDoc(doc(db, 'workout_templates', workoutId));
                 if (templateDoc.exists()) {
                     const tmplData = templateDoc.data();
@@ -537,6 +573,18 @@ export function WorkoutExecutionPage({ workoutId, onFinish, user }) {
         fetchData();
     }, [workoutId, profileId]);
 
+    // --- PERSISTENCE: AUTO-SAVE EFFECT ---
+    useEffect(() => {
+        if (!loading && exercises.length > 0) {
+            const backupData = {
+                timestamp: Date.now(),
+                elapsedSeconds,
+                exercises
+            };
+            localStorage.setItem(backupKey, JSON.stringify(backupData));
+        }
+    }, [exercises, elapsedSeconds, loading, backupKey]);
+
     // Timer Logic
     useEffect(() => {
         let interval;
@@ -630,6 +678,9 @@ export function WorkoutExecutionPage({ workoutId, onFinish, user }) {
                     notes: ex.notes
                 }))
             });
+            // --- PERSISTENCE: CLEAR BACKUP ON SUCCESS ---
+            localStorage.removeItem(backupKey);
+
             if (onFinish) onFinish();
         } catch (e) {
             console.error(e);

@@ -23,11 +23,13 @@ function detectRepsType(repsGoal) {
     if (cleaned.includes('FALHA') || cleaned.includes('FAILURE') || cleaned.includes('MAX')) {
         return 'FAILURE';
     }
-    // Check for Pyramid (slash, comma, or plus separated multiple values)
-    if (cleaned.includes('/') || (cleaned.includes(',') && cleaned.split(',').length > 1) || (cleaned.includes('+') && cleaned.split('+').length > 1)) {
+    // Check for Pyramid (slash or comma separated multiple values). 
+    // REMOVED '+' to allow "8+8+8" to be shown as full text (Cluster/Drop)
+    if (cleaned.includes('/') || (cleaned.includes(',') && cleaned.split(',').length > 1)) {
         return 'PYRAMID';
     }
-    if (cleaned.includes('-') && /^\d+-\d+/.test(cleaned)) {
+    // Cluster: now explicitly checks for '-' range OR '+' notation
+    if ((cleaned.includes('-') && /^\d+-\d+/.test(cleaned)) || cleaned.includes('+')) {
         return 'CLUSTER';
     }
     if (cleaned.includes(' A ') || cleaned.includes('À') || /^\d+-\d+$/.test(cleaned.replace(' ', ''))) {
@@ -60,8 +62,8 @@ function getCurrentSetGoal(repsGoal, setNumber, repsType) {
             return repsGoal;
         }
         case 'PYRAMID': {
-            // Split by slash, comma, or plus
-            const values = repsGoal.split(/[\/,\+]/).map(v => v.trim());
+            // Split by slash or comma
+            const values = repsGoal.split(/[\/,]/).map(v => v.trim());
             return values[setNumber - 1] || values[0] || '';
         }
         case 'CLUSTER':
