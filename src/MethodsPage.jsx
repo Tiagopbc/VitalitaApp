@@ -21,7 +21,7 @@ const iconMap = {
 
 export default function MethodsPage({ onBack }) {
     return (
-        <div className="w-full max-w-[1400px] mx-auto px-4 pt-8 pb-32">
+        <div className="w-full max-w-5xl mx-auto px-4 pt-8 pb-32">
             {/* Header */}
             <div className="mb-8">
                 <Button

@@ -168,7 +168,7 @@ export default function CreateWorkoutPage({ onBack, user, initialData }) {
     }
 
     return (
-        <div className="w-full max-w-[1120px] mx-auto px-4 py-6 pb-32">
+        <div className="w-full max-w-5xl mx-auto px-4 py-6 pb-32">
             {/* Header */}
             <div className="mb-6">
                 <Button

@@ -26,14 +26,15 @@ import { db } from './firebaseConfig';
 
 // ... imports ...
 // Mock data for streak (keep for now until history is integrated)
+// Mock data for streak (keep for now until history is integrated)
 const weekDays = [
-    { day: 'Seg', trained: true, workout: 'Upper Push', time: '18:30', isRest: false },
-    { day: 'Ter', trained: true, workout: 'Pernas', time: '19:00', isRest: false },
-    { day: 'Qua', trained: false, workout: null, time: null, isRest: true },
-    { day: 'Qui', trained: true, workout: 'Upper Pull', time: '18:15', isRest: false },
-    { day: 'Sex', trained: false, workout: null, time: null, isRest: true },
-    { day: 'Sáb', trained: false, workout: null, time: null, isRest: true },
-    { day: 'Dom', trained: false, workout: null, time: null, isRest: true }
+    { day: 'Seg', dateNumber: new Date().getDate() - new Date().getDay() + 1, trained: true, workout: 'Upper Push', time: '18:30', isRest: false },
+    { day: 'Ter', dateNumber: new Date().getDate() - new Date().getDay() + 2, trained: true, workout: 'Pernas', time: '19:00', isRest: false },
+    { day: 'Qua', dateNumber: new Date().getDate() - new Date().getDay() + 3, trained: false, workout: null, time: null, isRest: true },
+    { day: 'Qui', dateNumber: new Date().getDate() - new Date().getDay() + 4, trained: true, workout: 'Upper Pull', time: '18:15', isRest: false },
+    { day: 'Sex', dateNumber: new Date().getDate() - new Date().getDay() + 5, trained: false, workout: null, time: null, isRest: true },
+    { day: 'Sáb', dateNumber: new Date().getDate() - new Date().getDay() + 6, trained: false, workout: null, time: null, isRest: true },
+    { day: 'Dom', dateNumber: new Date().getDate() - new Date().getDay() + 7, trained: false, workout: null, time: null, isRest: true }
 ];
 
 export function HomeDashboardUXOptimized({
@@ -144,12 +145,67 @@ export function HomeDashboardUXOptimized({
             return {
                 day: daysMap[dayOfWeek],
                 label: daysMap[dayOfWeek],
+                dateNumber: dayDate.getDate(), // Added date number for display
                 trained: trained,
                 workout: lastSession ? lastSession.workoutName : null,
                 time: lastSession ? formatTime(lastSession.date) : null,
                 isRest: !trained && dayDate < now && dayDate.getDay() !== 0,
             };
         });
+
+        // Month Stats Calculation
+        const year = now.getFullYear();
+        const month = now.getMonth();
+        const firstDayOfMonth = new Date(year, month, 1);
+        const lastDayOfMonth = new Date(year, month + 1, 0); // Last day of current month
+        const totalDaysInMonth = lastDayOfMonth.getDate();
+
+        // Determine padding for start of month (assuming Monday start like Week view)
+        // JS getDay(): 0=Sun, 1=Mon...6=Sat.
+        // We want 0=Mon...6=Sun.
+        const startDayJS = firstDayOfMonth.getDay();
+        const paddingDays = startDayJS === 0 ? 6 : startDayJS - 1;
+
+        const monthDaysData = [];
+
+        // Add previous month days (padding)
+        for (let i = paddingDays; i > 0; i--) {
+            const currentDayDate = new Date(year, month, 1 - i);
+            const daySessions = sessions.filter(s => isSameDay(s.date, currentDayDate));
+            const trained = daySessions.length > 0;
+            const lastSession = trained ? daySessions[0] : null;
+
+            monthDaysData.push({
+                day: daysMap[currentDayDate.getDay()],
+                label: daysMap[currentDayDate.getDay()],
+                dateNumber: currentDayDate.getDate(),
+                fullDate: currentDayDate,
+                trained: trained,
+                workout: lastSession ? lastSession.workoutName : null,
+                time: lastSession ? formatTime(lastSession.date) : null,
+                isRest: !trained && currentDayDate < now && currentDayDate.getDay() !== 0,
+                isOutsideMonth: true
+            });
+        }
+
+        // Add actual days
+        for (let day = 1; day <= totalDaysInMonth; day++) {
+            const currentDayDate = new Date(year, month, day);
+            const daySessions = sessions.filter(s => isSameDay(s.date, currentDayDate));
+            const trained = daySessions.length > 0;
+            const lastSession = trained ? daySessions[0] : null;
+
+            monthDaysData.push({
+                day: daysMap[currentDayDate.getDay()],
+                label: daysMap[currentDayDate.getDay()],
+                dateNumber: day,
+                fullDate: currentDayDate,
+                trained: trained,
+                workout: lastSession ? lastSession.workoutName : null,
+                time: lastSession ? formatTime(lastSession.date) : null,
+                isRest: !trained && currentDayDate < now && currentDayDate.getDay() !== 0,
+            });
+        }
 
         const weeksWithTraining = new Set();
         sessions.forEach(s => {
@@ -178,7 +234,8 @@ export function HomeDashboardUXOptimized({
             bestStreak,
             completedThisWeek: thisWeekSessions.length,
             weeklyGoal: currentWeeklyGoal || 4,
-            weekDays: weekDaysData
+            weekDays: weekDaysData,
+            monthDays: monthDaysData // Added month data
         });
     }
 
@@ -246,6 +303,7 @@ export function HomeDashboardUXOptimized({
                             weeklyGoal={stats.weeklyGoal}
                             completedThisWeek={stats.completedThisWeek}
                             weekDays={stats.weekDays.length > 0 ? stats.weekDays : weekDays} // Fallback to mock if empty
+                            monthDays={stats.monthDays}
                             showRings={false}
                         />
                     </div>

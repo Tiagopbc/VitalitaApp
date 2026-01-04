@@ -382,15 +382,20 @@ function AppContent() {
 
     return (
         <div className="min-h-screen relative bg-transparent">
+            {/* Background Layers that cover safe areas */}
+            <div className="fixed inset-0 bg-slate-950 z-[-2]" />
+            <div className="fixed inset-0 bg-[radial-gradient(ellipse_at_top,rgba(59,130,246,0.15),transparent_50%)] z-[-1]" />
+
             {/* Desktop Sidebar */}
             <DesktopSidebar
                 activeTab={getActiveTab()}
                 onTabChange={handleTabChange}
+                user={user}
             />
 
             {/* Main Content Area */}
-            {/* Added lg:pl-24 to accommodate sidebar width */}
-            <div className="app-shell pt-8 pb-32 lg:pb-8 lg:pt-8 lg:pl-24 transition-all duration-300">
+            {/* Added lg:pl-64 to accommodate wider sidebar width */}
+            <div className="app-shell pt-8 pb-32 lg:pb-8 lg:pt-8 lg:pl-64 transition-all duration-300">
                 <div className="app-inner mx-auto">
                     {/* Only show simplified header if NOT on home (Home has its own greeting) */}
                     {currentView !== 'home' && (
@@ -406,10 +411,12 @@ function AppContent() {
 
             {/* Mobile Bottom Nav */}
             {currentView !== 'workout' && (
-                <BottomNavEnhanced
-                    activeTab={getActiveTab()}
-                    onTabChange={handleTabChange}
-                />
+                <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-[#020617]/95 backdrop-blur-xl border-t border-slate-800 pb-[env(safe-area-inset-bottom)]">
+                    <BottomNavEnhanced
+                        activeTab={getActiveTab()}
+                        onTabChange={handleTabChange}
+                    />
+                </div>
             )}
 
             {welcomeOpen ? (

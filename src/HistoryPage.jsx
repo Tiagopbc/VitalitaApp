@@ -274,43 +274,45 @@ function HistoryPage({ onBack, initialTemplate, initialExercise, user }) {
         <div className="min-h-screen bg-[#020617] pb-32">
             {/* --- HEADER --- */}
             <div className="sticky top-0 z-40 bg-[#020617]/80 backdrop-blur-md border-b border-slate-800/50 pt-12 pb-4 px-4">
-                <div className="flex items-center justify-between mb-6">
-                    <Button
-                        variant="outline-primary"
-                        size="sm"
-                        onClick={onBack}
-                        leftIcon={<ChevronLeft size={16} />}
-                    >
-                        VOLTAR
-                    </Button>
-                    <h1 className="text-xl font-bold text-white">Histórico</h1>
-                    <div className="w-10" /> {/* Spacer */}
-                </div>
+                <div className="w-full max-w-5xl mx-auto">
+                    <div className="flex items-center justify-between mb-6">
+                        <Button
+                            variant="outline-primary"
+                            size="sm"
+                            onClick={onBack}
+                            leftIcon={<ChevronLeft size={16} />}
+                        >
+                            VOLTAR
+                        </Button>
+                        <h1 className="text-xl font-bold text-white">Histórico</h1>
+                        <div className="w-10" /> {/* Spacer */}
+                    </div>
 
-                {/* TABS */}
-                <div className="grid grid-cols-2 bg-slate-900/50 p-1 rounded-xl border border-slate-800">
-                    <button
-                        onClick={() => setActiveTab('journal')}
-                        className={`py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'journal'
-                            ? 'bg-slate-800 text-white shadow-sm'
-                            : 'text-slate-500 hover:text-slate-300'
-                            }`}
-                    >
-                        Diário
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('analytics')}
-                        className={`py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'analytics'
-                            ? 'bg-slate-800 text-cyan-400 shadow-sm'
-                            : 'text-slate-500 hover:text-slate-300'
-                            }`}
-                    >
-                        Evolução
-                    </button>
+                    {/* TABS */}
+                    <div className="grid grid-cols-2 bg-slate-900/50 p-1 rounded-xl border border-slate-800">
+                        <button
+                            onClick={() => setActiveTab('journal')}
+                            className={`py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'journal'
+                                ? 'bg-slate-800 text-white shadow-sm'
+                                : 'text-slate-500 hover:text-slate-300'
+                                }`}
+                        >
+                            Diário
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('analytics')}
+                            className={`py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'analytics'
+                                ? 'bg-slate-800 text-cyan-400 shadow-sm'
+                                : 'text-slate-500 hover:text-slate-300'
+                                }`}
+                        >
+                            Evolução
+                        </button>
+                    </div>
                 </div>
             </div>
 
-            <div className="px-4 py-6 max-w-2xl mx-auto">
+            <div className="px-4 py-6 w-full max-w-5xl mx-auto">
                 {/* === JOURNAL VIEW === */}
                 {activeTab === 'journal' && (
                     <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">

@@ -8,6 +8,7 @@ export function StreakWeeklyGoalHybrid({
     weeklyGoal,
     completedThisWeek,
     weekDays,
+    monthDays,
     showRings = false,
     onNavigateToSettings
 }) {
@@ -274,104 +275,90 @@ export function StreakWeeklyGoalHybrid({
                 {/* Seção Expansível */}
 
 
-                {/* Calendário (Movido para dentro dos Detalhes) */}
-                <div className={`overflow-hidden transition-all duration-500 ease-in-out -mx-6 px-6 ${expanded ? 'max-h-96 opacity-100 mb-4' : 'max-h-0 opacity-0'}`}>
-                    <div className="flex gap-2 mb-4 pt-2 border-t border-slate-800/50">
-                        {weekDays.map((day, idx) => {
-                            // Adjust JS getDay() (0=Sun) to Array Index (0=Mon...6=Sun)
-                            const todayIndex = today === 0 ? 6 : today - 1;
-                            const isToday = idx === todayIndex;
+                {/* Calendário (Cards Semanais - Novo Design) */}
+                <div className={`overflow-hidden transition-all duration-500 ease-in-out px-1 ${expanded ? 'max-h-96 opacity-100 mb-4' : 'max-h-0 opacity-0'}`}>
+                    <div className="grid grid-cols-7 gap-2 mb-4 pt-2">
+                        {(monthDays || weekDays).map((day, idx) => {
+                            // Adjust JS getDay() (0=Sun) to Array Index (0=Mon...6=Sun) 
+                            // Only relevant if using weekDays index logic, but here we use day.dateNumber check
+                            const todayDate = new Date();
+                            // Ensure we only match Today if it's the current month AND day match. 
+                            // Or simpler: compare full Date strings (to avoid match on prev month same number)
+                            // But `day.dateNumber` is just an int.
+                            // If `day` object has `fullDate`, use that!
+                            // I added `fullDate` to HomeDashboard logic. Does `weekDays` fallback have it?
+                            // WeekDays mock doesn't have `fullDate`... wait. I added `dateNumber` to mock but not `fullDate`.
+                            // If I use `day.fullDate`, I must ensure fallback supports it or check existence.
+                            // I'll stick to `day.dateNumber === todayDate.getDate() && !day.isOutsideMonth`.
+
+                            const isToday = day.dateNumber === todayDate.getDate() && !day.isOutsideMonth && !day.empty;
+
+                            const dayLetter = day.day ? day.day.charAt(0) : '';
 
                             return (
-                                <div key={idx} className="flex flex-col items-center gap-1.5 flex-1 pt-4 relative">
-                                    {/* Indicator Dot for Today */}
-                                    {isToday && (
-                                        <div className="absolute top-0 w-1.5 h-1.5 rounded-full bg-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.8)]" />
-                                    )}
-
-                                    <div
-                                        className={`
-                    w-full h-10 lg:h-12 rounded-2xl flex items-center justify-center transition-all duration-200 cursor-pointer relative
-                    ${day.trained
-                                                ? 'bg-gradient-to-b from-cyan-400 to-blue-600 shadow-[0_0_15px_rgba(6,182,212,0.4)]' // Cyan to Blue Vertical Gradient
-                                                : day.isRest
-                                                    ? 'bg-[#2e1065] border border-purple-500/30 text-purple-400 shadow-[0_0_10px_rgba(168,85,247,0.2)]' // Deep Purple
-                                                    : 'bg-slate-800/40 border border-white/5 text-slate-600' // Default
-                                            }
-                    ${isToday ? 'ring-2 ring-cyan-400 shadow-[0_0_15px_rgba(34,211,238,0.5)]' : ''} 
-                  `}
-                                        onMouseEnter={() => setHoveredDay(idx)}
-                                        onMouseLeave={() => setHoveredDay(null)}
-                                    >
-                                        {/* Conteúdo da Bolha */}
-                                        {day.trained ? (
-                                            <div className="bg-white/20 p-1 rounded-full">
-                                                <CheckCircle2 size={14} className="text-white" strokeWidth={3} />
-                                            </div>
-                                        ) : day.isRest ? (
-                                            <span className="text-sm font-bold opacity-60 flex items-center justify-center pt-1" style={{ fontFamily: 'monospace' }}>z<span className="text-xs -mt-1">Z</span></span>
-                                        ) : (
-                                            isToday && <div className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
-                                        )}
-                                    </div>
-
-                                    {/* Label Abaixo da Bolha */}
-                                    <span className={`
-                                        text-[10px] font-bold uppercase tracking-wider
-                                        ${isToday ? 'text-cyan-400' : 'text-slate-500'}
-                                    `}>
-                                        {day.label || day.day[0]}
-                                    </span>
-
-                                    {/* Tooltip */}
-                                    {hoveredDay === idx && (day.trained || day.isRest) && (
-                                        <div className="absolute bottom-full mb-2 left-1/2 transform -translate-x-1/2 px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 shadow-xl z-20 whitespace-nowrap animate-fadeInUp">
-                                            <p className="text-xs font-bold text-white mb-1">{day.day || day.label}</p>
-                                            {day.trained && (
-                                                <>
-                                                    <p className="text-[10px] text-cyan-400">{day.workout}</p>
-                                                    <p className="text-[9px] text-slate-400">{day.time}</p>
-                                                </>
-                                            )}
-                                            {day.isRest && !day.trained && (
-                                                <p className="text-[10px] text-purple-400">Descanso planejado</p>
-                                            )}
-                                            <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-1">
-                                                <div className="w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-slate-700"></div>
-                                            </div>
+                                <div
+                                    key={idx}
+                                    className={`
+                                        relative flex flex-col items-center justify-center py-2 rounded-xl transition-all duration-300
+                                        ${day.trained
+                                            ? 'bg-gradient-to-b from-cyan-400 to-blue-600 shadow-[0_0_15px_rgba(6,182,212,0.4)]'
+                                            : 'bg-slate-800/40'
+                                        }
+                                        ${isToday ? 'ring-2 ring-amber-400 box-border' : ''}
+                                        ${day.isOutsideMonth ? 'opacity-60' : ''}
+                                    `}
+                                    style={{ aspectRatio: '1/1.2' }}
+                                    onMouseEnter={() => setHoveredDay(idx)}
+                                    onMouseLeave={() => setHoveredDay(null)}
+                                >
+                                    {/* Green Check Badge for Completed */}
+                                    {day.trained && (
+                                        <div className="absolute -top-1.5 -left-1.5 w-4 h-4 rounded-full bg-emerald-500 border border-[#0f172a] shadow-sm flex items-center justify-center z-10">
+                                            <CheckCircle2 size={10} className="text-white" strokeWidth={4} />
                                         </div>
                                     )}
+
+                                    {/* Day Letter - Only show for top row? Or all? User spec "Cards Semanais" implie headers. 
+                                        But for month view, usually headers are separate.
+                                        However, the design is "Cards". Each card has a letter. I'll keep it for now.
+                                    */}
+                                    <span className={`text-[10px] font-bold mb-0.5 uppercase ${day.trained ? 'text-white/80' : 'text-slate-500'}`}>
+                                        {dayLetter}
+                                    </span>
+
+                                    {/* Date Number */}
+                                    <span className={`text-xl font-bold leading-none ${day.trained ? 'text-white' : 'text-slate-400'}`}>
+                                        {day.dateNumber}
+                                    </span>
                                 </div>
                             );
                         })}
                     </div>
+
+                    {/* Footer Legend (Only visible when expanded) */}
+                    <div className="flex items-center gap-3 px-1 border-t border-slate-800/50 pt-3 mb-2">
+                        <div className="flex items-center gap-1.5">
+                            <div className="w-2.5 h-2.5 rounded-full bg-gradient-to-br from-cyan-400 to-blue-600 shadow-[0_0_5px_rgba(6,182,212,0.5)]"></div>
+                            <span className="text-[10px] text-slate-400 font-medium">Completos</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                            <div className="w-2.5 h-2.5 rounded-full bg-slate-800 border border-slate-700"></div>
+                            <span className="text-[10px] text-slate-500 font-medium">Restantes</span>
+                        </div>
+                    </div>
                 </div>
 
-                {/* Botão Detalhes (Pill) */}
-                <div className="flex justify-center mt-4">
+                {/* Always Visible Toggle Button */}
+                <div className="flex justify-end px-1 mt-2">
                     <button
                         onClick={(e) => {
                             e.stopPropagation();
                             setExpanded(!expanded);
                         }}
-                        className="
-            px-4 py-1.5 rounded-full
-            bg-cyan-950/30 border border-cyan-500/20
-            hover:bg-cyan-900/40 hover:border-cyan-400/40
-            text-cyan-400
-            transition-all duration-200
-            flex items-center gap-1.5
-            group
-          "
+                        className="text-[10px] font-bold text-cyan-400 flex items-center gap-1 hover:text-cyan-300 transition-colors py-2"
                     >
-                        <span className="text-[10px] font-bold uppercase tracking-widest">
-                            {expanded ? 'Ocultar' : 'Detalhes'}
-                        </span>
-                        {expanded ? (
-                            <ChevronUp size={14} className="group-hover:-translate-y-0.5 transition-transform" />
-                        ) : (
-                            <ChevronDown size={14} className="group-hover:translate-y-0.5 transition-transform" />
-                        )}
+                        {expanded ? 'Ocultar calendário' : 'Ver calendário completo'}
+                        <ChevronDown size={14} className={`transition-transform duration-300 ${expanded ? 'rotate-180' : ''}`} />
                     </button>
                 </div>
 

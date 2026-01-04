@@ -56,16 +56,31 @@
         -webkit-tap-highlight-color: transparent;
         scroll-behavior: smooth;
         font-family: var(--font-sans);
+        background-color: #0f172a;
+        /* Explicit base color */
+        /* Match the top of the gradient */
+        background-image: radial-gradient(circle at top, #0f172a 0%, #020617 100%);
+        /* background-attachment: fixed;  <-- REMOVED: Causes issues on iOS */
+        height: 100%;
+        min-height: 100dvh;
+        /* Use dynamic viewport height */
     }
 
     body {
-        background-color: var(--color-slate-950);
+        background-color: #0f172a;
+        /* Ensure body also has the color */
         color: #e2e8f0;
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
-        background-image: radial-gradient(circle at top, #0f172a 0%, #020617 100%);
         min-height: 100vh;
+        min-height: 100dvh;
         overflow-x: hidden;
+        /* iOS Safe Area Support - using padding only for content push if needed, 
+           but background should be handled by the root elements */
+        padding-top: env(safe-area-inset-top);
+        padding-bottom: env(safe-area-inset-bottom);
+        padding-left: env(safe-area-inset-left);
+        padding-right: env(safe-area-inset-right);
     }
 
     /* Typography System */

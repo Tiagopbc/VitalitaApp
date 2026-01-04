@@ -17,6 +17,27 @@ const firebaseConfig = {
     appId: import.meta.env.VITE_FIREBASE_APP_ID
 };
 
+const requiredKeys = [
+    'apiKey',
+    'authDomain',
+    'projectId',
+    'storageBucket',
+    'messagingSenderId',
+    'appId'
+];
+
+const missingKeys = requiredKeys.filter(key => !firebaseConfig[key]);
+
+if (missingKeys.length > 0) {
+    console.error(
+        `%c[CRITICAL] Missing Firebase Environment Variables: ${missingKeys.join(', ')}`,
+        'background: red; color: white; padding: 4px; font-weight: bold;'
+    );
+    console.error('Make sure these are set in your .env file (locally) or Vercel Project Settings (production).');
+    // Optional: throw an error to stop execution explicitly if you want to fail fast
+    // throw new Error(`Missing Firebase configuration: ${missingKeys.join(', ')}`);
+}
+
 const app = initializeApp(firebaseConfig);
 
 export const db = getFirestore(app);

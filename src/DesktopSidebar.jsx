@@ -6,24 +6,23 @@
 import React, { useState } from 'react';
 import { Home, Dumbbell, Plus, History, User } from 'lucide-react';
 
-export function DesktopSidebar({ activeTab, onTabChange }) {
+export function DesktopSidebar({ activeTab, onTabChange, user }) {
     const [hoveredTab, setHoveredTab] = useState(null);
 
     const tabs = [
         {
             id: 'home',
-            label: 'Home',
+            label: 'Início',
             icon: Home
         },
         {
             id: 'workouts',
             label: 'Treinos',
-            icon: Dumbbell,
-            badge: 0
+            icon: Dumbbell
         },
         {
             id: 'new',
-            label: 'Novo',
+            label: 'Novo', // Keeping it short as requested before, but in list
             icon: Plus,
             isSpecial: true
         },
@@ -31,106 +30,105 @@ export function DesktopSidebar({ activeTab, onTabChange }) {
             id: 'history',
             label: 'Histórico',
             icon: History
-        },
-        {
-            id: 'profile',
-            label: 'Perfil',
-            icon: User
         }
     ];
 
     return (
         <aside
-            className="hidden lg:flex flex-col fixed left-0 top-0 bottom-0 w-24 z-50 items-center py-8 gap-8"
+            className="hidden lg:flex flex-col fixed left-0 top-0 bottom-0 w-64 z-50 py-6 px-4 gap-8 font-sans"
             style={{
-                background: 'linear-gradient(180deg, #020617 0%, #000 100%)',
-                borderRight: '1px solid rgba(59,130,246,0.15)',
-                boxShadow: '4px 0 24px rgba(0,0,0,0.6)'
+                background: 'linear-gradient(180deg, #020617 0%, #0f172a 100%)',
+                borderRight: '1px solid rgba(30, 41, 59, 0.5)',
+                boxShadow: '4px 0 24px rgba(0,0,0,0.4)'
             }}
         >
-            {/* Logo Icon */}
-            <div className="mb-4">
-                <img
-                    src="/apple-touch-icon.png"
-                    alt="Logo"
-                    className="w-12 h-12 rounded-xl shadow-lg shadow-blue-500/20 hover:scale-105 transition-transform duration-300"
-                />
+            {/* Logo Section */}
+            <div className="flex items-center gap-3 px-2 mb-2">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-400 to-blue-600 p-[1px] shadow-lg shadow-blue-500/20">
+                    <div className="w-full h-full rounded-[11px] bg-black/20 flex items-center justify-center overflow-hidden">
+                        <img
+                            src="/apple-touch-icon.png"
+                            alt="Logo"
+                            className="w-full h-full object-cover"
+                        />
+                    </div>
+                </div>
+                <div className="flex flex-col">
+                    <span className="text-lg font-bold text-white tracking-wide leading-none">
+                        VITALITÀ
+                    </span>
+                    <span className="text-[10px] text-slate-400 font-medium tracking-wider mt-0.5">
+                        Fitness Tracker Pro
+                    </span>
+                </div>
             </div>
 
-            <nav className="flex flex-col gap-6 w-full px-2">
+            {/* Navigation */}
+            <nav className="flex flex-col gap-2 w-full flex-1">
                 {tabs.map((tab) => {
                     const Icon = tab.icon;
                     const isActive = activeTab === tab.id;
                     const isHovered = hoveredTab === tab.id;
 
-                    // ========== BOTÃO DE AÇÃO (FAB Desktop) ==========
-                    if (tab.isSpecial) {
-                        return (
-                            <button
-                                key={tab.id}
-                                onClick={() => onTabChange(tab.id)}
-                                onMouseEnter={() => setHoveredTab(tab.id)}
-                                onMouseLeave={() => setHoveredTab(null)}
-                                className="relative flex flex-col items-center justify-center mx-auto group cursor-pointer gap-1.5"
-                                aria-label={tab.label}
-                            >
-                                <div
-                                    className="flex items-center justify-center transition-all duration-300"
-                                    style={{
-                                        width: '56px',
-                                        height: '56px',
-                                        borderRadius: '16px',
-                                        background: `radial-gradient(circle at 30% 30%, #06b6d4 0%, #3b82f6 50%, #1e40af 100%)`,
-                                        boxShadow: isHovered
-                                            ? '0 8px 24px rgba(6,182,212,0.5)'
-                                            : '0 4px 12px rgba(6,182,212,0.3)',
-                                        transform: isHovered ? 'scale(1.05)' : 'scale(1)',
-                                    }}
-                                >
-                                    <Icon size={28} strokeWidth={2.5} className="text-white" />
-                                </div>
-
-                                <span className="text-[10px] font-bold text-cyan-400 uppercase tracking-wider group-hover:text-white transition-colors">
-                                    Novo
-                                </span>
-
-                                {/* Tooltip (Optional, keeping simpler 'Novo' label instead) */}
-                            </button>
-                        );
-                    }
-
-                    // ========== ITENS NORMAIS ==========
                     return (
                         <button
                             key={tab.id}
                             onClick={() => onTabChange(tab.id)}
                             onMouseEnter={() => setHoveredTab(tab.id)}
                             onMouseLeave={() => setHoveredTab(null)}
-                            className="flex flex-col items-center justify-center gap-1 relative p-3 rounded-2xl transition-all duration-200 cursor-pointer group"
-                            aria-label={tab.label}
+                            className={`
+                                relative flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all duration-300 w-full text-left group
+                                ${isActive
+                                    ? 'bg-gradient-to-r from-blue-600/20 to-cyan-500/10 border border-blue-500/20 shadow-[0_0_15px_rgba(59,130,246,0.1)]'
+                                    : 'hover:bg-slate-800/50 transparent'
+                                }
+                                ${tab.isSpecial && !isActive ? 'bg-gradient-to-r from-cyan-500/10 to-blue-600/5 border border-cyan-500/10' : ''}
+                            `}
                         >
-                            <div className={`relative p-2 rounded-xl transition-all duration-300 ${isActive ? 'bg-cyan-500/10' : 'group-hover:bg-white/5'}`}>
-                                <Icon
-                                    size={24}
-                                    strokeWidth={isActive ? 2.5 : 2}
-                                    className={`transition-all duration-300 ${isActive ? 'text-cyan-400' : 'text-slate-500 group-hover:text-slate-300'}`}
-                                    style={{
-                                        filter: isActive ? 'drop-shadow(0 0 8px rgba(6,182,212,0.4))' : 'none'
-                                    }}
-                                />
+                            {/* Active Indicator Line */}
+                            {isActive && (
+                                <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-cyan-400 rounded-r-full shadow-[0_0_8px_rgba(6,182,212,0.8)]" />
+                            )}
 
-                                {isActive && (
-                                    <div className="absolute left-0 top-1/2 -translate-y-1/2 -ml-3 w-1 h-8 rounded-r-full bg-cyan-400 shadow-[0_0_12px_rgba(6,182,212,0.6)]" />
-                                )}
-                            </div>
+                            <Icon
+                                size={20}
+                                className={`transition-colors duration-300 ${isActive ? 'text-cyan-400' : 'text-slate-400 group-hover:text-slate-200'} ${tab.isSpecial ? 'text-cyan-400' : ''}`}
+                                strokeWidth={isActive ? 2.5 : 2}
+                            />
 
-                            <span className={`text-[10px] font-medium transition-colors duration-200 ${isActive ? 'text-cyan-400' : 'text-slate-500 group-hover:text-slate-400'}`}>
+                            <span className={`text-sm font-medium transition-colors duration-300 ${isActive ? 'text-white' : 'text-slate-400 group-hover:text-slate-200'}`}>
                                 {tab.label}
                             </span>
                         </button>
                     );
                 })}
             </nav>
+
+            {/* User Profile Footer */}
+            {user && (
+                <div className="mt-auto px-2 pt-4 border-t border-slate-800/50">
+                    <button
+                        onClick={() => onTabChange('profile')}
+                        className="flex items-center gap-3 w-full p-2.5 rounded-xl hover:bg-slate-800/50 transition-colors text-left group"
+                    >
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-sm shadow-md ring-2 ring-black/50 group-hover:ring-slate-700 transition-all">
+                            {user.photoURL ? (
+                                <img src={user.photoURL} alt="Avatar" className="w-full h-full rounded-full object-cover" />
+                            ) : (
+                                <span>{user.displayName?.charAt(0).toUpperCase() || 'U'}</span>
+                            )}
+                        </div>
+                        <div className="flex flex-col overflow-hidden">
+                            <span className="text-sm font-bold text-white truncate group-hover:text-cyan-400 transition-colors">
+                                {user.displayName || 'Usuário'}
+                            </span>
+                            <span className="text-xs text-slate-500 truncate">
+                                Ver perfil
+                            </span>
+                        </div>
+                    </button>
+                </div>
+            )}
         </aside>
     );
 }
