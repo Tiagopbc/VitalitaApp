@@ -110,6 +110,26 @@ export function HomeDashboard({
 
                 sessions.sort((a, b) => b.date - a.date);
 
+                // --- SMART SUGGESTION LOGIC ---
+                if (workoutsData.length > 0) {
+                    let nextWorkout = workoutsData[0]; // Default to first
+
+                    if (sessions.length > 0) {
+                        const lastSession = sessions[0];
+                        // Try to match by templateId first, then name
+                        const lastWorkoutIndex = workoutsData.findIndex(w =>
+                            w.id === lastSession.templateId || w.name === lastSession.workoutName
+                        );
+
+                        if (lastWorkoutIndex !== -1) {
+                            // Rotate to next: (current + 1) % total
+                            const nextIndex = (lastWorkoutIndex + 1) % workoutsData.length;
+                            nextWorkout = workoutsData[nextIndex];
+                        }
+                    }
+                    setSuggestedWorkout(nextWorkout);
+                }
+
                 calculateStats(sessions, fetchedGoal);
             } catch (error) {
                 console.error("Error fetching history:", error);
