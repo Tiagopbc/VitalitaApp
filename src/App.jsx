@@ -5,7 +5,7 @@
  * e estado de alto nível para treinos, histórico e validação de autenticação do usuário.
  */
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { HomeDashboardUXOptimized } from './HomeDashboardUXOptimized';
+import { HomeDashboard } from './HomeDashboard';
 import { BottomNavEnhanced } from './BottomNavEnhanced';
 import { DesktopSidebar } from './DesktopSidebar';
 
@@ -367,7 +367,7 @@ function AppContent() {
         );
     } else {
         content = (
-            <HomeDashboardUXOptimized
+            <HomeDashboard
                 onNavigateToMethods={handleOpenMethodsFromHeader}
                 onNavigateToCreateWorkout={handleCreateWorkout}
                 onNavigateToWorkout={handleSelectWorkout}
