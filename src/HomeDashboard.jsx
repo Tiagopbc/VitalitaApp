@@ -23,16 +23,11 @@ import {
 import { collection, query, where, getDocs, limit, orderBy, doc, getDoc } from 'firebase/firestore';
 import { StreakWeeklyGoalHybrid } from './StreakWeeklyGoalHybrid';
 import { db } from './firebaseConfig';
+import { calculateWeeklyStats } from './utils/workoutStats';
+import { workoutService } from './services/workoutService';
 
-const weekDays = [
-    { day: 'Seg', dateNumber: new Date().getDate() - new Date().getDay() + 1, trained: true, workout: 'Upper Push', time: '18:30', isRest: false },
-    { day: 'Ter', dateNumber: new Date().getDate() - new Date().getDay() + 2, trained: true, workout: 'Pernas', time: '19:00', isRest: false },
-    { day: 'Qua', dateNumber: new Date().getDate() - new Date().getDay() + 3, trained: false, workout: null, time: null, isRest: true },
-    { day: 'Qui', dateNumber: new Date().getDate() - new Date().getDay() + 4, trained: true, workout: 'Upper Pull', time: '18:15', isRest: false },
-    { day: 'Sex', dateNumber: new Date().getDate() - new Date().getDay() + 5, trained: false, workout: null, time: null, isRest: true },
-    { day: 'Sáb', dateNumber: new Date().getDate() - new Date().getDay() + 6, trained: false, workout: null, time: null, isRest: true },
-    { day: 'Dom', dateNumber: new Date().getDate() - new Date().getDay() + 7, trained: false, workout: null, time: null, isRest: true }
-];
+const weekDays = []; // Removed hardcoded mock data
+
 
 export function HomeDashboard({
     onNavigateToMethods,
@@ -81,31 +76,26 @@ export function HomeDashboard({
                 console.error("Error fetching user goal:", err);
             }
 
-            // 1. Fetch Workouts (Templates)
+            let workoutsData = [];
+
+            // 1. Fetch Workouts (Templates) - CACHED
             try {
-                const qWorkouts = query(
-                    collection(db, 'workout_templates'),
-                    where('userId', '==', user.uid)
-                );
-                const snapWorkouts = await getDocs(qWorkouts);
-                const workoutsData = snapWorkouts.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                workoutsData = await workoutService.getTemplates(user.uid);
                 setWorkouts(workoutsData);
                 if (workoutsData.length > 0 && !suggestedWorkout) setSuggestedWorkout(workoutsData[0]);
             } catch (error) {
                 console.error("Error fetching templates:", error);
             }
 
-            // 2. Fetch History (Sessions)
+            // 2. Fetch History (Sessions) for Stats & Suggestion
             try {
-                const qHistory = query(
-                    collection(db, 'workout_sessions'),
-                    where('userId', '==', user.uid)
-                );
-                const snapHistory = await getDocs(qHistory);
-                const sessions = snapHistory.docs.map(doc => ({
-                    id: doc.id,
-                    ...doc.data(),
-                    date: doc.data().completedAt?.toDate() || new Date()
+                // We need all sessions for Streak calculation?
+                // For now, yes.
+                const allSessions = await workoutService.getAllSessions(user.uid);
+
+                const sessions = allSessions.map(d => ({
+                    ...d,
+                    date: d.completedAt?.toDate() || new Date()
                 }));
 
                 sessions.sort((a, b) => b.date - a.date);
@@ -130,7 +120,8 @@ export function HomeDashboard({
                     setSuggestedWorkout(nextWorkout);
                 }
 
-                calculateStats(sessions, fetchedGoal);
+                const computedStats = calculateWeeklyStats(sessions, fetchedGoal);
+                setStats(computedStats);
             } catch (error) {
                 console.error("Error fetching history:", error);
             } finally {
@@ -141,101 +132,11 @@ export function HomeDashboard({
         fetchData();
     }, [user]);
 
-    function calculateStats(sessions, currentWeeklyGoal) {
-        const now = new Date();
-        const startOfCurrentWeek = getStartOfWeek(now);
 
-        const thisWeekSessions = sessions.filter(s => s.date >= startOfCurrentWeek);
-
-        const daysMap = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
-        const weekDaysData = Array(7).fill(null).map((_, idx) => {
-            const dayDate = new Date(startOfCurrentWeek);
-            dayDate.setDate(startOfCurrentWeek.getDate() + idx);
-
-            const daySessions = thisWeekSessions.filter(s => isSameDay(s.date, dayDate));
-            const trained = daySessions.length > 0;
-            const lastSession = trained ? daySessions[0] : null;
-
-            const dayOfWeek = dayDate.getDay();
-
-            return {
-                day: daysMap[dayOfWeek],
-                label: daysMap[dayOfWeek],
-                dateNumber: dayDate.getDate(),
-                trained: trained,
-                workout: lastSession ? lastSession.workoutName : null,
-                time: lastSession ? formatTime(lastSession.date) : null,
-                isRest: !trained && dayDate < now && dayDate.getDay() !== 0,
-            };
-        });
-
-        // Month Stats Calculation (Simplified for this rewrite)
-        const monthDaysData = []; // Can re-implement full month logic if needed, keeping simple for fix
-
-        const weeksWithTraining = new Set();
-        sessions.forEach(s => {
-            const weekStr = getWeekString(s.date);
-            weeksWithTraining.add(weekStr);
-        });
-
-        let currentStreak = 0;
-        let checkDate = new Date();
-        if (weeksWithTraining.has(getWeekString(checkDate))) {
-            currentStreak++;
-        }
-        for (let i = 0; i < 52; i++) {
-            checkDate.setDate(checkDate.getDate() - 7);
-            if (weeksWithTraining.has(getWeekString(checkDate))) {
-                currentStreak++;
-            } else {
-                break;
-            }
-        }
-
-        const bestStreak = Math.max(currentStreak, 3); // Mock best streak min 3
-
-        setStats({
-            currentStreak,
-            bestStreak,
-            completedThisWeek: thisWeekSessions.length,
-            weeklyGoal: currentWeeklyGoal || 4,
-            weekDays: weekDaysData,
-            monthDays: monthDaysData
-        });
-    }
-
-
-    function getStartOfWeek(date) {
-        const d = new Date(date);
-        const day = d.getDay();
-        const diff = d.getDate() - day + (day === 0 ? -6 : 1);
-        d.setDate(diff);
-        d.setHours(0, 0, 0, 0);
-        return d;
-    }
-
-    function isSameDay(d1, d2) {
-        return d1.getDate() === d2.getDate() &&
-            d1.getMonth() === d2.getMonth() &&
-            d1.getFullYear() === d2.getFullYear();
-    }
-
-    function formatTime(date) {
-        return date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-    }
-
-    function getWeekString(date) {
-        const d = new Date(date);
-        d.setHours(0, 0, 0, 0);
-        d.setDate(d.getDate() + 4 - (d.getDay() || 7));
-        const yearStart = new Date(d.getFullYear(), 0, 1);
-        const weekNo = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
-        return `${d.getFullYear()}-W${weekNo}`;
-    }
 
     return (
         <div className="min-h-screen bg-transparent text-gray-50 pb-24 lg:pb-8">
-            <div className="max-w-5xl mx-auto px-4 lg:px-8 flex flex-col">
+            <div className="w-full max-w-3xl mx-auto px-4 lg:px-8 flex flex-col">
 
                 {/* 1. SAUDAÇÃO */}
                 <div className="pt-4 pb-6">
@@ -263,7 +164,7 @@ export function HomeDashboard({
                             bestStreak={stats.bestStreak}
                             weeklyGoal={stats.weeklyGoal}
                             completedThisWeek={stats.completedThisWeek}
-                            weekDays={stats.weekDays.length > 0 ? stats.weekDays : weekDays}
+                            weekDays={stats.weekDays}
                             monthDays={stats.monthDays}
                             showRings={false}
                         />
@@ -273,7 +174,7 @@ export function HomeDashboard({
                 {/* 3. HERO SECTION - PRÓXIMO TREINO */}
                 <div className="mb-8">
                     <div className="flex items-center gap-2 mb-3">
-                        <Target size={18} className="text-cyan-400" />
+                        <Target size={10} className="text-cyan-400" />
                         <h3 className="text-base font-bold text-white">Próximo Treino Sugerido</h3>
                     </div>
 
@@ -288,7 +189,7 @@ export function HomeDashboard({
                                     <p className="text-[10px] font-bold uppercase tracking-widest text-cyan-400 mb-1">
                                         Sugerido
                                     </p>
-                                    <h2 className="text-2xl lg:text-3xl font-bold text-white mb-3 group-hover:text-cyan-400 transition-colors">
+                                    <h2 className="text-lg lg:text-3xl font-bold text-white mb-3 group-hover:text-cyan-400 transition-colors">
                                         {suggestedWorkout.name}
                                     </h2>
                                     <div className="flex flex-wrap items-center gap-4 text-sm text-slate-300 font-medium">
@@ -352,74 +253,23 @@ export function HomeDashboard({
                                 </div>
                                 <div>
                                     <h4 className="font-bold text-white mb-0.5">Guerreiro da Semana 💪</h4>
-                                    <p className="text-xs text-slate-400">Complete 5 treinos esta semana</p>
+                                    <p className="text-xs text-slate-400">Complete {stats.weeklyGoal || 4} treinos esta semana</p>
                                 </div>
                             </div>
                             <div className="flex-1 flex items-center gap-3 w-full">
                                 <div className="flex-1 h-3 bg-slate-800 rounded-full overflow-hidden">
                                     <div
                                         className="h-full bg-gradient-to-r from-purple-400 to-purple-600 rounded-full transition-all"
-                                        style={{ width: '60%' }}
+                                        style={{ width: `${Math.min(100, ((stats.completedThisWeek || 0) / (stats.weeklyGoal || 4)) * 100)}%` }}
                                     ></div>
                                 </div>
-                                <span className="text-sm font-semibold text-purple-400 min-w-[40px]">3/5</span>
+                                <span className="text-sm font-semibold text-purple-400 min-w-[40px]">{stats.completedThisWeek || 0}/{stats.weeklyGoal || 4}</span>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                {/* 5. NAVEGAÇÃO - ACESSO RÁPIDO */}
-                <div className="mb-8">
-                    <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-base font-semibold text-white">Seus Treinos</h3>
-                        <button
-                            onClick={onNavigateToMyWorkouts}
-                            className="text-xs text-cyan-400 hover:text-cyan-300 flex items-center gap-1 transition-colors"
-                        >
-                            Ver todos <ChevronRight size={14} />
-                        </button>
-                    </div>
 
-                    {loading ? (
-                        <div className="text-center py-8 text-slate-500">Carregando treinos...</div>
-                    ) : workouts.length === 0 ? (
-                        <div className="text-center py-8 text-slate-500 bg-slate-900/30 rounded-2xl border border-slate-800 border-dashed">
-                            Nenhum treino encontrado.
-                        </div>
-                    ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                            {workouts.slice(0, 3).map((workout) => (
-                                <button
-                                    key={workout.id}
-                                    onClick={() => onNavigateToWorkout(workout.id, workout.name)}
-                                    className="p-4 rounded-2xl text-left hover:scale-[1.02] active:scale-[0.98] transition-all group"
-                                    style={{
-                                        background: 'linear-gradient(135deg, #0b1120, #000)',
-                                        border: '1px solid rgba(148,163,184,0.25)'
-                                    }}
-                                >
-                                    <div className="flex items-start justify-between mb-3">
-                                        <div className="flex-1 min-w-0">
-                                            <p className="text-xs uppercase tracking-widest text-cyan-400 mb-1 font-semibold truncate">
-                                                {workout.name}
-                                            </p>
-                                            <p className="text-sm text-white font-semibold mb-2 truncate">
-                                                {workout.description || 'Treino Personalizado'}
-                                            </p>
-                                        </div>
-                                        <ChevronRight size={16} className="text-slate-500 group-hover:text-cyan-400 group-hover:translate-x-1 transition-all" />
-                                    </div>
-                                    <div className="flex items-center gap-3 text-xs text-slate-400">
-                                        <span className="flex items-center gap-1">
-                                            <Dumbbell size={12} />
-                                            {workout.exercises?.length || 0} ex.
-                                        </span>
-                                    </div>
-                                </button>
-                            ))}
-                        </div>
-                    )}
-                </div>
 
                 {/* 6. MOTIVACIONAL */}
                 <div

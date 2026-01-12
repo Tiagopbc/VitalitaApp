@@ -6,15 +6,7 @@
  * Valida a entrada do usuário para registro (força da senha, data de nascimento, dados físicos).
  */
 import React, { useMemo, useState } from 'react';
-import {
-    createUserWithEmailAndPassword,
-    signInWithEmailAndPassword,
-    signInWithPopup,
-    updateProfile,
-} from 'firebase/auth';
-import { doc, serverTimestamp, setDoc } from 'firebase/firestore';
-import { auth, db, googleProvider } from './firebaseConfig';
-
+import { authService } from './services/authService';
 
 function GoogleIcon() {
     return (
@@ -282,7 +274,7 @@ export default function LoginPage() {
         setLoading(true);
 
         try {
-            await signInWithEmailAndPassword(auth, loginEmail.trim(), loginPassword);
+            await authService.login(loginEmail.trim(), loginPassword);
         } catch (err) {
             console.error(err);
             setError('Não foi possível autenticar. Verifique os dados e tente novamente.');
@@ -298,10 +290,10 @@ export default function LoginPage() {
         setLoading(true);
 
         try {
-            await signInWithPopup(auth, googleProvider);
+            await authService.loginWithGoogle();
         } catch (err) {
             console.error(err);
-            // DEBUG: Mostrando erro detalhado para identificar a causa
+
             setError(`Erro ao entrar com Google: ${err.code} - ${err.message}`);
         } finally {
             setLoading(false);
@@ -335,37 +327,24 @@ export default function LoginPage() {
             const email = signupEmail.trim();
             const name = fullName.trim();
 
-            const cred = await createUserWithEmailAndPassword(auth, email, signupPassword);
+            const additionalData = {
+                gender,
+                birthDate: {
+                    day: Number(birthDay),
+                    month: Number(birthMonth),
+                    year: Number(birthYear),
+                },
+                heightCm: Number(heightCm),
+                weightKg: Number(weightKg),
+            };
+
+            await authService.register(email, signupPassword, name, additionalData);
 
             // Sinaliza para o App exibir o pop up de boas-vindas após o cadastro
             const firstName = getFirstName(name);
             localStorage.setItem('welcomeFirstName', firstName);
             localStorage.setItem('welcomePending', '1');
 
-            try {
-                await updateProfile(cred.user, { displayName: name });
-            } catch (err) {
-                console.error('Falha ao atualizar o perfil:', err);
-            }
-
-            try {
-                await setDoc(doc(db, 'users', cred.user.uid), {
-                    fullName: name,
-                    email,
-                    gender,
-                    birthDate: {
-                        day: Number(birthDay),
-                        month: Number(birthMonth),
-                        year: Number(birthYear),
-                    },
-                    heightCm: Number(heightCm),
-                    weightKg: Number(weightKg),
-                    createdAt: serverTimestamp(),
-                });
-            } catch (err) {
-                console.error('Falha ao salvar dados no Firestore:', err);
-                throw err;
-            }
         } catch (err) {
             console.error(err);
             setError('Não foi possível criar sua conta. Verifique os dados e tente novamente.');

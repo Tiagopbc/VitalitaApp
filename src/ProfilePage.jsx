@@ -1,11 +1,8 @@
-/**
- * ProfilePage.jsx
- * Tela de gerenciamento de perfil do usuário.
- * Permite visualizar e editar estatísticas pessoais (peso, altura, idade) e objetivos.
- */
+// -----------------------------------------------------------------------------
 import React, { useState, useEffect } from 'react';
-import { db } from './firebaseConfig';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { userService } from './services/userService';
+import { workoutService } from './services/workoutService';
+
 import {
     User,
     Mail,
@@ -24,18 +21,56 @@ import {
     Trophy,
     Lock,
     Star,
-    CheckCircle2
+    CheckCircle2,
+    BicepsFlexed,
+    Ruler,
+    X,
+    Crown,
+    ChevronRight,
+    Users
 } from 'lucide-react';
 import { achievementsCatalog } from './data/achievementsCatalog';
 import { evaluateAchievements, calculateStats } from './utils/evaluateAchievements';
-import { collection, query, where, getDocs, orderBy } from 'firebase/firestore';
 import { Button } from './components/design-system/Button';
 import { PremiumCard } from './components/design-system/PremiumCard';
 
-export default function ProfilePage({ user, onLogout }) {
-    const [isEditing, setIsEditing] = useState(false);
+// -----------------------------------------------------------------------------
+// HELPER: Normalize Exercise Name
+// -----------------------------------------------------------------------------
+function normalizeName(name) {
+    if (!name) return "";
+    return name.toLowerCase().trim()
+        .normalize("NFD").replace(/[\u0300-\u036f]/g, ""); // Remove accents
+}
+
+export default function ProfilePage({ user, onLogout, onNavigateToHistory, onNavigateToVolumeAnalysis, onNavigateToTrainer, isTrainer }) {
+    const [showEditModal, setShowEditModal] = useState(false);
+
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
+
+    // --- PERSONAL TRAINER LINKING ---
+    const [showLinkTrainer, setShowLinkTrainer] = useState(false);
+    const [inviteCode, setInviteCode] = useState('');
+    const [linking, setLinking] = useState(false);
+
+    const handleLinkTrainer = async () => {
+        if (!inviteCode || !user) return;
+        setLinking(true);
+        try {
+            await userService.linkTrainer(user.uid, inviteCode);
+            alert("Personal vinculado com sucesso!");
+            setShowLinkTrainer(false);
+            setInviteCode('');
+        } catch (err) {
+            console.error(err);
+            if (err.message === "PERSONAL_NOT_FOUND") alert("Personal não encontrado com este ID.");
+            else if (err.message === "ALREADY_LINKED") alert("Você já está vinculado a este personal.");
+            else alert("Erro ao vincular.");
+        } finally {
+            setLinking(false);
+        }
+    };
 
     // Profile State
     const [profile, setProfile] = useState({
@@ -52,7 +87,12 @@ export default function ProfilePage({ user, onLogout }) {
     // Achievements State
     const [achievementsList, setAchievementsList] = useState([]);
     const [stats, setStats] = useState(null);
+    const [sessionsState, setSessionsState] = useState([]);
     const [loadingAchievements, setLoadingAchievements] = useState(true);
+
+
+    // Derived weekly status
+    // const workoutsThisWeekArray = React.useMemo(() => getDaysOfWeekStatus(sessionsState), [sessionsState]); // DEPRECATED in favor of Hybrid component
 
     // Load Profile
     useEffect(() => {
@@ -60,11 +100,10 @@ export default function ProfilePage({ user, onLogout }) {
 
         async function loadProfile() {
             try {
-                const docRef = doc(db, 'users', user.uid);
-                const docSnap = await getDoc(docRef);
+                const docSnapData = await userService.getUserProfile(user.uid);
 
-                if (docSnap.exists()) {
-                    setProfile(prev => ({ ...prev, ...docSnap.data() }));
+                if (docSnapData) {
+                    setProfile(prev => ({ ...prev, ...docSnapData }));
                 } else {
                     // Init with auth data if no doc exists
                     setProfile(prev => ({
@@ -89,27 +128,14 @@ export default function ProfilePage({ user, onLogout }) {
         async function loadAchievementsData() {
             setLoadingAchievements(true);
             try {
-                // 1. Fetch all workout sessions for stats
-                const sessionsRef = collection(db, 'workout_sessions');
-                const q = query(
-                    sessionsRef,
-                    where('userId', '==', user.uid)
-                    // We don't need to sort here if calculateStats handles it, but good practice
-                );
-                const snap = await getDocs(q);
-                const sessions = snap.docs.map(d => ({ ...d.data(), id: d.id }));
+                // 1. Fetch all workout sessions for stats (Using Service)
+                const sessions = await workoutService.getAllSessions(user.uid);
+                setSessionsState(sessions); // Save sessions to state for weekly calc
 
                 // 2. Calculate Stats
                 const computedStats = calculateStats(sessions);
                 setStats(computedStats);
 
-                // 3. Evaluate Achievements
-                // use profile.achievements from main effect if available, or fetch again?
-                // The main profile load effect sets 'profile'. 
-                // We depend on 'profile' being loaded? 
-                // It's better to rely on 'profile' state.
-                // But 'profile' might be initial state.
-                // Only evaluate when profile is loaded.
             } catch (err) {
                 console.error("Error loading achievements data:", err);
             } finally {
@@ -136,11 +162,11 @@ export default function ProfilePage({ user, onLogout }) {
     const handleSave = async () => {
         setSaving(true);
         try {
-            await setDoc(doc(db, 'users', user.uid), {
+            await userService.updateUserProfile(user.uid, {
                 ...profile,
                 updatedAt: new Date().toISOString()
-            }, { merge: true });
-            setIsEditing(false);
+            });
+            setShowEditModal(false);
         } catch (err) {
             console.error("Error saving profile:", err);
             alert("Erro ao salvar perfil.");
@@ -185,7 +211,7 @@ export default function ProfilePage({ user, onLogout }) {
     }
 
     return (
-        <div className="min-h-screen bg-[#020617] pb-32 px-4 pt-[calc(2rem+env(safe-area-inset-top))] w-full max-w-5xl mx-auto">
+        <div className="min-h-screen bg-[#020617] pb-32 px-4 pt-0 w-full max-w-3xl mx-auto">
 
             {/* --- PROFILE HEADER CARD --- */}
             <div className="bg-slate-900/50 rounded-3xl p-6 mb-6 border border-slate-800 relative overflow-hidden">
@@ -213,70 +239,181 @@ export default function ProfilePage({ user, onLogout }) {
                     <div className="flex-1 min-w-0">
                         {/* Name & Edit Row */}
                         <div className="flex items-center gap-3 mb-1">
-                            {isEditing ? (
-                                <input
-                                    type="text"
-                                    name="displayName"
-                                    value={profile.displayName}
-                                    onChange={handleChange}
-                                    className="bg-slate-800 border border-slate-700 rounded-lg px-3 py-1 text-white font-bold text-xl w-full max-w-[200px] focus:ring-2 focus:ring-blue-500 outline-none"
-                                />
-                            ) : (
-                                <h1 className="text-2xl font-bold text-white tracking-tight truncate">{profile.displayName || 'Atleta'}</h1>
-                            )}
+                            <h1 className="text-2xl font-bold text-white tracking-tight truncate">{profile.displayName || 'Atleta'}</h1>
 
                             <button
-                                onClick={() => setIsEditing(!isEditing)}
-                                className="w-7 h-7 rounded-lg border border-slate-700 flex items-center justify-center text-slate-400 hover:text-white hover:bg-slate-800 transition-colors shrink-0"
+                                onClick={() => setShowEditModal(true)}
+                                className="px-3 py-1 text-xs font-bold text-slate-300 bg-slate-800 rounded-lg border border-slate-700 hover:text-white hover:bg-slate-700 transition-colors"
                             >
-                                {isEditing ? <Save size={14} /> : <Edit2 size={14} />}
+                                Editar Perfil
+                            </button>
+                            <button
+                                onClick={() => setShowLinkTrainer(true)}
+                                className="px-3 py-1 text-xs font-bold text-cyan-400 bg-cyan-950/30 rounded-lg border border-cyan-900 hover:text-cyan-300 hover:bg-cyan-950/50 transition-colors flex items-center gap-1.5"
+                            >
+                                <Users size={12} />
+                                Personal
                             </button>
                         </div>
 
-                        {/* Email & Date */}
-                        <div className="flex flex-col gap-1 text-slate-400 text-xs mb-4">
-                            <div className="flex items-center gap-2">
-                                <Mail size={12} />
-                                <span className="truncate">{user?.email}</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <CalendarDays size={12} />
-                                <span>Membro desde {formattedJoinDate}</span>
-                            </div>
+                        {/* Email */}
+                        <div className="flex items-center gap-2 mb-1.5 text-slate-400">
+                            <Mail size={14} strokeWidth={2.5} />
+                            <span className="text-xs truncate">{user?.email}</span>
                         </div>
 
-                        {/* XP Section */}
-                        <div className="w-full">
-                            <div className="flex justify-between items-end text-xs font-bold mb-1.5">
-                                <span className="text-slate-500 uppercase tracking-wider">Experiência</span>
-                                <div>
-                                    <span className="text-blue-500 text-sm">{Math.floor(currentXP)}</span>
-                                    <span className="text-slate-600 text-[10px]"> / {XP_PER_LEVEL} XP</span>
-                                </div>
+                        {/* Join Date */}
+                        <div className="flex items-center gap-2 text-slate-500">
+                            <CalendarDays size={14} strokeWidth={2.5} />
+                            <span className="text-xs">Membro desde {formattedJoinDate}</span>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Experience Bar */}
+                <div className="mt-6 pt-5 border-t border-slate-800 relative">
+                    <div className="flex justify-between items-end mb-2">
+                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Experiência</span>
+                        <div className="text-right">
+                            <span className="text-sm font-bold text-blue-400">{Math.floor(xpInLevel)}</span>
+                            <span className="text-[10px] font-bold text-slate-600"> / {XP_PER_LEVEL} XP</span>
+                        </div>
+                    </div>
+                    {/* Progress Bar BG */}
+                    <div className="h-2 w-full bg-slate-800 rounded-full overflow-hidden">
+                        <div
+                            className="h-full bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.5)] rounded-full transition-all duration-1000"
+                            style={{ width: `${xpProgress}%` }}
+                        />
+                    </div>
+                </div>
+            </div>
+
+            {/* --- TRAINER AREA (Mobile Only - Strip) --- */}
+            {isTrainer && (
+                <button
+                    onClick={onNavigateToTrainer}
+                    className="w-full py-2 mb-6 bg-cyan-950/30 border-y border-cyan-900/50 flex items-center justify-center gap-2 text-xs font-bold text-cyan-400 uppercase tracking-widest hover:bg-cyan-950/50 transition-colors lg:hidden"
+                >
+                    <Users size={14} />
+                    Área do Personal
+                </button>
+            )}
+
+            {/* --- BODY STATS --- */}
+            <div className="mb-6">
+                <div className="bg-slate-900/50 border border-slate-800 rounded-3xl p-5 relative overflow-hidden">
+                    <div className="flex items-center gap-2 mb-4">
+                        <Activity size={18} className="text-blue-500" />
+                        <h3 className="text-sm font-bold text-white">Dados Corporais</h3>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                        {/* Weight */}
+                        <div>
+                            <p className="text-sm text-slate-500 mb-1">Peso</p>
+                            <div className="flex items-baseline gap-1">
+                                <span className="text-xl font-bold text-white">{profile.weight || '--'}</span>
+                                <span className="text-xs text-slate-500">kg</span>
                             </div>
-                            <div className="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden">
-                                <div
-                                    className="h-full bg-blue-500 rounded-full shadow-[0_0_10px_rgba(59,130,246,0.5)] transition-all duration-1000"
-                                    style={{ width: `${xpProgress}%` }}
-                                />
+                        </div>
+                        {/* Height */}
+                        <div>
+                            <p className="text-sm text-slate-500 mb-1">Altura</p>
+                            <div className="flex items-baseline gap-1">
+                                <span className="text-xl font-bold text-white">{profile.height || '--'}</span>
+                                <span className="text-xs text-slate-500">cm</span>
+                            </div>
+                        </div>
+                        {/* Age */}
+                        <div>
+                            <p className="text-sm text-slate-500 mb-1">Idade</p>
+                            <div className="flex items-baseline gap-1">
+                                <span className="text-xl font-bold text-white">{profile.age || '--'}</span>
+                                <span className="text-xs text-slate-500">anos</span>
+                            </div>
+                        </div>
+                        {/* BMI */}
+                        <div>
+                            <p className="text-sm text-slate-500 mb-1">IMC</p>
+                            <div className="flex items-baseline gap-1">
+                                <span className={`text-xl font-bold ${calculateBMI() ? 'text-white' : 'text-slate-600'}`}>
+                                    {calculateBMI() || '--'}
+                                </span>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            {/* --- STATS CARDS --- */}
-            <div className="grid grid-cols-2 gap-4 mb-6">
-                {/* Treinos */}
-                <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-5 flex items-center gap-4 relative overflow-hidden group hover:border-slate-700 transition-colors">
+
+            {/* --- BIG 3 HIGHLIGHTS (UPDATED to TOP 4) --- */}
+            <div className="bg-slate-900/50 border border-slate-800 rounded-3xl p-6 mt-6">
+                <div className="flex items-center gap-2 mb-4">
+                    <Trophy size={18} className="text-amber-500" />
+                    <h3 className="text-sm font-bold text-white uppercase tracking-wider">Melhores Marcas (1RM Estimado)</h3>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                    {(() => {
+                        // 1. Get all maxes
+                        const allMaxes = stats?.exerciseMaxes ? Object.entries(stats.exerciseMaxes) : [];
+                        // 2. Sort by weight desc
+                        const sortedMaxes = allMaxes.sort(([, weightA], [, weightB]) => weightB - weightA);
+                        // 3. Take top 4
+                        const top4 = sortedMaxes.slice(0, 4);
+
+                        // 4. Fill with placeholders if less than 4
+                        const displayItems = [...top4];
+                        while (displayItems.length < 4) {
+                            displayItems.push(null);
+                        }
+
+                        return displayItems.map((item, index) => {
+                            if (!item) {
+                                // Placeholder
+                                return (
+                                    <div key={`placeholder-${index}`}>
+                                        <p className="text-sm text-slate-500 mb-1">--</p>
+                                        <div className="flex items-baseline gap-1">
+                                            <span className="text-xl font-bold text-slate-700">--</span>
+                                        </div>
+                                    </div>
+                                );
+                            }
+
+                            const [name, weight] = item;
+                            const displayName = name.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
+
+                            return (
+                                <div key={name}>
+                                    <p className="text-sm text-slate-500 mb-1 truncate" title={displayName}>{displayName}</p>
+                                    <div className="flex items-baseline gap-1">
+                                        <span className="text-xl font-bold text-white">{weight}</span>
+                                        <span className="text-xs text-slate-500">kg</span>
+                                    </div>
+                                </div>
+                            );
+                        });
+                    })()}
+                </div>
+            </div>
+
+            {/* --- STATS GRID --- */}
+            <div className="grid grid-cols-2 gap-4 mb-6 mt-6">
+                {/* Treinos (Clickable) */}
+                <button
+                    onClick={onNavigateToHistory}
+                    className="bg-slate-900/50 border border-slate-800 rounded-2xl p-5 flex items-center gap-4 relative overflow-hidden group hover:border-blue-500/50 hover:bg-slate-900 transition-all text-left"
+                >
                     <div className="w-12 h-12 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-500 group-hover:scale-110 transition-transform">
-                        <Target size={24} />
+                        <Dumbbell size={24} />
                     </div>
                     <div>
-                        <p className="text-xs font-medium text-slate-500 mb-0.5">Treinos</p>
-                        <p className="text-3xl font-bold text-white">{stats?.totalWorkouts || 0}</p>
+                        <p className="text-sm font-medium text-slate-500 mb-0.5">Treinos</p>
+                        <p className="text-xl md:text-3xl font-bold text-white">{stats?.totalWorkouts || 0}</p>
                     </div>
-                </div>
+                </button>
 
                 {/* Streak */}
                 <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-5 flex items-center gap-4 relative overflow-hidden group hover:border-slate-700 transition-colors">
@@ -284,24 +421,27 @@ export default function ProfilePage({ user, onLogout }) {
                         <Activity size={24} />
                     </div>
                     <div>
-                        <p className="text-xs font-medium text-slate-500 mb-0.5">Streak Atual</p>
-                        <p className="text-3xl font-bold text-white">{stats?.currentStreakDays || 0}</p>
+                        <p className="text-sm font-medium text-slate-500 mb-0.5">Sequência</p>
+                        <p className="text-xl md:text-3xl font-bold text-white">{stats?.currentStreakDays || 0}</p>
                     </div>
                 </div>
 
-                {/* Volume */}
-                <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-5 flex items-center gap-4 relative overflow-hidden group hover:border-slate-700 transition-colors">
+                {/* Volume (Clickable) */}
+                <button
+                    onClick={onNavigateToVolumeAnalysis}
+                    className="bg-slate-900/50 border border-slate-800 rounded-2xl p-5 flex items-center gap-4 relative overflow-hidden group hover:border-purple-500/50 hover:bg-slate-900 transition-all text-left"
+                >
                     <div className="w-12 h-12 rounded-full bg-purple-500/10 flex items-center justify-center text-purple-500 group-hover:scale-110 transition-transform">
-                        <Activity size={24} className="rotate-45" />
+                        <BicepsFlexed size={24} />
                     </div>
                     <div>
-                        <p className="text-xs font-medium text-slate-500 mb-0.5">Volume Total</p>
-                        <p className="text-3xl font-bold text-white">
+                        <p className="text-sm font-medium text-slate-500 mb-0.5">Volume</p>
+                        <p className="text-xl md:text-3xl font-bold text-white">
                             {((stats?.totalTonnageKg || 0) / 1000).toFixed(1)}
                         </p>
-                        <p className="text-[10px] text-slate-500 font-medium">toneladas</p>
+                        <p className="text-[10px] text-slate-500 font-medium">ton</p>
                     </div>
-                </div>
+                </button>
 
                 {/* Records */}
                 <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-5 flex items-center gap-4 relative overflow-hidden group hover:border-slate-700 transition-colors">
@@ -309,8 +449,8 @@ export default function ProfilePage({ user, onLogout }) {
                         <Trophy size={24} />
                     </div>
                     <div>
-                        <p className="text-xs font-medium text-slate-500 mb-0.5">Records</p>
-                        <p className="text-3xl font-bold text-white">{stats?.prsCount || 0}</p>
+                        <p className="text-sm font-medium text-slate-500 mb-0.5">Recordes</p>
+                        <p className="text-xl md:text-3xl font-bold text-white">{stats?.prsCount || 0}</p>
                     </div>
                 </div>
             </div>
@@ -405,10 +545,149 @@ export default function ProfilePage({ user, onLogout }) {
                     onClick={onLogout}
                     className="flex items-center gap-2 text-red-500/80 hover:text-red-500 text-sm font-medium transition-colors"
                 >
-                    <LogOut size={16} />
                     Sair da Conta
                 </button>
             </div>
+
+
+            {/* --- EDIT MODAL --- */}
+            {showEditModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" onClick={() => setShowEditModal(false)}>
+                    <div className="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-md p-6 relative" onClick={e => e.stopPropagation()}>
+                        <button
+                            onClick={() => setShowEditModal(false)}
+                            className="absolute top-4 right-4 text-slate-500 hover:text-white"
+                        >
+                            <X size={20} />
+                        </button>
+
+                        <h2 className="text-xl font-bold text-white mb-6">Editar Perfil</h2>
+
+                        <div className="space-y-4">
+                            {/* Name */}
+                            <div>
+                                <label className="block text-xs font-medium text-slate-400 mb-1.5">Nome de Exibição</label>
+                                <input
+                                    type="text"
+                                    name="displayName"
+                                    value={profile.displayName}
+                                    onChange={handleChange}
+                                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                                    placeholder="Seu nome"
+                                />
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                {/* Weight */}
+                                <div>
+                                    <label className="block text-xs font-medium text-slate-400 mb-1.5">Peso (kg)</label>
+                                    <input
+                                        type="number"
+                                        name="weight"
+                                        value={profile.weight}
+                                        onChange={handleChange}
+                                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                                        placeholder="0.0"
+                                    />
+                                </div>
+                                {/* Height */}
+                                <div>
+                                    <label className="block text-xs font-medium text-slate-400 mb-1.5">Altura (cm)</label>
+                                    <input
+                                        type="number"
+                                        name="height"
+                                        value={profile.height}
+                                        onChange={handleChange}
+                                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                                        placeholder="0"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                {/* Age */}
+                                <div>
+                                    <label className="block text-xs font-medium text-slate-400 mb-1.5">Idade</label>
+                                    <input
+                                        type="number"
+                                        name="age"
+                                        value={profile.age}
+                                        onChange={handleChange}
+                                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                                        placeholder="0"
+                                    />
+                                </div>
+                                {/* Weekly Goal */}
+                                <div>
+                                    <label className="block text-xs font-medium text-slate-400 mb-1.5">Meta Semanal</label>
+                                    <div className="flex items-center gap-3 bg-slate-950 border border-slate-800 rounded-xl px-4 py-2">
+                                        <button
+                                            onClick={() => setProfile(p => ({ ...p, weeklyGoal: Math.max(1, (p.weeklyGoal || 4) - 1) }))}
+                                            className="w-8 h-8 flex items-center justify-center bg-slate-800 rounded-lg text-slate-400 hover:text-white"
+                                        >
+                                            <Minus size={16} />
+                                        </button>
+                                        <span className="flex-1 text-center font-bold text-white">{profile.weeklyGoal}</span>
+                                        <button
+                                            onClick={() => setProfile(p => ({ ...p, weeklyGoal: Math.min(7, (p.weeklyGoal || 4) + 1) }))}
+                                            className="w-8 h-8 flex items-center justify-center bg-slate-800 rounded-lg text-slate-400 hover:text-white"
+                                        >
+                                            <Plus size={16} />
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="mt-8">
+                            <Button
+                                onClick={handleSave}
+                                isLoading={saving}
+                                className="w-full py-3.5 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl shadow-lg shadow-blue-500/20"
+                            >
+                                Salvar Alterações
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* --- LINK TRAINER MODAL --- */}
+            {showLinkTrainer && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                    <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setShowLinkTrainer(false)} />
+                    <div className="relative w-full max-w-sm bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-2xl animate-in fade-in zoom-in-95">
+                        <h2 className="text-lg font-bold text-white mb-4">Vincular Personal</h2>
+                        <div className="space-y-4">
+                            <div>
+                                <label className="text-xs text-slate-400 font-bold uppercase">Código do Personal (UID)</label>
+                                <input
+                                    type="text"
+                                    className="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-white mt-1 focus:border-cyan-500 outline-none font-mono text-sm"
+                                    placeholder="Cole o ID completo..."
+                                    value={inviteCode}
+                                    onChange={(e) => setInviteCode(e.target.value)}
+                                />
+                                <p className="text-[10px] text-slate-500 mt-1">Peça o código para seu treinador.</p>
+                            </div>
+                            <Button
+                                onClick={handleLinkTrainer}
+                                loading={linking}
+                                className="w-full bg-cyan-500 hover:bg-cyan-400 text-black font-bold h-12 rounded-xl"
+                            >
+                                Confirmar Vínculo
+                            </Button>
+                            <button
+                                onClick={() => setShowLinkTrainer(false)}
+                                className="w-full py-2 text-sm text-slate-500 hover:text-white"
+                            >
+                                Cancelar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
+
     );
 }

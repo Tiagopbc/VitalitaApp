@@ -207,6 +207,8 @@ export function calculateStats(sessions) {
         totalSets,
         totalReps,
         prsCount,
-        distinctExercises: distinctExercisesSet.size
+        prsCount,
+        distinctExercises: distinctExercisesSet.size,
+        exerciseMaxes: exerciseMaxWeight
     };
 }

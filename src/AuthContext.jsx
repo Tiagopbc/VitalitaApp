@@ -5,11 +5,7 @@
  * Envolve o listener do Firebase Auth para gerenciar sessões globalmente.
  */
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { auth } from './firebaseConfig';
-import {
-    onAuthStateChanged,
-    signOut
-} from 'firebase/auth';
+import { authService } from './services/authService';
 
 const AuthContext = createContext(null);
 
@@ -18,7 +14,7 @@ export function AuthProvider({ children }) {
     const [authLoading, setAuthLoading] = useState(true);
 
     useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+        const unsubscribe = authService.subscribe((firebaseUser) => {
             setUser(firebaseUser || null);
             setAuthLoading(false);
         });
@@ -28,7 +24,7 @@ export function AuthProvider({ children }) {
 
     const logout = async () => {
         try {
-            await signOut(auth);
+            await authService.logout();
             localStorage.removeItem('activeWorkoutId');
         } catch (err) {
             console.error('Erro ao fazer logout', err);

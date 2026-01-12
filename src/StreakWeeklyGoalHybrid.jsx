@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Target, Trophy, Flame, CheckCircle2, ChevronDown, ChevronUp, Dumbbell, TrendingUp, Clock, AlertCircle } from 'lucide-react';
+import { Target, Trophy, Flame, CheckCircle2, ChevronDown, ChevronUp, Dumbbell, TrendingUp, Clock, AlertCircle, BedDouble, Moon, Sparkles } from 'lucide-react';
 
 
 export function StreakWeeklyGoalHybrid({
@@ -102,7 +102,7 @@ export function StreakWeeklyGoalHybrid({
 
     return (
         <div
-            className="relative p-4 rounded-2xl overflow-hidden transition-all duration-300"
+            className="relative p-5 sm:p-6 rounded-2xl overflow-hidden transition-all duration-300 w-full lg:max-w-3xl lg:mx-auto"
             style={{
                 background: `
           radial-gradient(circle at top left, ${level.glowColor}, transparent 70%),
@@ -110,10 +110,10 @@ export function StreakWeeklyGoalHybrid({
         `,
                 border: `1.5px solid ${level.borderColor}`,
                 boxShadow: `
-          0 0 40px ${level.glowColor},
+          0 0 25px ${level.glowColor},
           inset 0 1px 0 rgba(255,255,255,0.08),
           inset 0 -1px 0 rgba(0,0,0,0.5),
-          0 20px 40px rgba(0,0,0,0.5),
+          0 20px 30px rgba(0,0,0,0.4),
           0 0 0 1px rgba(0,0,0,0.1)
         `
             }}
@@ -141,12 +141,12 @@ export function StreakWeeklyGoalHybrid({
                 )}
 
                 {/* Header - Grid System (MELHORIA #1, #2) */}
-                <div className="grid grid-cols-3 gap-4 items-center mb-6">
+                <div className="grid grid-cols-3 gap-3 sm:gap-4 items-center mb-6 sm:mb-8">
                     {/* Coluna 1 - Badge COMPACTO (MELHORIA #2) */}
                     <div className="flex justify-start">
-                        <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-xl bg-gradient-to-r from-amber-500/15 to-orange-500/15 border border-amber-500/40">
+                        <div className="flex items-center gap-1.5 px-3 py-2 rounded-2xl bg-slate-900/50 border border-amber-500/20 backdrop-blur-sm shadow-inner shadow-amber-500/5">
                             <Flame size={16} className="text-amber-400" />
-                            <span className="text-sm font-bold uppercase tracking-wider text-amber-400">
+                            <span className="text-[13px] sm:text-sm font-bold uppercase tracking-wide text-amber-400">
                                 {level.name}
                             </span>
                         </div>
@@ -154,18 +154,16 @@ export function StreakWeeklyGoalHybrid({
 
                     {/* Coluna 2 - Streak GRANDE (MELHORIA #1) */}
                     <div className="flex flex-col items-center">
-                        <span className="text-5xl lg:text-6xl font-bold text-white leading-none">{currentStreak}</span>
-                        <span className="text-[9px] uppercase tracking-wider text-slate-500 mt-1">Semanas</span>
+                        <span className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white leading-none">{currentStreak}</span>
+                        <span className="text-[12px] sm:text-[12px] uppercase font-bold tracking-wide text-slate-300/90 mt-1 text-center leading-snug">Semanas consecutivas</span>
                     </div>
 
                     {/* Coluna 3 - Recorde */}
-                    <div className="flex justify-end">
-                        <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-gradient-to-r from-amber-500/10 to-yellow-500/10 border border-amber-400/30">
-                            <Trophy size={18} className="text-amber-400 animate-pulse" />
-                            <div className="flex flex-col">
-                                <span className="text-2xl font-bold text-amber-400 leading-none">{bestStreak}</span>
-                                <span className="text-[9px] uppercase tracking-wider text-amber-400/70">Recorde</span>
-                            </div>
+                    <div className="flex justify-center">
+                        <div className="flex items-center gap-2 px-4 sm:px-5 py-2.5 min-w-[140px] sm:min-w-[170px] rounded-2xl bg-slate-900/50 border border-amber-500/25 backdrop-blur-sm shadow-inner shadow-amber-500/10">
+                            <Trophy size={20} className="text-amber-400" />
+                            <span className="text-[13px] sm:text-sm font-semibold text-slate-100/90">Recorde:</span>
+                            <span className="text-[15px] sm:text-base font-extrabold text-amber-400 leading-none">{bestStreak}</span>
                         </div>
                     </div>
                 </div>
@@ -234,128 +232,159 @@ export function StreakWeeklyGoalHybrid({
                 )}
 
                 {/* Meta Semanal - Sempre visível */}
-                <div className="mb-4 p-3 rounded-xl bg-gradient-to-r from-cyan-500/10 to-blue-500/10 border border-cyan-500/30">
-                    <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-1.5">
-                            <Target size={14} className="text-cyan-400" />
-                            <span className="text-xs text-slate-300">Meta desta semana</span>
-                        </div>
-                        <span className="text-sm font-bold text-white">{Math.round(progressPercent)}%</span>
-                    </div>
+                {/* Meta Semanal - Premium Card */}
+                <div className="mb-8 p-5 rounded-3xl bg-slate-900/40 backdrop-blur-md border border-white/5 shadow-2xl relative overflow-hidden">
+                    {/* Ambient Glow */}
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-cyan-500/10 blur-[60px] rounded-full -mr-10 -mt-10 pointer-events-none"></div>
 
-                    {/* MELHORIA #8: Barra animada com shimmer */}
-                    <div className="w-full h-2.5 bg-slate-800/80 rounded-full overflow-hidden mb-2 shadow-inner">
-                        <div
-                            className="h-full rounded-full bg-gradient-to-r from-cyan-400 via-blue-500 to-blue-600 transition-all duration-1000 ease-out shadow-lg shadow-cyan-500/60 relative overflow-hidden"
-                            style={{
-                                width: `${animatedProgress}%`,
-                                transitionDelay: '100ms'
-                            }}
-                        >
-                            {/* Brilho animado */}
-                            <div className="h-full w-full absolute inset-0">
-                                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-shimmer"></div>
+                    <div className="relative z-10">
+                        <div className="flex items-center justify-between mb-4">
+                            <div className="flex items-center gap-2">
+                                <div className="p-1.5 rounded-lg bg-cyan-500/10 border border-cyan-500/20">
+                                    <Target size={14} className="text-cyan-400" />
+                                </div>
+                                <span className="text-[13px] sm:text-xs font-semibold text-slate-200 tracking-wide">Meta da semana</span>
+                            </div>
+                            <span className="text-[13px] sm:text-sm font-bold text-white bg-white/5 px-2.5 py-1 rounded-md border border-white/5">{Math.round(progressPercent)}%</span>
+                        </div>
+
+                        {/* Barra animada Premium */}
+                        <div className="w-full h-3 bg-slate-950/50 rounded-full overflow-hidden mb-3 ring-1 ring-white/5">
+                            <div
+                                className="h-full rounded-full bg-gradient-to-r from-cyan-400 via-blue-500 to-indigo-500 transition-all duration-1000 ease-out shadow-[0_0_15px_rgba(6,182,212,0.5)] relative overflow-hidden"
+                                style={{
+                                    width: `${animatedProgress}%`,
+                                    transitionDelay: '100ms'
+                                }}
+                            >
+                                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent animate-shimmer"></div>
                             </div>
                         </div>
-                    </div>
 
-                    <div className="flex items-center justify-between text-xs leading-tight">
-                        <span className="text-slate-300 font-medium">
-                            {completedThisWeek}/{weeklyGoal} treinos completos
-                        </span>
-                        {completedThisWeek < weeklyGoal && (
-                            <span className="text-[10px] font-bold text-cyan-400 animate-pulse flex items-center gap-1">
-                                <span>Falta {remainingWorkouts}!</span>
-                                <span>💪</span>
+                        <div className="flex items-center justify-between text-[13px] sm:text-xs">
+                            <span className="text-slate-300/90 font-medium">
+                                <strong className="text-white">{completedThisWeek}</strong> de {weeklyGoal} treinos
                             </span>
-                        )}
+                            {completedThisWeek < weeklyGoal && (
+                                <span className="text-[12px] sm:text-[10px] font-bold text-cyan-300 flex items-center gap-1.5 bg-cyan-500/10 px-2.5 py-1.5 rounded-full border border-cyan-500/20 leading-none">
+                                    <span>Faltam {remainingWorkouts}</span>
+                                    <span className="animate-bounce">�</span>
+                                </span>
+                            )}
+                        </div>
                     </div>
                 </div>
 
                 {/* Seção Expansível */}
 
 
-                {/* Calendário (Cards Semanais - Novo Design) */}
-                <div className={`overflow-hidden transition-all duration-500 ease-in-out px-1 ${expanded ? 'max-h-96 opacity-100 mb-4' : 'max-h-0 opacity-0'}`}>
-                    <div className="grid grid-cols-7 gap-2 mb-4 pt-2">
-                        {(monthDays || weekDays).map((day, idx) => {
-                            // Adjust JS getDay() (0=Sun) to Array Index (0=Mon...6=Sun) 
-                            // Only relevant if using weekDays index logic, but here we use day.dateNumber check
-                            const todayDate = new Date();
-                            // Ensure we only match Today if it's the current month AND day match. 
-                            // Or simpler: compare full Date strings (to avoid match on prev month same number)
-                            // But `day.dateNumber` is just an int.
-                            // If `day` object has `fullDate`, use that!
-                            // I added `fullDate` to HomeDashboard logic. Does `weekDays` fallback have it?
-                            // WeekDays mock doesn't have `fullDate`... wait. I added `dateNumber` to mock but not `fullDate`.
-                            // If I use `day.fullDate`, I must ensure fallback supports it or check existence.
-                            // I'll stick to `day.dateNumber === todayDate.getDate() && !day.isOutsideMonth`.
+                {/* Calendário (Cards Semanais - Novo Design Premium) */}
+                <div className={`overflow-hidden transition-all duration-500 ease-[cubic-bezier(0.4,0,0.2,1)] px-1 ${expanded ? 'max-h-[500px] opacity-100 mb-4' : 'max-h-0 opacity-0'}`}>
 
-                            const isToday = day.dateNumber === todayDate.getDate() && !day.isOutsideMonth && !day.empty;
+                    {/* Glass Container for Calendar */}
+                    <div className="bg-slate-900/40 backdrop-blur-md border border-white/5 rounded-2xl p-2.5 sm:p-4 lg:max-w-md lg:mx-auto shadow-inner shadow-white/5">
 
-                            const dayLetter = day.day ? day.day.charAt(0) : '';
-
-                            return (
-                                <div
-                                    key={idx}
-                                    className={`
-                                        relative flex flex-col items-center justify-center py-2 rounded-xl transition-all duration-300
-                                        ${day.trained
-                                            ? 'bg-gradient-to-b from-cyan-400 to-blue-600 shadow-[0_0_15px_rgba(6,182,212,0.4)]'
-                                            : 'bg-slate-800/40'
-                                        }
-                                        ${isToday ? 'ring-2 ring-amber-400 box-border' : ''}
-                                        ${day.isOutsideMonth ? 'opacity-60' : ''}
-                                    `}
-                                    style={{ aspectRatio: '1/1.2' }}
-                                    onMouseEnter={() => setHoveredDay(idx)}
-                                    onMouseLeave={() => setHoveredDay(null)}
-                                >
-                                    {/* Green Check Badge for Completed */}
-                                    {day.trained && (
-                                        <div className="absolute -top-1.5 -left-1.5 w-4 h-4 rounded-full bg-emerald-500 border border-[#0f172a] shadow-sm flex items-center justify-center z-10">
-                                            <CheckCircle2 size={10} className="text-white" strokeWidth={4} />
-                                        </div>
-                                    )}
-
-                                    {/* Day Letter - Only show for top row? Or all? User spec "Cards Semanais" implie headers. 
-                                        But for month view, usually headers are separate.
-                                        However, the design is "Cards". Each card has a letter. I'll keep it for now.
-                                    */}
-                                    <span className={`text-[10px] font-bold mb-0.5 uppercase ${day.trained ? 'text-white/80' : 'text-slate-500'}`}>
-                                        {dayLetter}
-                                    </span>
-
-                                    {/* Date Number */}
-                                    <span className={`text-xl font-bold leading-none ${day.trained ? 'text-white' : 'text-slate-400'}`}>
-                                        {day.dateNumber}
-                                    </span>
+                        <div className="grid grid-cols-7 gap-1 sm:gap-2 mb-2 sm:mb-3 px-0.5">
+                            {['D', 'S', 'T', 'Q', 'Q', 'S', 'S'].map((day, i) => (
+                                <div key={i} className="text-center text-[9px] sm:text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                                    {day}
                                 </div>
-                            );
-                        })}
-                    </div>
-
-                    {/* Footer Legend (Only visible when expanded) */}
-                    <div className="flex items-center gap-3 px-1 border-t border-slate-800/50 pt-3 mb-2">
-                        <div className="flex items-center gap-1.5">
-                            <div className="w-2.5 h-2.5 rounded-full bg-gradient-to-br from-cyan-400 to-blue-600 shadow-[0_0_5px_rgba(6,182,212,0.5)]"></div>
-                            <span className="text-[10px] text-slate-400 font-medium">Completos</span>
+                            ))}
                         </div>
-                        <div className="flex items-center gap-1.5">
-                            <div className="w-2.5 h-2.5 rounded-full bg-slate-800 border border-slate-700"></div>
-                            <span className="text-[10px] text-slate-500 font-medium">Restantes</span>
+
+                        <div className="grid grid-cols-7 gap-1 sm:gap-2">
+                            {((monthDays && monthDays.length > 0) ? monthDays : weekDays).map((day, idx) => {
+                                const todayDate = new Date();
+                                const isToday = day.dateNumber === todayDate.getDate() && !day.isOutsideMonth && !day.status?.includes('prev');
+
+                                // Status Defaults
+                                let status = day.status;
+                                if (!status) {
+                                    if (day.trained) status = 'trained';
+                                    else if (day.isOutsideMonth) status = 'prev_month_rest';
+                                    else status = 'rest';
+                                }
+
+                                // Base Styles
+                                let cardClass = "relative aspect-square rounded-xl flex flex-col items-center justify-center border transition-all duration-300 group";
+                                let content = null;
+                                let animationDelay = `${idx * 0.03}s`;
+
+                                if (status === 'trained') {
+                                    cardClass += " bg-gradient-to-br from-cyan-500 to-blue-600 border-white/10 shadow-[0_0_12px_rgba(6,182,212,0.4)] hover:scale-105 active:scale-95 z-10";
+                                    content = (
+                                        <>
+                                            <span className="text-white font-bold text-sm sm:text-base leading-none drop-shadow-md">{day.dateNumber}</span>
+                                            <div className="absolute bottom-1 right-1 opacity-100">
+                                                <CheckCircle2 size={10} className="text-white" strokeWidth={3} />
+                                            </div>
+                                        </>
+                                    );
+                                } else if (status === 'future') {
+                                    // FUTURO: Minimalista, baixa opacidade
+                                    cardClass += " bg-transparent border-slate-800/60 opacity-40 hover:opacity-70 hover:border-slate-700";
+                                    content = <span className="text-slate-500 font-medium text-xs sm:text-sm">{day.dateNumber}</span>;
+                                } else if (status === 'rest' || status === 'prev_month_rest') {
+                                    // DESCANSO: Fundo profundo, Ícone de Lua
+                                    const isOutside = day.isOutsideMonth;
+                                    cardClass += ` bg-slate-800/40 border-slate-800 ${isOutside ? 'opacity-30' : 'opacity-80 hover:opacity-100'} hover:bg-slate-800`;
+
+                                    content = (
+                                        <>
+                                            {/* Date number hidden, Moon icon always visible */}
+                                            <div className="flex items-center justify-center">
+                                                <Moon size={14} className="text-indigo-400" />
+                                            </div>
+                                            {/* Small indicator dot removed since icon is visible */}
+                                        </>
+                                    );
+                                }
+
+                                // TODAY Highlight
+                                if (isToday) {
+                                    cardClass += " ring-2 ring-amber-400 ring-offset-2 ring-offset-slate-950 shadow-[0_0_15px_rgba(251,191,36,0.2)]";
+                                }
+
+                                return (
+                                    <div
+                                        key={idx}
+                                        className={`${cardClass} animate-fadeInUp`}
+                                        style={{ animationDelay: expanded ? animationDelay : '0s', animationFillMode: 'both' }}
+                                        onMouseEnter={() => setHoveredDay(idx)}
+                                        onMouseLeave={() => setHoveredDay(null)}
+                                    >
+                                        {content}
+                                    </div>
+                                );
+                            })}
+                        </div>
+
+                        {/* Footer Legend */}
+                        <div className="flex items-center justify-center gap-4 mt-4 pt-3 border-t border-white/5">
+                            <div className="flex items-center gap-1.5">
+                                <div className="w-2 h-2 rounded-full bg-cyan-500 shadow-[0_0_6px_rgba(6,182,212,0.8)]"></div>
+                                <span className="text-[10px] text-slate-400 uppercase tracking-wide font-semibold">Feito</span>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                                <div className="w-2 h-2 rounded-full bg-slate-700"></div>
+                                <span className="text-[10px] text-slate-500 uppercase tracking-wide font-semibold">Descanso</span>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                                <div className="w-2 h-2 rounded-full border border-amber-400"></div>
+                                <span className="text-[10px] text-slate-400 uppercase tracking-wide font-semibold">Hoje</span>
+                            </div>
                         </div>
                     </div>
                 </div>
 
                 {/* Always Visible Toggle Button */}
-                <div className="flex justify-end px-1 mt-2">
+                <div className="flex justify-center px-1 mt-2">
                     <button
                         onClick={(e) => {
                             e.stopPropagation();
                             setExpanded(!expanded);
                         }}
-                        className="text-[10px] font-bold text-cyan-400 flex items-center gap-1 hover:text-cyan-300 transition-colors py-2"
+                        className="text-[14px] sm:text-[13px] font-semibold text-cyan-300 flex items-center gap-1.5 hover:text-cyan-200 transition-colors min-h-[44px] py-3 px-3 rounded-xl"
                     >
                         {expanded ? 'Ocultar calendário' : 'Ver calendário completo'}
                         <ChevronDown size={14} className={`transition-transform duration-300 ${expanded ? 'rotate-180' : ''}`} />
@@ -388,4 +417,3 @@ export function StreakWeeklyGoalHybrid({
         </div>
     );
 }
-

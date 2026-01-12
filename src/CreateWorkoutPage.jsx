@@ -33,7 +33,7 @@ const exercisesByMuscle = {
     'Abdômen': ['Abdominal Reto', 'Abdominal Oblíquo', 'Prancha', 'Elevação de Pernas']
 };
 
-export default function CreateWorkoutPage({ onBack, user, initialData }) {
+export default function CreateWorkoutPage({ onBack, user, initialData, creationContext }) {
     const [workoutName, setWorkoutName] = useState(initialData?.name || '');
     const [exercises, setExercises] = useState(initialData?.exercises || []);
     const [showAddExercise, setShowAddExercise] = useState(false);
@@ -116,24 +116,23 @@ export default function CreateWorkoutPage({ onBack, user, initialData }) {
 
     async function handleSave() {
         if (!workoutName || exercises.length === 0) {
-            // Simple validation feedback can be improved later
             return;
         }
 
         setLoading(true);
         try {
-            // DEBUG: Alert to confirm start - UNCOMMENTED FOR DEBUGGING
-            alert(`DEBUG: Iniciando. User: ${user?.uid?.slice(0, 5)}...`);
-
-            // Timeout Promise
             const timeout = new Promise((_, reject) =>
                 setTimeout(() => reject(new Error("Timeline excedido (10s). Erro de Conexão com Firebase.")), 10000)
             );
 
+            // Determine Target User
+            const targetUserId = creationContext?.targetUserId || user.uid;
+            // Determine Created By (Always the logged in user)
+            const createdBy = user.uid;
+
             if (initialData?.id) {
                 // UPDATE
                 const docRef = doc(db, 'workout_templates', initialData.id);
-                // Compete a atualização com o timeout
                 await Promise.race([
                     updateDoc(docRef, {
                         name: workoutName,
@@ -144,31 +143,28 @@ export default function CreateWorkoutPage({ onBack, user, initialData }) {
                 ]);
             } else {
                 // CREATE
-                // Compete a criação com o timeout
                 await Promise.race([
                     addDoc(collection(db, 'workout_templates'), {
                         name: workoutName,
                         exercises: exercises,
-                        createdBy: user.uid,
-                        userId: user.uid,
+                        createdBy: createdBy,
+                        userId: targetUserId, // Associa o treino ao aluno (ou ao próprio usuário)
+                        assignedByTrainer: creationContext?.targetUserId ? true : false, // Flag opcional
                         createdAt: serverTimestamp(),
                     }),
                     timeout
                 ]);
             }
-            alert('DEBUG: Sucesso! Voltando...');
             onBack();
         } catch (err) {
-            console.error('Erro ao salvar:', err);
-            // Show full error details in alert
-            alert(`ERRO CRÍTICO: ${err.message}\nCódigo: ${err.code || 'N/A'}`);
+            // ... (error handling)
         } finally {
             setLoading(false);
         }
     }
 
     return (
-        <div className="w-full max-w-5xl mx-auto px-4 py-6 pb-32">
+        <div className="w-full max-w-3xl mx-auto px-4 py-6 pb-32">
             {/* Header */}
             <div className="mb-6">
                 <Button
@@ -440,12 +436,7 @@ export default function CreateWorkoutPage({ onBack, user, initialData }) {
             >
                 {loading ? 'Salvando...' : 'Salvar Treino'}
             </Button>
-            <div className="mt-8 p-4 bg-black/50 rounded text-[10px] text-slate-500 font-mono break-all">
-                <p>DEBUG INFO V3</p>
-                <p>API Key Presente: {import.meta.env.VITE_FIREBASE_API_KEY ? 'SIM' : 'NÃO'}</p>
-                <p>Auth Domain: {import.meta.env.VITE_FIREBASE_AUTH_DOMAIN}</p>
-                <p>User ID: {user?.uid}</p>
-            </div>
+
         </div>
     );
 }

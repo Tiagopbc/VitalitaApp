@@ -16,8 +16,12 @@ import CreateWorkoutPage from './CreateWorkoutPage';
 import ProfilePage from './ProfilePage';
 import WorkoutsPage from './WorkoutsPage';
 import { WorkoutExecutionPage } from './WorkoutExecutionPage';
+import { TrainerDashboard } from './TrainerDashboard';
+import { userService } from './services/userService';
+// import { collection, query, where, getCountFromServer } from 'firebase/firestore'; 
 import { useAuth } from './AuthContext';
 import './style.css';
+
 
 class ErrorBoundary extends React.Component {
     constructor(props) {
@@ -73,8 +77,30 @@ function App() {
 
 function AppContent() {
     const { user, authLoading, logout } = useAuth();
+    const [isTrainer, setIsTrainer] = useState(false);
 
-    const [inWorkout, setInWorkout] = useState(false);
+    useEffect(() => {
+        if (!user) {
+            setIsTrainer(false);
+            return;
+        }
+
+        async function checkTrainerStatus() {
+            try {
+                const isTrainer = await userService.checkTrainerStatus(user.uid);
+                setIsTrainer(isTrainer);
+            } catch (err) {
+                console.error("Error checking trainer status:", err);
+            }
+        }
+
+        checkTrainerStatus();
+    }, [user]);
+
+    const [inWorkout, setInWorkout] = useState(() => {
+        const savedId = localStorage.getItem('activeWorkoutId');
+        return !!savedId;
+    });
 
     const [activeWorkoutId, setActiveWorkoutId] = useState(() => {
         const saved = localStorage.getItem('activeWorkoutId');
@@ -82,12 +108,20 @@ function AppContent() {
     });
 
     const [currentView, setCurrentView] = useState(() => {
-        const saved = localStorage.getItem('activeWorkoutId');
-        // If we want to restore session on reload, we could handle it here,
-        // but for now let's default to home or check if we want persistent 'inWorkout'.
-        // For the new page, let's keep it simple: defaults to home if refreshed (or handle persistence later).
-        return 'home';
+        // If there is an active workout, we probably want to show it or the home/workouts page context?
+        // But if the user was just navigating, we restore that view.
+        // However, if we are inWorkout, the App component returns WorkoutExecutionPage early (line 313),
+        // so currentView doesn't matter as much until they finish.
+        // But for non-workout navigation:
+        const savedView = localStorage.getItem('currentView');
+        return savedView || 'home';
     });
+
+    useEffect(() => {
+        if (currentView) {
+            localStorage.setItem('currentView', currentView);
+        }
+    }, [currentView]);
 
     // ... (rest of state)
 
@@ -260,19 +294,28 @@ function AppContent() {
     }
 
     const [editingWorkout, setEditingWorkout] = useState(null);
+    const [creationContext, setCreationContext] = useState(null); // { targetUserId: string, targetUserName: string }
 
-    function handleCreateWorkout(workoutToEdit = null) {
+    function handleCreateWorkout(workoutToEdit = null, context = null) {
         if (workoutToEdit?.id) {
             setEditingWorkout(workoutToEdit);
         } else {
             setEditingWorkout(null);
         }
+        setCreationContext(context);
         setCurrentView('create-workout');
     }
 
     function handleBackFromCreate() {
         setEditingWorkout(null);
-        setCurrentView('home');
+        setCreationContext(null);
+        // If we were prescribing, maybe go back to trainer? For now, home or determine by context?
+        // Let's default to home for now to keep it simple, or check logic later.
+        if (creationContext?.targetUserId) {
+            setCurrentView('trainer');
+        } else {
+            setCurrentView('home');
+        }
     }
 
     function getActiveTab() {
@@ -283,6 +326,7 @@ function AppContent() {
         if (currentView === 'history') return 'history';
         if (currentView === 'profile') return 'profile';
         if (currentView === 'workout') return 'workouts';
+        if (currentView === 'trainer') return 'partners'; // or 'trainer' if we add that ID
         return 'home';
     }
 
@@ -294,6 +338,7 @@ function AppContent() {
         if (tabId === 'new') handleCreateWorkout();
         if (tabId === 'history') handleOpenHistoryFromHeader();
         if (tabId === 'profile') setCurrentView('profile');
+        if (tabId === 'partners') setCurrentView('trainer');
     }
 
     if (authLoading) {
@@ -332,6 +377,7 @@ function AppContent() {
                 onBack={handleBackFromCreate}
                 user={user}
                 initialData={editingWorkout}
+                creationContext={creationContext}
             />
         );
     } else if (currentView === 'methods') {
@@ -363,6 +409,18 @@ function AppContent() {
             <ProfilePage
                 user={user}
                 onLogout={handleLogout}
+                onNavigateToHistory={handleOpenHistoryFromHeader}
+                onNavigateToVolumeAnalysis={() => setCurrentView('volumeAnalysis')}
+                onNavigateToTrainer={() => setCurrentView('trainer')}
+                isTrainer={isTrainer}
+            />
+        );
+    } else if (currentView === 'trainer') {
+        content = (
+            <TrainerDashboard
+                user={user}
+                onBack={() => setCurrentView('profile')}
+                onNavigateToCreateWorkout={handleCreateWorkout}
             />
         );
     } else {
@@ -372,7 +430,7 @@ function AppContent() {
                 onNavigateToCreateWorkout={handleCreateWorkout}
                 onNavigateToWorkout={handleSelectWorkout}
                 onNavigateToHistory={handleOpenHistoryFromHeader}
-                onNavigateToAchievements={() => setCurrentView('achievements')}
+                onNavigateToAchievements={() => setCurrentView('profile')}
                 onNavigateToVolumeAnalysis={() => setCurrentView('volumeAnalysis')}
                 onNavigateToMyWorkouts={() => handleTabChange('workouts')}
                 user={user}
@@ -391,12 +449,13 @@ function AppContent() {
                 activeTab={getActiveTab()}
                 onTabChange={handleTabChange}
                 user={user}
+                isTrainer={isTrainer}
             />
 
             {/* Main Content Area */}
-            {/* Added lg:pl-64 to accommodate wider sidebar width */}
-            <div className="app-shell pt-8 pb-32 lg:pb-8 lg:pt-8 lg:pl-64 transition-all duration-300">
-                <div className="app-inner mx-auto">
+            {/* Main Layout - Content Wrapper */}
+            <div className="w-full min-h-screen pt-[calc(2rem+env(safe-area-inset-top))] pb-32 lg:pb-8 lg:pt-8 lg:pl-64 transition-all duration-300 relative flex flex-col">
+                <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex-1">
                     {/* Only show simplified header if NOT on home (Home has its own greeting) */}
                     {currentView !== 'home' && (
                         <header className="app-header mb-8">
@@ -415,6 +474,7 @@ function AppContent() {
                     <BottomNavEnhanced
                         activeTab={getActiveTab()}
                         onTabChange={handleTabChange}
+                        isTrainer={isTrainer}
                     />
                 </div>
             )}

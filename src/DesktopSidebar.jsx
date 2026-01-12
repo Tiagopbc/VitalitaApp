@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { Home, Dumbbell, PlusCircle, History, TrendingUp } from 'lucide-react';
+import { Home, Dumbbell, PlusCircle, History, TrendingUp, Users } from 'lucide-react';
 
-export function DesktopSidebar({ activeTab, onTabChange, user }) {
+export function DesktopSidebar({ activeTab, onTabChange, user, isTrainer }) {
     const [hoveredTab, setHoveredTab] = useState(null);
 
     const tabs = [
@@ -26,12 +26,15 @@ export function DesktopSidebar({ activeTab, onTabChange, user }) {
             label: 'Histórico',
             icon: History
         },
-        {
-            id: 'profile', // Mapping Progresso to Profile/Stats view
-            label: 'Progresso',
-            icon: TrendingUp
-        }
     ];
+
+    if (isTrainer) {
+        tabs.push({
+            id: 'partners',
+            label: 'Área do Personal',
+            icon: Users
+        });
+    }
 
     return (
         <aside
@@ -100,16 +103,20 @@ export function DesktopSidebar({ activeTab, onTabChange, user }) {
             {/* Bottom User Section - Minimal */}
             {user && (
                 <div className="mt-auto px-4 pb-2">
-                    <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-900/50 border border-slate-800/50">
-                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-xs font-bold text-white">
+                    <button
+                        onClick={() => onTabChange('profile')}
+                        className="w-full flex items-center gap-3 p-3 rounded-xl bg-slate-900/50 border border-slate-800/50 hover:bg-slate-800 transition-colors text-left cursor-pointer group"
+                    >
+                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-xs font-bold text-white group-hover:scale-105 transition-transform">
                             {user.displayName?.charAt(0) || 'U'}
                         </div>
                         <div className="flex flex-col overflow-hidden">
-                            <span className="text-xs font-bold text-slate-300 truncate">{user.displayName}</span>
+                            <span className="text-xs font-bold text-slate-300 truncate group-hover:text-white transition-colors">{user.displayName}</span>
                             <span className="text-[10px] text-slate-500">Online</span>
                         </div>
-                    </div>
+                    </button>
                 </div>
+
             )}
         </aside>
     );

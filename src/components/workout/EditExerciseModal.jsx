@@ -141,7 +141,7 @@ export function EditExerciseModal({ exercise, onClose, onSave }) {
 
                         <RippleButton
                             onClick={() => {
-                                console.log('Salvando exercício', exercise);
+
                                 // For now just close, in real app would save
                                 onSave && onSave(exercise);
                                 onClose();

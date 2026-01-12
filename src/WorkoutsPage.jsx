@@ -12,6 +12,7 @@ import {
     Plus,
     Filter,
     Dumbbell,
+    Crown,
     Clock,
     Calendar,
     MoreVertical,
@@ -23,24 +24,20 @@ import {
     Check,
     Edit2,
     Copy,
-    Trash2
+    Trash2,
+    RefreshCw
 } from 'lucide-react';
 
 import { RippleButton } from './components/design-system/RippleButton';
 import { PremiumCard } from './components/design-system/PremiumCard';
 import { ExerciseCard } from './components/workout/ExerciseCard';
 import { EditExerciseModal } from './components/workout/EditExerciseModal';
+import { workoutService } from './services/workoutService';
+import { useAuth } from './AuthContext';
 
 // --- MOCK DATA FOR ACCORDION DEMO ---
-const EXERCISES_MOCK = {
-    'default': [
-        { name: 'Supino Reto', muscleGroup: 'Peito', lastWeight: 80, lastReps: 10, sets: 4, personalRecord: 85 },
-        { name: 'Supino Inclinado', muscleGroup: 'Peito', lastWeight: 70, lastReps: 10, sets: 4 },
-        { name: 'Crucifixo', muscleGroup: 'Peito', lastWeight: 24, lastReps: 12, sets: 3 },
-        { name: 'Tríceps Testa', muscleGroup: 'Tríceps', lastWeight: 30, lastReps: 12, sets: 3 },
-        { name: 'Tríceps Corda', muscleGroup: 'Tríceps', lastWeight: 40, lastReps: 15, sets: 3 }
-    ]
-};
+// Mock data removed
+
 
 // Filter constants
 const FILTERS = [
@@ -56,13 +53,16 @@ const SORT_OPTIONS = [
     { id: 'name', label: 'Nome' },
 ];
 
-export default function WorkoutsPage({ onNavigateToCreate, onNavigateToWorkout, user }) {
+export default function WorkoutsPage({ onNavigateToCreate, onNavigateToWorkout, user, isTrainerMode }) {
     // --- STATE ---
     const [workouts, setWorkouts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedFilter, setSelectedFilter] = useState('all');
     const [sortBy, setSortBy] = useState('recent');
+
+    // New: Source Filter (All / My / Personal)
+    const [sourceFilter, setSourceFilter] = useState('all');
 
     // UI State
     const [selectedWorkout, setSelectedWorkout] = useState(null); // ID of expanded workout
@@ -78,27 +78,28 @@ export default function WorkoutsPage({ onNavigateToCreate, onNavigateToWorkout, 
         async function fetchWorkouts() {
             setLoading(true);
             try {
-                const q = query(collection(db, 'workout_templates'));
-                const snapshot = await getDocs(q);
-                const loadedWorkouts = snapshot.docs.map(doc => {
-                    const data = doc.data();
-                    return {
-                        id: doc.id,
-                        name: data.name,
-                        exercisesCount: data.exercises ? data.exercises.length : 0,
-                        exercises: data.exercises || [],
-                        duration: data.estimatedDuration || '45-60min',
-                        muscleGroups: data.muscleGroups || [],
-                        lastPerformed: 'Nunca',
-                        lastPerformedDate: null,
-                        frequency: '1x/sem',
-                        timesPerformed: 0,
-                        isFavorite: false,
-                        category: data.category || 'fullbody',
-                        completedToday: false
-                    };
-                });
-                setWorkouts(loadedWorkouts);
+                // CACHED FETCH
+                const loadedWorkouts = await workoutService.getTemplates(user.uid);
+
+                const formattedWorkouts = loadedWorkouts.map(data => ({
+                    id: data.id,
+                    name: data.name,
+                    exercisesCount: data.exercises ? data.exercises.length : 0,
+                    exercises: data.exercises || [],
+                    duration: data.estimatedDuration || '45-60min',
+                    muscleGroups: data.muscleGroups || [],
+                    lastPerformed: data.lastPerformed ? new Date(data.lastPerformed.toDate()).toLocaleDateString('pt-BR') : 'Nunca',
+                    lastPerformedDate: data.lastPerformed ? data.lastPerformed.toDate() : null,
+                    frequency: '1x/sem',
+                    timesPerformed: data.timesPerformed || 0,
+                    isFavorite: !!data.isFavorite,
+                    category: data.category || 'fullbody',
+                    createdBy: data.createdBy,
+                    assignedByTrainer: data.assignedByTrainer,
+                    completedToday: false
+                }));
+
+                setWorkouts(formattedWorkouts);
             } catch (error) {
                 console.error("Error fetching workouts:", error);
             } finally {
@@ -127,10 +128,19 @@ export default function WorkoutsPage({ onNavigateToCreate, onNavigateToWorkout, 
     // --- FILTER LOGIC ---
     const filteredWorkouts = workouts.filter(workout => {
         const matchesCategory = selectedFilter === 'all' || workout.category === selectedFilter;
-        // Search by name OR muscle groups
+        // 2. Search
         const matchesSearch = workout.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
             (workout.muscleGroups && workout.muscleGroups.some(g => g.toLowerCase().includes(searchQuery.toLowerCase())));
-        return matchesCategory && matchesSearch;
+
+        // 3. Source Filter (My vs Personal)
+        let matchesSource = true;
+        if (sourceFilter === 'meus') {
+            matchesSource = workout.createdBy === user.uid || !workout.createdBy;
+        } else if (sourceFilter === 'personal') {
+            matchesSource = workout.createdBy && workout.createdBy !== user.uid;
+        }
+
+        return matchesCategory && matchesSearch && matchesSource;
     }).sort((a, b) => {
         if (sortBy === 'recent') {
             if (!a.lastPerformedDate) return 1;
@@ -177,73 +187,95 @@ export default function WorkoutsPage({ onNavigateToCreate, onNavigateToWorkout, 
 
     // --- RENDER ---
     return (
-        <div className="min-h-screen pb-32 pt-[calc(1rem+env(safe-area-inset-top))] px-4 lg:px-8 max-w-5xl mx-auto">
+        <div className="min-h-screen pb-32 pt-[calc(1rem+env(safe-area-inset-top))] px-4 lg:px-8 w-full max-w-5xl mx-auto">
 
             {/* 1. HEADER & SEARCH */}
             <div className="space-y-8 pt-6 mb-8">
-                {/* Top Bar */}
-                <div className="flex items-center justify-between gap-4">
-                    <div>
-                        <h1 className="text-3xl lg:text-4xl font-bold text-white mb-2">
-                            Meus Treinos
-                        </h1>
-                        <p className="text-slate-400 text-base">
-                            Gerencie suas fichas de treino
-                        </p>
-                    </div>
-
-                    <RippleButton
-                        onClick={() => onNavigateToCreate()}
-                        className="bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold py-3 px-6 rounded-xl flex items-center gap-2 shadow-[0_0_20px_rgba(6,182,212,0.3)] transition-all"
-                    >
-                        <Plus size={20} strokeWidth={2.5} />
-                        <span className="hidden sm:inline">Novo Treino</span>
-                        <span className="sm:hidden">Novo</span>
-                    </RippleButton>
-                </div>
-
-                {/* Stats Grid - 4 Columns */}
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                    {/* Total Workouts */}
-                    <PremiumCard className="p-5 flex items-center gap-3">
-                        <div className="w-12 h-12 bg-cyan-500/10 rounded-xl flex items-center justify-center">
-                            <Dumbbell size={22} className="text-cyan-400" />
-                        </div>
+                {/* Top Bar - Hide if Trainer Mode */}
+                {!isTrainerMode && (
+                    <div className="flex items-center justify-between gap-4">
                         <div>
-                            <p className="text-2xl font-bold text-white">{workouts.length}</p>
-                            <p className="text-xs text-slate-400 mt-0.5">Treinos</p>
+                            <h1 className="text-3xl lg:text-4xl font-bold text-white mb-2">
+                                Meus Treinos
+                            </h1>
+                            <p className="text-slate-400 text-base">
+                                Gerencie suas fichas de treino
+                            </p>
                         </div>
-                    </PremiumCard>
 
-                    {/* This Week (Static Mock 4) */}
-                    <PremiumCard className="p-5 flex flex-col justify-center">
-                        <div className="w-12 h-12 bg-green-500/10 rounded-xl flex items-center justify-center mb-2">
-                            <Calendar size={22} className="text-green-400" />
-                        </div>
-                        <p className="text-2xl font-bold text-white">4</p>
-                        <p className="text-xs text-slate-400">Esta semana</p>
-                    </PremiumCard>
+                        <RippleButton
+                            onClick={() => onNavigateToCreate(null, { targetUserId: user.uid })}
+                            className="bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold py-3 px-6 rounded-xl flex items-center gap-2 shadow-[0_0_20px_rgba(6,182,212,0.3)] transition-all"
+                        >
+                            <Plus size={20} strokeWidth={2.5} />
+                            <span className="hidden sm:inline">Novo Treino</span>
+                            <span className="sm:hidden">Novo</span>
+                        </RippleButton>
+                    </div>
+                )}
 
-                    {/* Total Exercises */}
-                    <PremiumCard className="p-5 flex flex-col justify-center">
-                        <div className="w-12 h-12 bg-purple-500/10 rounded-xl flex items-center justify-center mb-2">
-                            <Play size={22} className="text-purple-400" />
-                        </div>
-                        <p className="text-2xl font-bold text-white">
-                            {workouts.reduce((acc, w) => acc + w.exercisesCount, 0)}
-                        </p>
-                        <p className="text-xs text-slate-400">Exercícios</p>
-                    </PremiumCard>
+                {/* Stats Grid - Hide if Trainer Mode */}
+                {!isTrainerMode && (
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                        {/* Total Workouts */}
+                        <PremiumCard className="p-5 flex items-center gap-3">
+                            <div className="w-12 h-12 bg-cyan-500/10 rounded-xl flex items-center justify-center">
+                                <Dumbbell size={22} className="text-cyan-400" />
+                            </div>
+                            <div>
+                                <p className="text-2xl font-bold text-white">{workouts.length}</p>
+                                <p className="text-xs text-slate-400 mt-0.5">Treinos</p>
+                            </div>
+                        </PremiumCard>
 
-                    {/* Last Workout (Letter) */}
-                    <PremiumCard className="p-5 flex flex-col justify-center">
-                        <div className="w-12 h-12 bg-yellow-500/10 rounded-xl flex items-center justify-center mb-2">
-                            <Flame size={22} className="text-yellow-400" />
-                        </div>
-                        <p className="text-2xl font-bold text-white">A</p>
-                        <p className="text-xs text-slate-400">Último treino</p>
-                    </PremiumCard>
-                </div>
+                        {/* This Week (Static Mock 4) */}
+                        <PremiumCard className="p-5 flex flex-col justify-center">
+                            <div className="w-12 h-12 bg-green-500/10 rounded-xl flex items-center justify-center mb-2">
+                                <Calendar size={22} className="text-green-400" />
+                            </div>
+                            <p className="text-2xl font-bold text-white">4</p>
+                            <p className="text-xs text-slate-400">Esta semana</p>
+                        </PremiumCard>
+
+                        {/* Total Exercises */}
+                        <PremiumCard className="p-5 flex flex-col justify-center">
+                            <div className="w-12 h-12 bg-purple-500/10 rounded-xl flex items-center justify-center mb-2">
+                                <Play size={22} className="text-purple-400" />
+                            </div>
+                            <p className="text-2xl font-bold text-white">
+                                {workouts.reduce((acc, w) => acc + w.exercisesCount, 0)}
+                            </p>
+                            <p className="text-xs text-slate-400">Exercícios</p>
+                        </PremiumCard>
+
+                        {/* Last Workout (Letter) */}
+                        <PremiumCard className="p-5 flex flex-col justify-center">
+                            <div className="w-12 h-12 bg-yellow-500/10 rounded-xl flex items-center justify-center mb-2">
+                                <Flame size={22} className="text-yellow-400" />
+                            </div>
+                            <p className="text-2xl font-bold text-white">A</p>
+                            <p className="text-xs text-slate-400">Último treino</p>
+                        </PremiumCard>
+                    </div>
+                )}
+
+                {/* New: Source Tabs - Hide if Trainer Mode (since trainer sees all relevant) */}
+                {!isTrainerMode && (
+                    <div className="flex p-1 bg-slate-900/50 rounded-xl mb-6 border border-slate-800 backdrop-blur-sm">
+                        {['all', 'meus', 'personal'].map((filter) => (
+                            <button
+                                key={filter}
+                                onClick={() => setSourceFilter(filter)}
+                                className={`flex-1 py-2 px-4 rounded-lg text-sm font-semibold transition-all duration-300 ${sourceFilter === filter
+                                    ? 'bg-cyan-500 text-black shadow-lg shadow-cyan-500/20'
+                                    : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                                    }`}
+                            >
+                                {filter === 'all' ? 'Todos' : filter === 'meus' ? 'Meus Treinos' : 'Personal Play'}
+                            </button>
+                        ))}
+                    </div>
+                )}
 
                 {/* Search Bar */}
                 <PremiumCard className="p-0">
@@ -298,6 +330,13 @@ export default function WorkoutsPage({ onNavigateToCreate, onNavigateToWorkout, 
                                     <div>
                                         <h3 className="text-lg font-bold text-white leading-tight mb-1.5">{workout.name}</h3>
                                         <div className="flex flex-wrap gap-1.5">
+                                            {/* Coach Badge */}
+                                            {workout.assignedByTrainer && (
+                                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-500 border border-amber-500/30 flex items-center gap-1">
+                                                    <Crown size={10} strokeWidth={3} />
+                                                    COACH
+                                                </span>
+                                            )}
                                             {workout.muscleGroups.map((tag, i) => (
                                                 <span key={i} className="text-[10px] font-medium px-2 py-0.5 rounded-md bg-slate-800 text-cyan-400 border border-slate-700/50">
                                                     {tag}
@@ -373,14 +412,22 @@ export default function WorkoutsPage({ onNavigateToCreate, onNavigateToWorkout, 
                                         className="overflow-hidden"
                                     >
                                         <div className="pt-4 mt-4 border-t border-slate-800 space-y-2">
-                                            {/* Using Mock Data for Demo if real is empty or simple */}
-                                            {(EXERCISES_MOCK['default']).map((exercise, i) => (
-                                                <ExerciseCard
-                                                    key={i}
-                                                    {...exercise}
-                                                    onPress={() => setEditingExercise({ workoutId: workout.id, index: i, data: exercise })}
-                                                />
-                                            ))}
+                                            {/* Real Exercises List */}
+                                            {workout.exercises && workout.exercises.length > 0 ? (
+                                                workout.exercises.map((exercise, i) => (
+                                                    <ExerciseCard
+                                                        key={i}
+                                                        name={exercise.name}
+                                                        muscleGroup={exercise.group || 'Geral'}
+                                                        sets={exercise.target ? exercise.target.split('x')[0] : '?'}
+                                                        lastReps={exercise.target || '-'}
+                                                        lastWeight={null} // We don't have weight in template, only in history
+                                                        onPress={() => setEditingExercise({ workoutId: workout.id, index: i, data: exercise })}
+                                                    />
+                                                ))
+                                            ) : (
+                                                <p className="text-sm text-slate-500 text-center py-4">Nenhum exercício cadastrado.</p>
+                                            )}
                                             {/* Note: In real app, we would map `workout.exercises` if detailed. */}
                                         </div>
                                     </motion.div>
@@ -404,7 +451,7 @@ export default function WorkoutsPage({ onNavigateToCreate, onNavigateToWorkout, 
                 <button
                     onClick={(e) => {
                         e.stopPropagation();
-                        onNavigateToCreate();
+                        onNavigateToCreate(null, { targetUserId: user.uid });
                     }}
                     className="w-14 h-14 rounded-full bg-gradient-to-r from-cyan-500 to-blue-600 flex items-center justify-center text-white shadow-[0_4px_20px_rgba(6,182,212,0.4)] hover:scale-105 active:scale-95 transition-all"
                 >
@@ -419,7 +466,7 @@ export default function WorkoutsPage({ onNavigateToCreate, onNavigateToWorkout, 
                         exercise={editingExercise}
                         onClose={() => setEditingExercise(null)}
                         onSave={(data) => {
-                            console.log("Saved", data);
+
                             // Update logic here
                         }}
                     />

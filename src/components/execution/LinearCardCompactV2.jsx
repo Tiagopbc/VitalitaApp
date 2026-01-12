@@ -4,7 +4,7 @@
  * Lida com registro de séries, ajustes de peso/repetição e rastreamento visual de progresso.
  */
 import React, { useState, useMemo } from 'react';
-import { Minus, Plus, CheckCircle2, Info, Check, Zap, LayoutList, Target, ArrowRight } from 'lucide-react';
+import { Minus, Plus, CheckCircle2, Info, Check, Zap, LayoutList, Target, ArrowRight, History } from 'lucide-react';
 
 /**
  * @typedef {'NUMERIC' | 'RANGE' | 'PYRAMID' | 'CLUSTER' | 'FAILURE' | 'TEXT'} RepsType
@@ -118,6 +118,8 @@ export function LinearCardCompactV2({
     onCompleteSet,
     suggestedWeight, // New Prop for History
     suggestedReps, // New Prop for History
+    lastWeight,
+    lastReps,
     onMethodClick // New Prop for Method Modal
 }) {
     // Determine completion status
@@ -281,6 +283,7 @@ export function LinearCardCompactV2({
                     </div>
                 </div>
 
+
                 {/* Counter */}
                 <div
                     className={`px-3 py-1.5 rounded-full text-[20px] font-bold flex-shrink-0 border ${isExerciseFullyCompleted ? 'text-green-500 bg-green-500/10 border-green-500/30' : 'text-blue-500 bg-blue-500/10 border-blue-500/25'}`}
@@ -408,6 +411,6 @@ export function LinearCardCompactV2({
                     className="w-full bg-transparent border-b border-slate-700/50 text-xs text-slate-400 py-2 focus:border-cyan-500/50 focus:text-slate-200 outline-none transition-colors placeholder:text-slate-600"
                 />
             </div>
-        </div>
+        </div >
     );
 }

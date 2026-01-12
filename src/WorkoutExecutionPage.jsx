@@ -31,8 +31,12 @@ import {
     ChevronRight,
     Repeat,
     RotateCw,
-    Settings
+    Settings,
+    Share2
 } from 'lucide-react';
+import confetti from 'canvas-confetti';
+import html2canvas from 'html2canvas'; // For sharing
+import { ShareableWorkoutCard } from './components/sharing/ShareableWorkoutCard';
 import { RestTimer } from './components/execution/RestTimer';
 import { MuscleFocusDisplay } from './components/execution/MuscleFocusDisplay';
 import { OneRMDisplay } from './components/execution/OneRMDisplay';
@@ -56,6 +60,8 @@ import { Button } from './components/design-system/Button';
 import { CyanSystemButton } from './components/design-system/CyanSystemButton';
 import MethodModal from './MethodModal';
 import { LinearCardCompactV2 } from './components/execution/LinearCardCompactV2';
+import { Toast } from './components/design-system/Toast';
+import { Skeleton } from './components/design-system/Skeleton';
 
 
 const DRAFT_COLLECTION = 'workout_session_drafts';
@@ -112,11 +118,19 @@ function ExerciseCard({ exercise, onUpdateSet, onToggleSet, onUpdateNotes, onAdd
     const activeSet = exercise.sets[activeSetIdx];
     const isExerciseComplete = exercise.sets.length > 0 && exercise.sets.every(s => s.completed);
 
-    // Confetti Logic Removed
+    // Confetti Logic
     const hasCelebrated = useRef(false);
 
     useEffect(() => {
-        // Confetti removed
+        if (isExerciseComplete && !hasCelebrated.current) {
+            hasCelebrated.current = true;
+            confetti({
+                particleCount: 50,
+                spread: 60,
+                origin: { y: 0.7 },
+                colors: ['#06b6d4', '#ec4899', '#8b5cf6'] // Cyan, Pink, Purple
+            });
+        }
     }, [isExerciseComplete]);
 
     if (!activeSet) return null;
@@ -144,7 +158,6 @@ function ExerciseCard({ exercise, onUpdateSet, onToggleSet, onUpdateNotes, onAdd
                         {exercise.method && (
                             <div
                                 onClick={() => {
-                                    console.log('Method Clicked:', exercise.method);
                                     setSelectedMethod(exercise.method);
                                 }}
                                 className="flex-shrink-0 px-2.5 py-1 rounded-lg border border-cyan-500/30 bg-cyan-500/10 text-cyan-400 text-[9px] font-bold uppercase tracking-wider ml-2 cursor-pointer hover:bg-cyan-500/20 active:scale-95 transition-all"
@@ -317,6 +330,8 @@ export function WorkoutExecutionPage({ workoutId, onFinish, user }) {
     const [elapsedSeconds, setElapsedSeconds] = useState(0);
     const [exercises, setExercises] = useState([]);
     const [saving, setSaving] = useState(false);
+    const [error, setError] = useState(null);
+
 
     // Global Toggles
     const [showTimer, setShowTimer] = useState(false);
@@ -359,7 +374,7 @@ export function WorkoutExecutionPage({ workoutId, onFinish, user }) {
                         // Check if backup is valid and recent (optional: add expiration logic here)
                         // For now, we trust the user wants to resume if it exists
                         if (parsedBackup.exercises && Array.isArray(parsedBackup.exercises)) {
-                            console.log('Restoring from LocalStorage backup');
+                            // Restoring from LocalStorage backup
                             setExercises(parsedBackup.exercises);
                             setElapsedSeconds(parsedBackup.elapsedSeconds || 0);
 
@@ -372,7 +387,6 @@ export function WorkoutExecutionPage({ workoutId, onFinish, user }) {
                             restoredFromBackup = true;
                         }
                     } catch (e) {
-                        console.error('Failed to parse backup', e);
                         localStorage.removeItem(backupKey);
                     }
                 }
@@ -442,12 +456,10 @@ export function WorkoutExecutionPage({ workoutId, onFinish, user }) {
                             sessionSnap = { empty: false, docs: [{ data: () => sessions[0] }] };
                         }
                     } catch (sessionErr) {
-                        console.warn('Session fetch failed (likely missing index), starting new session:', sessionErr);
                         sessionSnap = { empty: true };
                     }
 
                     if (!tmplData.exercises || !Array.isArray(tmplData.exercises)) {
-                        console.error('Template missing exercises array:', tmplData);
                         setExercises([]);
                         setLoading(false);
                         return;
@@ -461,36 +473,73 @@ export function WorkoutExecutionPage({ workoutId, onFinish, user }) {
                                 collection(db, 'workout_sessions'),
                                 where('userId', '==', profileId),
                                 where('templateId', '==', workoutId),
-                                where('completedAt', '!=', null),
-                                orderBy('completedAt', 'desc'),
-                                limit(1)
+                                limit(20) // Fetch a bit more to filter client-side
                             );
                             const historySnap = await getDocs(historyQuery);
-                            if (!historySnap.empty) {
-                                lastSessionExercises = historySnap.docs[0].data().exercises || [];
-                                console.log('Found previous session for persistence:', lastSessionExercises);
+                            // Filter valid completed sessions client-side
+                            const validDocs = historySnap.docs.filter(doc => doc.data().completedAt);
+
+                            if (validDocs.length > 0) {
+                                // Client-side sort
+                                const sortedDocs = validDocs.sort((a, b) => {
+                                    const dateA = a.data().completedAt?.toDate?.() || 0;
+                                    const dateB = b.data().completedAt?.toDate?.() || 0;
+                                    return dateB - dateA;
+                                });
+                                const lastData = sortedDocs[0].data();
+
+                                if (lastData.exercises && Array.isArray(lastData.exercises)) {
+                                    lastSessionExercises = lastData.exercises;
+                                } else if (lastData.results) {
+                                    // Adapter for Legacy Data (Map of "Name": {weight, reps})
+                                    lastSessionExercises = Object.entries(lastData.results).map(([name, data]) => ({
+                                        name: name,
+                                        sets: [{
+                                            weight: data.weight,
+                                            reps: data.reps
+                                        }]
+                                    }));
+                                }
                             }
                         } catch (histErr) {
-                            console.warn('Could not fetch history for persistence:', histErr);
+                            console.error("Error fetching history:", histErr);
                         }
                     }
 
                     if (!sessionSnap.empty) {
                         try {
                             const sessionData = sessionSnap.docs[0].data();
-                            console.log('Resuming session:', sessionData);
 
                             const mergedExercises = tmplData.exercises.map(ex => {
                                 const exId = ex.id || generateId();
                                 const saved = sessionData.exercises?.find(e => e.id === exId);
                                 const templateSets = normalizeSets(ex.sets, ex.reps, ex.target);
 
+                                // ALSO try to find history for this exercise to show "Last" even in active session
+                                // Robust matching: ID first, then Case-Insensitive Name
+                                const lastEx = lastSessionExercises.find(le => le.id === exId) ||
+                                    lastSessionExercises.find(le => le.name && ex.name && le.name.trim().toLowerCase() === ex.name.trim().toLowerCase());
+
                                 return {
                                     ...ex,
                                     id: exId,
-                                    sets: templateSets.map(s => {
+                                    sets: templateSets.map((s, idx) => {
+                                        // Retrieve saved set (active session)
                                         const savedSet = saved?.sets?.find(ss => ss.id === s.id) ||
-                                            (saved?.sets ? saved.sets[templateSets.indexOf(s)] : null);
+                                            (saved?.sets ? saved.sets[idx] : null);
+
+                                        // Retrieve historical set (Last Session)
+                                        // PROPAGATION LOGIC: If we have more sets now than before, use the LAST known set from history.
+                                        // likely lastEx.sets has 1 element (Legacy) or N elements.
+                                        // If idx >= lastEx.sets.length, use lastEx.sets[lastEx.sets.length - 1]
+                                        let lastSet = null;
+                                        if (lastEx && lastEx.sets && lastEx.sets.length > 0) {
+                                            if (idx < lastEx.sets.length) {
+                                                lastSet = lastEx.sets[idx];
+                                            } else {
+                                                lastSet = lastEx.sets[lastEx.sets.length - 1]; // Propagate last value
+                                            }
+                                        }
 
                                         return {
                                             ...s,
@@ -499,7 +548,10 @@ export function WorkoutExecutionPage({ workoutId, onFinish, user }) {
                                             weight: savedSet?.weight || s.weight || '',
                                             reps: savedSet?.reps || s.reps || '',
                                             targetReps: s.reps || ex.reps || s.targetReps,
-                                            targetWeight: s.weight || ''
+                                            targetWeight: s.weight || '',
+                                            // Explicit HistoryProps
+                                            lastWeight: lastSet?.weight || null,
+                                            lastReps: lastSet?.reps || null
                                         };
                                     }),
                                     notes: saved?.notes || ''
@@ -507,7 +559,7 @@ export function WorkoutExecutionPage({ workoutId, onFinish, user }) {
                             });
                             setExercises(mergedExercises);
                         } catch (resumeError) {
-                            console.error('Error resuming session, falling back to new:', resumeError);
+                            // Fallback (same as catch block below but simplified)
                             setExercises(tmplData.exercises.map(ex => {
                                 const standardizedSets = normalizeSets(ex.sets, ex.reps, ex.target);
                                 return {
@@ -520,7 +572,9 @@ export function WorkoutExecutionPage({ workoutId, onFinish, user }) {
                                         weight: '',
                                         reps: '',
                                         targetReps: s.targetReps || s.reps,
-                                        targetWeight: ''
+                                        targetWeight: '',
+                                        lastWeight: null,
+                                        lastReps: null
                                     })),
                                     notes: ''
                                 };
@@ -528,32 +582,42 @@ export function WorkoutExecutionPage({ workoutId, onFinish, user }) {
                         }
                     } else {
                         // New session
-                        // New session with Persistence
                         setExercises(tmplData.exercises.map(ex => {
                             const standardizedSets = normalizeSets(ex.sets, ex.reps, ex.target);
 
                             // Find matching exercise from last session
-                            // Try ID first, then Name
+                            // Robust matching: ID first, then Case-Insensitive Name
                             const lastEx = lastSessionExercises.find(le => le.id === ex.id) ||
-                                lastSessionExercises.find(le => le.name === ex.name);
+                                lastSessionExercises.find(le => le.name && ex.name && le.name.trim().toLowerCase() === ex.name.trim().toLowerCase());
 
                             return {
                                 ...ex,
                                 id: ex.id || generateId(),
                                 sets: standardizedSets.map((s, idx) => {
-                                    // Try to find matching set in last session (by index since IDs might change in new session)
-                                    // Actually, for "New Session", we want to replicate the LAST USED weight/reps.
-                                    // If lastEx exists, we try to match sets.
-                                    const lastSet = lastEx?.sets?.[idx];
+                                    // PROPAGATION LOGIC
+                                    let lastSet = null;
+                                    if (lastEx && lastEx.sets && lastEx.sets.length > 0) {
+                                        if (idx < lastEx.sets.length) {
+                                            lastSet = lastEx.sets[idx];
+                                        } else {
+                                            lastSet = lastEx.sets[lastEx.sets.length - 1]; // Propagate last value
+                                        }
+                                    }
 
                                     return {
                                         ...s,
                                         id: s.id || generateId(),
                                         completed: false,
+                                        // Pre-fill with history
                                         weight: lastSet?.weight || s.weight || '',
-                                        reps: lastSet?.reps || s.reps || '',
-                                        targetReps: s.targetReps || s.reps, // Keep target from template
-                                        targetWeight: lastSet?.weight || '' // Populate targetWeight with history
+                                        reps: lastSet?.reps || s.reps || '', // Pre-fill reps as requested
+
+                                        targetReps: s.targetReps || s.reps,
+                                        targetWeight: lastSet?.weight || '',
+
+                                        // Explicit History Props
+                                        lastWeight: lastSet?.weight || null,
+                                        lastReps: lastSet?.reps || null
                                     };
                                 }),
                                 notes: lastEx?.notes || ''
@@ -561,11 +625,10 @@ export function WorkoutExecutionPage({ workoutId, onFinish, user }) {
                         }));
                     }
                 } else {
-                    console.error('Template not found');
+                    // Template not found
                 }
             } catch (err) {
-                console.error('Error loading workout:', err);
-                // No alert here, just log. allow UI to render even if empty
+                console.error("Fatal error loading workout:", err);
             } finally {
                 setLoading(false);
             }
@@ -660,9 +723,17 @@ export function WorkoutExecutionPage({ workoutId, onFinish, user }) {
     const handleFinishWorkout = async () => {
         setSaving(true);
         try {
+            // Calculate Duration
+            const minutes = Math.floor(elapsedSeconds / 60);
+            const durationStr = `${minutes}min`;
+
             // Save logic (Simplified for revert)
             await addDoc(collection(db, 'workout_sessions'), {
+                duration: durationStr,
+                elapsedSeconds: elapsedSeconds,
                 templateId: workoutId,
+                templateName: template?.name || 'Treino Personalizado', // Critical for History Analytics
+                workoutName: template?.name || 'Treino Personalizado', // Legacy support
                 userId: profileId,
                 createdAt: serverTimestamp(),
                 completedAt: serverTimestamp(),
@@ -681,22 +752,127 @@ export function WorkoutExecutionPage({ workoutId, onFinish, user }) {
             // --- PERSISTENCE: CLEAR BACKUP ON SUCCESS ---
             localStorage.removeItem(backupKey);
 
-            if (onFinish) onFinish();
+            // --- UPDATE TEMPLATE METADATA (Last Performed) ---
+            const templateRef = doc(db, 'workout_templates', workoutId);
+            try {
+                // Use updateDoc to avoid overwriting entire doc if possible, but we don't import it.
+                // Re-using setDoc with merge: true is safer if we stick to imports we have?
+                // Actually we imported setDoc, but updateDoc is cleaner. Let's see imports.
+                // We have setDoc. Let's add updateDoc to imports first? Or just use setDoc({ ... }, { merge: true })
+                await setDoc(templateRef, {
+                    lastPerformed: serverTimestamp(),
+                    // Increment timesPerformed? We need increment() from firestore which is likely not imported.
+                    // Let's just update the timestamp for now to fix the main issue.
+                    // If we want count, we need to read+write or use increment.
+                    // Let's stick to simple timestamp update for "Last Performed".
+                }, { merge: true });
+            } catch (tmplErr) {
+                console.error("Error updating template metadata:", tmplErr);
+            }
+
+            // Grand Finale Confetti
+            confetti({
+                particleCount: 150,
+                spread: 100,
+                origin: { y: 0.6 }
+            });
+
+            setTimeout(() => {
+                if (onFinish) onFinish();
+            }, 1000); // Wait a bit for effect
         } catch (e) {
-            console.error(e);
-            alert('Erro ao salvar.');
+            setError('Erro ao salvar. Verifique sua conexão.');
         } finally {
             setSaving(false);
         }
     };
 
-    if (loading) return <div className="text-white text-center p-10">Carregando...</div>;
+    // --- SHARING ---
+    const [sharing, setSharing] = useState(false);
+    const shareCardRef = useRef(null);
+
+    const handleShare = async () => {
+        if (!shareCardRef.current) return;
+        setSharing(true);
+        try {
+            const canvas = await html2canvas(shareCardRef.current, {
+                backgroundColor: '#020617',
+                scale: 2, // High res
+                useCORS: true,
+                allowTaint: true,
+            });
+
+            canvas.toBlob(async (blob) => {
+                if (!blob) {
+                    setError('Erro ao gerar imagem.');
+                    setSharing(false);
+                    return;
+                }
+
+                if (navigator.share) {
+                    try {
+                        const file = new File([blob], 'treino_concluido.png', { type: 'image/png' });
+                        await navigator.share({
+                            title: 'Treino Concluído - Vitalitá',
+                            text: `Acabei de completar o treino ${template?.name || 'Personalizado'}! 💪`,
+                            files: [file]
+                        });
+                    } catch (shareErr) {
+                        console.warn('Share mismatch/cancel:', shareErr);
+                    }
+                } else {
+                    // Fallback to clipboard
+                    try {
+                        const item = new ClipboardItem({ 'image/png': blob });
+                        await navigator.clipboard.write([item]);
+                        alert('Imagem copiada para a área de transferência!');
+                    } catch (clipErr) {
+                        alert('Seu navegador não suporta compartilhamento direto.');
+                    }
+                }
+                setSharing(false);
+            }, 'image/png');
+        } catch (err) {
+            console.error(err);
+            setError(`Erro ao gerar imagem: ${err.message || err}`);
+            setSharing(false);
+        }
+    };
+
+    if (loading) {
+        return (
+            <div className="min-h-screen bg-[#020617] p-4 font-sans max-w-2xl mx-auto space-y-6">
+                {/* Header Skeleton */}
+                <div className="flex justify-between items-center py-4">
+                    <Skeleton className="h-8 w-20 rounded-full" />
+                    <div className="flex gap-2">
+                        <Skeleton className="h-8 w-16 rounded-full" />
+                        <Skeleton className="h-8 w-16 rounded-full" />
+                        <Skeleton className="h-8 w-16 rounded-full" />
+                    </div>
+                </div>
+
+                {/* Spacer */}
+                <div className="h-10"></div>
+
+                {/* Progress Skeleton */}
+                <Skeleton className="h-32 w-full rounded-3xl" />
+
+                {/* Exercise Card Skeleton */}
+                <div className="space-y-4">
+                    <Skeleton className="h-64 w-full rounded-3xl" />
+                    <Skeleton className="h-64 w-full rounded-3xl" />
+                </div>
+            </div>
+        );
+    }
 
     const completedExercisesCount = exercises.filter(ex => ex.sets.every(s => s.completed)).length;
     const totalExercises = exercises.length;
 
     return (
         <div className="min-h-screen bg-[#020617] text-slate-100 p-4 pb-32 font-sans selection:bg-cyan-500/30">
+            {error && <Toast message={error} type="error" onClose={() => setError(null)} />}
             <div className="max-w-2xl mx-auto space-y-6">
 
                 {/* --- HEADER (Legacy Style - Outlined) --- */}
@@ -821,6 +997,8 @@ export function WorkoutExecutionPage({ workoutId, onFinish, user }) {
                                     observation={ex.notes}
                                     suggestedWeight={activeSet.targetWeight || activeSet.weight}
                                     suggestedReps={activeSet.targetReps || ex.reps || (ex.target ? ex.target.replace(/^\d+\s*x\s*/i, '').trim() : "12")}
+                                    lastWeight={activeSet.lastWeight}
+                                    lastReps={activeSet.lastReps}
                                     onWeightChange={(val) => handleUpdateSet(ex.id, activeSet.id, 'weight', val)}
                                     onRepsChange={(val) => handleUpdateSet(ex.id, activeSet.id, 'reps', val)}
                                     onObservationChange={(val) => handleUpdateNotes(ex.id, val)}
@@ -855,6 +1033,8 @@ export function WorkoutExecutionPage({ workoutId, onFinish, user }) {
                                     observation={ex.notes}
                                     suggestedWeight={activeSet.targetWeight || activeSet.weight}
                                     suggestedReps={activeSet.targetReps || ex.reps || (ex.target ? ex.target.replace(/^\d+\s*x\s*/i, '').trim() : "12")}
+                                    lastWeight={activeSet.lastWeight}
+                                    lastReps={activeSet.lastReps}
                                     onWeightChange={(val) => handleUpdateSet(ex.id, activeSet.id, 'weight', val)}
                                     onRepsChange={(val) => handleUpdateSet(ex.id, activeSet.id, 'reps', val)}
                                     onObservationChange={(val) => handleUpdateNotes(ex.id, val)}
@@ -886,13 +1066,50 @@ export function WorkoutExecutionPage({ workoutId, onFinish, user }) {
                 {/* Finish Button - Updated to match screenshot (Blue/Cyan Gradient) */}
                 <div className="fixed bottom-0 left-0 w-full p-4 bg-gradient-to-t from-[#020617] to-transparent z-50">
                     <div className="max-w-2xl mx-auto flex justify-center">
-                        <div className="w-[70%] max-w-sm mx-auto">
-                            <CyanSystemButton
+                        <div className="space-y-4 w-full flex flex-col items-center pointer-events-auto relative z-10">
+                            <Button
                                 onClick={handleFinishWorkout}
-                                loading={saving}
-                                text="Finalizar Treino"
-                            />
+                                disabled={saving}
+                                className="w-full bg-cyan-500 hover:bg-cyan-400 text-black font-bold h-12 rounded-xl shadow-[0_0_20px_rgba(6,182,212,0.4)]"
+                            >
+                                {saving ? 'SALVANDO...' : 'FINALIZAR TREINO'}
+                            </Button>
+
+                            <Button
+                                onClick={handleShare}
+                                disabled={sharing}
+                                variant="ghost"
+                                className="w-full text-slate-400 hover:text-white flex items-center justify-center gap-2"
+                            >
+                                {sharing ? 'Gerando...' : (
+                                    <>
+                                        <Share2 size={18} />
+                                        Compartilhar Conquista
+                                    </>
+                                )}
+                            </Button>
                         </div>
+
+                        {/* Hidden Card for Generation */}
+                        <ShareableWorkoutCard
+                            ref={shareCardRef}
+                            session={{
+                                templateName: template?.name || 'Treino Personalizado',
+                                duration: Math.floor(elapsedSeconds / 60) + "min",
+                                exercisesCount: completedExercisesCount,
+                                volumeLoad: (() => {
+                                    // Calculate simple volume for sharing
+                                    let vol = 0;
+                                    exercises.forEach(ex => {
+                                        ex.sets.forEach(s => {
+                                            if (s.completed) vol += (Number(s.weight) * Number(s.reps));
+                                        });
+                                    });
+                                    return vol;
+                                })()
+                            }}
+                            userName={user?.displayName || "Atleta"}
+                        />
                     </div>
                 </div>
 
@@ -900,3 +1117,4 @@ export function WorkoutExecutionPage({ workoutId, onFinish, user }) {
         </div>
     );
 }
+

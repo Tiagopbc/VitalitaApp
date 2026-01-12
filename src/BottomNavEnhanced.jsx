@@ -4,9 +4,9 @@
  * Gerencia o estado da aba ativa e fornece feedback visual para interações de toque.
  */
 import React, { useState } from 'react';
-import { Home, Dumbbell, Plus, History, User } from 'lucide-react';
+import { Home, Dumbbell, Plus, History, User, Users } from 'lucide-react';
 
-export function BottomNavEnhanced({ activeTab, onTabChange }) {
+export function BottomNavEnhanced({ activeTab, onTabChange, isTrainer }) {
     const [pressedTab, setPressedTab] = useState(null);
 
     const tabs = [
@@ -37,6 +37,8 @@ export function BottomNavEnhanced({ activeTab, onTabChange }) {
             icon: User
         }
     ];
+
+
 
     const handlePress = (tabId) => {
         setPressedTab(tabId);
