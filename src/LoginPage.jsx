@@ -8,6 +8,22 @@
 import React, { useMemo, useState } from 'react';
 import { authService } from './services/authService';
 
+const EyeIcon = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="opacity-70">
+        <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
+        <circle cx="12" cy="12" r="3" />
+    </svg>
+);
+
+const EyeOffIcon = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="opacity-70">
+        <path d="M9.88 9.88a3 3 0 1 0 4.24 4.24" />
+        <path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68" />
+        <path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7c.84 0 1.68-.09 2.5-.26" />
+        <line x1="2" x2="22" y1="2" y2="22" />
+    </svg>
+);
+
 function GoogleIcon() {
     return (
         <svg
@@ -50,7 +66,7 @@ function daysInMonth(year, month) {
 }
 
 export default function LoginPage() {
-    const [view, setView] = useState('login'); // login | signup
+    const [view, setView] = useState('login'); // login | signup | forgot_password
     const [step, setStep] = useState(1); // 1 | 2
 
     const [loading, setLoading] = useState(false);
@@ -87,12 +103,16 @@ export default function LoginPage() {
     // Login
     const [loginEmail, setLoginEmail] = useState('');
     const [loginPassword, setLoginPassword] = useState('');
+    const [showLoginPassword, setShowLoginPassword] = useState(false);
 
     // Cadastro
     const [fullName, setFullName] = useState('');
     const [signupEmail, setSignupEmail] = useState('');
     const [signupPassword, setSignupPassword] = useState('');
+    const [showSignupPassword, setShowSignupPassword] = useState(false);
+
     const [confirmPassword, setConfirmPassword] = useState('');
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
     const [gender, setGender] = useState('');
     const [birthDay, setBirthDay] = useState('');
@@ -100,6 +120,10 @@ export default function LoginPage() {
     const [birthYear, setBirthYear] = useState('');
     const [heightCm, setHeightCm] = useState('');
     const [weightKg, setWeightKg] = useState('');
+
+    // Forgot Password
+    const [resetEmail, setResetEmail] = useState('');
+    const [resetSuccess, setResetSuccess] = useState('');
 
     const canLogin = useMemo(() => {
         return loginEmail.trim().length > 0 && loginPassword.length >= 6 && !loading;
@@ -266,6 +290,32 @@ export default function LoginPage() {
         setView('login');
     }
 
+    async function handleResetPassword(e) {
+        e.preventDefault();
+        if (loading || !resetEmail.trim()) return;
+
+        setError('');
+        setResetSuccess('');
+        setLoading(true);
+
+        try {
+            await authService.resetPassword(resetEmail.trim());
+            setResetSuccess('E-mail de redefinição enviado com sucesso! Verifique sua caixa de entrada.');
+            setResetEmail('');
+        } catch (err) {
+            console.error(err);
+            let msg = 'Não foi possível enviar o e-mail. Tente novamente.';
+            if (err.code === 'auth/user-not-found') {
+                msg = 'E-mail não cadastrado.';
+            } else if (err.code === 'auth/invalid-email') {
+                msg = 'E-mail inválido.';
+            }
+            setError(msg);
+        } finally {
+            setLoading(false);
+        }
+    }
+
     async function handleLoginSubmit(e) {
         e.preventDefault();
         if (!canLogin) return;
@@ -277,7 +327,19 @@ export default function LoginPage() {
             await authService.login(loginEmail.trim(), loginPassword);
         } catch (err) {
             console.error(err);
-            setError('Não foi possível autenticar. Verifique os dados e tente novamente.');
+            let msg = 'Não foi possível autenticar. Verifique os dados e tente novamente.';
+
+            if (err.code === 'auth/invalid-credential' || err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password') {
+                msg = 'E-mail ou senha incorretos.';
+            } else if (err.code === 'auth/invalid-email') {
+                msg = 'O formato do e-mail é inválido.';
+            } else if (err.code === 'auth/too-many-requests') {
+                msg = 'Muitas tentativas falhas. Tente novamente mais tarde.';
+            } else if (err.code === 'auth/network-request-failed') {
+                msg = 'Erro de conexão/rede. Verifique sua internet.';
+            }
+
+            setError(msg);
         } finally {
             setLoading(false);
         }
@@ -406,16 +468,42 @@ export default function LoginPage() {
 
                                 <div className="w-full flex flex-col gap-1.5 text-[0.85rem] text-text-secondary">
                                     <label className="block text-left self-start text-inherit font-medium opacity-75" htmlFor="login-password">Senha</label>
-                                    <input
-                                        id="login-password"
-                                        type="password"
-                                        className="w-full box-border rounded-[10px] border border-blue-800/60 bg-slate-900/95 text-text-primary px-2.5 py-2 text-[0.9rem] outline-none transition-all shadow-md focus:border-blue-500/95 focus:shadow-glow-input-focus placeholder:text-slate-200/40"
-                                        value={loginPassword}
-                                        onChange={(e) => setLoginPassword(e.target.value)}
-                                        autoComplete="current-password"
-                                        required
+                                    <div className="relative">
+                                        <input
+                                            id="login-password"
+                                            type={showLoginPassword ? "text" : "password"}
+                                            className="w-full box-border rounded-[10px] border border-blue-800/60 bg-slate-900/95 text-text-primary px-2.5 py-2 text-[0.9rem] outline-none transition-all shadow-md focus:border-blue-500/95 focus:shadow-glow-input-focus placeholder:text-slate-200/40 pr-10"
+                                            value={loginPassword}
+                                            onChange={(e) => setLoginPassword(e.target.value)}
+                                            autoComplete="current-password"
+                                            required
+                                            disabled={loading}
+                                        />
+                                        <button
+                                            type="button"
+                                            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 transition-colors cursor-pointer p-1"
+                                            onClick={() => setShowLoginPassword(!showLoginPassword)}
+                                            aria-label={showLoginPassword ? "Ocultar senha" : "Mostrar senha"}
+                                        >
+                                            {showLoginPassword ? <EyeOffIcon /> : <EyeIcon />}
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div className="w-full flex justify-end mt-1">
+                                    <button
+                                        type="button"
+                                        className="text-[0.8rem] text-blue-400 hover:text-blue-300 transition-colors cursor-pointer"
+                                        onClick={() => {
+                                            setError('');
+                                            setResetSuccess('');
+                                            setResetEmail(loginEmail); // Pre-fill if typed
+                                            setView('forgot_password');
+                                        }}
                                         disabled={loading}
-                                    />
+                                    >
+                                        Esqueci minha senha
+                                    </button>
                                 </div>
 
                                 {error && <p className="text-[0.8rem] text-red-300 text-center mt-2">{error}</p>}
@@ -453,6 +541,47 @@ export default function LoginPage() {
                                     Criar uma conta com e-mail
                                 </button>
                             </div>
+                        </>
+                    ) : view === 'forgot_password' ? (
+                        <>
+                            <h2 className="text-center m-0 mb-2 text-[1.45rem] font-bold text-slate-200/95">Redefinir senha</h2>
+                            <p className="text-center text-[0.9rem] text-slate-400 mb-6">Digite seu e-mail para receber o link de recuperação.</p>
+
+                            <form className="w-full text-left flex flex-col gap-3 my-4 mb-[18px]" onSubmit={handleResetPassword}>
+                                <div className="w-full flex flex-col gap-1.5 text-[0.85rem] text-text-secondary s-6">
+                                    <label className="block text-left self-start text-inherit font-medium opacity-75" htmlFor="reset-email">E-mail</label>
+                                    <input
+                                        id="reset-email"
+                                        type="email"
+                                        className="w-full box-border rounded-[10px] border border-blue-800/60 bg-slate-900/95 text-text-primary px-2.5 py-2 text-[0.9rem] outline-none transition-all shadow-md focus:border-blue-500/95 focus:shadow-glow-input-focus placeholder:text-slate-200/40"
+                                        value={resetEmail}
+                                        onChange={(e) => setResetEmail(e.target.value)}
+                                        autoComplete="email"
+                                        required
+                                        disabled={loading}
+                                    />
+                                </div>
+
+                                {error && <p className="text-[0.8rem] text-red-300 text-center mt-2">{error}</p>}
+                                {resetSuccess && <p className="text-[0.8rem] text-green-400 text-center mt-2">{resetSuccess}</p>}
+
+                                <button
+                                    type="submit"
+                                    className="vitalita-primary-btn w-full py-3 mt-4 inline-flex items-center justify-center gap-1.5 rounded-pill text-white text-[0.78rem] font-semibold tracking-[0.16em] uppercase cursor-pointer"
+                                    disabled={loading || !resetEmail.trim()}
+                                >
+                                    {loading ? 'Enviando...' : 'Enviar link'}
+                                </button>
+
+                                <button
+                                    type="button"
+                                    className="vitalita-pill w-full mt-2 py-3 border border-slate-400/20 bg-[#02061740] shadow-sm text-slate-200/70 text-[0.78rem] font-bold tracking-[0.22em] uppercase cursor-pointer transition-all hover:bg-[#02061754] hover:border-slate-400/35 hover:-translate-y-px active:translate-y-0 focus:outline-none focus:shadow-[0_0_0_3px_rgba(56,189,248,0.1)] disabled:opacity-60 disabled:cursor-default"
+                                    onClick={backToLogin}
+                                    disabled={loading}
+                                >
+                                    Voltar
+                                </button>
+                            </form>
                         </>
                     ) : (
                         <>
@@ -499,17 +628,27 @@ export default function LoginPage() {
 
                                         <label className="w-full flex flex-col gap-1.5" htmlFor="signup-pass">
                                             <span className="block text-left self-start text-[0.85rem] text-text-secondary font-medium">Senha</span>
-                                            <input
-                                                id="signup-pass"
-                                                type="password"
-                                                className="w-full box-border rounded-[10px] border border-blue-900/60 bg-slate-900/95 text-text-primary px-2.5 py-2 text-[0.9rem] outline-none transition-all shadow-md focus:border-accent-strong/95 focus:shadow-[0_0_0_1px_rgba(37,99,235,0.7)] placeholder:text-slate-200/40"
-                                                value={signupPassword}
-                                                onChange={(e) => setSignupPassword(e.target.value)}
-                                                placeholder="Sua senha"
-                                                autoComplete="new-password"
-                                                required
-                                                disabled={loading}
-                                            />
+                                            <div className="relative">
+                                                <input
+                                                    id="signup-pass"
+                                                    type={showSignupPassword ? "text" : "password"}
+                                                    className="w-full box-border rounded-[10px] border border-blue-900/60 bg-slate-900/95 text-text-primary px-2.5 py-2 text-[0.9rem] outline-none transition-all shadow-md focus:border-accent-strong/95 focus:shadow-[0_0_0_1px_rgba(37,99,235,0.7)] placeholder:text-slate-200/40 pr-10"
+                                                    value={signupPassword}
+                                                    onChange={(e) => setSignupPassword(e.target.value)}
+                                                    placeholder="Sua senha"
+                                                    autoComplete="new-password"
+                                                    required
+                                                    disabled={loading}
+                                                />
+                                                <button
+                                                    type="button"
+                                                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 transition-colors cursor-pointer p-1"
+                                                    onClick={() => setShowSignupPassword(!showSignupPassword)}
+                                                    aria-label={showSignupPassword ? "Ocultar senha" : "Mostrar senha"}
+                                                >
+                                                    {showSignupPassword ? <EyeOffIcon /> : <EyeIcon />}
+                                                </button>
+                                            </div>
                                         </label>
 
                                         <div className="my-2.5 mb-1.5 p-3 px-3 rounded-xl border border-slate-400/20 bg-[#02061740]" aria-live="polite">
@@ -538,17 +677,27 @@ export default function LoginPage() {
 
                                         <label className="w-full flex flex-col gap-1.5" htmlFor="signup-pass2">
                                             <span className="block text-left self-start text-[0.85rem] text-text-secondary font-medium">Confirmar senha</span>
-                                            <input
-                                                id="signup-pass2"
-                                                type="password"
-                                                className="w-full box-border rounded-[10px] border border-blue-900/60 bg-slate-900/95 text-text-primary px-2.5 py-2 text-[0.9rem] outline-none transition-all shadow-md focus:border-accent-strong/95 focus:shadow-[0_0_0_1px_rgba(37,99,235,0.7)] placeholder:text-slate-200/40"
-                                                value={confirmPassword}
-                                                onChange={(e) => setConfirmPassword(e.target.value)}
-                                                placeholder="Repita a senha"
-                                                autoComplete="new-password"
-                                                required
-                                                disabled={loading}
-                                            />
+                                            <div className="relative">
+                                                <input
+                                                    id="signup-pass2"
+                                                    type={showConfirmPassword ? "text" : "password"}
+                                                    className="w-full box-border rounded-[10px] border border-blue-900/60 bg-slate-900/95 text-text-primary px-2.5 py-2 text-[0.9rem] outline-none transition-all shadow-md focus:border-accent-strong/95 focus:shadow-[0_0_0_1px_rgba(37,99,235,0.7)] placeholder:text-slate-200/40 pr-10"
+                                                    value={confirmPassword}
+                                                    onChange={(e) => setConfirmPassword(e.target.value)}
+                                                    placeholder="Repita a senha"
+                                                    autoComplete="new-password"
+                                                    required
+                                                    disabled={loading}
+                                                />
+                                                <button
+                                                    type="button"
+                                                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 transition-colors cursor-pointer p-1"
+                                                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                                    aria-label={showConfirmPassword ? "Ocultar senha" : "Mostrar senha"}
+                                                >
+                                                    {showConfirmPassword ? <EyeOffIcon /> : <EyeIcon />}
+                                                </button>
+                                            </div>
                                         </label>
                                     </>
                                 ) : (

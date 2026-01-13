@@ -6,7 +6,7 @@
 import React, { useState, useEffect } from 'react';
 import { db } from './firebaseConfig';
 import { collection, addDoc, updateDoc, doc, serverTimestamp } from 'firebase/firestore';
-import { Trash2, Plus, ArrowLeft, GripVertical, X } from 'lucide-react';
+import { Trash2, Plus, ChevronLeft, GripVertical, X } from 'lucide-react';
 import { Button } from './components/design-system/Button';
 
 const muscleGroups = [
@@ -168,13 +168,13 @@ export default function CreateWorkoutPage({ onBack, user, initialData, creationC
             {/* Header */}
             <div className="mb-6">
                 <Button
-                    variant="ghost"
+                    variant="outline-primary"
                     size="sm"
                     onClick={onBack}
-                    leftIcon={<ArrowLeft size={16} />}
-                    className="mb-6 pl-0 hover:bg-transparent hover:text-white"
+                    className="mb-6 uppercase font-bold tracking-wider"
+                    leftIcon={<ChevronLeft size={16} />}
                 >
-                    Voltar
+                    VOLTAR
                 </Button>
                 <h2 className="text-2xl font-bold text-white">{initialData ? 'Editar Treino' : 'Criar Novo Treino'}</h2>
             </div>

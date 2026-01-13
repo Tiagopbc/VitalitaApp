@@ -446,18 +446,7 @@ export default function WorkoutsPage({ onNavigateToCreate, onNavigateToWorkout, 
                 )}
             </div>
 
-            {/* --- FAB (Create New) --- */}
-            <div className="fixed bottom-24 right-6 lg:bottom-12 lg:right-12 z-40 flex flex-col gap-4 items-end">
-                <button
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        onNavigateToCreate(null, { targetUserId: user.uid });
-                    }}
-                    className="w-14 h-14 rounded-full bg-gradient-to-r from-cyan-500 to-blue-600 flex items-center justify-center text-white shadow-[0_4px_20px_rgba(6,182,212,0.4)] hover:scale-105 active:scale-95 transition-all"
-                >
-                    <Plus size={28} strokeWidth={2.5} />
-                </button>
-            </div>
+
 
             {/* --- Edit Modal --- */}
             <AnimatePresence>

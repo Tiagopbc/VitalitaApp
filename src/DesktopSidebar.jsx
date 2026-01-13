@@ -76,8 +76,8 @@ export function DesktopSidebar({ activeTab, onTabChange, user, isTrainer }) {
                             className={`
                                 relative flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all duration-300 w-full text-left group
                                 ${isActive
-                                    ? 'bg-gradient-to-r from-blue-600/20 to-transparent border-l-4 border-cyan-400 pl-3'
-                                    : 'hover:bg-slate-800/40 border-l-4 border-transparent pl-3 text-slate-400 hover:text-slate-200'
+                                    ? 'bg-gradient-to-r from-cyan-500/20 to-blue-600/10 text-white'
+                                    : 'hover:bg-slate-800/40 text-slate-400 hover:text-slate-200'
                                 }
                             `}
                         >
@@ -94,6 +94,10 @@ export function DesktopSidebar({ activeTab, onTabChange, user, isTrainer }) {
                             {/* Glow Effect for Active */}
                             {isActive && (
                                 <div className="absolute inset-0 rounded-xl bg-cyan-400/5 blur-sm -z-10" />
+                            )}
+                            {/* Active Indicator Line (Left) */}
+                            {isActive && (
+                                <div className="absolute left-0 top-1/2 -translate-y-1/2 h-8 w-1 bg-cyan-500 rounded-r-full shadow-[0_0_12px_rgba(6,182,212,0.6)]" />
                             )}
                         </button>
                     );

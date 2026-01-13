@@ -208,7 +208,15 @@ export function LinearCardCompactV2({
             {/* Header */}
             <div className="flex justify-between items-start mb-[10px] gap-3">
                 <div className="flex-1 min-w-0">
-                    <h3 className="text-[#e2e8f0] text-[20px] font-bold leading-tight truncate">
+                    <h3
+                        className="text-[#e2e8f0] text-[20px] font-bold leading-tight"
+                        style={{
+                            whiteSpace: 'normal',
+                            wordWrap: 'break-word',
+                            overflowWrap: 'break-word',
+                            display: 'block'
+                        }}
+                    >
                         {exerciseName}
                     </h3>
 

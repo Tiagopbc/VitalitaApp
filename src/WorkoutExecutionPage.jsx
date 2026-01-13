@@ -85,25 +85,25 @@ function Stepper({ label, value, onChange, step = 1, suffix = '' }) {
     const handleDecrement = () => onChange(Math.max(0, Number(value) - step));
 
     return (
-        <div className="flex flex-col gap-2">
-            <span className="text-xs text-slate-400 font-bold ml-1">{label}</span>
-            <div className="flex items-center gap-3">
+        <div className="flex flex-col gap-1 sm:gap-2">
+            <span className="text-[10px] sm:text-xs text-slate-400 font-bold ml-1">{label}</span>
+            <div className="flex items-center gap-2 sm:gap-3">
                 <RippleButton
                     onClick={handleDecrement}
-                    className="w-10 h-10 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-300 hover:bg-slate-700 active:scale-95 transition-all"
+                    className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-300 hover:bg-slate-700 active:scale-95 transition-all"
                 >
-                    <ChevronDown size={20} className="rotate-90" /> {/* Minus appearance */}
+                    <ChevronDown size={18} className="rotate-90 sm:w-5 sm:h-5" /> {/* Minus appearance */}
                 </RippleButton>
 
-                <div className="bg-slate-200 text-slate-900 font-bold text-lg h-10 min-w-[30px] px-4 rounded-full flex items-center justify-center border border-slate-300">
+                <div className="bg-slate-200 text-slate-900 font-bold text-base sm:text-lg h-8 sm:h-10 min-w-[30px] px-4 rounded-full flex items-center justify-center border border-slate-300">
                     {value}{suffix}
                 </div>
 
                 <RippleButton
                     onClick={handleIncrement}
-                    className="w-10 h-10 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-300 hover:bg-slate-700 active:scale-95 transition-all"
+                    className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-300 hover:bg-slate-700 active:scale-95 transition-all"
                 >
-                    <ChevronUp size={20} className="rotate-90" /> {/* Plus appearance */}
+                    <ChevronUp size={18} className="rotate-90 sm:w-5 sm:h-5" /> {/* Plus appearance */}
                 </RippleButton>
             </div>
         </div>
@@ -136,23 +136,36 @@ function ExerciseCard({ exercise, onUpdateSet, onToggleSet, onUpdateNotes, onAdd
     if (!activeSet) return null;
 
     return (
-        <div className={`bg-[#0f172a] rounded-3xl p-5 border border-slate-800 relative overflow-hidden transition-all ${isExerciseComplete ? 'opacity-75 border-emerald-500/30' : ''}`}>
+        <div className={`bg-[#0f172a] rounded-3xl p-4 sm:p-5 border border-slate-800 relative overflow-hidden transition-all ${isExerciseComplete ? 'opacity-75 border-emerald-500/30' : ''}`}>
 
             {/* Header Row */}
-            <div className="flex items-start gap-4 mb-4">
+            <div className="flex items-start gap-3 sm:gap-4 mb-3 sm:mb-4">
                 {/* Checkbox Main - Toggles ACTIVE set */}
                 <button
                     onClick={() => onToggleSet(exercise.id, activeSet.id)}
-                    className={`w-12 h-12 rounded-full border-2 flex items-center justify-center transition-all flex-shrink-0 ${activeSet.completed ? 'bg-emerald-500 border-emerald-500' : 'border-slate-600 hover:border-cyan-500'}`}
+                    className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full border-2 flex items-center justify-center transition-all flex-shrink-0 ${activeSet.completed ? 'bg-emerald-500 border-emerald-500' : 'border-slate-600 hover:border-cyan-500'}`}
                 >
-                    {activeSet.completed && <Check size={20} className="text-white" strokeWidth={4} />}
+                    {activeSet.completed && <Check size={18} className="text-white sm:w-5 sm:h-5" strokeWidth={4} />}
                 </button>
 
                 <div className="flex-1 min-w-0">
-                    <div className="flex justify-between items-start">
-                        <div>
+                    <div className="flex flex-col sm:flex-row justify-between items-start gap-1 sm:gap-0">
+                        <div className="flex-1 pr-1 w-full">
                             <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-0.5">{exercise.muscleFocus?.primary || exercise.group}</p>
-                            <h3 className="text-xl font-bold text-white mb-1 leading-tight">{exercise.name}</h3>
+                            <h3
+                                className="text-base sm:text-xl font-bold text-white mb-1 leading-normal"
+                                style={{
+                                    wordWrap: 'break-word',
+                                    overflowWrap: 'break-word',
+                                    whiteSpace: 'normal !important',
+                                    wordBreak: 'break-word',
+                                    display: 'block',
+                                    height: 'auto',
+                                    maxHeight: 'none'
+                                }}
+                            >
+                                {exercise.name}
+                            </h3>
                         </div>
                         {/* Badge */}
                         {exercise.method && (
@@ -160,7 +173,7 @@ function ExerciseCard({ exercise, onUpdateSet, onToggleSet, onUpdateNotes, onAdd
                                 onClick={() => {
                                     setSelectedMethod(exercise.method);
                                 }}
-                                className="flex-shrink-0 px-2.5 py-1 rounded-lg border border-cyan-500/30 bg-cyan-500/10 text-cyan-400 text-[9px] font-bold uppercase tracking-wider ml-2 cursor-pointer hover:bg-cyan-500/20 active:scale-95 transition-all"
+                                className="flex-shrink-0 px-2.5 py-1 rounded-lg border border-cyan-500/30 bg-cyan-500/10 text-cyan-400 text-[9px] font-bold uppercase tracking-wider cursor-pointer hover:bg-cyan-500/20 active:scale-95 transition-all self-start sm:self-auto ml-0 sm:ml-auto"
                             >
                                 {exercise.method}
                             </div>
@@ -199,51 +212,51 @@ function ExerciseCard({ exercise, onUpdateSet, onToggleSet, onUpdateNotes, onAdd
             </div>
 
             {/* Steppers Area */}
-            <div className="flex items-center justify-between gap-4 mb-6 px-1">
+            <div className="flex items-center justify-between gap-2 sm:gap-4 mb-5 sm:mb-6 px-1">
                 {/* Weight Stepper */}
-                <div className="flex flex-col gap-2">
-                    <span className="text-xs text-slate-400 font-bold ml-1">Peso (kg)</span>
-                    <div className="flex items-center gap-3">
+                <div className="flex flex-col gap-1 sm:gap-2">
+                    <span className="text-[10px] sm:text-xs text-slate-400 font-bold ml-1">Peso (kg)</span>
+                    <div className="flex items-center gap-2 sm:gap-3">
                         <RippleButton
                             onClick={() => onUpdateSet(exercise.id, activeSet.id, 'weight', Math.max(0, Number(activeSet.weight || 0) - 1))}
-                            className="w-10 h-10 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-300 hover:bg-slate-700 active:scale-95 transition-all"
+                            className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-300 hover:bg-slate-700 active:scale-95 transition-all"
                         >
-                            <span className="text-xl font-bold mb-1">-</span>
+                            <span className="text-lg sm:text-xl font-bold mb-1">-</span>
                         </RippleButton>
 
-                        <div className={`${inputClassName} font-bold text-lg h-10 w-[70px] rounded-full flex items-center justify-center border border-slate-300 shadow-inner`}>
+                        <div className={`${inputClassName} font-bold text-base sm:text-lg h-8 sm:h-10 w-[60px] sm:w-[70px] rounded-full flex items-center justify-center border border-slate-300 shadow-inner`}>
                             {activeSet.weight || 0}
                         </div>
 
                         <RippleButton
                             onClick={() => onUpdateSet(exercise.id, activeSet.id, 'weight', Number(activeSet.weight || 0) + 1)}
-                            className="w-10 h-10 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-300 hover:bg-slate-700 active:scale-95 transition-all"
+                            className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-300 hover:bg-slate-700 active:scale-95 transition-all"
                         >
-                            <span className="text-xl font-bold mb-1">+</span>
+                            <span className="text-lg sm:text-xl font-bold mb-1">+</span>
                         </RippleButton>
                     </div>
                 </div>
 
                 {/* Reps Stepper */}
-                <div className="flex flex-col gap-2">
-                    <span className="text-xs text-slate-400 font-bold ml-1">Repetições</span>
-                    <div className="flex items-center gap-3">
+                <div className="flex flex-col gap-1 sm:gap-2">
+                    <span className="text-[10px] sm:text-xs text-slate-400 font-bold ml-1">Repetições</span>
+                    <div className="flex items-center gap-2 sm:gap-3">
                         <RippleButton
                             onClick={() => onUpdateSet(exercise.id, activeSet.id, 'reps', Math.max(0, Number(activeSet.reps || 0) - 1))}
-                            className="w-10 h-10 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-300 hover:bg-slate-700 active:scale-95 transition-all"
+                            className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-300 hover:bg-slate-700 active:scale-95 transition-all"
                         >
-                            <span className="text-xl font-bold mb-1">-</span>
+                            <span className="text-lg sm:text-xl font-bold mb-1">-</span>
                         </RippleButton>
 
-                        <div className={`${inputClassName} font-bold text-lg h-10 w-[70px] rounded-full flex items-center justify-center border border-slate-300 shadow-inner`}>
+                        <div className={`${inputClassName} font-bold text-base sm:text-lg h-8 sm:h-10 w-[60px] sm:w-[70px] rounded-full flex items-center justify-center border border-slate-300 shadow-inner`}>
                             {activeSet.reps || 0}
                         </div>
 
                         <RippleButton
                             onClick={() => onUpdateSet(exercise.id, activeSet.id, 'reps', Number(activeSet.reps || 0) + 1)}
-                            className="w-10 h-10 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-300 hover:bg-slate-700 active:scale-95 transition-all"
+                            className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-300 hover:bg-slate-700 active:scale-95 transition-all"
                         >
-                            <span className="text-xl font-bold mb-1">+</span>
+                            <span className="text-lg sm:text-xl font-bold mb-1">+</span>
                         </RippleButton>
                     </div>
                 </div>
@@ -296,27 +309,36 @@ function ExerciseCard({ exercise, onUpdateSet, onToggleSet, onUpdateNotes, onAdd
 
 // --- SUBCOMPONENT: PROGRESS CARD ---
 function ProgressCard({ completedCount, totalCount }) {
-    const percent = totalCount > 0 ? (completedCount / totalCount) * 100 : 0;
+    // Determine percent just for safe keeping or analytics if needed, but we use segments now
+    // const percent = totalCount > 0 ? (completedCount / totalCount) * 100 : 0;
 
     return (
-        <div className="bg-[#0f172a] rounded-3xl p-6 border border-slate-800 mb-6">
-            <div className="flex items-center gap-2 mb-2">
-                <div className="w-4 h-4 rounded-full border border-cyan-500 flex items-center justify-center">
-                    <Check size={8} className="text-cyan-500" />
+        <div className="bg-[#0f172a] rounded-3xl p-5 border border-slate-800 mb-6">
+            <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 rounded-full border border-cyan-500 flex items-center justify-center">
+                        <Check size={8} className="text-cyan-500" />
+                    </div>
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Progresso do Treino</span>
                 </div>
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Progresso do Treino</span>
+
+                <div className="text-sm font-bold text-white">
+                    <span className="text-lg text-cyan-400 mr-1">{completedCount}</span>
+                    <span className="text-slate-500">/ {totalCount}</span>
+                </div>
             </div>
 
-            <h2 className="text-3xl font-bold text-white mb-4">
-                {completedCount} de {totalCount} <span className="text-slate-500 text-xl font-normal">exercícios</span>
-            </h2>
-
-            {/* Bar */}
-            <div className="h-2 w-full bg-slate-800 rounded-full overflow-hidden">
-                <div
-                    className="h-full bg-cyan-500 rounded-full transition-all duration-500"
-                    style={{ width: `${percent}%` }}
-                />
+            {/* Segmented Bar */}
+            <div className="flex gap-1 h-1.5 w-full">
+                {Array.from({ length: totalCount }).map((_, idx) => (
+                    <div
+                        key={idx}
+                        className={`flex-1 rounded-full transition-all duration-500 ${idx < completedCount
+                            ? 'bg-cyan-500 shadow-[0_0_8px_rgba(6,182,212,0.4)]'
+                            : 'bg-slate-800'
+                            }`}
+                    />
+                ))}
             </div>
         </div>
     );
@@ -331,6 +353,7 @@ export function WorkoutExecutionPage({ workoutId, onFinish, user }) {
     const [exercises, setExercises] = useState([]);
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState(null);
+    const [showFinishModal, setShowFinishModal] = useState(false); // Success Modal State
 
 
     // Global Toggles
@@ -777,9 +800,10 @@ export function WorkoutExecutionPage({ workoutId, onFinish, user }) {
                 origin: { y: 0.6 }
             });
 
+            // Show Finish Modal
             setTimeout(() => {
-                if (onFinish) onFinish();
-            }, 1000); // Wait a bit for effect
+                setShowFinishModal(true);
+            }, 800);
         } catch (e) {
             setError('Erro ao salvar. Verifique sua conexão.');
         } finally {
@@ -885,10 +909,10 @@ export function WorkoutExecutionPage({ workoutId, onFinish, user }) {
                             variant="outline-primary"
                             size="sm"
                             onClick={() => navigate(-1)}
-                            className="pl-2 pr-4 py-1.5 backdrop-blur-md shadow-lg gap-2"
+                            className="backdrop-blur-md shadow-lg uppercase font-bold tracking-wider"
+                            leftIcon={<ChevronLeft size={16} />}
                         >
-                            <ChevronLeft size={18} />
-                            <span className="text-[10px] font-bold tracking-widest uppercase">Voltar</span>
+                            VOLTAR
                         </Button>
                     </div>
 
@@ -1061,6 +1085,53 @@ export function WorkoutExecutionPage({ workoutId, onFinish, user }) {
                     methodName={selectedMethod}
                     onClose={() => setSelectedMethod(null)}
                 />
+
+                {/* Finish Success Modal */}
+                {showFinishModal && (
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-300">
+                        <div className="w-full max-w-sm bg-[#0f172a] border border-slate-700 rounded-3xl p-6 shadow-2xl animate-in zoom-in-95 duration-300 relative overflow-hidden">
+                            {/* Background Glow */}
+                            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-cyan-500 to-blue-600"></div>
+                            <div className="absolute -top-10 -right-10 w-32 h-32 bg-cyan-500/10 rounded-full blur-3xl"></div>
+
+                            <div className="text-center space-y-4 relative z-10">
+                                <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full flex items-center justify-center mx-auto shadow-lg shadow-green-500/20 mb-2">
+                                    <Check size={32} className="text-white" strokeWidth={3} />
+                                </div>
+
+                                <h3 className="text-2xl font-black italic text-white uppercase tracking-tighter">Treino Concluído!</h3>
+                                <p className="text-slate-400 text-sm">
+                                    Parabéns! Todo o esforço vale a pena. Que tal compartilhar essa conquista?
+                                </p>
+
+                                <div className="pt-4 space-y-3">
+                                    <Button
+                                        onClick={handleShare}
+                                        disabled={sharing}
+                                        className="w-full h-12 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-bold rounded-xl shadow-lg shadow-purple-500/25 flex items-center justify-center gap-2"
+                                    >
+                                        {sharing ? 'Gerando...' : (
+                                            <>
+                                                <Share2 size={18} />
+                                                Compartilhar no Instagram
+                                            </>
+                                        )}
+                                    </Button>
+
+                                    <Button
+                                        onClick={() => {
+                                            if (onFinish) onFinish();
+                                        }}
+                                        variant="ghost"
+                                        className="w-full h-12 text-slate-400 hover:text-white"
+                                    >
+                                        Pular e Sair
+                                    </Button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
 
                 {/* Finish Button */}
                 {/* Finish Button - Updated to match screenshot (Blue/Cyan Gradient) */}

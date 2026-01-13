@@ -98,64 +98,75 @@ export function TrainerDashboard({ user, onBack, onNavigateToCreateWorkout }) {
     if (selectedStudent) {
         return (
             <div className="min-h-screen bg-[#020617] relative">
-                <div className="sticky top-0 z-30 bg-[#020617]/95 backdrop-blur-sm border-b border-slate-800 p-4">
-                    <div className="flex flex-col md:flex-row md:items-center justify-between max-w-7xl mx-auto gap-4">
-                        <div className="flex items-center gap-3 w-full">
-                            <Button variant="ghost" size="sm" onClick={() => setSelectedStudent(null)} leftIcon={<ChevronLeft size={20} />} className="shrink-0">
-                                Voltar
-                            </Button>
-                            <div className="flex items-center gap-3 pl-2 border-l border-slate-700 overflow-hidden">
-                                <div className="w-9 h-9 rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center text-sm font-bold text-white shadow-lg shadow-cyan-500/20 shrink-0">
-                                    {selectedStudent.displayName?.charAt(0)}
-                                </div>
-                                <span className="font-bold text-white text-lg truncate block max-w-[150px] sm:max-w-none">
-                                    {selectedStudent.displayName}
-                                </span>
-                            </div>
-                        </div>
-                        <div className="flex items-center justify-end w-full md:w-auto gap-2">
-                            {/* Mobile Unlink (Icon Only) */}
-                            <Button
-                                variant="danger"
-                                size="sm"
-                                onClick={() => handleUnlink(selectedStudent)}
-                                className="bg-red-500/10 text-red-400 hover:bg-red-500/20 border-red-500/20 sm:hidden"
-                            >
-                                <Trash2 size={18} />
-                            </Button>
-                            {/* Desktop Unlink (Full Button) */}
+                <div className="sticky top-0 z-30 bg-[#020617]/80 backdrop-blur-xl border-b border-white/5 p-4 transition-all">
+                    <div className="flex items-center justify-between max-w-7xl mx-auto">
+                        <Button
+                            variant="outline-primary"
+                            size="sm"
+                            onClick={() => setSelectedStudent(null)}
+                            className="shrink-0 uppercase font-bold tracking-wider"
+                            leftIcon={<ChevronLeft size={16} />}
+                        >
+                            VOLTAR
+                        </Button>
+
+                        <div className="flex gap-2">
                             <Button
                                 variant="danger"
                                 size="sm"
                                 onClick={() => handleUnlink(selectedStudent)}
                                 leftIcon={<Trash2 size={16} />}
-                                className="bg-red-500/10 text-red-400 hover:bg-red-500/20 border-red-500/20 hidden sm:flex"
+                                className="bg-red-500/10 text-red-400 hover:bg-red-500/20 border-red-500/20"
                             >
                                 Desvincular
                             </Button>
                         </div>
                     </div>
+                </div>
 
-                    {/* Tabs */}
-                    <div className="max-w-7xl mx-auto mt-6 flex gap-6">
-                        <button
-                            onClick={() => setActiveTab('workouts')}
-                            className={`pb-3 border-b-2 text-sm font-bold transition-all px-1 ${activeTab === 'workouts'
-                                ? 'border-cyan-500 text-cyan-400'
-                                : 'border-transparent text-slate-500 hover:text-slate-300'
-                                }`}
-                        >
-                            Fichas de Treino
-                        </button>
-                        <button
-                            onClick={() => setActiveTab('history')}
-                            className={`pb-3 border-b-2 text-sm font-bold transition-all px-1 ${activeTab === 'history'
-                                ? 'border-cyan-500 text-cyan-400'
-                                : 'border-transparent text-slate-500 hover:text-slate-300'
-                                }`}
-                        >
-                            Histórico & Evolução
-                        </button>
+                {/* HERO SECTION: Profile + Tabs */}
+                <div className="pt-8 pb-2 bg-gradient-to-b from-[#020617] to-[#0f172a]/50">
+                    {/* Centered Profile Info */}
+                    <div className="flex flex-col items-center justify-center animate-in fade-in slide-in-from-top-2 duration-700 mb-6">
+                        <div className="relative mb-3">
+                            <div className="w-20 h-20 rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center text-3xl font-bold text-white shadow-lg shadow-cyan-500/20 ring-4 ring-black/50">
+                                {selectedStudent.displayName?.charAt(0)}
+                            </div>
+                            <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-green-500 border-[3px] border-[#020617] shadow-sm"></div>
+                        </div>
+                        <h2 className="text-2xl font-bold text-white text-center mb-1">
+                            {selectedStudent.displayName}
+                        </h2>
+                        <div className="flex items-center gap-2">
+                            <div className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
+                            <span className="text-[10px] uppercase tracking-widest text-cyan-400 font-bold">
+                                Aluno Ativo
+                            </span>
+                        </div>
+                    </div>
+
+                    {/* Modern Pill Tabs - Close to Name */}
+                    <div className="max-w-7xl mx-auto px-4 flex justify-center mb-4">
+                        <div className="bg-slate-900/80 backdrop-blur-md p-1 rounded-full inline-flex border border-white/10 shadow-2xl shadow-black/50">
+                            <button
+                                onClick={() => setActiveTab('workouts')}
+                                className={`px-5 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all duration-300 ${activeTab === 'workouts'
+                                    ? 'bg-cyan-500 text-black shadow-lg shadow-cyan-500/25'
+                                    : 'text-slate-400 hover:text-white hover:bg-white/5'
+                                    }`}
+                            >
+                                Fichas de Treino
+                            </button>
+                            <button
+                                onClick={() => setActiveTab('history')}
+                                className={`px-5 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all duration-300 ${activeTab === 'history'
+                                    ? 'bg-cyan-500 text-black shadow-lg shadow-cyan-500/25'
+                                    : 'text-slate-400 hover:text-white hover:bg-white/5'
+                                    }`}
+                            >
+                                Histórico & Evolução
+                            </button>
+                        </div>
                     </div>
                 </div>
 
@@ -187,6 +198,7 @@ export function TrainerDashboard({ user, onBack, onNavigateToCreateWorkout }) {
                             <HistoryPage
                                 user={selectedStudent}
                                 onBack={() => { }}
+                                isEmbedded={true}
                             />
                         </div>
                     )}
@@ -204,8 +216,14 @@ export function TrainerDashboard({ user, onBack, onNavigateToCreateWorkout }) {
                 <div>
                     {/* Show Back Button mainly on Mobile */}
                     <div className="lg:hidden mb-2">
-                        <Button variant="ghost" size="sm" onClick={onBack} leftIcon={<ChevronLeft size={20} />} className="pl-0 hover:bg-transparent text-slate-400 hover:text-white">
-                            Voltar
+                        <Button
+                            variant="outline-primary"
+                            size="sm"
+                            onClick={onBack}
+                            className="pl-2 pr-4 backdrop-blur-md shadow-lg font-bold tracking-wider uppercase mb-4"
+                            leftIcon={<ChevronLeft size={18} />}
+                        >
+                            VOLTAR
                         </Button>
                     </div>
                     <h1 className="text-3xl font-bold text-white mb-1">Área do Personal</h1>
@@ -246,15 +264,21 @@ export function TrainerDashboard({ user, onBack, onNavigateToCreateWorkout }) {
                 {/* Add more stats if real data available */}
             </div>
 
-            {/* 3. Search & Toolbar */}
+            {/* 3. Search & Toolbar (Modern Floating Island) */}
             <div className="mb-6">
-                <input
-                    type="text"
-                    placeholder="Buscar aluno por nome..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full bg-slate-900 border border-slate-800 rounded-xl px-5 py-3 text-white focus:outline-none focus:ring-2 focus:ring-cyan-500/50 transition-all placeholder:text-slate-600"
-                />
+                <div className="relative group max-w-md">
+                    <div className="absolute inset-0 bg-cyan-500/20 blur-xl rounded-2xl opacity-0 group-focus-within:opacity-100 transition-opacity duration-500" />
+                    <input
+                        type="text"
+                        placeholder="Buscar aluno por nome..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="relative w-full bg-[#0f172a] border border-slate-800 rounded-2xl px-5 py-4 text-white focus:outline-none focus:border-cyan-500/50 shadow-xl transition-all placeholder:text-slate-600 font-medium"
+                    />
+                    <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500">
+                        <Users size={18} />
+                    </div>
+                </div>
             </div>
 
             {/* 4. Students Grid */}

@@ -4,7 +4,8 @@ import {
     signInWithPopup,
     signOut,
     updateProfile,
-    onAuthStateChanged
+    onAuthStateChanged,
+    sendPasswordResetEmail
 } from 'firebase/auth';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db, googleProvider } from '../firebaseConfig'; // Adjust path
@@ -72,6 +73,15 @@ export const authService = {
      */
     async logout() {
         return signOut(auth);
+    },
+
+    /**
+     * Send Password Reset Email
+     * @param {string} email
+     * @returns {Promise<void>}
+     */
+    async resetPassword(email) {
+        return sendPasswordResetEmail(auth, email);
     },
 
     /**

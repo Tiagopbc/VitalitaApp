@@ -13,7 +13,7 @@ import { Button } from './components/design-system/Button';
 import { EvolutionChart } from './components/analytics/EvolutionChart';
 import { WorkoutDetailsModal } from './components/history/WorkoutDetailsModal';
 
-function HistoryPage({ onBack, initialTemplate, initialExercise, user }) {
+function HistoryPage({ onBack, initialTemplate, initialExercise, user, isEmbedded = false }) {
     // Tab State: 'journal' | 'analytics'
     const [activeTab, setActiveTab] = useState('journal');
 
@@ -343,20 +343,24 @@ function HistoryPage({ onBack, initialTemplate, initialExercise, user }) {
     return (
         <div className="min-h-screen bg-[#020617] pb-32">
             {/* --- HEADER --- */}
-            <div className="sticky top-0 z-40 bg-[#020617]/80 backdrop-blur-md border-b border-slate-800/50 pt-12 pb-4 px-4">
-                <div className="w-full max-w-5xl mx-auto">
-                    <div className="flex items-center justify-between mb-6">
-                        <Button
-                            variant="outline-primary"
-                            size="sm"
-                            onClick={onBack}
-                            leftIcon={<ChevronLeft size={16} />}
-                        >
-                            VOLTAR
-                        </Button>
-                        <h1 className="text-xl font-bold text-white">Histórico</h1>
-                        <div className="w-10" /> {/* Spacer */}
-                    </div>
+            <div className="sticky top-0 z-40 bg-[#020617]/80 backdrop-blur-md border-b border-slate-800/50 pt-4 px-4 pb-4">
+                <div className="w-full max-w-5xl mx-auto space-y-4">
+
+                    {!isEmbedded && (
+                        <div className="flex items-center justify-between pt-8 mb-2">
+                            <Button
+                                variant="outline-primary"
+                                size="sm"
+                                onClick={onBack}
+                                className="uppercase font-bold tracking-wider"
+                                leftIcon={<ChevronLeft size={16} />}
+                            >
+                                VOLTAR
+                            </Button>
+                            <h1 className="text-xl font-bold text-white">Histórico</h1>
+                            <div className="w-10" />
+                        </div>
+                    )}
 
                     {/* TABS */}
                     <div className="grid grid-cols-2 bg-slate-900/50 p-1 rounded-xl border border-slate-800">
@@ -594,13 +598,15 @@ function HistoryPage({ onBack, initialTemplate, initialExercise, user }) {
                 )}
             </div>
             {/* DETAILS MODAL */}
-            {selectedSessionForDetails && (
-                <WorkoutDetailsModal
-                    session={selectedSessionForDetails}
-                    onClose={() => setSelectedSessionForDetails(null)}
-                />
-            )}
-        </div>
+            {
+                selectedSessionForDetails && (
+                    <WorkoutDetailsModal
+                        session={selectedSessionForDetails}
+                        onClose={() => setSelectedSessionForDetails(null)}
+                    />
+                )
+            }
+        </div >
     );
 }
 

@@ -4,7 +4,7 @@
  * Fornece descrições, guias de execução e dicas de uso para cada método.
  */
 import React from 'react';
-import { ArrowLeft } from 'lucide-react';
+import { ChevronLeft } from 'lucide-react';
 import { trainingMethods } from './data/trainingMethods';
 import { TrendingDown, TrendingUp, Grid, Link2, Focus, AlertTriangle, Repeat, Heart } from 'lucide-react';
 
@@ -28,6 +28,7 @@ export default function MethodsPage({ onBack }) {
                     variant="outline-primary"
                     size="sm"
                     onClick={onBack}
+                    className="uppercase font-bold tracking-wider"
                     leftIcon={<ChevronLeft size={16} />}
                 >
                     VOLTAR
