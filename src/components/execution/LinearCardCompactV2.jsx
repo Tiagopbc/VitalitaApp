@@ -100,6 +100,8 @@ const METHOD_COLORS = {
     'DEFAULT': { main: '#94a3b8', bg: 'rgba(71,85,105,0.2)', border: 'rgba(71,85,105,0.25)' }
 };
 
+import { NumericKeypad } from '../common/NumericKeypad';
+
 export function LinearCardCompactV2({
     muscleGroup,
     exerciseName,
@@ -116,16 +118,34 @@ export function LinearCardCompactV2({
     onObservationChange,
     onSetChange,
     onCompleteSet,
-    suggestedWeight, // New Prop for History
-    suggestedReps, // New Prop for History
+    suggestedWeight,
+    suggestedReps,
     lastWeight,
     lastReps,
-    onMethodClick // New Prop for Method Modal
+    onMethodClick
 }) {
     // Determine completion status
     const completedCount = completedSets.filter(Boolean).length;
     const isExerciseFullyCompleted = completedCount === totalSets && totalSets > 0;
     const isCurrentSetCompleted = completedSets[currentSet - 1];
+
+    // Keypad State
+    const [keypadOpen, setKeypadOpen] = useState(false);
+    const [activeInputType, setActiveInputType] = useState(null); // 'weight' | 'reps'
+
+    const openKeypad = (type) => {
+        setActiveInputType(type);
+        setKeypadOpen(true);
+    };
+
+    const handleKeypadConfirm = (val) => {
+        if (activeInputType === 'weight') {
+            onWeightChange(val);
+        } else if (activeInputType === 'reps') {
+            onRepsChange(val);
+        }
+    };
+
 
     // Memoize calculations
     const { repsType, currentSetGoal } = useMemo(() => {
@@ -162,7 +182,6 @@ export function LinearCardCompactV2({
     };
 
     const handleCompleteSet = () => {
-        // Use current OR suggested
         const effectiveWeight = (weight && parseFloat(weight) > 0) ? weight : suggestedWeight;
         const effectiveReps = (actualReps && actualReps.trim() !== '') ? actualReps : suggestedReps;
 
@@ -338,15 +357,14 @@ export function LinearCardCompactV2({
                     >
                         <Minus size={18} strokeWidth={2} />
                     </button>
-                    <div className="flex-1 flex flex-col items-center">
+                    <div
+                        className="flex-1 flex flex-col items-center cursor-pointer active:scale-95 transition-transform"
+                        onClick={() => openKeypad('weight')}
+                    >
                         <span className="text-[9px] text-slate-400 tracking-wider font-bold mb-0.5">PESO (KG)</span>
-                        <input
-                            type="number"
-                            value={weight || suggestedWeight || ""}
-                            onChange={(e) => onWeightChange(e.target.value)}
-                            className={`bg-transparent border-none text-center font-bold text-lg p-0 w-full focus:ring-0 ${!weight && suggestedWeight ? 'text-slate-500' : 'text-[#f1f5f9]'}`}
-                            placeholder="0.00"
-                        />
+                        <div className={`text-center font-bold text-lg leading-none ${!weight && suggestedWeight ? 'text-slate-500' : 'text-[#f1f5f9]'}`}>
+                            {weight || suggestedWeight || "0.00"}
+                        </div>
                         {/* History Hint */}
                         {suggestedWeight && !weight && (
                             <span className="absolute bottom-1 right-14 text-[8px] text-slate-600">Hist: {suggestedWeight}</span>
@@ -368,15 +386,14 @@ export function LinearCardCompactV2({
                     >
                         <Minus size={18} strokeWidth={2} />
                     </button>
-                    <div className="flex-1 flex flex-col items-center">
+                    <div
+                        className="flex-1 flex flex-col items-center cursor-pointer active:scale-95 transition-transform"
+                        onClick={() => openKeypad('reps')}
+                    >
                         <span className="text-[9px] text-slate-400 tracking-wider font-bold mb-0.5">REPETIÇÕES</span>
-                        <input
-                            type="number"
-                            value={actualReps || suggestedReps || ""}
-                            onChange={(e) => onRepsChange(e.target.value)}
-                            className={`bg-transparent border-none text-center font-bold text-lg p-0 w-full focus:ring-0 ${!actualReps && suggestedReps ? 'text-slate-500' : 'text-[#f1f5f9]'}`}
-                            placeholder="0"
-                        />
+                        <div className={`text-center font-bold text-lg leading-none ${!actualReps && suggestedReps ? 'text-slate-500' : 'text-[#f1f5f9]'}`}>
+                            {actualReps || suggestedReps || "0"}
+                        </div>
                     </div>
                     <button
                         onClick={incrementReps}
@@ -419,6 +436,15 @@ export function LinearCardCompactV2({
                     className="w-full bg-transparent border-b border-slate-700/50 text-xs text-slate-400 py-2 focus:border-cyan-500/50 focus:text-slate-200 outline-none transition-colors placeholder:text-slate-600"
                 />
             </div>
+
+            {/* --- KEYPAD OVERLAY --- */}
+            <NumericKeypad
+                isOpen={keypadOpen}
+                onClose={() => setKeypadOpen(false)}
+                onConfirm={handleKeypadConfirm}
+                initialValue={activeInputType === 'weight' ? (weight || suggestedWeight || '') : (actualReps || suggestedReps || '')}
+                title={activeInputType === 'weight' ? 'DEFINIR PESO (KG)' : 'DEFINIR REPETIÇÕES'}
+            />
         </div >
     );
 }
