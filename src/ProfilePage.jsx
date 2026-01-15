@@ -539,8 +539,25 @@ export default function ProfilePage({ user, onLogout, onNavigateToHistory, onNav
                 )}
             </div>
 
+
             {/* --- LOGOUT --- */}
-            <div className="flex justify-center mt-8">
+            <div className="flex flex-col items-center gap-4 mt-8">
+                <button
+                    onClick={async () => {
+                        if (!window.confirm("Admin: Importar +800 exercícios?")) return;
+                        try {
+                            const { exerciseImportService } = await import('./services/exerciseImportService');
+                            const count = await exerciseImportService.importExercises();
+                            alert(`Importação concluída! ${count} exercícios adicionados.`);
+                        } catch (e) {
+                            alert("Erro na importação: " + e.message);
+                        }
+                    }}
+                    className="text-xs font-mono text-slate-700 hover:text-cyan-500 transition-colors"
+                >
+                    [Admin] Importar Database de Exercícios
+                </button>
+
                 <button
                     onClick={onLogout}
                     className="flex items-center gap-2 text-red-500/80 hover:text-red-500 text-sm font-medium transition-colors"

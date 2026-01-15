@@ -207,5 +207,61 @@ export const workoutService = {
         );
         const snap = await getDocs(q);
         return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    },
+
+    /**
+     * Search exercises in the global catalog.
+     * @param {string} searchTerm
+     * @param {string|null} muscleFilter (Optional)
+     * @param {number} limitCount
+     * @returns {Promise<Array>}
+     */
+    async searchExercises(searchTerm, muscleFilter = null, limitCount = 20) {
+        try {
+            const catalogRef = collection(db, 'exercises_catalog');
+            let constraints = [];
+            const term = searchTerm ? searchTerm.toLowerCase().trim() : '';
+
+            // STRATEGY:
+            // 1. If Muscle Filter is ON: Query by Muscle Group (Equality) -> Client-side filter by Name.
+            //    Reason: Avoids need for Composite Index (Muscle + SearchKey) which breaks if missing.
+            // 2. If Muscle Filter is OFF: Query by SearchKey (Range) -> Standard prefix search.
+
+            if (muscleFilter) {
+                constraints.push(where('muscleGroup', '==', muscleFilter));
+                // fetch more to allow for filtering
+                constraints.push(limit(100)); // Reasonable limit for a single muscle group
+            } else if (term) {
+                // Global search (Prefix)
+                constraints.push(where('searchKey', '>=', term));
+                constraints.push(where('searchKey', '<=', term + '\uf8ff'));
+                constraints.push(limit(limitCount));
+            } else {
+                // No filter, no term? Just return some randoms or empty?
+                // Returning empty is safer to avoid huge reads, but if limit is small it's ok.
+                constraints.push(limit(limitCount));
+            }
+
+            const q = query(catalogRef, ...constraints);
+            const snap = await getDocs(q);
+            let results = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+            // Client-side filtering if we used muscle filter strategy with a term
+            if (muscleFilter && term) {
+                results = results.filter(r => {
+                    const name = r.name?.toLowerCase() || '';
+                    const searchKey = r.searchKey || '';
+                    return name.includes(term) || searchKey.includes(term);
+                });
+                // Re-apply limit after filtering
+                results = results.slice(0, limitCount);
+            }
+
+            return results;
+
+        } catch (error) {
+            console.error("Error searching exercises:", error);
+            return [];
+        }
     }
 };

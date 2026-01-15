@@ -1,105 +1,238 @@
 import React, { forwardRef } from 'react';
-import { Trophy, Clock, Dumbbell, Activity, Calendar } from 'lucide-react';
+import { Activity, Clock, Dumbbell, Trophy, User } from 'lucide-react';
 
 export const ShareableWorkoutCard = forwardRef(({ session, userName }, ref) => {
     if (!session) return null;
 
-    // Format date: "Sábado, 12 de Jan"
+    // Date
     const formattedDate = new Intl.DateTimeFormat('pt-BR', {
-        weekday: 'long',
         day: '2-digit',
-        month: 'short'
-    }).format(new Date()).replace('.', '');
+        month: 'long',
+        year: 'numeric'
+    }).format(new Date());
 
-    // Background is a dark gradient
+    /**
+     * DESIGN SYSTEM: "Midnight Glass"
+     * Layout: OPTION 2 - "HYPER-VISUAL POSTER"
+     * Focus: Cinematic 3D Background + Massive Typography
+     */
+
+    const colors = {
+        cyan: '#22d3ee',    // Cyan-400
+        cyanGlow: 'rgba(34, 211, 238, 0.8)',
+        blue: '#3b82f6',    // Blue-500
+        textMain: '#ffffff',
+        textMuted: '#94a3b8'
+    };
+
     return (
         <div
             ref={ref}
             id="share-card"
-            ref={ref}
-            id="share-card"
-            // PURE INLINE STYLES TO AVOID ANY TAILWIND v4 OKLAB/OKLCH LEAKAGE
             style={{
                 position: 'fixed',
                 left: '-9999px',
                 top: 0,
-                width: '400px',
-                height: '711px',
+                width: '400px', // Standard Story width
+                height: '711px', // 9:16 aspect ratio
                 backgroundColor: '#020617',
+                fontFamily: 'Inter, sans-serif',
+                color: 'white',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: '0', // No padding, full bleed
+                boxSizing: 'border-box',
+                overflow: 'hidden'
+            }}
+        >
+            {/* --- BACKGROUND LAYER --- */}
+            {/* 1. 3D Render Image */}
+            <img
+                src="/bg-share-dumbbells.png"
+                alt="Background"
+                style={{
+                    position: 'absolute',
+                    inset: 0,
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover',
+                    zIndex: 0
+                }}
+            />
+
+            {/* 2. Gradient Scrims for Readability */}
+            <div style={{
+                position: 'absolute',
+                inset: 0,
+                background: `
+                    linear-gradient(to bottom, #020617 0%, transparent 20%, transparent 50%, #020617 90%),
+                    radial-gradient(circle at center, transparent 0%, rgba(2, 6, 23, 0.6) 100%)
+                `,
+                zIndex: 1
+            }} />
+
+            {/* --- CONTENT LAYER --- */}
+            <div style={{
+                position: 'relative',
+                zIndex: 10,
+                width: '100%',
+                height: '100%',
                 display: 'flex',
                 flexDirection: 'column',
                 justifyContent: 'space-between',
-                fontFamily: 'sans-serif',
-                color: '#ffffff',
-                padding: '2rem',
-                zIndex: -50,
-                opacity: 1,
-                pointerEvents: 'none'
-            }}
-        // w=400, h=711 => 9:16 approx
-        >
-            {/* Background Texture / Gradients */}
-            <div className="absolute top-[-20%] left-[-20%] w-[140%] h-[60%] blur-[100px] rounded-full" style={{ background: 'rgba(6, 182, 212, 0.1)' }} />
-            <div className="absolute bottom-[-10%] right-[-10%] w-[120%] h-[50%] blur-[90px] rounded-full" style={{ background: 'rgba(37, 99, 235, 0.1)' }} />
+                padding: '32px'
+            }}>
 
-            {/* HEADER */}
-            <div className="relative z-10 grid gap-2">
-                <div className="flex items-center gap-2 mb-2 opacity-80">
-                    <Activity size={18} style={{ color: '#22d3ee' }} />
-                    <span className="text-xs font-bold tracking-[0.2em] uppercase" style={{ color: '#22d3ee' }}>Vitalita App</span>
-                </div>
-                <h1 className="text-5xl font-black italic tracking-tighter leading-none" style={{ color: '#ffffff' }}>
-                    TREINO<br />
-                    <span className="text-transparent bg-clip-text" style={{ backgroundImage: 'linear-gradient(to right, #22d3ee, #3b82f6)', WebkitBackgroundClip: 'text', color: 'transparent' }}>CONCLUÍDO</span>
-                </h1>
-                <p className="text-lg font-medium mt-2 capitalize" style={{ color: '#94a3b8' }}>{formattedDate}</p>
-            </div>
-
-            {/* MAIN CONTENT - STATS */}
-            <div className="relative z-10 flex flex-col gap-6 my-auto">
-                {/* Big Stat: Workout Name */}
-                <div className="backdrop-blur-md rounded-2xl p-6 shadow-xl" style={{ backgroundColor: 'rgba(15, 23, 42, 0.6)', borderColor: 'rgba(30, 41, 59, 0.6)', borderWidth: '1px', borderStyle: 'solid' }}>
-                    <span className="text-xs font-bold uppercase tracking-wider block mb-1" style={{ color: '#64748b' }}>Rotina</span>
-                    <h2 className="text-2xl font-bold" style={{ color: '#ffffff' }}>{session.templateName || "Treino Livre"}</h2>
-                </div>
-
-                {/* Grid Stats */}
-                <div className="grid grid-cols-2 gap-4">
-                    <div className="backdrop-blur-md rounded-2xl p-5" style={{ backgroundColor: 'rgba(15, 23, 42, 0.4)', borderColor: 'rgba(30, 41, 59, 0.4)', borderWidth: '1px', borderStyle: 'solid' }}>
-                        <Clock size={24} style={{ color: '#fbbf24' }} className="mb-3" />
-                        <span className="text-3xl font-bold block" style={{ color: '#ffffff' }}>{session.duration}</span>
-                        <span className="text-xs font-bold uppercase" style={{ color: '#64748b' }}>Duração</span>
-                    </div>
-
-                    <div className="backdrop-blur-md rounded-2xl p-5" style={{ backgroundColor: 'rgba(15, 23, 42, 0.4)', borderColor: 'rgba(30, 41, 59, 0.4)', borderWidth: '1px', borderStyle: 'solid' }}>
-                        <Dumbbell size={24} style={{ color: '#22d3ee' }} className="mb-3" />
-                        <span className="text-3xl font-bold block" style={{ color: '#ffffff' }}>{session.exercisesCount}</span>
-                        <span className="text-xs font-bold uppercase" style={{ color: '#64748b' }}>Exercícios</span>
-                    </div>
-
-                    {session.volumeLoad > 0 && (
-                        <div className="col-span-2 backdrop-blur-md rounded-2xl p-5 flex items-center justify-between" style={{ backgroundColor: 'rgba(15, 23, 42, 0.4)', borderColor: 'rgba(30, 41, 59, 0.4)', borderWidth: '1px', borderStyle: 'solid' }}>
-                            <div>
-                                <span className="text-xs font-bold uppercase block" style={{ color: '#64748b' }}>Carga Total/Volume</span>
-                                <span className="text-2xl font-bold" style={{ color: '#ffffff' }}>{(session.volumeLoad / 1000).toFixed(1)} <span className="text-sm font-normal" style={{ color: '#94a3b8' }}>toneladas</span></span>
-                            </div>
-                            <Trophy size={32} style={{ color: '#eab308' }} className="opacity-80" />
-                        </div>
-                    )}
-                </div>
-            </div>
-
-            {/* FOOTER */}
-            <div className="relative z-10" style={{ borderTop: '1px solid rgba(30, 41, 59, 0.5)', paddingTop: '1.5rem' }}>
-                <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg" style={{ backgroundColor: 'rgba(22, 78, 99, 0.3)', borderColor: 'rgba(6, 182, 212, 0.3)', borderWidth: '1px', borderStyle: 'solid', color: '#22d3ee' }}>
-                        {userName ? userName.charAt(0).toUpperCase() : 'V'}
-                    </div>
-                    <div>
-                        <p className="text-sm font-bold leading-tight" style={{ color: '#ffffff' }}>{userName || 'Atleta Vitalita'}</p>
-                        <p className="text-xs font-medium" style={{ color: '#22d3ee' }}>Keep moving.</p>
+                {/* 1. HEADER */}
+                <div style={{ display: 'flex', justifyContent: 'center', marginTop: '10px' }}>
+                    <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        background: 'rgba(255, 255, 255, 0.1)',
+                        padding: '8px 16px',
+                        borderRadius: '20px',
+                        backdropFilter: 'blur(10px)',
+                        border: '1px solid rgba(255,255,255,0.1)'
+                    }}>
+                        <Activity size={16} color={colors.cyan} />
+                        <span style={{ fontSize: '12px', fontWeight: 'bold', letterSpacing: '2px', textTransform: 'uppercase' }}>
+                            VITALITÀ
+                        </span>
                     </div>
                 </div>
+
+                {/* 2. CENTER: MASSIVE STATS */}
+                <div style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flex: 1,
+                    gap: '10px' // Closer together
+                }}>
+                    {/* The Number */}
+                    <div style={{ position: 'relative' }}>
+                        <h1 style={{
+                            fontSize: '140px', // Massive
+                            lineHeight: '0.9',
+                            fontWeight: '900',
+                            margin: 0,
+                            color: 'transparent',
+                            WebkitTextStroke: `2px ${colors.cyan}`, // Outline effect like the reference
+                            textShadow: `0 0 30px ${colors.cyanGlow}`,
+                            letterSpacing: '-5px',
+                            fontFamily: 'Inter, sans-serif'
+                        }}>
+                            {(session.volumeLoad / 1000).toFixed(1)}
+                        </h1>
+
+                        {/* Glow Layer underneath for intensity */}
+                        <h1 style={{
+                            position: 'absolute',
+                            top: 0,
+                            left: 0,
+                            fontSize: '140px',
+                            lineHeight: '0.9',
+                            fontWeight: '900',
+                            margin: 0,
+                            color: colors.cyan,
+                            opacity: 0.2,
+                            filter: 'blur(10px)',
+                            zIndex: -1,
+                            letterSpacing: '-5px',
+                        }}>
+                            {(session.volumeLoad / 1000).toFixed(1)}
+                        </h1>
+                    </div>
+
+                    {/* The Label "KILOS" / "TONS" */}
+                    <div style={{
+                        fontSize: '48px',
+                        fontWeight: '900',
+                        color: 'white',
+                        textTransform: 'uppercase',
+                        letterSpacing: '8px',
+                        marginTop: '-10px',
+                        textShadow: '0 4px 10px rgba(0,0,0,0.5)'
+                    }}>
+                        {/* Kilos sounds more "bodybuilding", TON sounds "powerlifting". 
+                           Let's use "KILOS" as requested in the reference image if it fits? 
+                           Actually reference image had "KILOS" outline. 
+                           However, users usually see Volume in KG. 
+                           4.5 TON is cool but let's stick to what we calculated.
+                           If val > 1000, maybe display TON? Or just KG?
+                           User prompt said: "408 KG" in one image and "4.5 KILOS" (which meant tons probably) in another.
+                           Let's show "TONELADAS" if > 1000kg for impact? Or just VOLUME EM KG.
+                           Let's stick to "KILOS" if we show the number in KG.
+                           Wait, previous code divided by 1000. 
+                           If we show "4.5", that is Toneladas. 
+                           If we show "4500", that is KG.
+                           The reference image had "4.5" and "KILOS" (which is confusing, probably meant Tons).
+                           Let's stick to showing the calculated VolumeLoad (which is usually in KG, e.g. 4500).
+                           But 4500 is too long for 140px font?
+                           Let's use TONELADAS (e.g. 4.5) for that massive cinematic look. */}
+                        TONS
+                    </div>
+                </div>
+
+                {/* 3. BOTTOM INFO */}
+                <div style={{
+                    textAlign: 'center',
+                    paddingBottom: '20px'
+                }}>
+                    <h2 style={{
+                        fontSize: '24px',
+                        fontWeight: 'bold',
+                        color: 'white',
+                        marginBottom: '8px',
+                        textShadow: '0 2px 4px rgba(0,0,0,0.8)'
+                    }}>
+                        Volume Empilhado
+                    </h2>
+
+                    <h3 style={{
+                        fontSize: '16px',
+                        color: colors.textMuted,
+                        textTransform: 'uppercase',
+                        fontWeight: '600',
+                        letterSpacing: '1px',
+                        marginBottom: '4px'
+                    }}>
+                        {session.templateName}
+                    </h3>
+
+                    <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '12px',
+                        color: colors.cyan,
+                        fontSize: '14px',
+                        fontWeight: 'bold',
+                        textShadow: '0 2px 4px rgba(0,0,0,0.8)'
+                    }}>
+                        <span>{session.duration}</span>
+                        <span>|</span>
+                        <span>{session.exercisesCount} Exercícios</span>
+                    </div>
+
+                    {/* Button Simulation (Visual only) */}
+                    <div style={{
+                        marginTop: '32px',
+                        background: `linear-gradient(90deg, transparent, rgba(6, 182, 212, 0.2), transparent)`,
+                        height: '1px',
+                        width: '80%',
+                        marginLeft: 'auto',
+                        marginRight: 'auto'
+                    }} />
+
+                    <div style={{ marginTop: '16px', fontSize: '12px', color: '#64748b' }}>
+                        {formattedDate} • {userName}
+                    </div>
+                </div>
+
             </div>
         </div>
     );

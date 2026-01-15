@@ -16,6 +16,7 @@ export function calculateWeeklyStats(sessions, currentWeeklyGoal = 4) {
     const daysMap = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 
     // --- Week Days Data ---
+    // Start of week is Monday (from getStartOfWeek)
     const weekDaysData = Array(7).fill(null).map((_, idx) => {
         const dayDate = new Date(startOfCurrentWeek);
         dayDate.setDate(startOfCurrentWeek.getDate() + idx);
@@ -42,10 +43,15 @@ export function calculateWeeklyStats(sessions, currentWeeklyGoal = 4) {
     });
 
     // --- Month Stats Calculation ---
+    // Updated to start on Monday
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
     const daysInMonth = endOfMonth.getDate();
-    const startDayOfWeek = startOfMonth.getDay(); // 0 (Sun) - 6 (Sat)
+
+    // Adjust start day: standard getDay() is 0=Sun. 
+    // We want 0=Mon ... 6=Sun.
+    let startDayOfWeek = startOfMonth.getDay();
+    startDayOfWeek = startDayOfWeek === 0 ? 6 : startDayOfWeek - 1;
 
     const monthDaysData = [];
 
@@ -114,9 +120,12 @@ export function calculateWeeklyStats(sessions, currentWeeklyGoal = 4) {
     }
 
     // Pad end (next month days)
-    const lastDayOfMonth = endOfMonth.getDay(); // 0-6
-    if (lastDayOfMonth !== 6) {
-        for (let i = 1; i < (7 - lastDayOfMonth); i++) {
+    // We want total cells to be multiple of 7 to fill the row
+    const totalCells = monthDaysData.length;
+    const remainingCells = 7 - (totalCells % 7);
+
+    if (remainingCells < 7) {
+        for (let i = 1; i <= remainingCells; i++) {
             const d = new Date(endOfMonth);
             d.setDate(d.getDate() + i);
             monthDaysData.push({

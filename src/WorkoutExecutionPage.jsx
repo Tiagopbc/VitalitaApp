@@ -910,28 +910,51 @@ export function WorkoutExecutionPage({ workoutId, onFinish, user }) {
                     return;
                 }
 
-                if (navigator.share) {
+                const file = new File([blob], 'treino_concluido.png', { type: 'image/png' });
+
+                // 1. Tentar Compartilhamento Nativo (Mobile/Supported Browsers)
+                if (navigator.canShare && navigator.canShare({ files: [file] })) {
                     try {
-                        const file = new File([blob], 'treino_concluido.png', { type: 'image/png' });
                         await navigator.share({
                             title: 'Treino Concluído - Vitalitá',
                             text: `Acabei de completar o treino ${template?.name || 'Personalizado'}! 💪`,
                             files: [file]
                         });
+                        setSharing(false);
+                        return; // Sucesso
                     } catch (shareErr) {
-                        console.warn('Share mismatch/cancel:', shareErr);
-                    }
-                } else {
-                    // Fallback to clipboard
-                    try {
-                        const item = new ClipboardItem({ 'image/png': blob });
-                        await navigator.clipboard.write([item]);
-                        alert('Imagem copiada para a área de transferência!');
-                    } catch (clipErr) {
-                        alert('Seu navegador não suporta compartilhamento direto.');
+                        console.warn('Share API request failed, falling back to download:', shareErr);
+                        // Se usuário cancelar, não faz nada. Se for erro real, cai no fallback.
+                        if (shareErr.name === 'AbortError') {
+                            setSharing(false);
+                            return;
+                        }
                     }
                 }
+
+                // 2. Fallback: Download da Imagem (Funciona em Desktop ou HTTP local)
+                try {
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `vitalita_treino_${new Date().toISOString().slice(0, 10)}.png`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+
+                    // Notificar usuário
+                    setError(null); // Limpa erros anteriores
+                    // Usar um Toast seria melhor, mas como não temos acesso fácil ao ToastRef aqui fora do JSX renderizado condicionalmente, 
+                    // vamos assumir que o download é feedback suficiente ou usar um alert amigável se necessário.
+                    // Mas preferível não usar alert nativo feio.
+                } catch (downloadErr) {
+                    console.error("Download fallback failed:", downloadErr);
+                    setError('Não foi possível salvar a imagem.');
+                }
+
                 setSharing(false);
+
             }, 'image/png');
         } catch (err) {
             console.error(err);
@@ -978,7 +1001,10 @@ export function WorkoutExecutionPage({ workoutId, onFinish, user }) {
 
                 {/* --- HEADER (Legacy Style - Outlined) --- */}
                 {/* --- HEADER (Legacy Style - Separated Buttons) --- */}
-                <div className="fixed top-0 left-1/2 -translate-x-1/2 w-full max-w-2xl z-50 px-3 pt-6 pb-2 flex items-center justify-between pointer-events-none">
+                <div
+                    className="fixed top-0 left-1/2 -translate-x-1/2 w-full max-w-2xl z-50 px-3 pb-2 flex items-center justify-between pointer-events-none"
+                    style={{ paddingTop: 'max(1.5rem, env(safe-area-inset-top))' }}
+                >
 
                     {/* VOLTAR Button */}
                     <div className="pointer-events-auto">
@@ -995,26 +1021,12 @@ export function WorkoutExecutionPage({ workoutId, onFinish, user }) {
 
                     <div className="flex items-center gap-2 pointer-events-auto">
                         {/* SYNC INDICATOR & REFRESH */}
-                        <div className="flex items-center gap-1 mr-1">
-                            {saving ? (
-                                <span className="text-[10px] text-cyan-400 font-bold animate-pulse flex items-center gap-1">
-                                    <RotateCw size={10} className="animate-spin" /> Salvando...
-                                </span>
-                            ) : (
-                                <button
-                                    onClick={() => {
-                                        setLoading(true); // Visual feedback
-                                        // Force slight delay to show spinner
-                                        setTimeout(() => {
-                                            fetchData().then(() => alert("Sincronizado via nuvem!"));
-                                        }, 100);
-                                    }}
-                                    className="flex items-center gap-1 px-2 py-1 rounded-full bg-slate-800 border border-slate-700 text-[10px] text-slate-400 font-bold hover:text-cyan-400 hover:border-cyan-500 transition-all"
-                                >
-                                    <Share2 size={10} className="rotate-0" /> Sync
-                                </button>
-                            )}
-                        </div>
+                        {/* SKIPPED SYNC BUTTON - User prefers browser refresh */}
+                        {saving && (
+                            <span className="text-[10px] text-cyan-400 font-bold animate-pulse flex items-center gap-1 mr-2">
+                                <RotateCw size={10} className="animate-spin" /> Salvando...
+                            </span>
+                        )}
 
                         {/* Timer Button */}
                         <Button

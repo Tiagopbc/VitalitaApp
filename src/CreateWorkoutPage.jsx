@@ -20,18 +20,7 @@ const methods = [
     'Rest-Pause', 'Cardio 140 bpm'
 ];
 
-const exercisesByMuscle = {
-    'Peito': ['Supino Reto', 'Supino Inclinado', 'Supino Declinado', 'Crucifixo', 'Crossover', 'Flexão'],
-    'Costas': ['Barra Fixa', 'Remada Curvada', 'Remada Unilateral', 'Pulldown', 'Remada Sentado', 'Levantamento Terra'],
-    'Ombros': ['Desenvolvimento', 'Elevação Lateral', 'Elevação Frontal', 'Crucifixo Inverso', 'Remada Alta'],
-    'Bíceps': ['Rosca Direta', 'Rosca Alternada', 'Rosca Scott', 'Rosca Concentrada', 'Rosca Martelo'],
-    'Tríceps': ['Tríceps Testa', 'Tríceps Pulley', 'Mergulho', 'Tríceps Francês', 'Tríceps Coice'],
-    'Quadríceps': ['Agachamento', 'Leg Press', 'Cadeira Extensora', 'Afundo', 'Agachamento Búlgaro'],
-    'Posteriores': ['Mesa Flexora', 'Stiff', 'Cadeira Flexora', 'Levantamento Terra Romeno'],
-    'Glúteos': ['Hip Thrust', 'Abdução', 'Elevação Pélvica', 'Kickback'],
-    'Panturrilha': ['Panturrilha em Pé', 'Panturrilha Sentado', 'Panturrilha no Leg Press'],
-    'Abdômen': ['Abdominal Reto', 'Abdominal Oblíquo', 'Prancha', 'Elevação de Pernas']
-};
+import { workoutService } from './services/workoutService';
 
 export default function CreateWorkoutPage({ onBack, user, initialData, creationContext }) {
     const [workoutName, setWorkoutName] = useState(initialData?.name || '');
@@ -39,6 +28,10 @@ export default function CreateWorkoutPage({ onBack, user, initialData, creationC
     const [showAddExercise, setShowAddExercise] = useState(false);
     const [editingExerciseId, setEditingExerciseId] = useState(null);
     const [loading, setLoading] = useState(false);
+
+    // Search State
+    const [suggestions, setSuggestions] = useState([]);
+    const [isSearching, setIsSearching] = useState(false);
 
     // Patch missing IDs on load (legacy data support)
     useEffect(() => {
@@ -48,7 +41,7 @@ export default function CreateWorkoutPage({ onBack, user, initialData, creationC
                 id: ex.id || Math.random().toString(36).substr(2, 9)
             })));
         }
-    }, []);
+    }, [exercises]);
 
     // Form state
     const [newExercise, setNewExercise] = useState({
@@ -56,22 +49,75 @@ export default function CreateWorkoutPage({ onBack, user, initialData, creationC
         name: '',
         sets: '3',
         reps: '12',
-        method: 'Convencional'
+        method: 'Convencional',
+        rest: '',
+        notes: ''
     });
 
+    // Debounced Search Effect
+    useEffect(() => {
+        const fetchSuggestions = async () => {
+            // Logic:
+            // 1. If we have a muscleGroup selected, we can search even with empty name (to show list).
+            // 2. If no muscleGroup, we need at least 2 chars of name to avoid fetching whole DB.
+            const hasMuscle = !!newExercise.muscleGroup;
+            const hasName = newExercise.name.length >= 2;
+
+            if (!hasMuscle && !hasName) {
+                setSuggestions([]);
+                return;
+            }
+
+            setIsSearching(true);
+            try {
+                // If searching ONLY by muscle group (no name), fetch more results to populate grid
+                const limit = (hasMuscle && !newExercise.name) ? 50 : 15;
+
+                const results = await workoutService.searchExercises(
+                    newExercise.name,
+                    newExercise.muscleGroup || null,
+                    limit
+                );
+                setSuggestions(results);
+            } catch (err) {
+                console.error("Search failed", err);
+            } finally {
+                setIsSearching(false);
+            }
+        };
+
+        const timeoutId = setTimeout(fetchSuggestions, 400);
+        return () => clearTimeout(timeoutId);
+    }, [newExercise.name, newExercise.muscleGroup]);
+
+    function handleSelectSuggestion(suggestion) {
+        setNewExercise(prev => ({
+            ...prev,
+            name: suggestion.name,
+            muscleGroup: suggestion.muscleGroup || prev.muscleGroup || 'Geral', // Auto-fill muscle if missing
+            // Could also auto-fill instructions/notes if we wanted
+        }));
+        setSuggestions([]); // Clear suggestions
+    }
+
     function handleAddExercise() {
-        if (!newExercise.name || !newExercise.muscleGroup) return;
+        if (!newExercise.name) return;
+
+        const finalExercise = {
+            ...newExercise,
+            muscleGroup: newExercise.muscleGroup || 'Geral'
+        };
 
         if (editingExerciseId) {
             // Edit existing
-            setExercises(exercises.map(ex => ex.id === editingExerciseId ? { ...newExercise, id: editingExerciseId } : ex));
+            setExercises(exercises.map(ex => ex.id === editingExerciseId ? { ...finalExercise, id: editingExerciseId } : ex));
             setEditingExerciseId(null);
             setShowAddExercise(false);
         } else {
             // Add new
             const exercise = {
                 id: Date.now().toString(),
-                ...newExercise
+                ...finalExercise
             };
             setExercises([...exercises, exercise]);
             setShowAddExercise(false);
@@ -83,8 +129,11 @@ export default function CreateWorkoutPage({ onBack, user, initialData, creationC
             name: '',
             sets: '3',
             reps: '12',
-            method: 'Convencional'
+            method: 'Convencional',
+            rest: '',
+            notes: ''
         });
+        setSuggestions([]);
     }
 
     function handleEditExercise(ex) {
@@ -130,23 +179,24 @@ export default function CreateWorkoutPage({ onBack, user, initialData, creationC
             // Determine Created By (Always the logged in user)
             const createdBy = user.uid;
 
+            const workoutData = {
+                name: workoutName,
+                exercises: exercises,
+                updatedAt: serverTimestamp()
+            };
+
             if (initialData?.id) {
                 // UPDATE
                 const docRef = doc(db, 'workout_templates', initialData.id);
                 await Promise.race([
-                    updateDoc(docRef, {
-                        name: workoutName,
-                        exercises: exercises,
-                        updatedAt: serverTimestamp()
-                    }),
+                    updateDoc(docRef, workoutData),
                     timeout
                 ]);
             } else {
                 // CREATE
                 await Promise.race([
                     addDoc(collection(db, 'workout_templates'), {
-                        name: workoutName,
-                        exercises: exercises,
+                        ...workoutData,
                         createdBy: createdBy,
                         userId: targetUserId, // Associa o treino ao aluno (ou ao próprio usuário)
                         assignedByTrainer: creationContext?.targetUserId ? true : false, // Flag opcional
@@ -157,7 +207,8 @@ export default function CreateWorkoutPage({ onBack, user, initialData, creationC
             }
             onBack();
         } catch (err) {
-            // ... (error handling)
+            console.error(err);
+            alert("Erro ao salvar treino.");
         } finally {
             setLoading(false);
         }
@@ -251,8 +302,8 @@ export default function CreateWorkoutPage({ onBack, user, initialData, creationC
             {/* Add/Edit Exercise Modal */}
             {showAddExercise && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-                    <div className="w-full max-w-md bg-[#0f172a] rounded-2xl border border-slate-700 shadow-2xl p-6 animate-in zoom-in-95 duration-200">
-                        <div className="flex items-center justify-between mb-6">
+                    <div className="w-full max-w-md bg-[#0f172a] rounded-2xl border border-slate-700 shadow-2xl p-6 animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
+                        <div className="flex items-center justify-between mb-6 shrink-0">
                             <h4 className="text-lg font-bold text-white">
                                 {editingExerciseId ? 'Editar Exercício' : 'Novo Exercício'}
                             </h4>
@@ -277,37 +328,58 @@ export default function CreateWorkoutPage({ onBack, user, initialData, creationC
                             </button>
                         </div>
 
-                        <div className="flex flex-col gap-4">
+                        <div className="flex flex-col gap-4 overflow-y-auto pr-1 custom-scrollbar">
                             <label className="flex flex-col gap-2 text-xs font-bold text-slate-400 uppercase tracking-wider">
-                                Grupo Muscular
+                                Grupo Muscular (Filtro)
                                 <select
                                     value={newExercise.muscleGroup}
-                                    onChange={(e) => setNewExercise({ ...newExercise, muscleGroup: e.target.value, name: '' })}
+                                    onChange={(e) => setNewExercise({ ...newExercise, muscleGroup: e.target.value })}
                                     className="w-full rounded-xl border border-slate-600 bg-slate-800/50 text-white px-4 py-3 text-sm outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/50 transition-all appearance-none"
                                 >
-                                    <option value="">Selecione...</option>
+                                    <option value="">Todos (Global)</option>
                                     {muscleGroups.map(g => <option key={g} value={g}>{g}</option>)}
                                 </select>
                             </label>
 
-                            <label className="flex flex-col gap-2 text-xs font-bold text-slate-400 uppercase tracking-wider">
+                            <label className="flex flex-col gap-2 text-xs font-bold text-slate-400 uppercase tracking-wider relative group">
                                 Exercício
-                                <div className="relative">
-                                    <input
-                                        type="text"
-                                        list="exercise-suggestions"
-                                        value={newExercise.name}
-                                        onChange={(e) => setNewExercise({ ...newExercise, name: e.target.value })}
-                                        disabled={!newExercise.muscleGroup}
-                                        placeholder={newExercise.muscleGroup ? "Selecione ou digite..." : "Selecione o grupo muscular primeiro"}
-                                        className="w-full rounded-xl border border-slate-600 bg-slate-800/50 text-white px-4 py-3 text-sm outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/50 transition-all disabled:opacity-50"
-                                    />
-                                    <datalist id="exercise-suggestions">
-                                        {newExercise.muscleGroup && exercisesByMuscle[newExercise.muscleGroup]?.map(ex => (
-                                            <option key={ex} value={ex} />
+                                <input
+                                    type="text"
+                                    value={newExercise.name}
+                                    onChange={(e) => setNewExercise({ ...newExercise, name: e.target.value })}
+                                    onFocus={() => {
+                                        // Trigger search if we have a muscle group selected already
+                                        if (newExercise.muscleGroup && newExercise.name.length < 2) {
+                                            // Ensure effect runs or state allows showing
+                                        }
+                                    }}
+                                    placeholder={newExercise.muscleGroup ? "Selecione da lista ou digite..." : "Digite para buscar..."}
+                                    className="w-full rounded-xl border border-slate-600 bg-slate-800/50 text-white px-4 py-3 text-sm outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/50 transition-all"
+                                    autoFocus
+                                />
+                                {isSearching && (
+                                    <div className="absolute right-3 top-9">
+                                        <div className="w-4 h-4 border-2 border-cyan-500 border-t-transparent rounded-full animate-spin"></div>
+                                    </div>
+                                )}
+
+                                {(suggestions.length > 0 && (newExercise.name.length >= 2 || newExercise.muscleGroup)) && (
+                                    <div className="absolute left-0 right-0 top-[105%] bg-slate-800 border border-slate-700 rounded-xl shadow-2xl z-50 max-h-60 overflow-y-auto">
+                                        {suggestions.map(s => (
+                                            <div
+                                                key={s.id}
+                                                onClick={() => handleSelectSuggestion(s)}
+                                                className="px-4 py-3 hover:bg-slate-700 cursor-pointer border-b border-slate-700/50 last:border-0"
+                                            >
+                                                <div className="text-white font-medium text-sm">{s.name}</div>
+                                                <div className="text-[10px] text-cyan-400 flex gap-2">
+                                                    <span>{s.muscleGroup}</span>
+                                                    {s.equipment && <span className="opacity-50">• {s.equipment}</span>}
+                                                </div>
+                                            </div>
                                         ))}
-                                    </datalist>
-                                </div>
+                                    </div>
+                                )}
                             </label>
 
                             <div className="grid grid-cols-2 gap-4">
@@ -399,7 +471,6 @@ export default function CreateWorkoutPage({ onBack, user, initialData, creationC
                 </div>
             )}
 
-            {/* Add Button Trigger (Only visible when modal is closed, logical checks handled by standard flow) */}
             {!showAddExercise && (
                 <Button
                     onClick={() => {
@@ -424,7 +495,6 @@ export default function CreateWorkoutPage({ onBack, user, initialData, creationC
                 </Button>
             )}
 
-            {/* Save Button */}
             <Button
                 onClick={handleSave}
                 loading={loading}
