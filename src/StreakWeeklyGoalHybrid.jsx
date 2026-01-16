@@ -65,7 +65,7 @@ export function StreakWeeklyGoalHybrid({
     const level = getStreakLevel();
 
     return (
-        <div className="relative w-full lg:max-w-3xl lg:mx-auto">
+        <div className="relative w-full lg:max-w-xl lg:mx-auto">
 
             {/* --- CARD CONTAINER --- */}
             <div
