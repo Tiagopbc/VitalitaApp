@@ -5,7 +5,7 @@
  */
 import React from 'react';
 import { ChevronLeft } from 'lucide-react';
-import { trainingMethods } from './data/trainingMethods';
+import { trainingMethods } from '../data/trainingMethods';
 import { TrendingDown, TrendingUp, Grid, Link2, Focus, AlertTriangle, Repeat, Heart } from 'lucide-react';
 
 const iconMap = {

@@ -64,7 +64,6 @@ export function useWorkoutSession(workoutId, user) {
 
                 // If found active session, use it
                 if (activeData) {
-                    console.log("Found active remote session");
                     // Load template data (metadata only)
                     const templateDoc = await getDoc(doc(db, 'workout_templates', workoutId));
                     if (templateDoc.exists()) {

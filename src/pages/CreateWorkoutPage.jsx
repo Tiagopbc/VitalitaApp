@@ -4,10 +4,10 @@
  * Permite aos usuários adicionar exercícios, definir séries/repetições/métodos e salvar no Firestore.
  */
 import React, { useState, useEffect } from 'react';
-import { db } from './firebaseConfig';
+import { db } from '../firebaseConfig';
 import { collection, addDoc, updateDoc, doc, serverTimestamp } from 'firebase/firestore';
 import { Trash2, Plus, ChevronLeft, GripVertical, X } from 'lucide-react';
-import { Button } from './components/design-system/Button';
+import { Button } from '../components/design-system/Button';
 
 const muscleGroups = [
     'Peito', 'Costas', 'Ombros', 'Bíceps', 'Tríceps',
@@ -20,7 +20,7 @@ const methods = [
     'Rest-Pause', 'Cardio 140 bpm'
 ];
 
-import { workoutService } from './services/workoutService';
+import { workoutService } from '../services/workoutService';
 
 export default function CreateWorkoutPage({ onBack, user, initialData, creationContext }) {
     const [workoutName, setWorkoutName] = useState(initialData?.name || '');

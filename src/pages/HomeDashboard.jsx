@@ -21,10 +21,10 @@ import {
     BarChart3
 } from 'lucide-react';
 import { collection, query, where, getDocs, limit, orderBy, doc, getDoc } from 'firebase/firestore';
-import { StreakWeeklyGoalHybrid } from './StreakWeeklyGoalHybrid';
-import { db } from './firebaseConfig';
-import { calculateWeeklyStats } from './utils/workoutStats';
-import { workoutService } from './services/workoutService';
+import { StreakWeeklyGoalHybrid } from '../StreakWeeklyGoalHybrid';
+import { db } from '../firebaseConfig';
+import { calculateWeeklyStats } from '../utils/workoutStats';
+import { workoutService } from '../services/workoutService';
 
 
 export function HomeDashboard({
@@ -48,7 +48,11 @@ export function HomeDashboard({
     // Initialize with empty stats structure (7 empty days) to prevent missing calendar
     const [stats, setStats] = useState(() => calculateWeeklyStats([], 4));
 
+
     useEffect(() => {
+        let unsubscribeTemplates = null;
+        let unsubscribeSessions = null;
+
         async function fetchData() {
             if (!user) {
                 setLoading(false);
@@ -72,7 +76,7 @@ export function HomeDashboard({
             let workoutsData = [];
 
             // 1. Subscribe to Workouts (Templates) - REALTIME
-            const unsubscribeTemplates = workoutService.subscribeToTemplates(user.uid, (data) => {
+            unsubscribeTemplates = workoutService.subscribeToTemplates(user.uid, (data) => {
                 setWorkouts(data);
                 if (data.length > 0 && !suggestedWorkout) {
                     setSuggestedWorkout(data[0]);
@@ -81,81 +85,62 @@ export function HomeDashboard({
                 }
             });
 
-            // Cleanup subscription
-            return () => {
-                if (unsubscribeTemplates) unsubscribeTemplates();
-            };
-
-            // 2. Fetch History (Sessions) for Stats & Suggestion
+            // 2. Subscribe to History (Sessions) - REALTIME
+            // This ensures instant updates when a workout is finished, even without page reload.
             try {
-                // We need all sessions for Streak calculation?
-                // For now, yes.
-                const allSessions = await workoutService.getAllSessions(user.uid);
+                unsubscribeSessions = workoutService.subscribeToSessions(user.uid, (data) => {
+                    // console.log("DASHBOARD: Received sessions update", data.length);
 
-                const sessions = allSessions.map(d => {
-                    let dateObj = new Date();
-                    try {
-                        const raw = d.completedAt || d.timestamp;
-                        if (raw) {
-                            if (typeof raw.toDate === 'function') {
-                                // Firestore Timestamp
-                                dateObj = raw.toDate();
-                            } else if (raw instanceof Date) {
-                                // Native Date
-                                dateObj = raw;
-                            } else if (typeof raw === 'string' || typeof raw === 'number') {
-                                // ISO String or Ms
-                                dateObj = new Date(raw);
-                            } else if (raw.seconds) {
-                                // Plain object timestamp (serialized)
-                                dateObj = new Date(raw.seconds * 1000);
+                    const sessions = data.map(d => {
+                        let dateObj = new Date();
+                        try {
+                            // Prioritize completedAtClient to match User's device time
+                            const raw = d.completedAtClient || d.completedAt || d.timestamp;
+                            if (raw) {
+                                if (typeof raw.toDate === 'function') {
+                                    dateObj = raw.toDate();
+                                } else if (raw instanceof Date) {
+                                    dateObj = raw;
+                                } else if (typeof raw === 'string' || typeof raw === 'number') {
+                                    dateObj = new Date(raw);
+                                } else if (raw.seconds) {
+                                    dateObj = new Date(raw.seconds * 1000);
+                                }
                             }
+                        } catch (e) {
+                            console.warn("Date parsing error for session", d.id, e);
                         }
-                    } catch (e) {
-                        console.warn("Date parsing error for session", d.id, e);
-                        // Keep default 'now' or maybe fallback to created?
-                    }
 
-                    // Validate Result
-                    if (isNaN(dateObj.getTime())) {
-                        dateObj = new Date(); // Fallback to safe date if Invalid
-                    }
+                        // Validate
+                        if (isNaN(dateObj.getTime())) {
+                            dateObj = new Date();
+                        }
 
-                    return { ...d, date: dateObj };
+                        return { ...d, date: dateObj };
+                    });
+
+                    sessions.sort((a, b) => b.date - a.date);
+
+                    // --- SMART SUGGESTION LOGIC ---
+
+                    const computedStats = calculateWeeklyStats(sessions, fetchedGoal);
+                    // Update stats
+                    setStats({ ...computedStats, totalSessions: sessions.length });
+                    setLoading(false);
                 });
-
-                sessions.sort((a, b) => b.date - a.date);
-                // --- SMART SUGGESTION LOGIC ---
-                if (workoutsData.length > 0) {
-                    let nextWorkout = workoutsData[0]; // Default to first
-
-                    if (sessions.length > 0) {
-                        const lastSession = sessions[0];
-                        // Try to match by templateId first, then name
-                        const lastWorkoutIndex = workoutsData.findIndex(w =>
-                            w.id === lastSession.templateId || w.name === lastSession.workoutName
-                        );
-
-                        if (lastWorkoutIndex !== -1) {
-                            // Rotate to next: (current + 1) % total
-                            const nextIndex = (lastWorkoutIndex + 1) % workoutsData.length;
-                            nextWorkout = workoutsData[nextIndex];
-                        }
-                    }
-                    setSuggestedWorkout(nextWorkout);
-                }
-
-                const computedStats = calculateWeeklyStats(sessions, fetchedGoal);
-                setStats({ ...computedStats, totalSessions: sessions.length });
-            } catch (error) {
-                console.error("Error fetching history:", error);
-            } finally {
-                setLoading(false);
+            } catch (err) {
+                console.error("Subscription Error:", err);
             }
         }
 
         fetchData();
-    }, [user]);
+
+        // Cleanup
+        return () => {
+            if (unsubscribeTemplates) unsubscribeTemplates();
+            if (unsubscribeSessions) unsubscribeSessions();
+        };
+    }, [user, userGoal]);
 
 
 
@@ -172,7 +157,9 @@ export function HomeDashboard({
                     <p className="text-slate-400 text-sm">
                         Pronto para o próximo treino?
                     </p>
-                    <p className="text-[10px] text-slate-500 mt-1">Debug: Sessions {stats.totalSessions || 0} | Streak {stats.currentStreak}</p>
+                    <p className="text-slate-400 text-sm">
+                        Pronto para o próximo treino?
+                    </p>
                 </div>
 
                 {/* 2. PROGRESSO */}

@@ -255,7 +255,6 @@ export const workoutService = {
             where('userId', '==', userId)
         );
         return onSnapshot(q, (snapshot) => {
-            console.log("workoutService: Real-time update received. Docs:", snapshot.docs.length);
             const sessions = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
             callback(sessions);
         }, (error) => {

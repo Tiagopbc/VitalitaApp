@@ -4,7 +4,7 @@
  * Suporta pesquisa, filtragem (por empurrar/puxar/pernas/etc) e classificação de modelos.
  */
 import React, { useState, useRef, useEffect } from 'react';
-import { db } from './firebaseConfig';
+import { db } from '../firebaseConfig';
 import { collection, query, getDocs, deleteDoc, doc, addDoc } from 'firebase/firestore';
 import { motion, AnimatePresence } from 'motion/react';
 import {
@@ -28,12 +28,12 @@ import {
     RefreshCw
 } from 'lucide-react';
 
-import { RippleButton } from './components/design-system/RippleButton';
-import { PremiumCard } from './components/design-system/PremiumCard';
-import { ExerciseCard } from './components/workout/ExerciseCard';
-import { EditExerciseModal } from './components/workout/EditExerciseModal';
-import { workoutService } from './services/workoutService';
-import { useAuth } from './AuthContext';
+import { RippleButton } from '../components/design-system/RippleButton';
+import { PremiumCard } from '../components/design-system/PremiumCard';
+import { ExerciseCard } from '../components/workout/ExerciseCard';
+import { EditExerciseModal } from '../components/workout/EditExerciseModal';
+import { workoutService } from '../services/workoutService';
+import { useAuth } from '../AuthContext';
 
 // --- MOCK DATA FOR ACCORDION DEMO ---
 // Mock data removed

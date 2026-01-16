@@ -5,7 +5,7 @@
  * Gerencia o estado da sessão, inputs de peso/reps, timer e salvamento de rascunhos.
  */
 import React, { useState, useEffect } from 'react';
-import { db } from './firebaseConfig';
+import { db } from '../firebaseConfig';
 import {
     doc,
     getDoc,

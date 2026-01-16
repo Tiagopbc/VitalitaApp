@@ -1,7 +1,7 @@
 // -----------------------------------------------------------------------------
 import React, { useState, useEffect } from 'react';
-import { userService } from './services/userService';
-import { workoutService } from './services/workoutService';
+import { userService } from '../services/userService';
+import { workoutService } from '../services/workoutService';
 
 import {
     User,
@@ -29,10 +29,10 @@ import {
     ChevronRight,
     Users
 } from 'lucide-react';
-import { achievementsCatalog } from './data/achievementsCatalog';
-import { evaluateAchievements, calculateStats } from './utils/evaluateAchievements';
-import { Button } from './components/design-system/Button';
-import { PremiumCard } from './components/design-system/PremiumCard';
+import { achievementsCatalog } from '../data/achievementsCatalog';
+import { evaluateAchievements, calculateStats } from '../utils/evaluateAchievements';
+import { Button } from '../components/design-system/Button';
+import { PremiumCard } from '../components/design-system/PremiumCard';
 
 // -----------------------------------------------------------------------------
 // HELPER: Normalize Exercise Name
@@ -546,7 +546,7 @@ export default function ProfilePage({ user, onLogout, onNavigateToHistory, onNav
                     onClick={async () => {
                         if (!window.confirm("Admin: Importar +800 exercícios?")) return;
                         try {
-                            const { exerciseImportService } = await import('./services/exerciseImportService');
+                            const { exerciseImportService } = await import('../services/exerciseImportService');
                             const count = await exerciseImportService.importExercises();
                             alert(`Importação concluída! ${count} exercícios adicionados.`);
                         } catch (e) {

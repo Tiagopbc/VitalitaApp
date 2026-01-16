@@ -6,66 +6,30 @@
  */
 import React, { useEffect, useMemo, useRef, useState, Suspense } from 'react';
 import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
-import { HomeDashboard } from './HomeDashboard';
+import { HomeDashboard } from './pages/HomeDashboard';
 import { BottomNavEnhanced } from './BottomNavEnhanced';
 import { DesktopSidebar } from './DesktopSidebar';
 import { ProtectedRoute } from './components/ProtectedRoute';
 
 // Lazy Load Heavy Pages
-const HistoryPage = React.lazy(() => import('./HistoryPage'));
-const MethodsPage = React.lazy(() => import('./MethodsPage'));
-const CreateWorkoutPage = React.lazy(() => import('./CreateWorkoutPage'));
-const ProfilePage = React.lazy(() => import('./ProfilePage'));
-const WorkoutsPage = React.lazy(() => import('./WorkoutsPage'));
-const WorkoutExecutionPage = React.lazy(() => import('./WorkoutExecutionPage').then(module => ({ default: module.WorkoutExecutionPage })));
-const TrainerDashboard = React.lazy(() => import('./TrainerDashboard').then(module => ({ default: module.TrainerDashboard })));
+const HistoryPage = React.lazy(() => import('./pages/HistoryPage'));
+const MethodsPage = React.lazy(() => import('./pages/MethodsPage'));
+const CreateWorkoutPage = React.lazy(() => import('./pages/CreateWorkoutPage'));
+const ProfilePage = React.lazy(() => import('./pages/ProfilePage'));
+const WorkoutsPage = React.lazy(() => import('./pages/WorkoutsPage'));
+const WorkoutExecutionPage = React.lazy(() => import('./pages/WorkoutExecutionPage').then(module => ({ default: module.WorkoutExecutionPage })));
+const TrainerDashboard = React.lazy(() => import('./pages/TrainerDashboard').then(module => ({ default: module.TrainerDashboard })));
 
-import LoginPage from './LoginPage'; // Keep generic login fast (or lazy load too if large)
+import LoginPage from './pages/LoginPage'; // Keep generic login fast (or lazy load too if large)
 import { userService } from './services/userService';
 import { useAuth } from './AuthContext';
 import { db } from './firebaseConfig';
-import { doc, onSnapshot } from 'firebase/firestore';
+import { doc, onSnapshot } from 'firebase/firestore'; // Clean up if specific import not needed
 import './style.css';
+import { WorkoutProvider, useWorkout } from './context/WorkoutContext';
 
 
-class ErrorBoundary extends React.Component {
-    constructor(props) {
-        super(props);
-        this.state = { hasError: false, error: null, errorInfo: null };
-    }
-
-    static getDerivedStateFromError(error) {
-        return { hasError: true };
-    }
-
-    componentDidCatch(error, errorInfo) {
-        this.setState({ error, errorInfo });
-        console.error("Uncaught error:", error, errorInfo);
-    }
-
-    render() {
-        if (this.state.hasError) {
-            return (
-                <div style={{ padding: '20px', color: 'white', background: '#111', height: '100vh', overflow: 'auto' }}>
-                    <h1>Algo deu errado.</h1>
-                    <details style={{ whiteSpace: 'pre-wrap' }}>
-                        {this.state.error && this.state.error.toString()}
-                        <br />
-                        {this.state.errorInfo && this.state.errorInfo.componentStack}
-                    </details>
-                    <button
-                        onClick={() => window.location.reload()}
-                        style={{ marginTop: '20px', padding: '10px 20px', background: 'cyan', color: 'black', fontWeight: 'bold' }}
-                    >
-                        Tentar Recarregar
-                    </button>
-                </div>
-            );
-        }
-
-        return this.props.children;
-    }
-}
+import { ErrorBoundary } from './components/ErrorBoundary';
 
 function getFirstNameFromDisplayName(displayName) {
     const parts = (displayName || '').trim().split(/\s+/).filter(Boolean);
@@ -75,13 +39,22 @@ function getFirstNameFromDisplayName(displayName) {
 function App() {
     return (
         <ErrorBoundary>
-            <AppContent />
+            <AppContentWithProvider />
         </ErrorBoundary>
+    );
+}
+
+function AppContentWithProvider() {
+    return (
+        <WorkoutProvider>
+            <AppContent />
+        </WorkoutProvider>
     );
 }
 
 function AppContent() {
     const { user, authLoading, logout } = useAuth();
+    const { startWorkout, finishWorkout } = useWorkout(); // Use context
     const [isTrainer, setIsTrainer] = useState(false);
     const navigate = useNavigate();
     const location = useLocation();
@@ -105,87 +78,11 @@ function AppContent() {
         checkTrainerStatus();
     }, [user]);
 
-    // Active Workout Logic (Persistence)
-    const [activeWorkoutId, setActiveWorkoutId] = useState(() => {
-        const saved = localStorage.getItem('activeWorkoutId');
-        return saved || null;
-    });
-
-    // --- REAL-TIME SYNC FOR ACTIVE WORKOUT ---
-    useEffect(() => {
-        if (!user) return;
-
-        const unsubscribe = onSnapshot(doc(db, 'users', user.uid), async (docSnap) => {
-            if (docSnap.exists()) {
-                const data = docSnap.data();
-                const remoteActiveId = data.activeWorkoutId;
-
-                // Sync local state if different
-                if (remoteActiveId !== undefined) {
-                    // EMERGENCY BREAK: Check if user just manually exited
-                    const manualExit = sessionStorage.getItem('manual_exit');
-                    if (manualExit) {
-                        console.log("Manual exit detected. Ignoring remote active session and clearing.");
-                        if (remoteActiveId) {
-                            await userService.clearActiveWorkout(user.uid);
-                        }
-                        setActiveWorkoutId(null);
-                        localStorage.removeItem('activeWorkoutId');
-                        sessionStorage.removeItem('manual_exit'); // Clear flag after handling
-                        return; // STOP HERE
-                    }
-
-                    // VERIFY: Does this session actually exist?
-                    // This prevents "Ghost Sessions" from trapping the user in a loop.
-                    if (remoteActiveId) {
-                        try {
-                            const activeRef = doc(db, 'active_workouts', user.uid);
-                            // We can't use await inside a sync listener easily without IIFE, but here we are void.
-                            // Better to do a one-off check.
-                            const activeSnap = await import('firebase/firestore').then(mod => mod.getDoc(activeRef));
-
-                            if (activeSnap.exists()) {
-                                // It's real. Redirect.
-                                setActiveWorkoutId(remoteActiveId);
-                                localStorage.setItem('activeWorkoutId', remoteActiveId);
-                                if (!location.pathname.includes('/execute')) {
-                                    navigate(`/execute/${remoteActiveId}`);
-                                }
-                            } else {
-                                // It's a ghost! Clear it.
-                                console.warn("Ghost active session detected. Clearing...");
-                                await userService.clearActiveWorkout(user.uid);
-                                setActiveWorkoutId(null);
-                                localStorage.removeItem('activeWorkoutId');
-                            }
-                        } catch (e) {
-                            console.error("Error verifying active session:", e);
-                        }
-                    } else {
-                        // Explicitly null in DB
-                        setActiveWorkoutId(null);
-                        localStorage.removeItem('activeWorkoutId');
-                    }
-                }
-            }
-        });
-
-        return () => unsubscribe();
-    }, [user, location.pathname, navigate]); // Added deps for safety
+    // --- REAL-TIME SYNC FOR ACTIVE WORKOUT MOVED TO CONTEXT ---
 
     // Handlers
-    async function handleSelectWorkout(id) {
-        setActiveWorkoutId(id);
-        localStorage.setItem('activeWorkoutId', id);
-        if (user) {
-            await userService.setActiveWorkout(user.uid, id);
-        }
-        navigate(`/execute/${id}`);
-    }
-
     function handleLogout() {
         localStorage.removeItem('activeWorkoutId');
-        setActiveWorkoutId(null);
         clearWelcomeFlags();
         logout();
         navigate('/login');
@@ -335,7 +232,7 @@ function AppContent() {
                                     <HomeDashboard
                                         onNavigateToMethods={() => navigate('/methods', { state: { from: 'home' } })}
                                         onNavigateToCreateWorkout={handleCreateWorkout}
-                                        onNavigateToWorkout={handleSelectWorkout}
+                                        onNavigateToWorkout={startWorkout}
                                         onNavigateToHistory={handleOpenHistory}
                                         onNavigateToAchievements={() => navigate('/profile')}
                                         onNavigateToVolumeAnalysis={() => navigate('/profile')} // TODO: separate route
@@ -349,7 +246,7 @@ function AppContent() {
                                 <ProtectedRoute>
                                     <WorkoutsPage
                                         onNavigateToCreate={handleCreateWorkout}
-                                        onNavigateToWorkout={handleSelectWorkout}
+                                        onNavigateToWorkout={startWorkout}
                                         user={user}
                                     />
                                 </ProtectedRoute>
@@ -479,12 +376,7 @@ function ExecutionWrapper({ user }) {
         <WorkoutExecutionPage
             workoutId={workoutId}
             user={user}
-            onFinish={async () => {
-                // Determine logic: maybe go to home or history?
-                localStorage.removeItem('activeWorkoutId');
-                // The 'complete' logic in page handles data, we just navigate
-                navigate('/');
-            }}
+            onFinish={() => finishWorkout()}
         />
     );
 }

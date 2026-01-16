@@ -20,20 +20,20 @@ import {
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import html2canvas from 'html2canvas'; // For sharing
-import { ShareableWorkoutCard } from './components/sharing/ShareableWorkoutCard';
-import { RestTimer } from './components/execution/RestTimer';
-// import { MuscleFocusDisplay } from './components/execution/MuscleFocusDisplay'; // Unused
-// import { OneRMDisplay } from './components/execution/OneRMDisplay'; // Unused
-import { RippleButton } from './components/design-system/RippleButton';
-import { Button } from './components/design-system/Button';
-import MethodModal from './MethodModal';
-import { LinearCardCompactV2 } from './components/execution/LinearCardCompactV2';
-import { Toast } from './components/design-system/Toast';
-import { Skeleton } from './components/design-system/Skeleton';
+import { ShareableWorkoutCard } from '../components/sharing/ShareableWorkoutCard';
+import { RestTimer } from '../components/execution/RestTimer';
+// import { MuscleFocusDisplay } from '../components/execution/MuscleFocusDisplay'; // Unused
+// import { OneRMDisplay } from '../components/execution/OneRMDisplay'; // Unused
+import { RippleButton } from '../components/design-system/RippleButton';
+import { Button } from '../components/design-system/Button';
+import MethodModal from '../MethodModal';
+import { LinearCardCompactV2 } from '../components/execution/LinearCardCompactV2';
+import { Toast } from '../components/design-system/Toast';
+import { Skeleton } from '../components/design-system/Skeleton';
 
 // --- CUSTOM HOOKS ---
-import { useWorkoutTimer } from './hooks/useWorkoutTimer';
-import { useWorkoutSession } from './hooks/useWorkoutSession';
+import { useWorkoutTimer } from '../hooks/useWorkoutTimer';
+import { useWorkoutSession } from '../hooks/useWorkoutSession';
 
 // --- SUBCOMPONENT: Progress Card (Kept inline for simplicity or move to separate file later) ---
 function ProgressCard({ completedCount, totalCount }) {

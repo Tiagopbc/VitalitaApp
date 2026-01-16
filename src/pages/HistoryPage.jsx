@@ -1,17 +1,17 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 // import { db } from './firebaseConfig'; // Removed direct usage
-import { workoutService } from './services/workoutService';
+import { workoutService } from '../services/workoutService';
 import {
     TrendingUp,
     ChevronLeft,
     History,
     Activity
 } from 'lucide-react';
-import { PremiumCard } from './components/design-system/PremiumCard';
+import { PremiumCard } from '../components/design-system/PremiumCard';
 
-import { Button } from './components/design-system/Button';
-import { EvolutionChart } from './components/analytics/EvolutionChart';
-import { WorkoutDetailsModal } from './components/history/WorkoutDetailsModal';
+import { Button } from '../components/design-system/Button';
+import { EvolutionChart } from '../components/analytics/EvolutionChart';
+import { WorkoutDetailsModal } from '../components/history/WorkoutDetailsModal';
 
 function HistoryPage({ onBack, initialTemplate, initialExercise, user, isEmbedded = false }) {
     // Tab State: 'journal' | 'analytics'
