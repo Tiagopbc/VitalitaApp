@@ -182,7 +182,7 @@ export function StreakWeeklyGoalHybrid({
                                         <div
                                             key={idx}
                                             className={`
-                                                relative aspect-square flex items-center justify-center rounded-[22%] transition-all duration-300 group
+                                                relative aspect-square flex items-center justify-center rounded-lg transition-all duration-300 group
                                                 ${isTrained ? 'bg-gradient-to-br from-cyan-500/20 to-blue-600/40 shadow-[0_4px_10px_rgba(34,211,238,0.2)] backdrop-blur-md border border-cyan-400/30 z-10' : ''}
                                                 ${isRest ? 'bg-[#0f172a]/80 border border-slate-800 text-slate-600' : ''}
                                                 ${!isTrained && !isRest ? 'text-slate-700' : ''} 

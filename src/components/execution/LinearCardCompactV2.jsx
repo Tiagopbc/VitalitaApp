@@ -3,7 +3,7 @@
  * Cartão de exercício compacto para visualização de execução.
  * Lida com registro de séries, ajustes de peso/repetição e rastreamento visual de progresso.
  */
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, memo } from 'react';
 import { Minus, Plus, CheckCircle2, Info, Check, Zap, LayoutList, Target, ArrowRight, History } from 'lucide-react';
 
 /**
@@ -102,7 +102,15 @@ const METHOD_COLORS = {
 
 import { NumericKeypad } from '../common/NumericKeypad';
 
-export function LinearCardCompactV2({
+
+
+// ... (Existing Imports)
+
+// ... (Existing Helper Functions - detectRepsType, getCurrentSetGoal, COLORS)
+
+export const LinearCardCompactV2 = memo(function LinearCardCompactV2({
+    exerciseId, // New Prop
+    setId,      // New Prop
     muscleGroup,
     exerciseName,
     method,
@@ -113,11 +121,9 @@ export function LinearCardCompactV2({
     weight,
     actualReps,
     observation,
-    onWeightChange,
-    onRepsChange,
-    onObservationChange,
-    onSetChange,
-    onCompleteSet,
+    onUpdateSet, // Stable: (exId, setId, field, val) => ...
+    onUpdateNotes, // Stable: (exId, val) => ...
+    onCompleteSet, // Stable: (exId, setNumber, weight, reps) => ...
     suggestedWeight,
     suggestedReps,
     lastWeight,
@@ -140,9 +146,9 @@ export function LinearCardCompactV2({
 
     const handleKeypadConfirm = (val) => {
         if (activeInputType === 'weight') {
-            onWeightChange(val);
+            onUpdateSet(exerciseId, setId, 'weight', val);
         } else if (activeInputType === 'reps') {
-            onRepsChange(val);
+            onUpdateSet(exerciseId, setId, 'reps', val);
         }
     };
 
@@ -157,27 +163,31 @@ export function LinearCardCompactV2({
     // Handlers
     const decrementWeight = () => {
         const current = parseFloat(weight) || parseFloat(suggestedWeight) || 0;
-        onWeightChange(Math.max(0, current - 0.25).toFixed(2));
+        const newVal = Math.max(0, current - 0.25).toFixed(2);
+        onUpdateSet(exerciseId, setId, 'weight', newVal);
     };
 
     const incrementWeight = () => {
         const current = parseFloat(weight) || parseFloat(suggestedWeight) || 0;
-        onWeightChange((current + 0.25).toFixed(2));
+        const newVal = (current + 0.25).toFixed(2);
+        onUpdateSet(exerciseId, setId, 'weight', newVal);
     };
 
     const decrementReps = () => {
         const current = parseInt(actualReps) || parseInt(suggestedReps);
         if (!isNaN(current)) {
-            onRepsChange(Math.max(0, current - 1).toString());
+            const newVal = Math.max(0, current - 1).toString();
+            onUpdateSet(exerciseId, setId, 'reps', newVal);
         }
     };
 
     const incrementReps = () => {
         const current = parseInt(actualReps) || parseInt(suggestedReps);
         if (!isNaN(current)) {
-            onRepsChange((current + 1).toString());
+            const newVal = (current + 1).toString();
+            onUpdateSet(exerciseId, setId, 'reps', newVal);
         } else {
-            if (!actualReps) onRepsChange("1");
+            if (!actualReps) onUpdateSet(exerciseId, setId, 'reps', "1");
         }
     };
 
@@ -194,15 +204,11 @@ export function LinearCardCompactV2({
             return;
         }
 
-        onCompleteSet({
-            setNumber: currentSet,
-            weight: effectiveWeight.toString(),
-            actualReps: effectiveReps.toString()
-        });
+        // Changed to pass arguments directly to support stable parent handler
+        onCompleteSet(exerciseId, currentSet, effectiveWeight.toString(), effectiveReps.toString());
     };
 
-    // --- STYLES ---
-
+    // ... (Styles) ...
     // COMPLETE STATE (GREEN) - REDUCED GLOW
     const completeStyle = {
         background: 'linear-gradient(135deg, rgba(16,185,129,0.2), rgba(6,95,70,0.3))', // Darker/Lower opacity
@@ -228,7 +234,7 @@ export function LinearCardCompactV2({
             <div className="flex justify-between items-start mb-[10px] gap-3">
                 <div className="flex-1 min-w-0">
                     <h3
-                        className="text-[#e2e8f0] text-[20px] font-bold leading-tight"
+                        className="text-[#e2e8f0] text-[20px] font-bold leading-tight uppercase"
                         style={{
                             whiteSpace: 'normal',
                             wordWrap: 'break-word',
@@ -331,17 +337,18 @@ export function LinearCardCompactV2({
                         <button
                             key={idx}
                             onClick={() => onSetChange(setNum)}
-                            className={`flex-1 h-8 rounded-full transition-all duration-300 relative flex items-center justify-center text-xs font-bold ${isCompleted
+                            className={`flex-1 h-10 rounded-full transition-all duration-300 relative flex items-center justify-center text-xs font-bold ${isCompleted // Increased height to h-10 (40px) - acceptable tradeoff for density, better than h-8
                                 ? 'bg-emerald-900/40 border border-emerald-500/50 text-emerald-400'
                                 : isActive
                                     ? 'bg-blue-600/20 border border-blue-500 text-blue-400'
-                                    : 'bg-slate-800/40 border border-slate-700/50 text-slate-600'
+                                    : 'bg-slate-800/40 border border-slate-700/50 text-slate-400' // Improved contrast from slate-600
                                 }`}
                             style={isActive ? {
                                 boxShadow: '0 0 15px rgba(59,130,246,0.3)'
                             } : {}}
+                            aria-label={`Ir para série ${setNum}`}
                         >
-                            {isCompleted ? <Check size={14} strokeWidth={3} /> : setNum}
+                            {isCompleted ? <Check size={16} strokeWidth={3} /> : setNum}
                         </button>
                     );
                 })}
@@ -353,28 +360,32 @@ export function LinearCardCompactV2({
                 <div className="bg-slate-900/60 border border-slate-700/30 rounded-full p-1 flex items-center gap-1.5 relative">
                     <button
                         onClick={decrementWeight}
-                        className="w-10 h-10 rounded-full bg-slate-800/60 border-2 border-slate-500/20 text-slate-400 flex items-center justify-center hover:bg-slate-700 active:scale-95 transition-all"
+                        className="w-11 h-11 rounded-full bg-slate-800/60 border-2 border-slate-500/20 text-slate-300 flex items-center justify-center hover:bg-slate-700 active:scale-95 transition-all" // Increased to w-11 h-11 (44px), clearer text
+                        aria-label="Diminuir peso"
                     >
-                        <Minus size={18} strokeWidth={2} />
+                        <Minus size={20} strokeWidth={2} />
                     </button>
                     <div
                         className="flex-1 flex flex-col items-center cursor-pointer active:scale-95 transition-transform"
                         onClick={() => openKeypad('weight')}
+                        role="button"
+                        aria-label="Definir peso"
                     >
-                        <span className="text-[9px] text-slate-400 tracking-wider font-bold mb-0.5">PESO (KG)</span>
+                        <span className="text-[10px] text-slate-400 tracking-wider font-bold mb-0.5">PESO (KG)</span> {/* Increased text size to 10px */}
                         <div className={`text-center font-bold text-lg leading-none ${!weight && suggestedWeight ? 'text-slate-500' : 'text-[#f1f5f9]'}`}>
                             {weight || suggestedWeight || "0.00"}
                         </div>
                         {/* History Hint */}
                         {suggestedWeight && !weight && (
-                            <span className="absolute bottom-1 right-14 text-[8px] text-slate-600">Hist: {suggestedWeight}</span>
+                            <span className="absolute bottom-1 right-14 text-[9px] text-slate-500">Hist: {suggestedWeight}</span> // Improved contrast slate-500
                         )}
                     </div>
                     <button
                         onClick={incrementWeight}
-                        className="w-10 h-10 rounded-full bg-blue-500/15 border-2 border-[#3abff8] text-[#3abff8] flex items-center justify-center shadow-[0_0_16px_rgba(58,191,248,0.25)] hover:bg-blue-500/25 active:scale-95 transition-all"
+                        className="w-11 h-11 rounded-full bg-blue-500/15 border-2 border-[#3abff8] text-[#3abff8] flex items-center justify-center shadow-[0_0_16px_rgba(58,191,248,0.25)] hover:bg-blue-500/25 active:scale-95 transition-all" // Increased to w-11 h-11
+                        aria-label="Aumentar peso"
                     >
-                        <Plus size={18} strokeWidth={2} />
+                        <Plus size={20} strokeWidth={2} />
                     </button>
                 </div>
 
@@ -382,24 +393,28 @@ export function LinearCardCompactV2({
                 <div className="bg-slate-900/60 border border-slate-700/30 rounded-full p-1 flex items-center gap-1.5">
                     <button
                         onClick={decrementReps}
-                        className="w-10 h-10 rounded-full bg-slate-800/60 border-2 border-slate-500/20 text-slate-400 flex items-center justify-center hover:bg-slate-700 active:scale-95 transition-all"
+                        className="w-11 h-11 rounded-full bg-slate-800/60 border-2 border-slate-500/20 text-slate-300 flex items-center justify-center hover:bg-slate-700 active:scale-95 transition-all" // Increased size & contrast
+                        aria-label="Diminuir repetições"
                     >
-                        <Minus size={18} strokeWidth={2} />
+                        <Minus size={20} strokeWidth={2} />
                     </button>
                     <div
                         className="flex-1 flex flex-col items-center cursor-pointer active:scale-95 transition-transform"
                         onClick={() => openKeypad('reps')}
+                        role="button"
+                        aria-label="Definir repetições"
                     >
-                        <span className="text-[9px] text-slate-400 tracking-wider font-bold mb-0.5">REPETIÇÕES</span>
+                        <span className="text-[10px] text-slate-400 tracking-wider font-bold mb-0.5">REPETIÇÕES</span> {/* Increased Size */}
                         <div className={`text-center font-bold text-lg leading-none ${!actualReps && suggestedReps ? 'text-slate-500' : 'text-[#f1f5f9]'}`}>
                             {actualReps || suggestedReps || "0"}
                         </div>
                     </div>
                     <button
                         onClick={incrementReps}
-                        className="w-10 h-10 rounded-full bg-blue-500/15 border-2 border-[#3abff8] text-[#3abff8] flex items-center justify-center shadow-[0_0_16px_rgba(58,191,248,0.25)] hover:bg-blue-500/25 active:scale-95 transition-all"
+                        className="w-11 h-11 rounded-full bg-blue-500/15 border-2 border-[#3abff8] text-[#3abff8] flex items-center justify-center shadow-[0_0_16px_rgba(58,191,248,0.25)] hover:bg-blue-500/25 active:scale-95 transition-all" // Increased size
+                        aria-label="Aumentar repetições"
                     >
-                        <Plus size={18} strokeWidth={2} />
+                        <Plus size={20} strokeWidth={2} />
                     </button>
                 </div>
             </div>
@@ -412,16 +427,17 @@ export function LinearCardCompactV2({
                     ? 'bg-emerald-500/20 text-emerald-400 cursor-default border border-emerald-500/20'
                     : 'bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white shadow-cyan-500/20 hover:shadow-cyan-500/40 active:scale-[0.98]'
                     }`}
+                aria-label={isCurrentSetCompleted ? "Série concluída" : `Concluir série ${currentSet}`}
             >
                 {isCurrentSetCompleted ? (
                     <>
-                        <CheckCircle2 size={20} strokeWidth={2.5} />
+                        <CheckCircle2 size={24} strokeWidth={2.5} />
                         SÉRIE CONCLUÍDA
                     </>
                 ) : (
                     <>
                         CONCLUIR SÉRIE {currentSet}
-                        <ArrowRight size={18} strokeWidth={2.5} />
+                        <ArrowRight size={22} strokeWidth={2.5} />
                     </>
                 )}
             </button>
@@ -431,9 +447,10 @@ export function LinearCardCompactV2({
                 <input
                     type="text"
                     value={observation || ''}
-                    onChange={(e) => onObservationChange(e.target.value)}
+                    onChange={(e) => onUpdateNotes(exerciseId, e.target.value)} // Use dedicated stable handler
                     placeholder="Adicionar observação..."
-                    className="w-full bg-transparent border-b border-slate-700/50 text-xs text-slate-400 py-2 focus:border-cyan-500/50 focus:text-slate-200 outline-none transition-colors placeholder:text-slate-600"
+                    className="w-full bg-transparent border-b border-slate-700/50 text-xs text-slate-300 py-3 focus:border-cyan-500/50 focus:text-slate-200 outline-none transition-colors placeholder:text-slate-500" // Increased contrast, padding
+                    aria-label="Observações do exercício"
                 />
             </div>
 
@@ -445,6 +462,6 @@ export function LinearCardCompactV2({
                 initialValue={activeInputType === 'weight' ? (weight || suggestedWeight || '') : (actualReps || suggestedReps || '')}
                 title={activeInputType === 'weight' ? 'DEFINIR PESO (KG)' : 'DEFINIR REPETIÇÕES'}
             />
-        </div >
+        </div>
     );
-}
+}); // END MEMO

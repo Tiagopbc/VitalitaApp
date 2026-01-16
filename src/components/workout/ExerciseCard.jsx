@@ -23,7 +23,7 @@ export function ExerciseCard({
                 {/* Exercise Info */}
                 <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
-                        <h3 className="font-semibold text-white truncate">{name}</h3>
+                        <h3 className="font-semibold text-white truncate uppercase">{name}</h3>
                         {hasProgress && (
                             <motion.div
                                 initial={{ scale: 0 }}

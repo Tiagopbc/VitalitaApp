@@ -177,5 +177,8 @@ export const userService = {
     async deleteActiveSession(userId) {
         const docRef = doc(db, 'active_workouts', userId);
         await deleteDoc(docRef);
+
+        // Also clear the flag in user profile to stop redirects
+        await this.clearActiveWorkout(userId);
     }
 };

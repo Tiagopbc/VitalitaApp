@@ -121,7 +121,7 @@ function HistoryPage({ onBack, initialTemplate, initialExercise, user, isEmbedde
             }
         });
 
-        if (maxWeight > 0) return `Destaque: ${maxExName} (${maxWeight}kg)`;
+        if (maxWeight > 0) return `Destaque: ${maxExName.toUpperCase()} (${maxWeight}kg)`;
         return `${session.exercisesCount || exerciseList.length} exercícios`;
     };
 

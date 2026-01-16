@@ -10,7 +10,8 @@ import {
     getDoc,
     addDoc,
     serverTimestamp,
-    updateDoc
+    updateDoc,
+    onSnapshot
 } from 'firebase/firestore';
 import { db } from '../firebaseConfig'; // Adjust path if needed
 
@@ -72,6 +73,38 @@ export const workoutService = {
             console.error("Error fetching templates:", error);
             throw error;
         }
+    },
+
+    /**
+     * Subscribe to real-time updates for workout templates.
+     * @param {string} userId
+     * @param {function} onUpdate - Callback with new list of templates
+     * @returns {function} Unsubscribe function
+     */
+    subscribeToTemplates(userId, onUpdate) {
+        const templatesRef = collection(db, TEMPLATES_COLLECTION);
+        const q = query(templatesRef, where('userId', '==', userId));
+
+        // onSnapshot returns an unsubscribe function
+        return onSnapshot(q, (snapshot) => {
+            const list = snapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+            }));
+
+            const sorted = list.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+
+            // Also update cache silently to keep it fresh
+            templatesCache = {
+                userId,
+                data: sorted,
+                timestamp: Date.now()
+            };
+
+            onUpdate(sorted);
+        }, (error) => {
+            console.error("Error in template subscription:", error);
+        });
     },
 
     /**
@@ -207,6 +240,27 @@ export const workoutService = {
         );
         const snap = await getDocs(q);
         return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    },
+
+    /**
+     * Subscribe to user sessions (real-time history)
+     * @param {string} userId
+     * @param {function} callback
+     * @returns {function} unsubscribe
+     */
+    subscribeToSessions(userId, callback) {
+        const sessionsRef = collection(db, SESSIONS_COLLECTION);
+        const q = query(
+            sessionsRef,
+            where('userId', '==', userId)
+        );
+        return onSnapshot(q, (snapshot) => {
+            console.log("workoutService: Real-time update received. Docs:", snapshot.docs.length);
+            const sessions = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+            callback(sessions);
+        }, (error) => {
+            console.error("Error subscribing to sessions:", error);
+        });
     },
 
     /**

@@ -88,11 +88,20 @@ export function WorkoutExecutionPage({ workoutId, onFinish, user }) {
         syncSession
     } = useWorkoutSession(workoutId, user);
 
+
+    // --- UI STATE ---
+    const [showFinishModal, setShowFinishModal] = useState(false);
+    const [showTimer, setShowTimer] = useState(false);
+    const [showOneRM, setShowOneRM] = useState(false);
+    const [selectedMethod, setSelectedMethod] = useState(null);
+    const [focusMode, setFocusMode] = useState(false);
+    const [isFinished, setIsFinished] = useState(false); // Prevents "Zombie Sessions"
+
     const {
         elapsedSeconds,
         setElapsedSeconds,
         formatTime // Unused currently but available
-    } = useWorkoutTimer(!loading && !saving, initialElapsed); // Run only if not loading/saving
+    } = useWorkoutTimer(!loading && !saving && !isFinished, initialElapsed); // Stop timer on finish
 
     // Sync elapsed time from hook when loaded
     useEffect(() => {
@@ -103,20 +112,13 @@ export function WorkoutExecutionPage({ workoutId, onFinish, user }) {
 
     // Continuous Sync Effect
     useEffect(() => {
-        if (!loading && exercises.length > 0) {
+        if (!loading && exercises.length > 0 && !isFinished) {
             syncSession(exercises, elapsedSeconds);
         }
-    }, [exercises, elapsedSeconds, loading, syncSession]);
+    }, [exercises, elapsedSeconds, loading, syncSession, isFinished]);
 
 
-    // --- UI STATE ---
-    const [showFinishModal, setShowFinishModal] = useState(false);
-    const [showTimer, setShowTimer] = useState(false);
-    const [showOneRM, setShowOneRM] = useState(false);
-    const [selectedMethod, setSelectedMethod] = useState(null);
-    const [focusMode, setFocusMode] = useState(false);
-
-    // Focus Navigation
+    // --- FOCUS NAVIGATION STATE ---
     const [currentExerciseIndex, setCurrentExerciseIndex] = useState(0);
     const [activeSetIndices, setActiveSetIndices] = useState({});
 
@@ -138,6 +140,7 @@ export function WorkoutExecutionPage({ workoutId, onFinish, user }) {
     };
 
     const handleFinishWorkout = async () => {
+        setIsFinished(true); // Stop syncing immediately
         const success = await finishSession(elapsedSeconds);
         if (success) {
             confetti({
@@ -148,6 +151,8 @@ export function WorkoutExecutionPage({ workoutId, onFinish, user }) {
             setTimeout(() => {
                 setShowFinishModal(true);
             }, 800);
+        } else {
+            setIsFinished(false); // Re-enable if failed
         }
     };
 
@@ -251,7 +256,7 @@ export function WorkoutExecutionPage({ workoutId, onFinish, user }) {
                     className="fixed top-0 left-1/2 -translate-x-1/2 w-full max-w-2xl z-50 px-3 pb-2 flex items-center justify-between pointer-events-none"
                     style={{ paddingTop: 'calc(env(safe-area-inset-top) + 1rem)' }}
                 >
-                    <div className="pointer-events-auto">
+                    <div className="pointer-events-auto flex items-center gap-2">
                         <Button
                             variant="outline-primary"
                             size="sm"
@@ -338,6 +343,7 @@ export function WorkoutExecutionPage({ workoutId, onFinish, user }) {
                     <ProgressCard completedCount={completedExercisesCount} totalCount={totalExercises} />
                 </div>
 
+
                 <main className="px-4 pb-32 space-y-4">
                     {focusMode ? (
                         exercises.length > 0 && (() => {
@@ -351,6 +357,8 @@ export function WorkoutExecutionPage({ workoutId, onFinish, user }) {
                             return (
                                 <LinearCardCompactV2
                                     key={ex.id}
+                                    exerciseId={ex.id}
+                                    setId={activeSet.id}
                                     exerciseName={ex.name}
                                     muscleGroup={ex.muscleFocus?.primary || ex.group || 'Geral'}
                                     method={ex.method || "Convencional"}
@@ -365,14 +373,11 @@ export function WorkoutExecutionPage({ workoutId, onFinish, user }) {
                                     suggestedReps={activeSet.targetReps || ex.reps || (ex.target ? ex.target.replace(/^\d+\s*x\s*/i, '').trim() : "12")}
                                     lastWeight={activeSet.lastWeight}
                                     lastReps={activeSet.lastReps}
-                                    onWeightChange={(val) => updateExerciseSet(ex.id, activeSet.id, 'weight', val)}
-                                    onRepsChange={(val) => updateExerciseSet(ex.id, activeSet.id, 'reps', val)}
-                                    onObservationChange={(val) => updateNotes(ex.id, val)}
+                                    onUpdateSet={updateExerciseSet}
                                     onSetChange={(setNum) => handleSetNavigation(ex.id, setNum - 1)}
-                                    onCompleteSet={({ setNumber, weight, actualReps }) => {
-                                        completeSetAutoFill(ex.id, setNumber, weight, actualReps);
-                                    }}
                                     onMethodClick={() => setSelectedMethod(ex.method)}
+                                    onCompleteSet={completeSetAutoFill} // Stable Reference (Now supported by V2)
+                                    onUpdateNotes={updateNotes}         // Stable Reference (Now supported by V2)
                                 />
                             );
                         })()
@@ -387,6 +392,8 @@ export function WorkoutExecutionPage({ workoutId, onFinish, user }) {
                             return (
                                 <LinearCardCompactV2
                                     key={ex.id}
+                                    exerciseId={ex.id}
+                                    setId={activeSet.id}
                                     exerciseName={ex.name}
                                     muscleGroup={ex.muscleFocus?.primary || ex.group || 'Geral'}
                                     method={ex.method || "Convencional"}
@@ -401,14 +408,11 @@ export function WorkoutExecutionPage({ workoutId, onFinish, user }) {
                                     suggestedReps={activeSet.targetReps || ex.reps || (ex.target ? ex.target.replace(/^\d+\s*x\s*/i, '').trim() : "12")}
                                     lastWeight={activeSet.lastWeight}
                                     lastReps={activeSet.lastReps}
-                                    onWeightChange={(val) => updateExerciseSet(ex.id, activeSet.id, 'weight', val)}
-                                    onRepsChange={(val) => updateExerciseSet(ex.id, activeSet.id, 'reps', val)}
-                                    onObservationChange={(val) => updateNotes(ex.id, val)}
+                                    onUpdateSet={updateExerciseSet}
                                     onSetChange={(setNum) => handleSetNavigation(ex.id, setNum - 1)}
-                                    onCompleteSet={({ setNumber, weight, actualReps }) => {
-                                        completeSetAutoFill(ex.id, setNumber, weight, actualReps);
-                                    }}
                                     onMethodClick={() => setSelectedMethod(ex.method)}
+                                    onCompleteSet={completeSetAutoFill} // Stable Reference
+                                    onUpdateNotes={updateNotes}         // Stable Reference
                                 />
                             );
                         })
@@ -503,7 +507,7 @@ export function WorkoutExecutionPage({ workoutId, onFinish, user }) {
                 }}
                 userName={user?.displayName || "Atleta"}
             />
-        </div>
+        </div >
     );
 }
 

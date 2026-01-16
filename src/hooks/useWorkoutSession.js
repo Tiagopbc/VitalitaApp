@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { db } from '../firebaseConfig';
-import { doc, getDoc, getDocs, setDoc, query, collection, where, limit, serverTimestamp, addDoc } from 'firebase/firestore';
+import { doc, getDoc, getDocs, setDoc, query, collection, where, limit, serverTimestamp, addDoc, getDocFromServer } from 'firebase/firestore';
 import { userService } from '../services/userService';
 
 // Helper to generate IDs
@@ -15,10 +15,14 @@ export function useWorkoutSession(workoutId, user) {
     const [initialElapsed, setInitialElapsed] = useState(0);
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState(null);
+    const [sessionVersion, setSessionVersion] = useState(0);
 
     const profileId = user?.uid;
     const lastSyncedRef = useRef('');
     const backupKey = `workout_backup_${profileId}_${workoutId}`;
+
+    // --- DATA FETCHING ---
+
 
     // --- DATA FETCHING ---
     useEffect(() => {
@@ -27,31 +31,53 @@ export function useWorkoutSession(workoutId, user) {
         async function fetchData() {
             setLoading(true);
             try {
-                // 1. Check Active Session (Remote)
+                let activeData = null;
+
+                // 1. Check Active Session (Remote) - Only if not explicitly discarded (we assume sessionVersion > 0 means we might want fresh)
+                // Actually, consistently checking remote is fine, IF we trust delete worked.
                 try {
-                    const activeSnap = await getDoc(doc(db, 'active_workouts', profileId));
+                    const activeRef = doc(db, 'active_workouts', profileId);
+                    // FORCE SERVER FETCH to avoid stale cache after discard
+                    const activeSnap = await getDocFromServer(activeRef);
                     if (activeSnap.exists()) {
-                        const activeData = activeSnap.data();
-                        if (activeData.templateId === workoutId) {
-                            console.log("Found active remote session");
-
-                            // Load template data
-                            const templateDoc = await getDoc(doc(db, 'workout_templates', workoutId));
-                            if (templateDoc.exists()) {
-                                setTemplate({ id: templateDoc.id, ...templateDoc.data() });
-                            }
-
-                            if (activeData.exercises) {
-                                setExercises(activeData.exercises);
-                                setInitialElapsed(activeData.elapsedSeconds || 0);
-                                lastSyncedRef.current = JSON.stringify(activeData.exercises);
-                                setLoading(false);
-                                return;
-                            }
+                        const data = activeSnap.data();
+                        if (data.templateId === workoutId) {
+                            activeData = data;
                         }
                     }
                 } catch (e) {
-                    console.warn("Could not fetch active remote session", e);
+                    console.warn("Could not fetch active remote session (Server)", e);
+                    // Fallback to cache if offline
+                    try {
+                        const activeRef = doc(db, 'active_workouts', profileId);
+                        const activeSnap = await getDoc(activeRef);
+                        if (activeSnap.exists()) {
+                            const data = activeSnap.data();
+                            if (data.templateId === workoutId) {
+                                activeData = data;
+                            }
+                        }
+                    } catch (cacheErr) {
+                        console.warn("Could not fetch active remote session (Cache)", cacheErr);
+                    }
+                }
+
+                // If found active session, use it
+                if (activeData) {
+                    console.log("Found active remote session");
+                    // Load template data (metadata only)
+                    const templateDoc = await getDoc(doc(db, 'workout_templates', workoutId));
+                    if (templateDoc.exists()) {
+                        setTemplate({ id: templateDoc.id, ...templateDoc.data() });
+                    }
+
+                    if (activeData.exercises) {
+                        setExercises(activeData.exercises);
+                        setInitialElapsed(activeData.elapsedSeconds || 0);
+                        lastSyncedRef.current = JSON.stringify(activeData.exercises);
+                        setLoading(false);
+                        return;
+                    }
                 }
 
                 // 2. Check Local Backup
@@ -80,16 +106,22 @@ export function useWorkoutSession(workoutId, user) {
                     return;
                 }
 
-                // 3. New Session / Load Template
-                const templateDoc = await getDoc(doc(db, 'workout_templates', workoutId));
+                // 3. New Session / Load Template (FRESH)
+                const templateRef = doc(db, 'workout_templates', workoutId);
+                let templateDoc;
+                try {
+                    // Force server fetch to get latest edits
+                    templateDoc = await getDocFromServer(templateRef);
+                } catch (e) {
+                    console.warn("Template server fetch failed, falling back to cache", e);
+                    templateDoc = await getDoc(templateRef);
+                }
+
                 if (templateDoc.exists()) {
                     const tmplData = templateDoc.data();
                     setTemplate({ id: templateDoc.id, ...tmplData });
 
                     // ... (Normalization and History Logic) ...
-                    // Moving the heavy normalization logic here or keeping it separate? 
-                    // Ideally we keep it here to encapsulate "Session Loading".
-
                     // fetch History
                     let lastSessionExercises = [];
                     try {
@@ -152,6 +184,8 @@ export function useWorkoutSession(workoutId, user) {
                             };
                         });
                         setExercises(mapped);
+                        // Clear elapsed for new session
+                        setInitialElapsed(0);
                     }
                 }
             } catch (err) {
@@ -163,7 +197,32 @@ export function useWorkoutSession(workoutId, user) {
         }
 
         fetchData();
-    }, [workoutId, profileId, backupKey]);
+    }, [workoutId, profileId, backupKey, sessionVersion]);
+
+    // ... SYNC ...
+
+    // ... ACTIONS ...
+
+
+
+    // Re-declare other functions here to be safe or ensure they are present
+    // But since we are replacing a chunk, we just need to match correctly.
+
+    // The previous `useEffect` block in file was ~140 lines.
+    // The `discardSession` was at the end.
+    // We are replacing from start of `useEffect` to the end of `discardSession`?
+    // No, `useEffect` starts at line 24. `discardSession` ends at 312.
+    // That's too big of a chunk to replace safely without context.
+
+    // Let's replace smaller chunks.
+    // Chunk 1: Add sessionVersion state.
+    // Chunk 2: Update useEffect dependencies.
+    // Chunk 3: Update discardSession.
+
+    // This is safer.
+
+    // ABORTING THIS REPLACE to replace with smaller sequential edits.
+
 
     // --- SYNC ---
     const syncSession = useCallback((currentExercises, currentElapsed) => {
@@ -192,23 +251,23 @@ export function useWorkoutSession(workoutId, user) {
 
 
     // --- ACTIONS ---
-    const updateExerciseSet = (exId, setId, field, val) => {
+    const updateExerciseSet = useCallback((exId, setId, field, val) => {
         setExercises(prev => prev.map(ex => ex.id === exId ? {
             ...ex, sets: ex.sets.map(s => s.id === setId ? { ...s, [field]: val } : s)
         } : ex));
-    };
+    }, []);
 
-    const toggleSet = (exId, setId) => {
+    const toggleSet = useCallback((exId, setId) => {
         setExercises(prev => prev.map(ex => ex.id === exId ? {
             ...ex, sets: ex.sets.map(s => s.id === setId ? { ...s, completed: !s.completed } : s)
         } : ex));
-    };
+    }, []);
 
-    const updateNotes = (exId, val) => {
+    const updateNotes = useCallback((exId, val) => {
         setExercises(prev => prev.map(ex => ex.id === exId ? { ...ex, notes: val } : ex));
-    };
+    }, []);
 
-    const completeSetAutoFill = (exId, setNumber, weight, actualReps) => {
+    const completeSetAutoFill = useCallback((exId, setNumber, weight, actualReps) => {
         setExercises(prev => prev.map(ex => {
             if (ex.id !== exId) return ex;
 
@@ -234,7 +293,7 @@ export function useWorkoutSession(workoutId, user) {
                 })
             };
         }));
-    };
+    }, []);
 
     const finishSession = async (finalElapsed) => {
         setSaving(true);
@@ -242,6 +301,7 @@ export function useWorkoutSession(workoutId, user) {
             const minutes = Math.floor(finalElapsed / 60);
             const durationStr = `${minutes}min`;
 
+            const now = new Date();
             await addDoc(collection(db, 'workout_sessions'), {
                 duration: durationStr,
                 elapsedSeconds: finalElapsed,
@@ -250,17 +310,18 @@ export function useWorkoutSession(workoutId, user) {
                 workoutName: template?.name || 'Treino Personalizado',
                 userId: profileId,
                 createdAt: serverTimestamp(),
-                completedAt: serverTimestamp(),
+                completedAt: serverTimestamp(), // Use server time for consistency
+                completedAtClient: now, // Backup for immediate UI optimistic updates
                 exercises: exercises.map(ex => ({
-                    id: ex.id,
-                    name: ex.name,
+                    id: ex.id || generateId(),
+                    name: ex.name || 'Exercício sem nome',
                     sets: ex.sets.map(s => ({
-                        id: s.id,
-                        weight: s.weight,
-                        reps: s.reps,
-                        completed: s.completed
+                        id: s.id || generateId(),
+                        weight: s.weight || '',
+                        reps: s.reps || '',
+                        completed: !!s.completed
                     })),
-                    notes: ex.notes
+                    notes: ex.notes || ''
                 }))
             });
 
@@ -284,6 +345,27 @@ export function useWorkoutSession(workoutId, user) {
         }
     };
 
+    const discardSession = useCallback(async () => {
+        setLoading(true);
+        try {
+            // Cleanup
+            localStorage.removeItem(backupKey);
+            if (profileId) {
+                await userService.deleteActiveSession(profileId);
+            }
+
+            // Wait a bit to ensure propagation
+            await new Promise(r => setTimeout(r, 600));
+
+            // Trigger re-fetch
+            setSessionVersion(v => v + 1);
+        } catch (e) {
+            console.error("Error discarding session:", e);
+            // Fallback
+            window.location.reload();
+        }
+    }, [backupKey, profileId]);
+
     return {
         loading,
         saving,
@@ -297,7 +379,8 @@ export function useWorkoutSession(workoutId, user) {
         updateNotes,
         completeSetAutoFill,
         finishSession,
-        syncSession
+        syncSession,
+        discardSession
     };
 }
 

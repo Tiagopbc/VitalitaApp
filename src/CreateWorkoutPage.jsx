@@ -268,7 +268,7 @@ export default function CreateWorkoutPage({ onBack, user, initialData, creationC
                                 <div className="text-[0.7rem] text-cyan-400 uppercase tracking-widest font-bold mb-1">
                                     {ex.muscleGroup || ex.group || ex.muscleFocus?.primary || 'Geral'}
                                 </div>
-                                <div className="text-[0.95rem] font-semibold text-gray-200 mb-1">
+                                <div className="text-[0.95rem] font-semibold text-gray-200 mb-1 uppercase">
                                     {index + 1}. {ex.name}
                                 </div>
                                 <div className="text-[0.8rem] text-slate-400 font-medium">
@@ -354,7 +354,7 @@ export default function CreateWorkoutPage({ onBack, user, initialData, creationC
                                         }
                                     }}
                                     placeholder={newExercise.muscleGroup ? "Selecione da lista ou digite..." : "Digite para buscar..."}
-                                    className="w-full rounded-xl border border-slate-600 bg-slate-800/50 text-white px-4 py-3 text-sm outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/50 transition-all"
+                                    className="w-full rounded-xl border border-slate-600 bg-slate-800/50 text-white px-4 py-3 text-sm outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/50 transition-all uppercase"
                                     autoFocus
                                 />
                                 {isSearching && (

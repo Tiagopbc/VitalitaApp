@@ -4,20 +4,23 @@
  * Gerencia o roteamento do lado do cliente (via estado), layout global, integração da barra lateral/navegação inferior,
  * e estado de alto nível para treinos, histórico e validação de autenticação do usuário.
  */
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState, Suspense } from 'react';
+import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { HomeDashboard } from './HomeDashboard';
 import { BottomNavEnhanced } from './BottomNavEnhanced';
-
 import { DesktopSidebar } from './DesktopSidebar';
+import { ProtectedRoute } from './components/ProtectedRoute';
 
-import HistoryPage from './HistoryPage';
-import MethodsPage from './MethodsPage';
-import LoginPage from './LoginPage';
-import CreateWorkoutPage from './CreateWorkoutPage';
-import ProfilePage from './ProfilePage';
-import WorkoutsPage from './WorkoutsPage';
-import { WorkoutExecutionPage } from './WorkoutExecutionPage';
-import { TrainerDashboard } from './TrainerDashboard';
+// Lazy Load Heavy Pages
+const HistoryPage = React.lazy(() => import('./HistoryPage'));
+const MethodsPage = React.lazy(() => import('./MethodsPage'));
+const CreateWorkoutPage = React.lazy(() => import('./CreateWorkoutPage'));
+const ProfilePage = React.lazy(() => import('./ProfilePage'));
+const WorkoutsPage = React.lazy(() => import('./WorkoutsPage'));
+const WorkoutExecutionPage = React.lazy(() => import('./WorkoutExecutionPage').then(module => ({ default: module.WorkoutExecutionPage })));
+const TrainerDashboard = React.lazy(() => import('./TrainerDashboard').then(module => ({ default: module.TrainerDashboard })));
+
+import LoginPage from './LoginPage'; // Keep generic login fast (or lazy load too if large)
 import { userService } from './services/userService';
 import { useAuth } from './AuthContext';
 import { db } from './firebaseConfig';
@@ -80,7 +83,10 @@ function App() {
 function AppContent() {
     const { user, authLoading, logout } = useAuth();
     const [isTrainer, setIsTrainer] = useState(false);
+    const navigate = useNavigate();
+    const location = useLocation();
 
+    // Check Trainer Status
     useEffect(() => {
         if (!user) {
             setIsTrainer(false);
@@ -99,11 +105,7 @@ function AppContent() {
         checkTrainerStatus();
     }, [user]);
 
-    const [inWorkout, setInWorkout] = useState(() => {
-        const savedId = localStorage.getItem('activeWorkoutId');
-        return !!savedId;
-    });
-
+    // Active Workout Logic (Persistence)
     const [activeWorkoutId, setActiveWorkoutId] = useState(() => {
         const saved = localStorage.getItem('activeWorkoutId');
         return saved || null;
@@ -113,21 +115,55 @@ function AppContent() {
     useEffect(() => {
         if (!user) return;
 
-        const unsubscribe = onSnapshot(doc(db, 'users', user.uid), (docSnap) => {
+        const unsubscribe = onSnapshot(doc(db, 'users', user.uid), async (docSnap) => {
             if (docSnap.exists()) {
                 const data = docSnap.data();
                 const remoteActiveId = data.activeWorkoutId;
 
                 // Sync local state if different
                 if (remoteActiveId !== undefined) {
-                    // Update State
-                    setActiveWorkoutId(remoteActiveId);
-                    setInWorkout(!!remoteActiveId);
+                    // EMERGENCY BREAK: Check if user just manually exited
+                    const manualExit = sessionStorage.getItem('manual_exit');
+                    if (manualExit) {
+                        console.log("Manual exit detected. Ignoring remote active session and clearing.");
+                        if (remoteActiveId) {
+                            await userService.clearActiveWorkout(user.uid);
+                        }
+                        setActiveWorkoutId(null);
+                        localStorage.removeItem('activeWorkoutId');
+                        sessionStorage.removeItem('manual_exit'); // Clear flag after handling
+                        return; // STOP HERE
+                    }
 
-                    // Update LocalStorage to match
+                    // VERIFY: Does this session actually exist?
+                    // This prevents "Ghost Sessions" from trapping the user in a loop.
                     if (remoteActiveId) {
-                        localStorage.setItem('activeWorkoutId', remoteActiveId);
+                        try {
+                            const activeRef = doc(db, 'active_workouts', user.uid);
+                            // We can't use await inside a sync listener easily without IIFE, but here we are void.
+                            // Better to do a one-off check.
+                            const activeSnap = await import('firebase/firestore').then(mod => mod.getDoc(activeRef));
+
+                            if (activeSnap.exists()) {
+                                // It's real. Redirect.
+                                setActiveWorkoutId(remoteActiveId);
+                                localStorage.setItem('activeWorkoutId', remoteActiveId);
+                                if (!location.pathname.includes('/execute')) {
+                                    navigate(`/execute/${remoteActiveId}`);
+                                }
+                            } else {
+                                // It's a ghost! Clear it.
+                                console.warn("Ghost active session detected. Clearing...");
+                                await userService.clearActiveWorkout(user.uid);
+                                setActiveWorkoutId(null);
+                                localStorage.removeItem('activeWorkoutId');
+                            }
+                        } catch (e) {
+                            console.error("Error verifying active session:", e);
+                        }
                     } else {
+                        // Explicitly null in DB
+                        setActiveWorkoutId(null);
                         localStorage.removeItem('activeWorkoutId');
                     }
                 }
@@ -135,56 +171,37 @@ function AppContent() {
         });
 
         return () => unsubscribe();
-    }, [user]);
-    // -----------------------------------------
+    }, [user, location.pathname, navigate]); // Added deps for safety
 
-    const [currentView, setCurrentView] = useState(() => {
-        // If there is an active workout, we probably want to show it or the home/workouts page context?
-        // But if the user was just navigating, we restore that view.
-        // However, if we are inWorkout, the App component returns WorkoutExecutionPage early (line 313),
-        // so currentView doesn't matter as much until they finish.
-        // But for non-workout navigation:
-        const savedView = localStorage.getItem('currentView');
-        return savedView || 'home';
-    });
-
-    useEffect(() => {
-        if (currentView) {
-            localStorage.setItem('currentView', currentView);
-        }
-    }, [currentView]);
-
-    // ... (rest of state)
-
+    // Handlers
     async function handleSelectWorkout(id) {
-        // Optimistic update
         setActiveWorkoutId(id);
         localStorage.setItem('activeWorkoutId', id);
-        setInWorkout(true);
-
-        // Push to Firestore
         if (user) {
             await userService.setActiveWorkout(user.uid, id);
         }
+        navigate(`/execute/${id}`);
     }
 
-    const [initialMethod, setInitialMethod] = useState('');
-    const [methodsContext, setMethodsContext] = useState({ from: 'home' });
+    function handleLogout() {
+        localStorage.removeItem('activeWorkoutId');
+        setActiveWorkoutId(null);
+        clearWelcomeFlags();
+        logout();
+        navigate('/login');
+    }
 
-    const [historyTemplate, setHistoryTemplate] = useState(null);
-    const [historyExercise, setHistoryExercise] = useState(null);
-
+    // Welcome Modal Logic
     const [welcomeOpen, setWelcomeOpen] = useState(false);
     const [welcomeCanceled, setWelcomeCanceled] = useState(false);
     const [welcomeSeconds, setWelcomeSeconds] = useState(10);
+    const welcomeBtnRef = useRef(null);
 
     const welcomeFirstName = useMemo(() => {
         const stored = localStorage.getItem('welcomeFirstName') || '';
         if (stored.trim()) return stored.trim();
         return getFirstNameFromDisplayName(user?.displayName || '');
     }, [user?.displayName]);
-
-    const welcomeBtnRef = useRef(null);
 
     function clearWelcomeFlags() {
         localStorage.removeItem('welcomePending');
@@ -194,393 +211,281 @@ function AppContent() {
     useEffect(() => {
         if (!user) {
             setWelcomeOpen(false);
-            setWelcomeCanceled(false);
-            setWelcomeSeconds(10);
             return;
         }
-
         const pending = localStorage.getItem('welcomePending') === '1';
-        if (!pending) return;
-
-        setWelcomeOpen(true);
-        setWelcomeCanceled(false);
-        setWelcomeSeconds(10);
+        if (pending) {
+            setWelcomeOpen(true);
+            setWelcomeSeconds(10);
+        }
     }, [user]);
 
+    // ... (Welcome timer effects kept same/simplified)
     useEffect(() => {
-        if (!welcomeOpen) return;
-
-        if (welcomeBtnRef.current) {
-            welcomeBtnRef.current.focus();
-        }
-
-        function onKeyDown(e) {
-            if (e.key === 'Escape') {
-                setWelcomeOpen(false);
-                setWelcomeCanceled(false);
-                setWelcomeSeconds(10);
-                clearWelcomeFlags();
-            }
-        }
-
-        window.addEventListener('keydown', onKeyDown);
-        return () => window.removeEventListener('keydown', onKeyDown);
-    }, [welcomeOpen]);
-
-    useEffect(() => {
-        if (!welcomeOpen) return;
-        if (welcomeCanceled) return;
-
+        if (!welcomeOpen || welcomeCanceled) return;
         const id = window.setInterval(() => {
             setWelcomeSeconds((prev) => {
-                const next = prev - 1;
-                return next < 0 ? 0 : next;
+                if (prev <= 1) {
+                    setWelcomeOpen(false);
+                    clearWelcomeFlags();
+                    return 0;
+                }
+                return prev - 1;
             });
         }, 1000);
-
         return () => window.clearInterval(id);
     }, [welcomeOpen, welcomeCanceled]);
 
-    useEffect(() => {
-        if (!welcomeOpen) return;
-        if (welcomeCanceled) return;
-        if (welcomeSeconds !== 0) return;
-
-        setWelcomeOpen(false);
-        setWelcomeCanceled(false);
-        setWelcomeSeconds(10);
-        clearWelcomeFlags();
-    }, [welcomeOpen, welcomeCanceled, welcomeSeconds]);
-
-    function handleBackToHome() {
-        setCurrentView('home');
-        setActiveWorkoutId(null);
-        localStorage.removeItem('activeWorkoutId');
-    }
-
-    function openHistory(templateName = null, exerciseName = null) {
-        setHistoryTemplate(templateName);
-        setHistoryExercise(exerciseName);
-        setCurrentView('history');
-    }
-
-    function handleOpenHistoryFromHeader() {
-        openHistory(null, null);
-    }
-
-    function handleOpenHistoryFromWorkout(templateName, exerciseName) {
-        openHistory(templateName, exerciseName);
-    }
-
-    function handleOpenMethodsFromHeader() {
-        setMethodsContext({ from: 'home' });
-        setInitialMethod('');
-        setCurrentView('methods');
-    }
-
-    function handleOpenMethodsFromWorkout(methodName) {
-        setMethodsContext({ from: 'workout' });
-        setInitialMethod(methodName || '');
-        setCurrentView('methods');
-    }
-
-    function handleBackFromMethods() {
-        if (methodsContext.from === 'workout' && activeWorkoutId) {
-            setInWorkout(true);
-        } else {
-            setCurrentView('home');
-        }
-    }
-
-    function handleBackFromHistory() {
-        if (activeWorkoutId) {
-            setInWorkout(true);
-        } else {
-            setCurrentView('home');
-        }
-    }
-
-    function handleLogout() {
-        localStorage.removeItem('activeWorkoutId');
-        setActiveWorkoutId(null);
-        setCurrentView('home');
-        clearWelcomeFlags();
-        setWelcomeOpen(false);
-        setWelcomeCanceled(false);
-        setWelcomeSeconds(10);
-        logout();
-    }
 
     function handleWelcomeGo() {
         setWelcomeOpen(false);
-        setWelcomeCanceled(false);
-        setWelcomeSeconds(10);
         clearWelcomeFlags();
     }
+    function handleWelcomeCancel() { setWelcomeCanceled(true); }
+    function handleWelcomeOverlayClick(e) { if (e.target === e.currentTarget) handleWelcomeGo(); }
 
-    function handleWelcomeCancel() {
-        setWelcomeCanceled(true);
-    }
 
-    function handleWelcomeOverlayClick(e) {
-        if (e.target !== e.currentTarget) return;
-        setWelcomeOpen(false);
-        setWelcomeCanceled(false);
-        setWelcomeSeconds(10);
-        clearWelcomeFlags();
-    }
-
-    const [editingWorkout, setEditingWorkout] = useState(null);
-    const [creationContext, setCreationContext] = useState(null); // { targetUserId: string, targetUserName: string }
-
+    // Navigation Helpers
     function handleCreateWorkout(workoutToEdit = null, context = null) {
-        if (workoutToEdit?.id) {
-            setEditingWorkout(workoutToEdit);
-        } else {
-            setEditingWorkout(null);
-        }
-        setCreationContext(context);
-        setCurrentView('create-workout');
+        navigate('/create', { state: { initialData: workoutToEdit, creationContext: context } });
     }
 
-    function handleBackFromCreate() {
-        setEditingWorkout(null);
-        setCreationContext(null);
-        // If we were prescribing, maybe go back to trainer? For now, home or determine by context?
-        // Let's default to home for now to keep it simple, or check logic later.
-        if (creationContext?.targetUserId) {
-            setCurrentView('trainer');
-        } else {
-            setCurrentView('home');
-        }
-    }
-
-    function getActiveTab() {
-        if (currentView === 'home') return 'home';
-        if (currentView === 'workouts') return 'workouts'; // Changed from 'methods' logic
-        if (currentView === 'methods') return 'home'; // Methods is now a sub-view, technically part of home or workout or standalone
-        if (currentView === 'create-workout') return 'new';
-        if (currentView === 'history') return 'history';
-        if (currentView === 'profile') return 'profile';
-        if (currentView === 'workout') return 'workouts';
-        if (currentView === 'trainer') return 'partners'; // or 'trainer' if we add that ID
-        return 'home';
+    function handleOpenHistory(templateName = null, exerciseName = null) {
+        navigate('/history', { state: { initialTemplate: templateName, initialExercise: exerciseName } });
     }
 
     function handleTabChange(tabId) {
-        if (tabId === 'home') {
-            handleBackToHome();
-        }
-        if (tabId === 'workouts') setCurrentView('workouts'); // Open Workouts Page
+        if (tabId === 'home') navigate('/');
+        if (tabId === 'workouts') navigate('/workouts');
         if (tabId === 'new') handleCreateWorkout();
-        if (tabId === 'history') handleOpenHistoryFromHeader();
-        if (tabId === 'profile') setCurrentView('profile');
-        if (tabId === 'partners') setCurrentView('trainer');
+        if (tabId === 'history') handleOpenHistory();
+        if (tabId === 'profile') navigate('/profile');
+        if (tabId === 'partners') navigate('/trainer');
+    }
+
+    function getActiveTab() {
+        const path = location.pathname;
+        if (path === '/') return 'home';
+        if (path.startsWith('/workouts')) return 'workouts';
+        if (path.startsWith('/create')) return 'new';
+        if (path.startsWith('/history')) return 'history';
+        if (path.startsWith('/profile')) return 'profile';
+        if (path.startsWith('/trainer')) return 'partners';
+        return 'home';
     }
 
     if (authLoading) {
         return (
             <div className="app-shell">
-                <div className="app-inner">
-                    <p>Carregando autenticação...</p>
-                </div>
+                <div className="app-inner"><p>Carregando autenticação...</p></div>
             </div>
         );
     }
 
-    if (!user) {
-        return <LoginPage />;
-    }
-
-    if (inWorkout) {
-        return (
-            <WorkoutExecutionPage
-                workoutId={activeWorkoutId}
-                user={user}
-                onFinish={async () => {
-                    // Optimistic clear
-                    setInWorkout(false);
-                    setActiveWorkoutId(null);
-                    localStorage.removeItem('activeWorkoutId');
-
-                    // Push to Firestore
-                    if (user) {
-                        await userService.clearActiveWorkout(user.uid);
-                    }
-                }}
-            />
-        );
-    }
-
-    let content;
-
-    if (currentView === 'create-workout') {
-        content = (
-            <CreateWorkoutPage
-                onBack={handleBackFromCreate}
-                user={user}
-                initialData={editingWorkout}
-                creationContext={creationContext}
-            />
-        );
-    } else if (currentView === 'methods') {
-        content = (
-            <MethodsPage
-                onBack={handleBackFromMethods}
-                initialMethod={initialMethod}
-            />
-        );
-    } else if (currentView === 'workouts') {
-        content = (
-            <WorkoutsPage
-                onNavigateToCreate={handleCreateWorkout}
-                onNavigateToWorkout={handleSelectWorkout}
-                user={user}
-            />
-        );
-    } else if (currentView === 'history') {
-        content = (
-            <HistoryPage
-                onBack={handleBackFromHistory}
-                initialTemplate={historyTemplate}
-                initialExercise={historyExercise}
-                user={user}
-            />
-        );
-    } else if (currentView === 'profile') {
-        content = (
-            <ProfilePage
-                user={user}
-                onLogout={handleLogout}
-                onNavigateToHistory={handleOpenHistoryFromHeader}
-                onNavigateToVolumeAnalysis={() => setCurrentView('volumeAnalysis')}
-                onNavigateToTrainer={() => setCurrentView('trainer')}
-                isTrainer={isTrainer}
-            />
-        );
-    } else if (currentView === 'trainer') {
-        content = (
-            <TrainerDashboard
-                user={user}
-                onBack={() => setCurrentView('profile')}
-                onNavigateToCreateWorkout={handleCreateWorkout}
-            />
-        );
-    } else {
-        content = (
-            <HomeDashboard
-                onNavigateToMethods={handleOpenMethodsFromHeader}
-                onNavigateToCreateWorkout={handleCreateWorkout}
-                onNavigateToWorkout={handleSelectWorkout}
-                onNavigateToHistory={handleOpenHistoryFromHeader}
-                onNavigateToAchievements={() => setCurrentView('profile')}
-                onNavigateToVolumeAnalysis={() => setCurrentView('volumeAnalysis')}
-                onNavigateToMyWorkouts={() => handleTabChange('workouts')}
-                user={user}
-            />
-        );
-    }
+    // Header Logic
+    const showHeader = location.pathname !== '/login' && location.pathname !== '/' && !location.pathname.startsWith('/execute');
 
     return (
         <div className="min-h-screen relative bg-transparent">
-            {/* Background Layers that cover safe areas */}
+            {/* Background Layers */}
             <div className="fixed inset-0 bg-slate-950 z-[-2]" />
             <div className="fixed inset-0 bg-[radial-gradient(ellipse_at_top,rgba(59,130,246,0.15),transparent_50%)] z-[-1]" />
 
-            {/* Desktop Sidebar */}
-            <DesktopSidebar
-                activeTab={getActiveTab()}
-                onTabChange={handleTabChange}
-                user={user}
-                isTrainer={isTrainer}
-            />
+            {/* Layout Components (Sidebar/BottomNav) */}
+            {user && !location.pathname.startsWith('/execute') && location.pathname !== '/login' && (
+                <>
+                    <DesktopSidebar
+                        activeTab={getActiveTab()}
+                        onTabChange={handleTabChange}
+                        user={user}
+                        isTrainer={isTrainer}
+                    />
+                    <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-[#020617]/95 backdrop-blur-xl border-t border-slate-800 pb-[env(safe-area-inset-bottom)]">
+                        <BottomNavEnhanced
+                            activeTab={getActiveTab()}
+                            onTabChange={handleTabChange}
+                            isTrainer={isTrainer}
+                        />
+                    </div>
+                </>
+            )}
 
-            {/* Main Content Area */}
-            {/* Main Layout - Content Wrapper */}
-            <div className="w-full min-h-screen pt-[calc(2rem+env(safe-area-inset-top))] pb-32 lg:pb-8 lg:pt-8 lg:pl-64 transition-all duration-300 relative flex flex-col">
+            {/* Main Content */}
+            <div className={`w-full min-h-screen transition-all duration-300 relative flex flex-col ${user && !location.pathname.startsWith('/execute') && location.pathname !== '/login'
+                ? 'pt-[calc(2rem+env(safe-area-inset-top))] pb-32 lg:pb-8 lg:pt-8 lg:pl-64'
+                : ''
+                }`}>
                 <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex-1">
-                    {/* Only show simplified header if NOT on home (Home has its own greeting) */}
-                    {currentView !== 'home' && (
+                    {showHeader && (
                         <header className="app-header mb-8">
                             <h1 className="app-logo-name text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">Vitalità</h1>
                         </header>
                     )}
 
-                    <main>{content}</main>
+                    <Suspense fallback={
+                        <div className="flex items-center justify-center min-h-[50vh]">
+                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-500"></div>
+                        </div>
+                    }>
+                        <Routes>
+                            <Route path="/login" element={!user ? <LoginPage /> : <Navigate to="/" />} />
 
+                            <Route path="/" element={
+                                <ProtectedRoute>
+                                    <HomeDashboard
+                                        onNavigateToMethods={() => navigate('/methods', { state: { from: 'home' } })}
+                                        onNavigateToCreateWorkout={handleCreateWorkout}
+                                        onNavigateToWorkout={handleSelectWorkout}
+                                        onNavigateToHistory={handleOpenHistory}
+                                        onNavigateToAchievements={() => navigate('/profile')}
+                                        onNavigateToVolumeAnalysis={() => navigate('/profile')} // TODO: separate route
+                                        onNavigateToMyWorkouts={() => navigate('/workouts')}
+                                        user={user}
+                                    />
+                                </ProtectedRoute>
+                            } />
+
+                            <Route path="/workouts" element={
+                                <ProtectedRoute>
+                                    <WorkoutsPage
+                                        onNavigateToCreate={handleCreateWorkout}
+                                        onNavigateToWorkout={handleSelectWorkout}
+                                        user={user}
+                                    />
+                                </ProtectedRoute>
+                            } />
+
+                            <Route path="/create" element={
+                                <ProtectedRoute>
+                                    <CreateWorkoutWrapper user={user} />
+                                </ProtectedRoute>
+                            } />
+
+                            <Route path="/history" element={
+                                <ProtectedRoute>
+                                    <HistoryPageWrapper user={user} />
+                                </ProtectedRoute>
+                            } />
+
+                            <Route path="/profile" element={
+                                <ProtectedRoute>
+                                    <ProfilePage
+                                        user={user}
+                                        onLogout={handleLogout}
+                                        onNavigateToHistory={handleOpenHistory}
+                                        onNavigateToVolumeAnalysis={() => navigate('/profile')}
+                                        onNavigateToTrainer={() => navigate('/trainer')}
+                                        isTrainer={isTrainer}
+                                    />
+                                </ProtectedRoute>
+                            } />
+
+                            <Route path="/methods" element={
+                                <ProtectedRoute>
+                                    <MethodsWrapper />
+                                </ProtectedRoute>
+                            } />
+
+                            <Route path="/trainer" element={
+                                <ProtectedRoute>
+                                    <TrainerDashboard
+                                        user={user}
+                                        onBack={() => navigate('/profile')}
+                                        onNavigateToCreateWorkout={handleCreateWorkout}
+                                    />
+                                </ProtectedRoute>
+                            } />
+
+                            <Route path="/execute/:workoutId" element={
+                                <ProtectedRoute>
+                                    <ExecutionWrapper user={user} />
+                                </ProtectedRoute>
+                            } />
+
+                            <Route path="*" element={<Navigate to="/" replace />} />
+                        </Routes>
+                    </Suspense>
                 </div>
             </div>
 
-            {/* Mobile Bottom Nav */}
-            {currentView !== 'workout' && (
-                <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-[#020617]/95 backdrop-blur-xl border-t border-slate-800 pb-[env(safe-area-inset-bottom)]">
-                    <BottomNavEnhanced
-                        activeTab={getActiveTab()}
-                        onTabChange={handleTabChange}
-                        isTrainer={isTrainer}
-                    />
-                </div>
-            )}
-
-            {welcomeOpen ? (
-                <div
-                    className="welcome-overlay"
-                    role="presentation"
-                    onMouseDown={handleWelcomeOverlayClick}
-                >
-                    <div
-                        className="welcome-modal"
-                        role="dialog"
-                        aria-modal="true"
-                        aria-labelledby="welcome-title"
-                        aria-describedby="welcome-desc"
-                    >
-                        <h3 id="welcome-title" className="welcome-title">
-                            Conta criada com sucesso
-                        </h3>
-
-                        <p id="welcome-desc" className="welcome-text">
-                            Bem-vindo ao VITALITÀ, {welcomeFirstName || 'bem-vindo'}. Seu perfil foi criado e você já está logado.
-                        </p>
-
-                        <p className="welcome-mini">Seus dados foram salvos com segurança.</p>
-                        <p className="welcome-mini">Você pode ajustar seu perfil a qualquer momento nas configurações.</p>
-
-                        <button
-                            ref={welcomeBtnRef}
-                            type="button"
-                            className="header-history-button"
-                            style={{ width: '100%' }}
-                            onClick={handleWelcomeGo}
-                        >
-                            Ir para o app
-                        </button>
-
+            {/* Welcome Modal */}
+            {welcomeOpen && (
+                <div className="welcome-overlay" role="presentation" onMouseDown={handleWelcomeOverlayClick}>
+                    <div className="welcome-modal" role="dialog">
+                        <h3 className="welcome-title">Conta criada com sucesso</h3>
+                        <p className="welcome-text">Bem-vindo ao VITALITÀ, {welcomeFirstName || 'bem-vindo'}.</p>
+                        <button className="header-history-button" style={{ width: '100%' }} onClick={handleWelcomeGo}>Ir para o app</button>
                         <div className="welcome-footer">
-                            {!welcomeCanceled ? (
-                                <span className="welcome-count">
-                                    Redirecionando em {welcomeSeconds}s.
-                                </span>
-                            ) : (
-                                <span className="welcome-count">
-                                    Redirecionamento cancelado.
-                                </span>
-                            )}
-
-                            {!welcomeCanceled ? (
-                                <button
-                                    type="button"
-                                    className="welcome-cancel"
-                                    onClick={handleWelcomeCancel}
-                                >
-                                    Cancelar
-                                </button>
-                            ) : null}
+                            {!welcomeCanceled && <span className="welcome-count">Redirecionando em {welcomeSeconds}s.</span>}
+                            {!welcomeCanceled && <button className="welcome-cancel" onClick={handleWelcomeCancel}>Cancelar</button>}
                         </div>
                     </div>
                 </div>
-            ) : null}
+            )}
         </div>
+    );
+}
+
+// Wrappers to handle location state props
+function CreateWorkoutWrapper({ user }) {
+    const location = useLocation();
+    const navigate = useNavigate();
+    const { initialData, creationContext } = location.state || {};
+
+    return (
+        <CreateWorkoutPage
+            onBack={() => navigate(-1)}
+            user={user}
+            initialData={initialData}
+            creationContext={creationContext}
+        />
+    );
+}
+
+function HistoryPageWrapper({ user }) {
+    const location = useLocation();
+    const navigate = useNavigate();
+    const { initialTemplate, initialExercise } = location.state || {};
+
+    return (
+        <HistoryPage
+            onBack={() => navigate(-1)}
+            initialTemplate={initialTemplate}
+            initialExercise={initialExercise}
+            user={user}
+        />
+    );
+}
+
+function MethodsWrapper() {
+    const location = useLocation();
+    const navigate = useNavigate();
+    const { from, initialMethod } = location.state || {}; // from 'home' or 'workout'
+
+    return (
+        <MethodsPage
+            onBack={() => navigate(-1)}
+            initialMethod={initialMethod || ''}
+        />
+    );
+}
+
+import { useParams } from 'react-router-dom';
+function ExecutionWrapper({ user }) {
+    const { workoutId } = useParams();
+    const navigate = useNavigate();
+
+    return (
+        <WorkoutExecutionPage
+            workoutId={workoutId}
+            user={user}
+            onFinish={async () => {
+                // Determine logic: maybe go to home or history?
+                localStorage.removeItem('activeWorkoutId');
+                // The 'complete' logic in page handles data, we just navigate
+                navigate('/');
+            }}
+        />
     );
 }
 

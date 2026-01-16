@@ -83,7 +83,7 @@ export function WorkoutDetailsModal({ session, onClose }) {
                                         <div className="p-1.5 bg-cyan-950/30 rounded-lg border border-cyan-900/50">
                                             <Dumbbell size={16} className="text-cyan-500" />
                                         </div>
-                                        <h3 className="font-bold text-slate-200 text-sm sm:text-base">
+                                        <h3 className="font-bold text-slate-200 text-sm sm:text-base uppercase">
                                             {ex.name}
                                         </h3>
                                     </div>

@@ -26,8 +26,6 @@ import { db } from './firebaseConfig';
 import { calculateWeeklyStats } from './utils/workoutStats';
 import { workoutService } from './services/workoutService';
 
-const weekDays = []; // Removed hardcoded mock data
-
 
 export function HomeDashboard({
     onNavigateToMethods,
@@ -47,13 +45,8 @@ export function HomeDashboard({
     const [loading, setLoading] = useState(true);
     const [suggestedWorkout, setSuggestedWorkout] = useState(null);
     const [userGoal, setUserGoal] = useState(4); // State for user goal
-    const [stats, setStats] = useState({
-        currentStreak: 0,
-        bestStreak: 0,
-        completedThisWeek: 0,
-        weeklyGoal: 4,
-        weekDays: []
-    });
+    // Initialize with empty stats structure (7 empty days) to prevent missing calendar
+    const [stats, setStats] = useState(() => calculateWeeklyStats([], 4));
 
     useEffect(() => {
         async function fetchData() {
@@ -78,14 +71,20 @@ export function HomeDashboard({
 
             let workoutsData = [];
 
-            // 1. Fetch Workouts (Templates) - CACHED
-            try {
-                workoutsData = await workoutService.getTemplates(user.uid);
-                setWorkouts(workoutsData);
-                if (workoutsData.length > 0 && !suggestedWorkout) setSuggestedWorkout(workoutsData[0]);
-            } catch (error) {
-                console.error("Error fetching templates:", error);
-            }
+            // 1. Subscribe to Workouts (Templates) - REALTIME
+            const unsubscribeTemplates = workoutService.subscribeToTemplates(user.uid, (data) => {
+                setWorkouts(data);
+                if (data.length > 0 && !suggestedWorkout) {
+                    setSuggestedWorkout(data[0]);
+                    // Ideally we should check next suggestion logic again here if workouts change
+                    // But simple default is safer for now.
+                }
+            });
+
+            // Cleanup subscription
+            return () => {
+                if (unsubscribeTemplates) unsubscribeTemplates();
+            };
 
             // 2. Fetch History (Sessions) for Stats & Suggestion
             try {
@@ -93,13 +92,39 @@ export function HomeDashboard({
                 // For now, yes.
                 const allSessions = await workoutService.getAllSessions(user.uid);
 
-                const sessions = allSessions.map(d => ({
-                    ...d,
-                    date: d.completedAt?.toDate() || new Date()
-                }));
+                const sessions = allSessions.map(d => {
+                    let dateObj = new Date();
+                    try {
+                        const raw = d.completedAt || d.timestamp;
+                        if (raw) {
+                            if (typeof raw.toDate === 'function') {
+                                // Firestore Timestamp
+                                dateObj = raw.toDate();
+                            } else if (raw instanceof Date) {
+                                // Native Date
+                                dateObj = raw;
+                            } else if (typeof raw === 'string' || typeof raw === 'number') {
+                                // ISO String or Ms
+                                dateObj = new Date(raw);
+                            } else if (raw.seconds) {
+                                // Plain object timestamp (serialized)
+                                dateObj = new Date(raw.seconds * 1000);
+                            }
+                        }
+                    } catch (e) {
+                        console.warn("Date parsing error for session", d.id, e);
+                        // Keep default 'now' or maybe fallback to created?
+                    }
+
+                    // Validate Result
+                    if (isNaN(dateObj.getTime())) {
+                        dateObj = new Date(); // Fallback to safe date if Invalid
+                    }
+
+                    return { ...d, date: dateObj };
+                });
 
                 sessions.sort((a, b) => b.date - a.date);
-
                 // --- SMART SUGGESTION LOGIC ---
                 if (workoutsData.length > 0) {
                     let nextWorkout = workoutsData[0]; // Default to first
@@ -121,7 +146,7 @@ export function HomeDashboard({
                 }
 
                 const computedStats = calculateWeeklyStats(sessions, fetchedGoal);
-                setStats(computedStats);
+                setStats({ ...computedStats, totalSessions: sessions.length });
             } catch (error) {
                 console.error("Error fetching history:", error);
             } finally {
@@ -139,6 +164,7 @@ export function HomeDashboard({
             <div className="w-full max-w-3xl mx-auto px-4 lg:px-8 flex flex-col">
 
                 {/* 1. SAUDAÇÃO */}
+                {/* 1. SAUDAÇÃO */}
                 <div className="pt-4 pb-6">
                     <h1 className="text-2xl lg:text-3xl mb-1">
                         {greeting}, <span className="font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">{firstName}</span>
@@ -146,6 +172,7 @@ export function HomeDashboard({
                     <p className="text-slate-400 text-sm">
                         Pronto para o próximo treino?
                     </p>
+                    <p className="text-[10px] text-slate-500 mt-1">Debug: Sessions {stats.totalSessions || 0} | Streak {stats.currentStreak}</p>
                 </div>
 
                 {/* 2. PROGRESSO */}
