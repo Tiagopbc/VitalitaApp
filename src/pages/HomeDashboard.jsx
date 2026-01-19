@@ -20,7 +20,7 @@ import {
     Sparkles,
     BarChart3
 } from 'lucide-react';
-import { collection, query, where, getDocs, limit, orderBy, doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc } from 'firebase/firestore';
 import { StreakWeeklyGoalHybrid } from '../StreakWeeklyGoalHybrid';
 import { db } from '../firebaseConfig';
 import { calculateWeeklyStats } from '../utils/workoutStats';
@@ -28,24 +28,20 @@ import { workoutService } from '../services/workoutService';
 
 
 export function HomeDashboard({
-    onNavigateToMethods,
     onNavigateToCreateWorkout,
     onNavigateToWorkout,
     onNavigateToHistory,
     onNavigateToAchievements,
-    onNavigateToVolumeAnalysis,
-    onNavigateToMyWorkouts,
     user
 }) {
+
     const hour = new Date().getHours();
     const greeting = hour < 12 ? 'Bom dia' : hour < 18 ? 'Boa tarde' : 'Boa noite';
     const firstName = user?.displayName?.split(' ')[0] || 'Atleta';
 
-    const [workouts, setWorkouts] = useState([]);
-    const [loading, setLoading] = useState(true);
     const [suggestedWorkout, setSuggestedWorkout] = useState(null);
-    const [userGoal, setUserGoal] = useState(4); // State for user goal
-    // Initialize with empty stats structure (7 empty days) to prevent missing calendar
+    const [userGoal, setUserGoal] = useState(4); // Estado para meta do usuário
+    // Inicializar com estrutura de estatísticas vazia (7 dias vazios) para prevenir calendário faltando
     const [stats, setStats] = useState(() => calculateWeeklyStats([], 4));
 
 
@@ -55,13 +51,12 @@ export function HomeDashboard({
 
         async function fetchData() {
             if (!user) {
-                setLoading(false);
                 return;
             }
 
             let fetchedGoal = 4;
 
-            // 0. Fetch User Goal
+            // 0. Buscar Meta do Usuário
             try {
                 const userRef = doc(db, 'users', user.uid);
                 const userSnap = await getDoc(userRef);
@@ -75,18 +70,17 @@ export function HomeDashboard({
 
             let workoutsData = [];
 
-            // 1. Subscribe to Workouts (Templates) - REALTIME
+            // 1. Inscrever-se em Treinos (Templates) - EM TEMPO REAL
             unsubscribeTemplates = workoutService.subscribeToTemplates(user.uid, (data) => {
-                setWorkouts(data);
                 if (data.length > 0 && !suggestedWorkout) {
                     setSuggestedWorkout(data[0]);
-                    // Ideally we should check next suggestion logic again here if workouts change
-                    // But simple default is safer for now.
+                    // Idealmente deveríamos verificar a lógica de próxima sugestão novamente aqui se treinos mudarem
+                    // Mas padrão simples é mais seguro por enquanto.
                 }
             });
 
-            // 2. Subscribe to History (Sessions) - REALTIME
-            // This ensures instant updates when a workout is finished, even without page reload.
+            // 2. Inscrever-se no Histórico (Sessões) - EM TEMPO REAL
+            // Isso garante atualizações instantâneas quando um treino é finalizado, mesmo sem recarregar a página.
             try {
                 unsubscribeSessions = workoutService.subscribeToSessions(user.uid, (data) => {
                     // console.log("DASHBOARD: Received sessions update", data.length);
@@ -94,7 +88,7 @@ export function HomeDashboard({
                     const sessions = data.map(d => {
                         let dateObj = new Date();
                         try {
-                            // Prioritize completedAtClient to match User's device time
+                            // Priorizar completedAtClient para corresponder ao tempo do dispositivo do Usuário
                             const raw = d.completedAtClient || d.completedAt || d.timestamp;
                             if (raw) {
                                 if (typeof raw.toDate === 'function') {
@@ -111,7 +105,7 @@ export function HomeDashboard({
                             console.warn("Date parsing error for session", d.id, e);
                         }
 
-                        // Validate
+                        // Validar
                         if (isNaN(dateObj.getTime())) {
                             dateObj = new Date();
                         }
@@ -121,12 +115,11 @@ export function HomeDashboard({
 
                     sessions.sort((a, b) => b.date - a.date);
 
-                    // --- SMART SUGGESTION LOGIC ---
+                    // --- LÓGICA DE SUGESTÃO INTELIGENTE ---
 
                     const computedStats = calculateWeeklyStats(sessions, fetchedGoal);
-                    // Update stats
+                    // Atualizar estatísticas
                     setStats({ ...computedStats, totalSessions: sessions.length });
-                    setLoading(false);
                 });
             } catch (err) {
                 console.error("Subscription Error:", err);
@@ -135,7 +128,7 @@ export function HomeDashboard({
 
         fetchData();
 
-        // Cleanup
+        // Limpeza
         return () => {
             if (unsubscribeTemplates) unsubscribeTemplates();
             if (unsubscribeSessions) unsubscribeSessions();
@@ -185,7 +178,7 @@ export function HomeDashboard({
                     </div>
                 </div>
 
-                {/* 3. HERO SECTION - PRÓXIMO TREINO */}
+                {/* 3. SEÇÃO HERO - PRÓXIMO TREINO */}
                 <div className="mb-8">
                     <div className="flex items-center gap-2 mb-3">
                         <Target size={10} className="text-cyan-400" />

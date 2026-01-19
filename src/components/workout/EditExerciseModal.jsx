@@ -1,4 +1,4 @@
-import { motion } from 'motion/react';
+import { AnimatePresence } from 'framer-motion';
 import { Plus } from 'lucide-react';
 import { PremiumCard } from '../design-system/PremiumCard';
 import { RippleButton } from '../design-system/RippleButton';
@@ -8,7 +8,7 @@ export function EditExerciseModal({ exercise, onClose, onSave }) {
 
     return (
         <>
-            {/* Backdrop */}
+            {/* Fundo (Backdrop) */}
             <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -25,7 +25,7 @@ export function EditExerciseModal({ exercise, onClose, onSave }) {
                 className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-lg px-4 z-50"
             >
                 <PremiumCard className="p-6 bg-slate-900 border-slate-800">
-                    {/* Header */}
+                    {/* Cabeçalho */}
                     <div className="flex items-center justify-between mb-6">
                         <div>
                             <h2 className="text-2xl font-bold text-white">Editar Exercício</h2>
@@ -43,7 +43,7 @@ export function EditExerciseModal({ exercise, onClose, onSave }) {
                         </motion.button>
                     </div>
 
-                    {/* Form */}
+                    {/* Formulário */}
                     <div className="space-y-5">
                         {/* Nome do Exercício */}
                         <div>
@@ -71,7 +71,7 @@ export function EditExerciseModal({ exercise, onClose, onSave }) {
                             />
                         </div>
 
-                        {/* Grid: Peso, Reps, Sets */}
+                        {/* Grade: Peso, Reps, Sets */}
                         <div className="grid grid-cols-3 gap-3">
                             {/* Peso */}
                             <div>
@@ -128,7 +128,7 @@ export function EditExerciseModal({ exercise, onClose, onSave }) {
                         </div>
                     </div>
 
-                    {/* Actions */}
+                    {/* Ações */}
                     <div className="flex gap-3 mt-8">
                         <motion.button
                             whileHover={{ scale: 1.02 }}
@@ -142,7 +142,7 @@ export function EditExerciseModal({ exercise, onClose, onSave }) {
                         <RippleButton
                             onClick={() => {
 
-                                // For now just close, in real app would save
+                                // Por enquanto apenas fechar, no app real salvaria
                                 onSave && onSave(exercise);
                                 onClose();
                             }}

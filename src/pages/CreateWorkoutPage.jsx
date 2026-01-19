@@ -29,11 +29,11 @@ export default function CreateWorkoutPage({ onBack, user, initialData, creationC
     const [editingExerciseId, setEditingExerciseId] = useState(null);
     const [loading, setLoading] = useState(false);
 
-    // Search State
+    // Estado de Busca
     const [suggestions, setSuggestions] = useState([]);
     const [isSearching, setIsSearching] = useState(false);
 
-    // Patch missing IDs on load (legacy data support)
+    // Corrigir IDs ausentes no carregamento (suporte a dados legados)
     useEffect(() => {
         if (exercises.some(ex => !ex.id)) {
             setExercises(prev => prev.map(ex => ({
@@ -43,7 +43,7 @@ export default function CreateWorkoutPage({ onBack, user, initialData, creationC
         }
     }, [exercises]);
 
-    // Form state
+    // Estado do formulário
     const [newExercise, setNewExercise] = useState({
         muscleGroup: '',
         name: '',
@@ -54,12 +54,12 @@ export default function CreateWorkoutPage({ onBack, user, initialData, creationC
         notes: ''
     });
 
-    // Debounced Search Effect
+    // Efeito de Busca com Debounce
     useEffect(() => {
         const fetchSuggestions = async () => {
-            // Logic:
-            // 1. If we have a muscleGroup selected, we can search even with empty name (to show list).
-            // 2. If no muscleGroup, we need at least 2 chars of name to avoid fetching whole DB.
+            // Lógica:
+            // 1. Se tivermos um grupo muscular selecionado, podemos buscar mesmo com nome vazio (para mostrar lista).
+            // 2. Se não houver grupo muscular, precisamos de pelo menos 2 caracteres do nome para evitar buscar todo o DB.
             const hasMuscle = !!newExercise.muscleGroup;
             const hasName = newExercise.name.length >= 2;
 
@@ -70,7 +70,7 @@ export default function CreateWorkoutPage({ onBack, user, initialData, creationC
 
             setIsSearching(true);
             try {
-                // If searching ONLY by muscle group (no name), fetch more results to populate grid
+                // Se buscando APENAS por grupo muscular (sem nome), buscar mais resultados para popular a grade
                 const limit = (hasMuscle && !newExercise.name) ? 50 : 15;
 
                 const results = await workoutService.searchExercises(
@@ -94,10 +94,10 @@ export default function CreateWorkoutPage({ onBack, user, initialData, creationC
         setNewExercise(prev => ({
             ...prev,
             name: suggestion.name,
-            muscleGroup: suggestion.muscleGroup || prev.muscleGroup || 'Geral', // Auto-fill muscle if missing
-            // Could also auto-fill instructions/notes if we wanted
+            muscleGroup: suggestion.muscleGroup || prev.muscleGroup || 'Geral', // Auto-preencher músculo se ausente
+            // Poderia também auto-preencher instruções/notas se quiséssemos
         }));
-        setSuggestions([]); // Clear suggestions
+        setSuggestions([]); // Limpar sugestões
     }
 
     function handleAddExercise() {
@@ -109,12 +109,12 @@ export default function CreateWorkoutPage({ onBack, user, initialData, creationC
         };
 
         if (editingExerciseId) {
-            // Edit existing
+            // Editar existente
             setExercises(exercises.map(ex => ex.id === editingExerciseId ? { ...finalExercise, id: editingExerciseId } : ex));
             setEditingExerciseId(null);
             setShowAddExercise(false);
         } else {
-            // Add new
+            // Adicionar novo
             const exercise = {
                 id: Date.now().toString(),
                 ...finalExercise
@@ -123,7 +123,7 @@ export default function CreateWorkoutPage({ onBack, user, initialData, creationC
             setShowAddExercise(false);
         }
 
-        // Reset form
+        // Resetar formulário
         setNewExercise({
             muscleGroup: '',
             name: '',
@@ -137,13 +137,13 @@ export default function CreateWorkoutPage({ onBack, user, initialData, creationC
     }
 
     function handleEditExercise(ex) {
-        // Force state update with complete object
+        // Forçar atualização de estado com objeto completo
         const exerciseToEdit = { ...ex };
         setEditingExerciseId(exerciseToEdit.id);
 
         let mappedMuscle = exerciseToEdit.muscleGroup || exerciseToEdit.group || exerciseToEdit.muscleFocus?.primary || '';
 
-        // Try to match casing with muscleGroups
+        // Tentar corresponder maiúsculas/minúsculas com muscleGroups
         const exactMatch = muscleGroups.find(m => m.toLowerCase() === mappedMuscle.toLowerCase());
         if (exactMatch) mappedMuscle = exactMatch;
 
@@ -174,9 +174,9 @@ export default function CreateWorkoutPage({ onBack, user, initialData, creationC
                 setTimeout(() => reject(new Error("Timeline excedido (10s). Erro de Conexão com Firebase.")), 10000)
             );
 
-            // Determine Target User
+            // Determinar Usuário Alvo
             const targetUserId = creationContext?.targetUserId || user.uid;
-            // Determine Created By (Always the logged in user)
+            // Determinar Criado Por (Sempre o usuário logado)
             const createdBy = user.uid;
 
             const workoutData = {
@@ -186,14 +186,14 @@ export default function CreateWorkoutPage({ onBack, user, initialData, creationC
             };
 
             if (initialData?.id) {
-                // UPDATE
+                // ATUALIZAR
                 const docRef = doc(db, 'workout_templates', initialData.id);
                 await Promise.race([
                     updateDoc(docRef, workoutData),
                     timeout
                 ]);
             } else {
-                // CREATE
+                // CRIAR
                 await Promise.race([
                     addDoc(collection(db, 'workout_templates'), {
                         ...workoutData,
@@ -216,7 +216,7 @@ export default function CreateWorkoutPage({ onBack, user, initialData, creationC
 
     return (
         <div className="w-full max-w-3xl mx-auto px-4 py-6 pb-32">
-            {/* Header */}
+            {/* Cabeçalho */}
             <div className="mb-6">
                 <Button
                     variant="outline-primary"
@@ -230,7 +230,7 @@ export default function CreateWorkoutPage({ onBack, user, initialData, creationC
                 <h2 className="text-2xl font-bold text-white">{initialData ? 'Editar Treino' : 'Criar Novo Treino'}</h2>
             </div>
 
-            {/* Workout Name Input */}
+            {/* Entrada do Nome do Treino */}
             <div className="mb-8">
                 <label className="flex flex-col gap-2 text-[0.85rem] text-slate-400 font-medium">
                     Nome do Treino
@@ -244,7 +244,7 @@ export default function CreateWorkoutPage({ onBack, user, initialData, creationC
                 </label>
             </div>
 
-            {/* Exercises List */}
+            {/* Lista de Exercícios */}
             <div className="mb-6 space-y-3">
                 <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
                     Exercícios ({exercises.length})
@@ -299,7 +299,7 @@ export default function CreateWorkoutPage({ onBack, user, initialData, creationC
                 )}
             </div>
 
-            {/* Add/Edit Exercise Modal */}
+            {/* Modal Adicionar/Editar Exercício */}
             {showAddExercise && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
                     <div className="w-full max-w-md bg-[#0f172a] rounded-2xl border border-slate-700 shadow-2xl p-6 animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
@@ -311,7 +311,7 @@ export default function CreateWorkoutPage({ onBack, user, initialData, creationC
                                 onClick={() => {
                                     setShowAddExercise(false);
                                     setEditingExerciseId(null);
-                                    // Reset form
+                                    // Resetar formulário
                                     setNewExercise({
                                         muscleGroup: '',
                                         name: '',
@@ -348,7 +348,7 @@ export default function CreateWorkoutPage({ onBack, user, initialData, creationC
                                     value={newExercise.name}
                                     onChange={(e) => setNewExercise({ ...newExercise, name: e.target.value })}
                                     onFocus={() => {
-                                        // Trigger search if we have a muscle group selected already
+                                        // Acionar busca se já tivermos um grupo muscular selecionado
                                         if (newExercise.muscleGroup && newExercise.name.length < 2) {
                                             // Ensure effect runs or state allows showing
                                         }

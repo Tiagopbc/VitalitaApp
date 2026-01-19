@@ -3,7 +3,7 @@ import { db } from '../firebaseConfig';
 import { doc, getDoc, getDocs, setDoc, query, collection, where, limit, serverTimestamp, addDoc, getDocFromServer } from 'firebase/firestore';
 import { userService } from '../services/userService';
 
-// Helper to generate IDs
+// Auxiliar para gerar IDs
 function generateId() {
     return Math.random().toString(36).substr(2, 9);
 }
@@ -21,10 +21,10 @@ export function useWorkoutSession(workoutId, user) {
     const lastSyncedRef = useRef('');
     const backupKey = `workout_backup_${profileId}_${workoutId}`;
 
-    // --- DATA FETCHING ---
+    // --- BUSCA DE DADOS ---
 
 
-    // --- DATA FETCHING ---
+    // --- BUSCA DE DADOS ---
     useEffect(() => {
         if (!workoutId || !profileId) return;
 
@@ -33,11 +33,11 @@ export function useWorkoutSession(workoutId, user) {
             try {
                 let activeData = null;
 
-                // 1. Check Active Session (Remote) - Only if not explicitly discarded (we assume sessionVersion > 0 means we might want fresh)
-                // Actually, consistently checking remote is fine, IF we trust delete worked.
+                // 1. Verificar Sessão Ativa (Remota) - Apenas se não descartada explicitamente (assumimos que sessionVersion > 0 significa que podemos querer dados frescos)
+                // Na verdade, verificar remotamente de forma consistente é bom, SE confiarmos que o delete funcionou.
                 try {
                     const activeRef = doc(db, 'active_workouts', profileId);
-                    // FORCE SERVER FETCH to avoid stale cache after discard
+                    // FORÇAR BUSCA NO SERVIDOR para evitar cache obsoleto após descarte
                     const activeSnap = await getDocFromServer(activeRef);
                     if (activeSnap.exists()) {
                         const data = activeSnap.data();
@@ -47,7 +47,7 @@ export function useWorkoutSession(workoutId, user) {
                     }
                 } catch (e) {
                     console.warn("Could not fetch active remote session (Server)", e);
-                    // Fallback to cache if offline
+                    // Fallback para cache se offline
                     try {
                         const activeRef = doc(db, 'active_workouts', profileId);
                         const activeSnap = await getDoc(activeRef);
@@ -62,9 +62,9 @@ export function useWorkoutSession(workoutId, user) {
                     }
                 }
 
-                // If found active session, use it
+                // Se encontrar sessão ativa, usá-la
                 if (activeData) {
-                    // Load template data (metadata only)
+                    // Carregar dados do template (apenas metadados)
                     const templateDoc = await getDoc(doc(db, 'workout_templates', workoutId));
                     if (templateDoc.exists()) {
                         setTemplate({ id: templateDoc.id, ...templateDoc.data() });
@@ -79,7 +79,7 @@ export function useWorkoutSession(workoutId, user) {
                     }
                 }
 
-                // 2. Check Local Backup
+                // 2. Verificar Backup Local
                 const savedBackup = localStorage.getItem(backupKey);
                 let restored = false;
                 if (savedBackup) {
@@ -105,11 +105,11 @@ export function useWorkoutSession(workoutId, user) {
                     return;
                 }
 
-                // 3. New Session / Load Template (FRESH)
+                // 3. Nova Sessão / Carregar Template (FRESCO)
                 const templateRef = doc(db, 'workout_templates', workoutId);
                 let templateDoc;
                 try {
-                    // Force server fetch to get latest edits
+                    // Forçar busca no servidor para obter últimas edições
                     templateDoc = await getDocFromServer(templateRef);
                 } catch (e) {
                     console.warn("Template server fetch failed, falling back to cache", e);
@@ -120,8 +120,8 @@ export function useWorkoutSession(workoutId, user) {
                     const tmplData = templateDoc.data();
                     setTemplate({ id: templateDoc.id, ...tmplData });
 
-                    // ... (Normalization and History Logic) ...
-                    // fetch History
+                    // ... (Lógica de Normalização e Histórico) ...
+                    // buscar Histórico
                     let lastSessionExercises = [];
                     try {
                         const historyQuery = query(
@@ -145,18 +145,18 @@ export function useWorkoutSession(workoutId, user) {
                         console.error("Error fetching history:", err);
                     }
 
-                    // Map Exercises
+                    // Mapear Exercícios
                     if (tmplData.exercises) {
                         const mapped = tmplData.exercises.map(ex => {
                             const exId = ex.id || generateId();
 
-                            // Find Match in History
+                            // Encontrar Correspondência no Histórico
                             const lastEx = lastSessionExercises.find(le => le.id === exId) ||
                                 lastSessionExercises.find(le => le.name && ex.name && le.name.trim().toLowerCase() === ex.name.trim().toLowerCase());
 
                             const sets = normalizeSets(ex.sets, ex.reps, ex.target).map((s, idx) => {
                                 let lastSet = null;
-                                // Propagate history
+                                // Propagar histórico
                                 if (lastEx && lastEx.sets && lastEx.sets.length > 0) {
                                     if (idx < lastEx.sets.length) lastSet = lastEx.sets[idx];
                                     else lastSet = lastEx.sets[lastEx.sets.length - 1];
@@ -183,7 +183,7 @@ export function useWorkoutSession(workoutId, user) {
                             };
                         });
                         setExercises(mapped);
-                        // Clear elapsed for new session
+                        // Limpar tempo decorrido para nova sessão
                         setInitialElapsed(0);
                     }
                 }
@@ -223,11 +223,11 @@ export function useWorkoutSession(workoutId, user) {
     // ABORTING THIS REPLACE to replace with smaller sequential edits.
 
 
-    // --- SYNC ---
+    // --- SINCRONIZAÇÃO ---
     const syncSession = useCallback((currentExercises, currentElapsed) => {
         if (typeof window === 'undefined') return;
 
-        // Local Backup
+        // Backup Local
         const backupData = {
             timestamp: Date.now(),
             elapsedSeconds: currentElapsed,
@@ -235,7 +235,7 @@ export function useWorkoutSession(workoutId, user) {
         };
         localStorage.setItem(backupKey, JSON.stringify(backupData));
 
-        // Cloud Sync
+        // Sincronização na Nuvem
         const currentString = JSON.stringify(currentExercises);
         if (profileId && currentString !== lastSyncedRef.current) {
             userService.updateActiveSession(profileId, {
@@ -249,7 +249,7 @@ export function useWorkoutSession(workoutId, user) {
     }, [backupKey, profileId, workoutId]);
 
 
-    // --- ACTIONS ---
+    // --- AÇÕES ---
     const updateExerciseSet = useCallback((exId, setId, field, val) => {
         setExercises(prev => prev.map(ex => ex.id === exId ? {
             ...ex, sets: ex.sets.map(s => s.id === setId ? { ...s, [field]: val } : s)
@@ -276,16 +276,16 @@ export function useWorkoutSession(workoutId, user) {
             return {
                 ...ex,
                 sets: ex.sets.map((s, idx) => {
-                    // Update Current Set
+                    // Atualizar Série Atual
                     if (idx === currentSetIdx) {
                         return { ...s, completed: true, weight, reps: actualReps };
                     }
-                    // Auto-fill Next Set
+                    // Auto-preencher Próxima Série
                     if (idx === nextSetIdx) {
                         return {
                             ...s,
                             weight: s.weight || weight,
-                            reps: actualReps // Copy reps too
+                            reps: actualReps // Copiar reps também
                         };
                     }
                     return s;
@@ -309,8 +309,8 @@ export function useWorkoutSession(workoutId, user) {
                 workoutName: template?.name || 'Treino Personalizado',
                 userId: profileId,
                 createdAt: serverTimestamp(),
-                completedAt: serverTimestamp(), // Use server time for consistency
-                completedAtClient: now, // Backup for immediate UI optimistic updates
+                completedAt: serverTimestamp(), // Usar tempo do servidor para consistência
+                completedAtClient: now, // Backup para atualizações otimistas imediatas na UI
                 exercises: exercises.map(ex => ({
                     id: ex.id || generateId(),
                     name: ex.name || 'Exercício sem nome',
@@ -324,17 +324,17 @@ export function useWorkoutSession(workoutId, user) {
                 }))
             });
 
-            // Cleanup
+            // Limpeza
             localStorage.removeItem(backupKey);
             if (profileId) {
                 await userService.deleteActiveSession(profileId);
             }
 
-            // Update Template Metadata
+            // Atualizar Metadados do Template
             const templateRef = doc(db, 'workout_templates', workoutId);
             await setDoc(templateRef, { lastPerformed: serverTimestamp() }, { merge: true });
 
-            return true; // Success
+            return true; // Sucesso
         } catch (e) {
             console.error(e);
             setError('Erro ao salvar treino.');
@@ -347,16 +347,16 @@ export function useWorkoutSession(workoutId, user) {
     const discardSession = useCallback(async () => {
         setLoading(true);
         try {
-            // Cleanup
+            // Limpeza
             localStorage.removeItem(backupKey);
             if (profileId) {
                 await userService.deleteActiveSession(profileId);
             }
 
-            // Wait a bit to ensure propagation
+            // Aguardar um pouco para garantir propagação
             await new Promise(r => setTimeout(r, 600));
 
-            // Trigger re-fetch
+            // Acionar nova busca
             setSessionVersion(v => v + 1);
         } catch (e) {
             console.error("Error discarding session:", e);
@@ -384,7 +384,7 @@ export function useWorkoutSession(workoutId, user) {
 }
 
 
-// Shared Helper
+// Auxiliar Compartilhado
 function normalizeSets(exSets, exReps, exTarget) {
     let count = 3;
     if (exSets) {

@@ -13,13 +13,13 @@ export function WorkoutProvider({ children }) {
     const navigate = useNavigate();
     const location = useLocation();
 
-    // Active Workout Logic (Persistence)
+    // Lógica de Treino Ativo (Persistência)
     const [activeWorkoutId, setActiveWorkoutId] = useState(() => {
         const saved = localStorage.getItem('activeWorkoutId');
         return saved || null;
     });
 
-    // --- REAL-TIME SYNC FOR ACTIVE WORKOUT ---
+    // --- SINCRONIZAÇÃO EM TEMPO REAL PARA TREINO ATIVO ---
     useEffect(() => {
         if (!user) return;
 
@@ -28,9 +28,9 @@ export function WorkoutProvider({ children }) {
                 const data = docSnap.data();
                 const remoteActiveId = data.activeWorkoutId;
 
-                // Sync local state if different
+                // Sincronizar estado local se diferente
                 if (remoteActiveId !== undefined) {
-                    // EMERGENCY BREAK: Check if user just manually exited
+                    // PARADA DE EMERGÊNCIA: Verificar se usuário acabou de sair manualmente
                     const manualExit = sessionStorage.getItem('manual_exit');
                     if (manualExit) {
                         if (remoteActiveId) {
@@ -38,28 +38,28 @@ export function WorkoutProvider({ children }) {
                         }
                         setActiveWorkoutId(null);
                         localStorage.removeItem('activeWorkoutId');
-                        sessionStorage.removeItem('manual_exit'); // Clear flag after handling
-                        return; // STOP HERE
+                        sessionStorage.removeItem('manual_exit'); // Limpar flag após tratamento
+                        return; // PARE AQUI
                     }
 
-                    // VERIFY: Does this session actually exist?
-                    // This prevents "Ghost Sessions" from trapping the user in a loop.
+                    // VERIFICAR: Esta sessão realmente existe?
+                    // Isso previne "Sessões Fantasmas" de prenderem o usuário em um loop.
                     if (remoteActiveId) {
                         try {
                             const activeRef = doc(db, 'active_workouts', user.uid);
-                            // We can't use await inside a sync listener easily without IIFE.
-                            // Better to do a one-off check.
+                            // Não podemos usar await dentro de um listener facilmente sem IIFE.
+                            // Melhor fazer uma verificação única.
                             const activeSnap = await getDoc(activeRef);
 
                             if (activeSnap.exists()) {
-                                // It's real. Redirect.
+                                // É real. Redirecionar.
                                 setActiveWorkoutId(remoteActiveId);
                                 localStorage.setItem('activeWorkoutId', remoteActiveId);
                                 if (!location.pathname.includes('/execute')) {
                                     navigate(`/execute/${remoteActiveId}`);
                                 }
                             } else {
-                                // It's a ghost! Clear it.
+                                // É um fantasma! Limpar.
                                 console.warn("Ghost active session detected. Clearing...");
                                 await userService.clearActiveWorkout(user.uid);
                                 setActiveWorkoutId(null);
@@ -69,7 +69,7 @@ export function WorkoutProvider({ children }) {
                             console.error("Error verifying active session:", e);
                         }
                     } else {
-                        // Explicitly null in DB
+                        // Explicitamente nulo no DB
                         setActiveWorkoutId(null);
                         localStorage.removeItem('activeWorkoutId');
                     }
@@ -90,14 +90,14 @@ export function WorkoutProvider({ children }) {
     }
 
     async function finishWorkout() {
-        // Logic handled in WorkoutExecutionPage mostly, but we can clear state here
+        // Lógica tratada principalmente no WorkoutExecutionPage, mas podemos limpar estado aqui
         setActiveWorkoutId(null);
         localStorage.removeItem('activeWorkoutId');
         navigate('/');
     }
 
     function cancelWorkout() {
-        // Logic for manual exit/cancel
+        // Lógica para saída manual/cancelamento
         sessionStorage.setItem('manual_exit', '1');
         setActiveWorkoutId(null);
         localStorage.removeItem('activeWorkoutId');

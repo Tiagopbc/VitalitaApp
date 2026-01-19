@@ -12,7 +12,7 @@ import { auth, db, googleProvider } from '../firebaseConfig'; // Adjust path
 
 export const authService = {
     /**
-     * Login with Email and Password
+     * Login com Email e Senha
      * @param {string} email 
      * @param {string} password 
      * @returns {Promise<UserCredential>}
@@ -22,7 +22,7 @@ export const authService = {
     },
 
     /**
-     * Login with Google
+     * Login com Google
      * @returns {Promise<UserCredential>}
      */
     async loginWithGoogle() {
@@ -30,8 +30,8 @@ export const authService = {
     },
 
     /**
-     * Register new user
-     * Creates Auth user, updates DisplayName, and creates Firestore User document.
+     * Registrar novo usuário
+     * Cria usuário Auth, atualiza DisplayName e cria documento Firestore User.
      * @param {string} email 
      * @param {string} password 
      * @param {string} fullName 
@@ -46,22 +46,22 @@ export const authService = {
             await updateProfile(user, { displayName: fullName });
         } catch (error) {
             console.error("Error updating Auth profile:", error);
-            // Continue execution to save Firestore data
+            // Continuar execução para salvar dados no Firestore
         }
 
         try {
             await setDoc(doc(db, 'users', user.uid), {
                 fullName,
-                email, // Ensure email is saved
+                email, // Garantir que o email seja salvo
                 ...additionalData,
                 createdAt: serverTimestamp(),
             });
         } catch (error) {
             console.error("Error creating User document:", error);
-            // Consider if we should throw or just log. 
-            // If this fails, user is created but has no profile doc. 
-            // In critical apps, we might want to delete the user? 
-            // For now, throw so UI knows something went wrong.
+            // Considerar se devemos lançar ou apenas logar. 
+            // Se isso falhar, usuário é criado mas sem doc de perfil. 
+            // Em apps críticos, talvez devêssemos deletar o usuário? 
+            // Por enquanto, jogar erro para UI saber que algo deu errado.
             throw error;
         }
 
@@ -69,14 +69,14 @@ export const authService = {
     },
 
     /**
-     * Logout
+     * Sair (Logout)
      */
     async logout() {
         return signOut(auth);
     },
 
     /**
-     * Send Password Reset Email
+     * Enviar Email de Redefinição de Senha
      * @param {string} email
      * @returns {Promise<void>}
      */
@@ -85,20 +85,17 @@ export const authService = {
     },
 
     /**
-     * Subscribe to Auth State Changes
+     * Inscrever-se em Mudanças de Estado de Auth
      * @param {function} callback 
      * @returns {function} unsubscribe
      */
     subscribe(callback) {
-        // We import onAuthStateChanged inside or top level? 
-        // We need to import it at top level. 
-        // But since I can't easily add import at top with this tool without strict matching,
-        // I will assume I need to add import first or use 'firebase/auth' if available globally? 
-        // No, I must import it.
-        // I will perform a separate edit for import or use multi_replace.
-        // For now, I'll just add the method and assume I'll fix import next step.
-        // Wait, I can use auth.onAuthStateChanged? No, it's modular SDK.
-        // I'll add the method here.
+        // Nós importamos onAuthStateChanged dentro ou no top level? 
+        // Precisamos importar no top level. 
+        // Mas como não posso facilmente adicionar import no topo com esta ferramenta sem correspondência estrita,
+        // vou assumir que preciso adicionar import primeiro ou usar 'firebase/auth' se disponível globalmente? 
+        // Não, devo importar.
+        // Vou adicionar o método aqui.
         return onAuthStateChanged(auth, callback);
     }
 };

@@ -16,7 +16,7 @@ const iconMap = {
 export default function MethodModal({ methodName, onClose }) {
     if (!methodName) return null;
 
-    // Normalize comparison to find the method
+    // Normalizar comparação para encontrar o método
     const methodData = trainingMethods.find(m =>
         m.name.toLowerCase() === methodName.toLowerCase() ||
         (m.aliases && m.aliases.some(alias => alias.toLowerCase() === methodName.toLowerCase()))
@@ -28,10 +28,10 @@ export default function MethodModal({ methodName, onClose }) {
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
-            {/* Modal Card */}
+            {/* Cartão do Modal */}
             <div className="w-full max-w-md bg-slate-900 border border-slate-700 rounded-3xl p-6 shadow-2xl relative overflow-hidden animate-in zoom-in-95 duration-200">
 
-                {/* Close Button */}
+                {/* Botão Fechar */}
                 <button
                     onClick={onClose}
                     className="absolute top-4 right-4 p-2 rounded-full bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700 transition-all border border-slate-700"
@@ -39,7 +39,7 @@ export default function MethodModal({ methodName, onClose }) {
                     <X size={16} />
                 </button>
 
-                {/* Header */}
+                {/* Cabeçalho */}
                 <div className="flex items-center gap-4 mb-6">
                     <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center shadow-lg shadow-blue-500/20">
                         <Icon size={24} className="text-white" />
@@ -47,15 +47,15 @@ export default function MethodModal({ methodName, onClose }) {
                     <h3 className="text-xl font-bold text-white">{methodData.name}</h3>
                 </div>
 
-                {/* Content */}
+                {/* Conteúdo */}
                 <div className="space-y-6 max-h-[70vh] overflow-y-auto pr-2 custom-scrollbar">
 
-                    {/* Description */}
+                    {/* Descrição */}
                     <p className="text-slate-300 text-sm leading-relaxed">
                         {methodData.description}
                     </p>
 
-                    {/* How to Execute */}
+                    {/* Como Executar */}
                     <div>
                         <h4 className="text-xs font-bold text-cyan-400 uppercase tracking-widest mb-3">Como Executar</h4>
                         <ul className="space-y-2">
@@ -68,7 +68,7 @@ export default function MethodModal({ methodName, onClose }) {
                         </ul>
                     </div>
 
-                    {/* When to use */}
+                    {/* Quando Usar */}
                     <div>
                         <h4 className="text-xs font-bold text-cyan-400 uppercase tracking-widest mb-3">Quando Usar</h4>
                         <ul className="space-y-2">
@@ -81,7 +81,7 @@ export default function MethodModal({ methodName, onClose }) {
                         </ul>
                     </div>
 
-                    {/* Caution Box */}
+                    {/* Caixa de Cuidados */}
                     <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4">
                         <div className="flex items-center gap-2 mb-2 text-red-400">
                             <AlertTriangle size={14} />

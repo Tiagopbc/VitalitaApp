@@ -30,10 +30,10 @@ export function RippleButton({ children, onClick, className = '', haptic = 'medi
         const newRipple = { x, y, id: Date.now() };
         setRipples(prev => [...prev, newRipple]);
 
-        // Haptic Feedback
+        // Feedback Háptico
         vibrate();
 
-        // Remove ripple after animation
+        // Remover ondulação após animação
         setTimeout(() => {
             setRipples(prev => prev.filter(r => r.id !== newRipple.id));
         }, 600);

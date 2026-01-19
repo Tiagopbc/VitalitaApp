@@ -66,7 +66,7 @@ function daysInMonth(year, month) {
 }
 
 export default function LoginPage() {
-    const [view, setView] = useState('login'); // login | signup | forgot_password
+    const [view, setView] = useState('login'); // login | signup | forgot_password (mantido para lógica interna, mas significado: login | cadastro | esqueci_senha)
     const [step, setStep] = useState(1); // 1 | 2
 
     const [loading, setLoading] = useState(false);
@@ -100,7 +100,7 @@ export default function LoginPage() {
         }
     `;
 
-    // Login
+    // Entrar
     const [loginEmail, setLoginEmail] = useState('');
     const [loginPassword, setLoginPassword] = useState('');
     const [showLoginPassword, setShowLoginPassword] = useState(false);
@@ -121,7 +121,7 @@ export default function LoginPage() {
     const [heightCm, setHeightCm] = useState('');
     const [weightKg, setWeightKg] = useState('');
 
-    // Forgot Password
+    // Esqueci a Senha
     const [resetEmail, setResetEmail] = useState('');
     const [resetSuccess, setResetSuccess] = useState('');
 
@@ -497,7 +497,7 @@ export default function LoginPage() {
                                         onClick={() => {
                                             setError('');
                                             setResetSuccess('');
-                                            setResetEmail(loginEmail); // Pre-fill if typed
+                                            setResetEmail(loginEmail); // Preencher se digitado
                                             setView('forgot_password');
                                         }}
                                         disabled={loading}

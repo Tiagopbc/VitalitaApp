@@ -7,10 +7,10 @@ import React from 'react';
 import { Zap } from 'lucide-react';
 
 export function MuscleFocusDisplay({ muscleFocus }) {
-    // Default fallback
+    // Fallback padrão
     const focus = muscleFocus || { primary: 'Geral', emphasis: 'medium' };
 
-    // Determine styles based on emphasis
+    // Determinar estilos baseados na ênfase
     const getEmphasisStyle = () => {
         switch (focus.emphasis) {
             case 'high':

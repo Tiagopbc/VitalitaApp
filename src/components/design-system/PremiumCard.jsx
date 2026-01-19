@@ -30,7 +30,7 @@ export function PremiumCard({ children, onClick, className = '' }) {
                 ${className}
             `}
         >
-            {/* Top Shine */}
+            {/* Brilho Superior */}
             <div
                 className={`absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-cyan-400 to-transparent transition-opacity duration-300 ${isHovered ? 'opacity-100' : 'opacity-0'}`}
             />

@@ -6,7 +6,7 @@
 import React, { useState } from 'react';
 import { Home, Dumbbell, Plus, History, User, Users } from 'lucide-react';
 
-export function BottomNavEnhanced({ activeTab, onTabChange, isTrainer }) {
+export function BottomNavEnhanced({ activeTab, onTabChange }) {
     const [pressedTab, setPressedTab] = useState(null);
 
     const tabs = [

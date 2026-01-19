@@ -6,7 +6,7 @@
 import React from 'react';
 import { ChevronLeft } from 'lucide-react';
 import { trainingMethods } from '../data/trainingMethods';
-import { TrendingDown, TrendingUp, Grid, Link2, Focus, AlertTriangle, Repeat, Heart } from 'lucide-react';
+import { TrendingDown, TrendingUp, Grid, Link2, Focus, AlertTriangle, Repeat } from 'lucide-react';
 
 const iconMap = {
     'TrendingDown': TrendingDown,
@@ -15,14 +15,13 @@ const iconMap = {
     'Link2': Link2,
     'Focus': Focus,
     'AlertTriangle': AlertTriangle,
-    'Repeat': Repeat,
-    'Heart': Heart
+    'Repeat': Repeat
 };
 
 export default function MethodsPage({ onBack }) {
     return (
         <div className="w-full max-w-3xl mx-auto px-4 pt-8 pb-32">
-            {/* Header */}
+            {/* Cabeçalho */}
             <div className="mb-8">
                 <Button
                     variant="outline-primary"
@@ -40,14 +39,14 @@ export default function MethodsPage({ onBack }) {
                 </p>
             </div>
 
-            {/* Grid */}
+            {/* Grade */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {trainingMethods.map((method) => {
                     const Icon = iconMap[method.icon] || Repeat;
 
                     return (
                         <div key={method.id} className="bg-[#0f172a] border border-slate-800 rounded-3xl p-6 flex flex-col h-full hover:border-slate-700 transition-colors">
-                            {/* Card Header */}
+                            {/* Cabeçalho do Cartão */}
                             <div className="flex items-center gap-4 mb-6">
                                 <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-600 to-cyan-500 flex items-center justify-center shadow-lg shadow-blue-500/20 shrink-0">
                                     <Icon size={24} className="text-white" />
@@ -55,13 +54,13 @@ export default function MethodsPage({ onBack }) {
                                 <h3 className="text-lg font-bold text-white leading-tight">{method.name}</h3>
                             </div>
 
-                            {/* Short Description */}
+                            {/* Descrição Curta */}
                             <p className="text-slate-300 text-sm leading-relaxed mb-6">
                                 {method.description}
                             </p>
 
                             <div className="space-y-6 flex-1">
-                                {/* How To Execute */}
+                                {/* Como Executar */}
                                 <div>
                                     <h4 className="text-[10px] font-bold text-cyan-400 uppercase tracking-widest mb-3">Como Executar</h4>
                                     <ul className="space-y-2">
@@ -74,7 +73,7 @@ export default function MethodsPage({ onBack }) {
                                     </ul>
                                 </div>
 
-                                {/* When To Use */}
+                                {/* Quando Usar */}
                                 <div>
                                     <h4 className="text-[10px] font-bold text-cyan-400 uppercase tracking-widest mb-3">Quando Usar</h4>
                                     <ul className="space-y-2">
@@ -88,7 +87,7 @@ export default function MethodsPage({ onBack }) {
                                 </div>
                             </div>
 
-                            {/* Cautions - Pushed to bottom if height allows, but in flex flow */}
+                            {/* Cuidados - Empurrado para baixo se a altura permitir, mas em fluxo flex */}
                             <div className="mt-8 bg-red-500/5 border border-red-500/10 rounded-xl p-4">
                                 <div className="flex items-center gap-2 mb-2 text-red-400">
                                     <AlertTriangle size={12} />

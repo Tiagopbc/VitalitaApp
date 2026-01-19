@@ -12,7 +12,22 @@ import {
     AreaChart
 } from 'recharts';
 
-export function EvolutionChart({ data, range = '1M' }) {
+// Tooltip Personalizado
+const CustomTooltip = ({ active, payload, label }) => {
+    if (active && payload && payload.length) {
+        return (
+            <div className="bg-[#020617]/90 border border-slate-700/50 p-3 rounded-xl shadow-xl backdrop-blur-md">
+                <p className="text-slate-400 text-xs mb-1">{label}</p>
+                <p className="text-cyan-400 font-bold text-lg">
+                    {payload[0].value} kg
+                </p>
+            </div>
+        );
+    }
+    return null;
+};
+
+export function EvolutionChart({ data }) {
     if (!data || data.length === 0) {
         return (
             <div className="h-64 flex items-center justify-center border border-dashed border-slate-800 rounded-2xl bg-slate-900/20">
@@ -21,20 +36,7 @@ export function EvolutionChart({ data, range = '1M' }) {
         );
     }
 
-    // Custom Tooltip
-    const CustomTooltip = ({ active, payload, label }) => {
-        if (active && payload && payload.length) {
-            return (
-                <div className="bg-[#020617]/90 border border-slate-700/50 p-3 rounded-xl shadow-xl backdrop-blur-md">
-                    <p className="text-slate-400 text-xs mb-1">{label}</p>
-                    <p className="text-cyan-400 font-bold text-lg">
-                        {payload[0].value} kg
-                    </p>
-                </div>
-            );
-        }
-        return null;
-    };
+
 
     return (
         <div className="w-full h-72 bg-slate-900/20 border border-slate-800/50 rounded-2xl p-4">

@@ -1,0 +1,247 @@
+
+> treino@0.0.0 lint
+> eslint .
+
+
+/Users/tiagocavalcanti/WebstormProjects/App_treino/scripts/import_exercises.js
+  87:9  error  'process' is not defined  no-undef
+  91:9  error  'process' is not defined  no-undef
+
+/Users/tiagocavalcanti/WebstormProjects/App_treino/src/App.jsx
+   26:10  error  'db' is defined but never used. Allowed unused vars must match /^[A-Z_]/u                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     no-unused-vars
+   27:10  error  'doc' is defined but never used. Allowed unused vars must match /^[A-Z_]/u                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    no-unused-vars
+   27:15  error  'onSnapshot' is defined but never used. Allowed unused vars must match /^[A-Z_]/u                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             no-unused-vars
+   57:27  error  'finishWorkout' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 no-unused-vars
+   65:13  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+  63 |     useEffect(() => {
+  64 |         if (!user) {
+> 65 |             setIsTrainer(false);
+     |             ^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  66 |             return;
+  67 |         }
+  68 |                                                                                     react-hooks/set-state-in-effect
+   95:11  error  'welcomeBtnRef' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 no-unused-vars
+  110:13  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+  108 |     useEffect(() => {
+  109 |         if (!user) {
+> 110 |             setWelcomeOpen(false);
+      |             ^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  111 |             return;
+  112 |         }
+  113 |         const pending = localStorage.getItem('welcomePending') === '1';  react-hooks/set-state-in-effect
+  360:13  error  'from' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          no-unused-vars
+  373:11  error  'navigate' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      no-unused-vars
+  379:29  error  'finishWorkout' is not defined                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                no-undef
+
+/Users/tiagocavalcanti/WebstormProjects/App_treino/src/AuthContext.jsx
+  41:17  error  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+
+/Users/tiagocavalcanti/WebstormProjects/App_treino/src/BottomNavEnhanced.jsx
+  9:61  error  'isTrainer' is defined but never used  no-unused-vars
+
+/Users/tiagocavalcanti/WebstormProjects/App_treino/src/DesktopSidebar.jsx
+  5:12  error  'hoveredTab' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u     no-unused-vars
+  5:24  error  'setHoveredTab' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+/Users/tiagocavalcanti/WebstormProjects/App_treino/src/StreakWeeklyGoalHybrid.jsx
+   11:5   error    'showRings' is assigned a value but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              no-unused-vars
+   12:5   error    'onNavigateToSettings' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            no-unused-vars
+   50:17  error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+  48 |
+  49 |             if (!hasShown && !showCelebration) {
+> 50 |                 setShowCelebration(true);
+     |                 ^^^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  51 |                 sessionStorage.setItem(key, 'true');
+  52 |                 setTimeout(() => setShowCelebration(false), 5000);
+  53 |             }  react-hooks/set-state-in-effect
+   55:8   warning  React Hook useEffect has a missing dependency: 'showCelebration'. Either include it or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          react-hooks/exhaustive-deps
+  179:43  error    'isFuture' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    no-unused-vars
+
+/Users/tiagocavalcanti/WebstormProjects/App_treino/src/components/ErrorBoundary.jsx
+  9:37  error  'error' is defined but never used  no-unused-vars
+
+/Users/tiagocavalcanti/WebstormProjects/App_treino/src/components/analytics/EvolutionChart.jsx
+  15:40  error  'range' is assigned a value but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 no-unused-vars
+  68:40  error  Error: Cannot create components during render
+
+Components created during render will reset their state each time they are created. Declare components outside of render.
+
+  66 |                         domain={['dataMin - 5', 'dataMax + 5']}
+  67 |                     />
+> 68 |                     <Tooltip content={<CustomTooltip />} cursor={{ stroke: '#06b6d4', strokeWidth: 1, strokeDasharray: '5:5' }} />
+     |                                        ^^^^^^^^^^^^^ This component is created during render
+  69 |                     <Area
+  70 |                         type="monotone"
+  71 |                         dataKey="weight"
+
+  23 |
+  24 |     // Custom Tooltip
+> 25 |     const CustomTooltip = ({ active, payload, label }) => {
+     |                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 26 |         if (active && payload && payload.length) {
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 27 |             return (
+     …
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 36 |         return null;
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 37 |     };
+     | ^^^^^^ The component is created during render here
+  38 |
+  39 |     return (
+  40 |         <div className="w-full h-72 bg-slate-900/20 border border-slate-800/50 rounded-2xl p-4">  react-hooks/static-components
+
+/Users/tiagocavalcanti/WebstormProjects/App_treino/src/components/common/NumericKeypad.jsx
+  10:13  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+   8 |     useEffect(() => {
+   9 |         if (isOpen) {
+> 10 |             setValue(initialValue ? String(initialValue) : '');
+     |             ^^^^^^^^ Avoid calling setState() directly within an effect
+  11 |             // Small delay for animation trigger
+  12 |             requestAnimationFrame(() => setAnimateShow(true));
+  13 |         } else {  react-hooks/set-state-in-effect
+
+/Users/tiagocavalcanti/WebstormProjects/App_treino/src/components/execution/LinearCardCompactV2.jsx
+   66:45  error  Unnecessary escape character: \/        no-useless-escape
+  129:5   error  'lastWeight' is defined but never used  no-unused-vars
+  130:5   error  'lastReps' is defined but never used    no-unused-vars
+  339:44  error  'onSetChange' is not defined            no-undef
+
+/Users/tiagocavalcanti/WebstormProjects/App_treino/src/components/execution/OneRMDisplay.jsx
+  15:9  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+  13 |
+  14 |     useEffect(() => {
+> 15 |         setValue(oneRM || 0);
+     |         ^^^^^^^^ Avoid calling setState() directly within an effect
+  16 |     }, [oneRM]);
+  17 |
+  18 |     useEffect(() => {  react-hooks/set-state-in-effect
+
+/Users/tiagocavalcanti/WebstormProjects/App_treino/src/components/execution/RestTimer.jsx
+  39:13  error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+  37 |     useEffect(() => {
+  38 |         if (isOpen) {
+> 39 |             setTimeLeft(initialTime);
+     |             ^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  40 |             setStatus('running');
+  41 |             // Vibrate on open/start
+  42 |             vibrate(50);  react-hooks/set-state-in-effect
+  84:8   warning  React Hook useEffect has missing dependencies: 'onComplete' and 'timeLeft'. Either include them or remove the dependency array. If 'onComplete' changes too often, find the parent component that defines it and wrap that definition in useCallback                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              react-hooks/exhaustive-deps
+
+/Users/tiagocavalcanti/WebstormProjects/App_treino/src/components/workout/EditExerciseModal.jsx
+  1:10  error  'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+/Users/tiagocavalcanti/WebstormProjects/App_treino/src/components/workout/ExerciseCard.jsx
+  1:10  error  'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+/Users/tiagocavalcanti/WebstormProjects/App_treino/src/context/WorkoutContext.jsx
+  124:17  error  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+
+/Users/tiagocavalcanti/WebstormProjects/App_treino/src/context/WorkoutContext.test.jsx
+  2:48  error  'afterEach' is defined but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+/Users/tiagocavalcanti/WebstormProjects/App_treino/src/hooks/useWorkoutSession.js
+  98:30  error  'e' is defined but never used  no-unused-vars
+
+/Users/tiagocavalcanti/WebstormProjects/App_treino/src/pages/HistoryPage.jsx
+   34:8   warning  React Hook useEffect has a missing dependency: 'loadJournal'. Either include it or remove the dependency array       react-hooks/exhaustive-deps
+  140:12  error    'error' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u                                no-unused-vars
+  185:8   warning  React Hook useEffect has a missing dependency: 'selectedTemplate'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  256:27  error    'docId' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u                                no-unused-vars
+
+/Users/tiagocavalcanti/WebstormProjects/App_treino/src/pages/HomeDashboard.jsx
+   23:10  error    'collection' is defined but never used. Allowed unused vars must match /^[A-Z_]/u                                    no-unused-vars
+   23:22  error    'query' is defined but never used. Allowed unused vars must match /^[A-Z_]/u                                         no-unused-vars
+   23:29  error    'where' is defined but never used. Allowed unused vars must match /^[A-Z_]/u                                         no-unused-vars
+   23:36  error    'getDocs' is defined but never used. Allowed unused vars must match /^[A-Z_]/u                                       no-unused-vars
+   23:45  error    'limit' is defined but never used. Allowed unused vars must match /^[A-Z_]/u                                         no-unused-vars
+   23:52  error    'orderBy' is defined but never used. Allowed unused vars must match /^[A-Z_]/u                                       no-unused-vars
+   31:5   error    'onNavigateToMethods' is defined but never used                                                                      no-unused-vars
+   36:5   error    'onNavigateToVolumeAnalysis' is defined but never used                                                               no-unused-vars
+   37:5   error    'onNavigateToMyWorkouts' is defined but never used                                                                   no-unused-vars
+   44:12  error    'workouts' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u                             no-unused-vars
+   45:12  error    'loading' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u                              no-unused-vars
+   76:17  error    'workoutsData' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u                         no-unused-vars
+  143:8   warning  React Hook useEffect has a missing dependency: 'suggestedWorkout'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+/Users/tiagocavalcanti/WebstormProjects/App_treino/src/pages/ProfilePage.jsx
+  25:10  error  Parsing error: Identifier 'Button' has already been declared
+
+/Users/tiagocavalcanti/WebstormProjects/App_treino/src/pages/TrainerDashboard.jsx
+  30:8  warning  React Hook useEffect has missing dependencies: 'fetchInviteCode' and 'fetchStudents'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+
+/Users/tiagocavalcanti/WebstormProjects/App_treino/src/pages/WorkoutExecutionPage.jsx
+   84:9   error    'toggleSet' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u                                                    no-unused-vars
+  103:9   error    'formatTime' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u                                                   no-unused-vars
+  111:8   warning  React Hook useEffect has missing dependencies: 'elapsedSeconds' and 'setElapsedSeconds'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+  211:26  error    'downloadErr' is defined but never used                                                                                                      no-unused-vars
+
+/Users/tiagocavalcanti/WebstormProjects/App_treino/src/pages/WorkoutsPage.jsx
+    6:27  error  'useRef' is defined but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+    9:10  error  'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+  385:47  error  'e' is defined but never used                                                  no-unused-vars
+
+/Users/tiagocavalcanti/WebstormProjects/App_treino/src/services/exerciseImportService.js
+  1:10  error  'collection' is defined but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+/Users/tiagocavalcanti/WebstormProjects/App_treino/src/services/workoutService.js
+   9:5  error  'doc' is defined but never used. Allowed unused vars must match /^[A-Z_]/u              no-unused-vars
+  10:5  error  'getDoc' is defined but never used. Allowed unused vars must match /^[A-Z_]/u           no-unused-vars
+  11:5  error  'addDoc' is defined but never used. Allowed unused vars must match /^[A-Z_]/u           no-unused-vars
+  12:5  error  'serverTimestamp' is defined but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+  13:5  error  'updateDoc' is defined but never used. Allowed unused vars must match /^[A-Z_]/u        no-unused-vars
+
+/Users/tiagocavalcanti/WebstormProjects/App_treino/src/utils/evaluateAchievements.js
+  110:19  error  'diffDays' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+  210:9   error  Duplicate key 'prsCount'                                                                  no-dupe-keys
+
+/Users/tiagocavalcanti/WebstormProjects/App_treino/src/utils/workoutStats.test.js
+  14:19  error  'now' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+/Users/tiagocavalcanti/WebstormProjects/App_treino/vitest.config.js
+  15:31  error  '__dirname' is not defined  no-undef
+
+✖ 73 problems (66 errors, 7 warnings)
+

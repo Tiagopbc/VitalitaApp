@@ -21,11 +21,11 @@ export const Button = ({
     type = 'button',
     ...props
 }) => {
-    // Base styles matching "Anatomia do Botão" and "Transições"
+    // Estilos base combinando com "Anatomia do Botão" e "Transições"
     // transition-all duration-200 ease-out active:translate-y-0 active:opacity-95 hover:-translate-y-[1px]
     const baseStyles = 'inline-flex items-center justify-center font-bold font-semibold tracking-widest uppercase transition-all duration-200 ease-out outline-none select-none active:translate-y-0 active:opacity-95 hover:-translate-y-[1px] disabled:opacity-50 disabled:pointer-events-none disabled:cursor-not-allowed';
 
-    // Size styles matching "Tamanhos"
+    // Estilos de tamanho combinando com "Tamanhos"
     const sizeStyles = {
         xs: 'h-7 px-2 text-[0.65rem] rounded-full gap-1.5', // 28px --btn-xs-height
         sm: 'h-8 px-4 text-[0.68rem] rounded-full gap-1.5', // 32px --btn-sm-height
@@ -34,31 +34,31 @@ export const Button = ({
         xl: 'h-14 px-10 text-[1rem] rounded-full gap-2.5', // 56px --btn-xl-height
     };
 
-    // Variant styles matching "Variantes" & "Design Tokens"
+    // Estilos de variante combinando com "Variantes" e "Design Tokens"
     const variantStyles = {
-        // PRIMARY: Cyan gradient + glow + border
+        // PRIMÁRIO: Gradiente ciano + brilho + borda
         primary: 'bg-[radial-gradient(circle_at_top_left,#3abff8_0%,#0ea5e9_42%,#1d4ed8_100%)] border border-sky-400/80 text-white shadow-[0_8px_20px_rgba(37,99,235,0.4)] hover:shadow-[0_12px_30px_rgba(37,99,235,0.5)]',
 
-        // SECONDARY: Transparent outline
+        // SECUNDÁRIO: Contorno transparente
         secondary: 'bg-transparent border border-slate-400/30 text-slate-400 hover:border-slate-400/70 hover:text-slate-200',
 
-        // TERTIARY: Subtle filled backdrop + outline
+        // TERCIÁRIO: Fundo preenchido sutil + contorno
         tertiary: 'bg-[#0f172a]/90 border border-slate-400/45 text-slate-400 hover:bg-[#0f172a] hover:text-white',
 
-        // GHOST: Minimal, no border
+        // GHOST: Mínimo, sem borda
         ghost: 'bg-transparent border-transparent text-slate-400 hover:bg-slate-700/10 hover:text-slate-300',
 
-        // DANGER: Red gradient + glow + border
+        // PERIGO: Gradiente vermelho + brilho + borda
         danger: 'bg-[radial-gradient(circle_at_top_left,#ef4444_0%,#dc2626_42%,#991b1b_100%)] border border-red-500/80 text-white shadow-[0_8px_20px_rgba(220,38,38,0.4)] hover:shadow-[0_12px_30px_rgba(220,38,38,0.5)]',
 
-        // OUTLINE-PRIMARY: Cyan highlight
+        // OUTLINE-PRIMÁRIO: Destaque ciano
         'outline-primary': 'bg-cyan-500/10 border border-cyan-500/40 text-cyan-400 hover:shadow-[0_0_20px_rgba(6,182,212,0.3)]',
 
-        // SUCCESS: Emerald gradient (kept for consistency as "Special" variant if needed)
+        // SUCESSO: Gradiente esmeralda (mantido para consistência como variante "Especial" se necessário)
         success: 'bg-[radial-gradient(circle_at_top_left,#34d399_0%,#10b981_42%,#059669_100%)] border border-emerald-500/80 text-white shadow-[0_8px_20px_rgba(16,185,129,0.4)] hover:shadow-[0_12px_30px_rgba(16,185,129,0.5)]',
     };
 
-    // Combine classes
+    // Combinar classes
     const combinedClasses = [
         baseStyles,
         sizeStyles[size] || sizeStyles.md,
@@ -67,7 +67,7 @@ export const Button = ({
         className
     ].join(' ');
 
-    // Icon sizing based on button size
+    // Tamanho do ícone baseado no tamanho do botão
     const iconSize = {
         xs: 14,
         sm: 16,
@@ -77,10 +77,10 @@ export const Button = ({
     }[size] || 18;
 
     const renderIcon = (icon) => {
-        // If icon is a valid React element, clone it with the correct size if not already set, 
-        // or just render it. We can try to enforce size but often icons are passed as <Icon size={...} />
-        // If the user passes <Icon />, we could cloneElement to inject size, but for now assuming passed correctly or handled by wrapper.
-        // Ideally, the user passes the Icon component itself or an element. 
+        // Se o ícone for um elemento React válido, clone-o com o tamanho correto se ainda não estiver definido, 
+        // ou apenas renderize-o. Podemos tentar forçar o tamanho, mas frequentemente ícones são passados como <Icon size={...} />
+        // Se o usuário passar <Icon />, poderíamos usar cloneElement para injetar o tamanho, mas por enquanto assumimos que foi passado corretamente ou tratado pelo wrapper.
+        // Idealmente, o usuário passa o componente Icon em si ou um elemento. 
         // Let's just render it wrapped for flex behavior.
         return <span className="flex-shrink-0">{icon}</span>;
     }

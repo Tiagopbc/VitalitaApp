@@ -7,12 +7,7 @@ import {
     User,
     Mail,
     Dumbbell,
-    Maximize2,
     CalendarDays,
-    Target,
-    LogOut,
-    Edit2,
-    Save,
     Loader2,
     Activity,
     Minus,
@@ -20,28 +15,16 @@ import {
     Medal,
     Trophy,
     Lock,
-    Star,
-    CheckCircle2,
     BicepsFlexed,
-    Ruler,
     X,
-    Crown,
-    ChevronRight,
     Users
 } from 'lucide-react';
 import { achievementsCatalog } from '../data/achievementsCatalog';
 import { evaluateAchievements, calculateStats } from '../utils/evaluateAchievements';
 import { Button } from '../components/design-system/Button';
-import { PremiumCard } from '../components/design-system/PremiumCard';
 
-// -----------------------------------------------------------------------------
-// HELPER: Normalize Exercise Name
-// -----------------------------------------------------------------------------
-function normalizeName(name) {
-    if (!name) return "";
-    return name.toLowerCase().trim()
-        .normalize("NFD").replace(/[\u0300-\u036f]/g, ""); // Remove accents
-}
+
+
 
 export default function ProfilePage({ user, onLogout, onNavigateToHistory, onNavigateToVolumeAnalysis, onNavigateToTrainer, isTrainer }) {
     const [showEditModal, setShowEditModal] = useState(false);
@@ -49,7 +32,7 @@ export default function ProfilePage({ user, onLogout, onNavigateToHistory, onNav
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
 
-    // --- PERSONAL TRAINER LINKING ---
+    // --- VINCULAÇÃO DE PERSONAL TRAINER ---
     const [showLinkTrainer, setShowLinkTrainer] = useState(false);
     const [inviteCode, setInviteCode] = useState('');
     const [linking, setLinking] = useState(false);
@@ -72,29 +55,29 @@ export default function ProfilePage({ user, onLogout, onNavigateToHistory, onNav
         }
     };
 
-    // Profile State
+    // Estado do Perfil
     const [profile, setProfile] = useState({
         displayName: user?.displayName || '',
+        email: '',
         weight: '',
         height: '',
         age: '',
         gender: 'male',
         goal: 'hypertrophy',
         weeklyGoal: 4,
-        achievements: {} // Map of unlocked achievements { id: { unlockedAt: '...' } }
+        achievements: {} // Mapa de conquistas desbloqueadas { id: { unlockedAt: '...' } }
     });
 
-    // Achievements State
+    // Estado de Conquistas
     const [achievementsList, setAchievementsList] = useState([]);
     const [stats, setStats] = useState(null);
-    const [sessionsState, setSessionsState] = useState([]);
     const [loadingAchievements, setLoadingAchievements] = useState(true);
 
 
     // Derived weekly status
-    // const workoutsThisWeekArray = React.useMemo(() => getDaysOfWeekStatus(sessionsState), [sessionsState]); // DEPRECATED in favor of Hybrid component
+    // const workoutsThisWeekArray = React.useMemo(() => getDaysOfWeekStatus(sessionsState), [sessionsState]); // DESCONTINUADO em favor do componente Híbrido
 
-    // Load Profile
+    // Carregar Perfil
     useEffect(() => {
         if (!user) return;
 
@@ -105,7 +88,7 @@ export default function ProfilePage({ user, onLogout, onNavigateToHistory, onNav
                 if (docSnapData) {
                     setProfile(prev => ({ ...prev, ...docSnapData }));
                 } else {
-                    // Init with auth data if no doc exists
+                    // Iniciar com dados de autenticação se não houver documento
                     setProfile(prev => ({
                         ...prev,
                         displayName: user.displayName || '',
@@ -118,21 +101,20 @@ export default function ProfilePage({ user, onLogout, onNavigateToHistory, onNav
                 setLoading(false);
             }
         }
-        loadProfile();
+        void loadProfile();
     }, [user]);
 
-    // Load Achievements Data
+    // Carregar Dados de Conquistas
     useEffect(() => {
         if (!user) return;
 
         async function loadAchievementsData() {
             setLoadingAchievements(true);
             try {
-                // 1. Fetch all workout sessions for stats (Using Service)
+                // 1. Buscar todas as sessões de treino (Usando Serviço)
                 const sessions = await workoutService.getAllSessions(user.uid);
-                setSessionsState(sessions); // Save sessions to state for weekly calc
 
-                // 2. Calculate Stats
+                // 2. Calcular Estatísticas
                 const computedStats = calculateStats(sessions);
                 setStats(computedStats);
 
@@ -143,10 +125,10 @@ export default function ProfilePage({ user, onLogout, onNavigateToHistory, onNav
             }
         }
 
-        loadAchievementsData();
-    }, [user]); // Re-run if user changes. 
+        void loadAchievementsData();
+    }, [user]); // Rodar novamente se o usuário mudar. 
 
-    // Re-evaluate when stats or profile changes
+    // Reavaliar quando estatísticas ou perfil mudarem
     useEffect(() => {
         if (stats && profile) {
             const evaluated = evaluateAchievements(achievementsCatalog, stats, profile.achievements || {});
@@ -181,16 +163,11 @@ export default function ProfilePage({ user, onLogout, onNavigateToHistory, onNav
         return (profile.weight / (h * h)).toFixed(1);
     };
 
-    const GOALS = {
-        hypertrophy: 'Hipertrofia',
-        strength: 'Força',
-        weight_loss: 'Emagrecimento',
-        maintenance: 'Manutenção'
-    };
 
-    // Level & XP Calculation (Mocked or Derived)
-    // Example: Level = 1 + floor(XP / 3500)
-    // XP = totalTonnageKg / 100 (just an example to get a big number) + workouts * 100
+
+    // Cálculo de Nível e XP (Simulado ou Derivado)
+    // Exemplo: Nível = 1 + floor(XP / 3500)
+    // XP = tonelagemTotalKg / 100 (apenas um exemplo para obter um número grande) + treinos * 100
     const currentXP = (stats?.totalTonnageKg || 0) / 10 + (stats?.totalWorkouts || 0) * 50;
     const XP_PER_LEVEL = 3500;
     const level = Math.floor(currentXP / XP_PER_LEVEL) + 1;
@@ -199,7 +176,7 @@ export default function ProfilePage({ user, onLogout, onNavigateToHistory, onNav
 
     const formattedJoinDate = user?.metadata?.creationTime
         ? new Date(user.metadata.creationTime).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })
-        : '14/09/2025'; // Fallback to design date if missing
+        : '14/09/2025'; // Data de design como fallback se ausente
 
     if (loading) {
         return (
@@ -211,23 +188,23 @@ export default function ProfilePage({ user, onLogout, onNavigateToHistory, onNav
     }
 
     return (
-        <div className="min-h-screen bg-[#020617] pb-32 px-4 pt-0 w-full max-w-3xl mx-auto">
+        <div className="min-h-screen bg-slate-950 pb-32 px-4 pt-0 w-full max-w-3xl mx-auto">
 
-            {/* --- PROFILE HEADER CARD --- */}
+            {/* --- CARTÃO DE CABEÇALHO DO PERFIL --- */}
             <div className="bg-slate-900/50 rounded-3xl p-6 mb-6 border border-slate-800 relative overflow-hidden">
-                {/* Background Glow */}
+                {/* Brilho de Fundo */}
                 <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
 
                 <div className="flex gap-6 items-center relative z-10">
-                    {/* Avatar Group (Left) */}
+                    {/* Grupo de Avatar (Esquerda) */}
                     <div className="relative shrink-0">
-                        <div className="w-24 h-24 rounded-full bg-gradient-to-br from-[#2998FF] to-[#1E6BFF] flex items-center justify-center text-3xl shadow-xl shadow-blue-500/20 ring-4 ring-slate-900 z-10 relative">
+                        <div className="w-24 h-24 rounded-full bg-linear-to-br from-[#2998FF] to-[#1E6BFF] flex items-center justify-center text-3xl shadow-xl shadow-blue-500/20 ring-4 ring-slate-900 z-10 relative">
                             {profile.displayName && profile.displayName.length > 0
                                 ? <span className="font-bold text-white">{profile.displayName.substring(0, 2).toUpperCase()}</span>
                                 : <User size={32} className="text-white" />
                             }
                         </div>
-                        {/* Level Badge - Overlapping Bottom */}
+                        {/* Distintivo de Nível - Sobreposição Inferior */}
                         <div className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 z-20">
                             <div className="bg-amber-500 text-slate-900 text-[10px] font-bold px-3 py-0.5 rounded-full shadow-lg border-2 border-slate-900 whitespace-nowrap">
                                 Nível {level}
@@ -235,9 +212,9 @@ export default function ProfilePage({ user, onLogout, onNavigateToHistory, onNav
                         </div>
                     </div>
 
-                    {/* Info (Right) */}
+                    {/* Informações (Direita) */}
                     <div className="flex-1 min-w-0">
-                        {/* Name & Edit Row */}
+                        {/* Linha de Nome e Edição */}
                         <div className="flex items-center gap-3 mb-1">
                             <h1 className="text-2xl font-bold text-white tracking-tight truncate">{profile.displayName || 'Atleta'}</h1>
 
@@ -279,7 +256,7 @@ export default function ProfilePage({ user, onLogout, onNavigateToHistory, onNav
                             <span className="text-[10px] font-bold text-slate-600"> / {XP_PER_LEVEL} XP</span>
                         </div>
                     </div>
-                    {/* Progress Bar BG */}
+                    {/* Fundo da Barra de Progresso */}
                     <div className="h-2 w-full bg-slate-800 rounded-full overflow-hidden">
                         <div
                             className="h-full bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.5)] rounded-full transition-all duration-1000"
@@ -289,7 +266,7 @@ export default function ProfilePage({ user, onLogout, onNavigateToHistory, onNav
                 </div>
             </div>
 
-            {/* --- TRAINER AREA (Mobile Only - Strip) --- */}
+            {/* --- ÁREA DO TREINADOR (Apenas Mobile - Faixa) --- */}
             {isTrainer && (
                 <button
                     onClick={onNavigateToTrainer}
@@ -300,7 +277,7 @@ export default function ProfilePage({ user, onLogout, onNavigateToHistory, onNav
                 </button>
             )}
 
-            {/* --- BODY STATS --- */}
+            {/* --- DADOS CORPORAIS --- */}
             <div className="mb-6">
                 <div className="bg-slate-900/50 border border-slate-800 rounded-3xl p-5 relative overflow-hidden">
                     <div className="flex items-center gap-2 mb-4">
@@ -347,7 +324,7 @@ export default function ProfilePage({ user, onLogout, onNavigateToHistory, onNav
             </div>
 
 
-            {/* --- BIG 3 HIGHLIGHTS (UPDATED to TOP 4) --- */}
+            {/* --- DESTAQUES BIG 3 (ATUALIZADO para TOP 4) --- */}
             <div className="bg-slate-900/50 border border-slate-800 rounded-3xl p-6 mt-6">
                 <div className="flex items-center gap-2 mb-4">
                     <Trophy size={18} className="text-amber-500" />
@@ -356,14 +333,14 @@ export default function ProfilePage({ user, onLogout, onNavigateToHistory, onNav
 
                 <div className="grid grid-cols-2 gap-3">
                     {(() => {
-                        // 1. Get all maxes
+                        // 1. Obter todos os máximos
                         const allMaxes = stats?.exerciseMaxes ? Object.entries(stats.exerciseMaxes) : [];
-                        // 2. Sort by weight desc
+                        // 2. Ordenar por peso desc
                         const sortedMaxes = allMaxes.sort(([, weightA], [, weightB]) => weightB - weightA);
-                        // 3. Take top 4
+                        // 3. Pegar top 4
                         const top4 = sortedMaxes.slice(0, 4);
 
-                        // 4. Fill with placeholders if less than 4
+                        // 4. Preencher com placeholders se menos que 4
                         const displayItems = [...top4];
                         while (displayItems.length < 4) {
                             displayItems.push(null);
@@ -399,7 +376,7 @@ export default function ProfilePage({ user, onLogout, onNavigateToHistory, onNav
                 </div>
             </div>
 
-            {/* --- STATS GRID --- */}
+            {/* --- GRADE DE ESTATÍSTICAS --- */}
             <div className="grid grid-cols-2 gap-4 mb-6 mt-6">
                 {/* Treinos (Clickable) */}
                 <button
@@ -455,7 +432,7 @@ export default function ProfilePage({ user, onLogout, onNavigateToHistory, onNav
                 </div>
             </div>
 
-            {/* --- ACHIEVEMENTS SECTION --- */}
+            {/* --- SEÇÃO DE CONQUISTAS --- */}
             <div className="mb-24">
                 <div className="flex items-center justify-between mb-4">
                     <h3 className="text-lg font-bold text-white flex items-center gap-2">
@@ -469,10 +446,10 @@ export default function ProfilePage({ user, onLogout, onNavigateToHistory, onNav
                     </div>
                 ) : (
                     <>
-                        {/* UNLOCKED */}
+                        {/* DESBLOQUEADAS */}
                         <div className="flex flex-col gap-3">
                             {achievementsList.filter(a => a.isUnlocked).map(achievement => {
-                                // Dynamic Color Logic based on Category
+                                // Lógica de Cor Dinâmica baseada na Categoria
                                 let colorClass = "text-yellow-500";
                                 let bgClass = "bg-yellow-500/10";
                                 let shadowClass = "shadow-[0_0_10px_rgba(234,179,8,0.1)]";
@@ -496,12 +473,12 @@ export default function ProfilePage({ user, onLogout, onNavigateToHistory, onNav
                                         key={achievement.id}
                                         className="flex items-start gap-4 p-4 rounded-2xl bg-slate-900/50 border border-slate-800 relative overflow-hidden group hover:border-slate-700 transition-colors"
                                     >
-                                        {/* Icon */}
+                                        {/* Ícone */}
                                         <div className={`w-12 h-12 rounded-full ${bgClass} flex items-center justify-center ${colorClass} shrink-0 ${shadowClass} group-hover:scale-110 transition-transform`}>
                                             <Medal size={24} />
                                         </div>
 
-                                        {/* Content */}
+                                        {/* Conteúdo */}
                                         <div className="flex-1">
                                             <h4 className="text-lg font-bold text-white mb-1">{achievement.title}</h4>
                                             <p className="text-slate-400 text-sm mb-2">{achievement.description}</p>
@@ -516,7 +493,7 @@ export default function ProfilePage({ user, onLogout, onNavigateToHistory, onNav
                             })}
                         </div>
 
-                        {/* LOCKED */}
+                        {/* BLOQUEADAS */}
                         {achievementsList.filter(a => !a.isUnlocked).length > 0 && (
                             <div className="mt-6 pt-6 border-t border-slate-800/50">
                                 <h4 className="text-xs font-bold text-slate-500 uppercase mb-4 pl-1">A Desbloquear</h4>
@@ -540,7 +517,7 @@ export default function ProfilePage({ user, onLogout, onNavigateToHistory, onNav
             </div>
 
 
-            {/* --- LOGOUT --- */}
+            {/* --- SAIR --- */}
             <div className="flex flex-col items-center gap-4 mt-8">
                 <button
                     onClick={async () => {
@@ -567,7 +544,7 @@ export default function ProfilePage({ user, onLogout, onNavigateToHistory, onNav
             </div>
 
 
-            {/* --- EDIT MODAL --- */}
+            {/* --- MODAL DE EDIÇÃO --- */}
             {showEditModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" onClick={() => setShowEditModal(false)}>
                     <div className="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-md p-6 relative" onClick={e => e.stopPropagation()}>
@@ -669,7 +646,7 @@ export default function ProfilePage({ user, onLogout, onNavigateToHistory, onNav
                 </div>
             )}
 
-            {/* --- LINK TRAINER MODAL --- */}
+            {/* --- MODAL DE VINCULAR TREINADOR --- */}
             {showLinkTrainer && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
                     <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setShowLinkTrainer(false)} />

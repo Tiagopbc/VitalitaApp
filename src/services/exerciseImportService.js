@@ -1,7 +1,7 @@
-import { collection, writeBatch, doc } from 'firebase/firestore';
+import { writeBatch, doc } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
 
-// Using JSDelivr to bypass CORS issues with raw.githubusercontent.com in browser
+// Usando JSDelivr para contornar problemas de CORS com raw.githubusercontent.com no browser
 const EXERCISES_URL = "https://cdn.jsdelivr.net/gh/joao-gugel/exercicios-bd-ptbr@main/exercises/exercises-ptbr-full-translation.json";
 const COLLECTION_NAME = "exercises_catalog";
 
@@ -21,11 +21,11 @@ export const exerciseImportService = {
             let totalProcessed = 0;
 
             for (const ex of exercises) {
-                // Use original ID as doc ID to prevent duplicates
+                // Usar ID original como doc ID para evitar duplicatas
                 const docId = ex.id;
                 const docRef = doc(db, COLLECTION_NAME, docId);
 
-                // Normalize muscle group (Title Case)
+                // Normalizar grupo muscular (Title Case)
                 const muscleGroup = (ex.primaryMuscles && ex.primaryMuscles.length > 0)
                     ? ex.primaryMuscles[0].charAt(0).toUpperCase() + ex.primaryMuscles[0].slice(1)
                     : "Geral";

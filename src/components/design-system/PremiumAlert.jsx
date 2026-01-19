@@ -41,7 +41,7 @@ export function PremiumAlert({
 
     return (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
-            {/* Backdrop */}
+            {/* Fundo (Backdrop) */}
             <div
                 className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm animate-in fade-in duration-200"
                 onClick={onClose}

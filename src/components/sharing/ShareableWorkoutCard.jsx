@@ -4,7 +4,7 @@ import { Activity, Clock, Dumbbell, Trophy, User } from 'lucide-react';
 export const ShareableWorkoutCard = forwardRef(({ session, userName }, ref) => {
     if (!session) return null;
 
-    // Date
+    // Data
     const formattedDate = new Intl.DateTimeFormat('pt-BR', {
         day: '2-digit',
         month: 'long',
@@ -12,9 +12,9 @@ export const ShareableWorkoutCard = forwardRef(({ session, userName }, ref) => {
     }).format(new Date());
 
     /**
-     * DESIGN SYSTEM: "Midnight Glass"
-     * Layout: OPTION 2 - "HYPER-VISUAL POSTER"
-     * Focus: Cinematic 3D Background + Massive Typography
+     * SISTEMA DE DESIGN: "Midnight Glass"
+     * Layout: OPÇÃO 2 - "PÔSTER SUPER-VISUAL"
+     * Foco: Fundo 3D Cinemático + Tipografia Maciça
      */
 
     const colors = {
@@ -33,21 +33,21 @@ export const ShareableWorkoutCard = forwardRef(({ session, userName }, ref) => {
                 position: 'fixed',
                 left: '-9999px',
                 top: 0,
-                width: '400px', // Standard Story width
-                height: '711px', // 9:16 aspect ratio
+                width: '400px', // Largura padrão de Story
+                height: '711px', // proporção 9:16
                 backgroundColor: '#020617',
                 fontFamily: 'Inter, sans-serif',
                 color: 'white',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                padding: '0', // No padding, full bleed
+                padding: '0', // Sem preenchimento, sangria total
                 boxSizing: 'border-box',
                 overflow: 'hidden'
             }}
         >
-            {/* --- BACKGROUND LAYER --- */}
-            {/* 1. 3D Render Image */}
+            {/* --- CAMADA DE FUNDO --- */}
+            {/* 1. Imagem de Renderização 3D */}
             <img
                 src="/bg-share-dumbbells.png"
                 alt="Background"
@@ -61,7 +61,7 @@ export const ShareableWorkoutCard = forwardRef(({ session, userName }, ref) => {
                 }}
             />
 
-            {/* 2. Gradient Scrims for Readability */}
+            {/* 2. Scrims de Gradiente para Legibilidade */}
             <div style={{
                 position: 'absolute',
                 inset: 0,
@@ -72,7 +72,7 @@ export const ShareableWorkoutCard = forwardRef(({ session, userName }, ref) => {
                 zIndex: 1
             }} />
 
-            {/* --- CONTENT LAYER --- */}
+            {/* --- CAMADA DE CONTEÚDO --- */}
             <div style={{
                 position: 'relative',
                 zIndex: 10,
@@ -84,7 +84,7 @@ export const ShareableWorkoutCard = forwardRef(({ session, userName }, ref) => {
                 padding: '32px'
             }}>
 
-                {/* 1. HEADER */}
+                {/* 1. CABEÇALHO */}
                 <div style={{ display: 'flex', justifyContent: 'center', marginTop: '10px' }}>
                     <div style={{
                         display: 'flex',
@@ -103,24 +103,24 @@ export const ShareableWorkoutCard = forwardRef(({ session, userName }, ref) => {
                     </div>
                 </div>
 
-                {/* 2. CENTER: MASSIVE STATS */}
+                {/* 2. CENTRO: ESTATÍSTICAS MACIÇAS */}
                 <div style={{
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: 'center',
                     justifyContent: 'center',
                     flex: 1,
-                    gap: '10px' // Closer together
+                    gap: '10px' // Mais próximos
                 }}>
-                    {/* The Number */}
+                    {/* O Número */}
                     <div style={{ position: 'relative' }}>
                         <h1 style={{
-                            fontSize: '140px', // Massive
+                            fontSize: '140px', // Maciço
                             lineHeight: '0.9',
                             fontWeight: '900',
                             margin: 0,
                             color: 'transparent',
-                            WebkitTextStroke: `2px ${colors.cyan}`, // Outline effect like the reference
+                            WebkitTextStroke: `2px ${colors.cyan}`, // Efeito de contorno como na referência
                             textShadow: `0 0 30px ${colors.cyanGlow}`,
                             letterSpacing: '-5px',
                             fontFamily: 'Inter, sans-serif'
@@ -128,7 +128,7 @@ export const ShareableWorkoutCard = forwardRef(({ session, userName }, ref) => {
                             {(session.volumeLoad / 1000).toFixed(1)}
                         </h1>
 
-                        {/* Glow Layer underneath for intensity */}
+                        {/* Camada de Brilho por baixo para intensidade */}
                         <h1 style={{
                             position: 'absolute',
                             top: 0,
@@ -147,7 +147,7 @@ export const ShareableWorkoutCard = forwardRef(({ session, userName }, ref) => {
                         </h1>
                     </div>
 
-                    {/* The Label "KILOS" / "TONS" */}
+                    {/* O Rótulo "KILOS" / "TONS" */}
                     <div style={{
                         fontSize: '48px',
                         fontWeight: '900',
@@ -157,27 +157,27 @@ export const ShareableWorkoutCard = forwardRef(({ session, userName }, ref) => {
                         marginTop: '-10px',
                         textShadow: '0 4px 10px rgba(0,0,0,0.5)'
                     }}>
-                        {/* Kilos sounds more "bodybuilding", TON sounds "powerlifting". 
-                           Let's use "KILOS" as requested in the reference image if it fits? 
-                           Actually reference image had "KILOS" outline. 
-                           However, users usually see Volume in KG. 
-                           4.5 TON is cool but let's stick to what we calculated.
-                           If val > 1000, maybe display TON? Or just KG?
-                           User prompt said: "408 KG" in one image and "4.5 KILOS" (which meant tons probably) in another.
-                           Let's show "TONELADAS" if > 1000kg for impact? Or just VOLUME EM KG.
-                           Let's stick to "KILOS" if we show the number in KG.
-                           Wait, previous code divided by 1000. 
-                           If we show "4.5", that is Toneladas. 
-                           If we show "4500", that is KG.
-                           The reference image had "4.5" and "KILOS" (which is confusing, probably meant Tons).
-                           Let's stick to showing the calculated VolumeLoad (which is usually in KG, e.g. 4500).
-                           But 4500 is too long for 140px font?
-                           Let's use TONELADAS (e.g. 4.5) for that massive cinematic look. */}
+                        {/* Kilos soa mais "fisiculturismo", TON soa "powerlifting". 
+                           Vamos usar "KILOS" como solicitado na imagem de referência se couber? 
+                           Na verdade a imagem de referência tinha contorno "KILOS". 
+                           No entanto, usuários geralmente veem Volume em KG. 
+                           4.5 TON é legal mas vamos manter o que calculamos.
+                           Se val > 1000, talvez exibir TON? Ou apenas KG?
+                           Prompt do usuário disse: "408 KG" em uma imagem e "4.5 KILOS" (o que significava toneladas provavelmente) em outra.
+                           Vamos exibir "TONELADAS" se > 1000kg para impacto? Ou apenas VOLUME EM KG.
+                           Vamos manter "KILOS" se exibirmos o número em KG.
+                           Espere, código anterior dividiu por 1000. 
+                           Se exibirmos "4.5", isso é Toneladas. 
+                           Se exibirmos "4500", isso é KG.
+                           A imagem de referência tinha "4.5" e "KILOS" (o que é confuso, provavelmente significava Toneladas).
+                           Vamos continuar exibindo o VolumeLoad calculado (que é geralmente em KG, ex: 4500).
+                           Mas 4500 é muito longo para fonte de 140px?
+                           Vamos usar TONELADAS (ex: 4.5) para aquele visual cinemático maciço. */}
                         TONS
                     </div>
                 </div>
 
-                {/* 3. BOTTOM INFO */}
+                {/* 3. INFO INFERIOR */}
                 <div style={{
                     textAlign: 'center',
                     paddingBottom: '20px'
@@ -218,7 +218,7 @@ export const ShareableWorkoutCard = forwardRef(({ session, userName }, ref) => {
                         <span>{session.exercisesCount} Exercícios</span>
                     </div>
 
-                    {/* Button Simulation (Visual only) */}
+                    {/* Simulação de Botão (Apenas visual) */}
                     <div style={{
                         marginTop: '32px',
                         background: `linear-gradient(90deg, transparent, rgba(6, 182, 212, 0.2), transparent)`,

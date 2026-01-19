@@ -8,10 +8,10 @@ import { Play, Pause, RotateCcw, X, Minus, Plus, Timer } from 'lucide-react';
 import { createPortal } from 'react-dom';
 
 export function RestTimer({ initialTime = 90, onComplete, isOpen, onClose }) {
-    const [status, setStatus] = useState('idle'); // idle, running, paused, complete
+    const [status, setStatus] = useState('idle'); // ocioso, rodando, pausado, completo
     const [timeLeft, setTimeLeft] = useState(initialTime);
 
-    // Refs for precise timing
+    // Refs para temporização precisa
     const endTimeRef = useRef(null);
     const intervalRef = useRef(null);
 
@@ -19,26 +19,26 @@ export function RestTimer({ initialTime = 90, onComplete, isOpen, onClose }) {
     const radius = 80;
     const circumference = 2 * Math.PI * radius;
 
-    // Vibration helper
+    // Helper de vibração
     const vibrate = (pattern) => {
         if (navigator.vibrate) {
             navigator.vibrate(pattern);
         }
     };
 
-    // Helper to format time M:SS
+    // Helper para formatar tempo M:SS
     const formatTime = (seconds) => {
         const m = Math.floor(seconds / 60);
         const s = (seconds % 60).toString().padStart(2, '0');
         return `${m}:${s}`;
     };
 
-    // Initialize & Auto-Start
+    // Inicializar e Início Automático
     useEffect(() => {
         if (isOpen) {
             setTimeLeft(initialTime);
             setStatus('running');
-            // Vibrate on open/start
+            // Vibrar ao abrir/iniciar
             vibrate(50);
         } else {
             setStatus('idle');
@@ -46,16 +46,16 @@ export function RestTimer({ initialTime = 90, onComplete, isOpen, onClose }) {
         }
     }, [isOpen, initialTime]);
 
-    // Timer Logic with Drift Correction
+    // Lógica do Cronômetro com Correção de Drift
     useEffect(() => {
         if (status === 'running') {
-            // Set the target end time based on current timeLeft
-            // This ensures we resume correctly if paused
+            // Definir o tempo final alvo com base no timeLeft atual
+            // Isso garante que retomamos corretamente se pausado
             if (!endTimeRef.current) {
                 endTimeRef.current = Date.now() + (timeLeft * 1000);
             } else {
-                // Recalculate end time just in case (e.g. adjustTime was called)
-                // Actually, best to just reset end time relative to now + timeLeft
+                // Recalcular tempo final apenas por garantia (ex: adjustTime foi chamado)
+                // Na verdade, melhor apenas resetar o tempo final relativo a agora + timeLeft
                 endTimeRef.current = Date.now() + (timeLeft * 1000);
             }
 
@@ -73,14 +73,16 @@ export function RestTimer({ initialTime = 90, onComplete, isOpen, onClose }) {
                     endTimeRef.current = null;
                     if (onComplete) onComplete();
                 }
-            }, 100); // Check every 100ms for smoothness
+            }, 100); // Verificar a cada 100ms para suavidade
         } else {
-            // Paused or Idle works
+            // Pausado ou Ocioso funciona
             clearInterval(intervalRef.current);
             endTimeRef.current = null;
         }
 
+
         return () => clearInterval(intervalRef.current);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [status]);
 
     const handlePlayPause = () => {
@@ -90,7 +92,7 @@ export function RestTimer({ initialTime = 90, onComplete, isOpen, onClose }) {
         } else {
             vibrate(30);
             setStatus('running');
-            // Note: useEffect will pick up 'running' and reset endTimeRef based on current timeLeft
+            // Nota: useEffect pegará 'running' e resetará endTimeRef com base no timeLeft atual
         }
     };
 
@@ -98,17 +100,17 @@ export function RestTimer({ initialTime = 90, onComplete, isOpen, onClose }) {
         vibrate(50);
         setStatus('idle');
         setTimeLeft(initialTime);
-        // Explicitly clear ref
+        // Limpar ref explicitamente
         endTimeRef.current = null;
 
-        // Auto-restart after clear? Usually reset means "Stop and go to start".
-        // If user wants to restart immediately, they hit play.
+        // Auto-reiniciar após limpar? Geralmente resetar significa "Parar e ir para o início".
+        // Se o usuário quiser reiniciar imediatamente, ele aperta play.
     };
 
     const adjustTime = (amount) => {
         setTimeLeft(prev => {
             const newVal = Math.max(0, prev + amount);
-            // If running, we need to adjust the endTimeRef as well so it doesn't jump back
+            // Se rodando, precisamos ajustar o endTimeRef também para não pular de volta
             if (status === 'running') {
                 endTimeRef.current = Date.now() + (newVal * 1000);
             }
@@ -124,11 +126,11 @@ export function RestTimer({ initialTime = 90, onComplete, isOpen, onClose }) {
 
     const modalContent = (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-sm p-4 animate-in fade-in duration-300">
-            {/* Main Card */}
+            {/* Cartão Principal */}
             <div className="w-full max-w-[340px] bg-[#020617] rounded-[32px] border border-slate-800 shadow-2xl overflow-hidden relative flex flex-col items-center"
                 onClick={e => e.stopPropagation()}>
 
-                {/* Header */}
+                {/* Cabeçalho */}
                 <div className="pt-8 pb-4">
                     <div className="flex items-center gap-2 text-white/90">
                         <Timer size={16} className="text-cyan-400" />
@@ -136,11 +138,11 @@ export function RestTimer({ initialTime = 90, onComplete, isOpen, onClose }) {
                     </div>
                 </div>
 
-                {/* Circular Timer Display */}
+                {/* Display Circular do Cronômetro */}
                 <div className="relative my-6">
-                    {/* SVG Circle */}
+                    {/* Círculo SVG */}
                     <svg className="w-64 h-64 transform -rotate-90 drop-shadow-2xl">
-                        {/* Background Track */}
+                        {/* Trilho de Fundo */}
                         <circle
                             cx="128"
                             cy="128"
@@ -149,7 +151,7 @@ export function RestTimer({ initialTime = 90, onComplete, isOpen, onClose }) {
                             strokeWidth="6"
                             fill="transparent"
                         />
-                        {/* Progress */}
+                        {/* Progresso */}
                         <circle
                             cx="128"
                             cy="128"
@@ -165,7 +167,7 @@ export function RestTimer({ initialTime = 90, onComplete, isOpen, onClose }) {
                         />
                     </svg>
 
-                    {/* Time Text */}
+                    {/* Texto de Tempo */}
                     <div className="absolute inset-0 flex items-center justify-center">
                         <span className={`text-5xl font-bold font-sans tracking-tighter ${status === 'complete' ? 'text-emerald-400' : 'text-white'}`}>
                             {formatTime(timeLeft)}
@@ -173,7 +175,7 @@ export function RestTimer({ initialTime = 90, onComplete, isOpen, onClose }) {
                     </div>
                 </div>
 
-                {/* Controls Area */}
+                {/* Área de Controles */}
                 <div className="w-full px-6 pb-8 flex flex-col items-center gap-6">
                     {/* Play/Reset */}
                     <div className="flex items-center gap-5">
@@ -197,7 +199,7 @@ export function RestTimer({ initialTime = 90, onComplete, isOpen, onClose }) {
                         </button>
                     </div>
 
-                    {/* Adjust Time */}
+                    {/* Ajustar Tempo */}
                     <div className="flex items-center gap-3 bg-[#0f172a] p-1.5 rounded-2xl border border-slate-800/60 shadow-inner">
                         <button
                             onClick={() => adjustTime(-10)}
@@ -216,7 +218,7 @@ export function RestTimer({ initialTime = 90, onComplete, isOpen, onClose }) {
                         </button>
                     </div>
 
-                    {/* Close Button */}
+                    {/* Botão Fechar */}
                     <button
                         onClick={onClose}
                         className="w-full py-4 rounded-2xl bg-[#1e293b] text-slate-300 font-bold tracking-wide hover:bg-slate-700 hover:text-white transition-all active:scale-98 text-sm"

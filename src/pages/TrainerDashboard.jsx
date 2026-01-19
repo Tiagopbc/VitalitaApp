@@ -15,13 +15,13 @@ export function TrainerDashboard({ user, onBack, onNavigateToCreateWorkout }) {
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
 
-    // UI States
+    // Estados de UI
     const [showInviteModal, setShowInviteModal] = useState(false);
     const [copied, setCopied] = useState(false);
 
-    // Selection State
+    // Estado de Seleção
     const [selectedStudent, setSelectedStudent] = useState(null);
-    const [activeTab, setActiveTab] = useState('workouts'); // 'workouts' or 'history'
+    const [activeTab, setActiveTab] = useState('workouts'); // 'workouts' ou 'history'
 
     useEffect(() => {
         if (!user) return;
@@ -88,13 +88,13 @@ export function TrainerDashboard({ user, onBack, onNavigateToCreateWorkout }) {
         });
     };
 
-    // Filtered Students
+    // Alunos Filtrados
     const filteredStudents = students.filter(s =>
         s.displayName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         s.email?.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
-    // --- RENDER STUDENT DETAIL VIEW ---
+    // --- RENDERIZAR VISÃO DETALHADA DO ALUNO ---
     if (selectedStudent) {
         return (
             <div className="min-h-screen bg-[#020617] relative">
@@ -124,9 +124,9 @@ export function TrainerDashboard({ user, onBack, onNavigateToCreateWorkout }) {
                     </div>
                 </div>
 
-                {/* HERO SECTION: Profile + Tabs */}
+                {/* SEÇÃO HERO: Perfil + Abas */}
                 <div className="pt-8 pb-2 bg-gradient-to-b from-[#020617] to-[#0f172a]/50">
-                    {/* Centered Profile Info */}
+                    {/* Informações de Perfil Centralizadas */}
                     <div className="flex flex-col items-center justify-center animate-in fade-in slide-in-from-top-2 duration-700 mb-6">
                         <div className="relative mb-3">
                             <div className="w-20 h-20 rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center text-3xl font-bold text-white shadow-lg shadow-cyan-500/20 ring-4 ring-black/50">
@@ -145,7 +145,7 @@ export function TrainerDashboard({ user, onBack, onNavigateToCreateWorkout }) {
                         </div>
                     </div>
 
-                    {/* Modern Pill Tabs - Close to Name */}
+                    {/* Abas em Pílula Modernas - Perto do Nome */}
                     <div className="max-w-7xl mx-auto px-4 flex justify-center mb-4">
                         <div className="bg-slate-900/80 backdrop-blur-md p-1 rounded-full inline-flex border border-white/10 shadow-2xl shadow-black/50">
                             <button
@@ -170,7 +170,7 @@ export function TrainerDashboard({ user, onBack, onNavigateToCreateWorkout }) {
                     </div>
                 </div>
 
-                {/* CONTENT */}
+                {/* CONTEÚDO */}
                 <div className="p-4 max-w-7xl mx-auto space-y-6">
                     {activeTab === 'workouts' ? (
                         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -207,14 +207,14 @@ export function TrainerDashboard({ user, onBack, onNavigateToCreateWorkout }) {
         );
     }
 
-    // --- MAIN DASHBOARD VIEW ---
+    // --- VISÃO PRINCIPAL DO DASHBOARD ---
     return (
         <div className="min-h-screen bg-[#020617] pb-24 lg:pt-0 pt-4 px-4 lg:px-8 max-w-7xl mx-auto">
 
-            {/* 1. Header & Actions */}
+            {/* 1. Cabeçalho & Ações */}
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
                 <div>
-                    {/* Show Back Button mainly on Mobile */}
+                    {/* Mostrar Botão Voltar principalmente no Mobile */}
                     <div className="lg:hidden mb-2">
                         <Button
                             variant="outline-primary"
@@ -241,7 +241,7 @@ export function TrainerDashboard({ user, onBack, onNavigateToCreateWorkout }) {
                 </div>
             </div>
 
-            {/* 2. Stats Grid (Optional but nice for UX) */}
+            {/* 2. Grade de Estatísticas (Opcional, mas bom para UX) */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
                 <PremiumCard className="p-4 flex items-center gap-4 bg-slate-900/50">
                     <div className="w-10 h-10 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-500">
@@ -261,10 +261,10 @@ export function TrainerDashboard({ user, onBack, onNavigateToCreateWorkout }) {
                         <p className="text-xs text-slate-500 font-bold uppercase">Treinos Hoje</p>
                     </div>
                 </PremiumCard>
-                {/* Add more stats if real data available */}
+                {/* Adicionar mais estatísticas se houver dados reais */}
             </div>
 
-            {/* 3. Search & Toolbar (Modern Floating Island) */}
+            {/* 3. Busca & Barra de Ferramentas (Ilha Flutuante Moderna) */}
             <div className="mb-6">
                 <div className="relative group max-w-md">
                     <div className="absolute inset-0 bg-cyan-500/20 blur-xl rounded-2xl opacity-0 group-focus-within:opacity-100 transition-opacity duration-500" />
@@ -281,7 +281,7 @@ export function TrainerDashboard({ user, onBack, onNavigateToCreateWorkout }) {
                 </div>
             </div>
 
-            {/* 4. Students Grid */}
+            {/* 4. Grade de Alunos */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {loading ? (
                     <div className="col-span-full py-20 flex flex-col items-center opacity-50">
@@ -341,7 +341,7 @@ export function TrainerDashboard({ user, onBack, onNavigateToCreateWorkout }) {
                 )}
             </div>
 
-            {/* --- INVITE MODAL --- */}
+            {/* --- MODAL DE CONVITE --- */}
             {showInviteModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in" onClick={() => setShowInviteModal(false)}>
                     <div className="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-md p-6 relative shadow-2xl" onClick={e => e.stopPropagation()}>
@@ -349,7 +349,7 @@ export function TrainerDashboard({ user, onBack, onNavigateToCreateWorkout }) {
                             onClick={() => setShowInviteModal(false)}
                             className="absolute top-4 right-4 text-slate-500 hover:text-white"
                         >
-                            <ChevronLeft size={20} className="rotate-90" /> {/* Should be X but reusing icons for ease or import X if available, wait, let's just use text or existing icons */}
+                            <ChevronLeft size={20} className="rotate-90" /> {/* Deveria ser X mas reusando ícones para facilitar */}
                             <span className="text-xl font-bold">&times;</span>
                         </button>
 

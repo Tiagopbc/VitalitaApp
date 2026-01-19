@@ -6,11 +6,6 @@ import {
     getDocs,
     limit,
     startAfter,
-    doc,
-    getDoc,
-    addDoc,
-    serverTimestamp,
-    updateDoc,
     onSnapshot
 } from 'firebase/firestore';
 import { db } from '../firebaseConfig'; // Adjust path if needed
@@ -18,7 +13,7 @@ import { db } from '../firebaseConfig'; // Adjust path if needed
 const TEMPLATES_COLLECTION = 'workout_templates';
 const SESSIONS_COLLECTION = 'workout_sessions';
 
-// In-memory cache
+// Cache em memória
 let templatesCache = {
     userId: null,
     data: null,
@@ -28,13 +23,13 @@ const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
 export const workoutService = {
     /**
-     * Fetches workout templates for a specific user.
-     * @param {string} userId - The UID of the user (or student).
-     * @param {boolean} forceRefresh - Ignore cache.
-     * @returns {Promise<Array>} List of templates.
+     * Busca templates de treino para um usuário específico.
+     * @param {string} userId - O UID do usuário (ou estudante).
+     * @param {boolean} forceRefresh - Ignorar cache.
+     * @returns {Promise<Array>} Lista de templates.
      */
     async getTemplates(userId, forceRefresh = false) {
-        // Return cached data if valid
+        // Retornar dados cacheados se válidos
         const now = Date.now();
         if (
             !forceRefresh &&
@@ -58,10 +53,10 @@ export const workoutService = {
                 ...doc.data()
             }));
 
-            // Client-side sort by name
+            // Ordenação do lado do cliente por nome
             const sorted = list.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
 
-            // Update Cache
+            // Atualizar Cache
             templatesCache = {
                 userId,
                 data: sorted,
@@ -76,16 +71,16 @@ export const workoutService = {
     },
 
     /**
-     * Subscribe to real-time updates for workout templates.
+     * Inscrever-se em atualizações em tempo real para templates de treino.
      * @param {string} userId
-     * @param {function} onUpdate - Callback with new list of templates
-     * @returns {function} Unsubscribe function
+     * @param {function} onUpdate - Callback com nova lista de templates
+     * @returns {function} Função unsubscribe
      */
     subscribeToTemplates(userId, onUpdate) {
         const templatesRef = collection(db, TEMPLATES_COLLECTION);
         const q = query(templatesRef, where('userId', '==', userId));
 
-        // onSnapshot returns an unsubscribe function
+        // onSnapshot retorna uma função de cancelamento
         return onSnapshot(q, (snapshot) => {
             const list = snapshot.docs.map(doc => ({
                 id: doc.id,
@@ -94,7 +89,7 @@ export const workoutService = {
 
             const sorted = list.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
 
-            // Also update cache silently to keep it fresh
+            // Também atualizar cache silenciosamente para mantê-lo fresco
             templatesCache = {
                 userId,
                 data: sorted,
@@ -108,15 +103,15 @@ export const workoutService = {
     },
 
     /**
-     * Clear Templates Cache (e.g., after creating new workout)
+     * Limpar Cache de Templates (ex: após criar novo treino)
      */
     clearCache() {
         templatesCache = { userId: null, data: null, timestamp: 0 };
     },
 
     /**
-     * Get the LAST COMPLETED session for the user (Limit 1).
-     * Optimized for "Next Suggestion" logic.
+     * Obter a ÚLTIMA sessão CONCLUÍDA do usuário (Limit 1).
+     * Otimizado para lógica de "Próxima Sugestão".
      * @param {string} userId 
      * @returns {Promise<Object|null>}
      */
@@ -146,19 +141,19 @@ export const workoutService = {
     },
 
     /**
-     * Fetches workout history sessions with pagination.
-     * @param {string} userId - The UID of the user.
-     * @param {string} templateId - Filter by template name or ID (Legacy uses templateName).
-     * @param {string} exerciseName - Optional filter by exercise (client-side usually, but we can try server-side if structure allows).
-     * @param {Object} lastDoc - The last document snapshot from previous fetch (for pagination).
-     * @param {number} pageSize - Number of items to fetch.
+     * Busca sessões de histórico de treino com paginação.
+     * @param {string} userId - O UID do usuário.
+     * @param {string} templateName - Filtro por nome de template ou ID (Legado usa templateName).
+     * @param {string} exerciseName - Filtro opcional por exercício (geralmente client-side, mas podemos tentar server-side se estrutura permitir).
+     * @param {Object} lastDoc - O último snapshot de documento da busca anterior (para paginação).
+     * @param {number} pageSize - Número de itens para buscar.
      * @returns {Promise<{data: Array, lastDoc: Object, hasMore: boolean}>}
      */
     async getHistory(userId, templateName, lastDoc = null, pageSize = 10) {
         try {
             const sessionsRef = collection(db, SESSIONS_COLLECTION);
 
-            // Base constraints
+            // Restrições base
             const constraints = [
                 where('userId', '==', userId),
             ];
@@ -167,37 +162,37 @@ export const workoutService = {
                 constraints.push(where('templateName', '==', templateName));
             }
 
-            // Note: If filtering by templateName, we ideally need a composite index with completedAt.
-            // If just userId, we need index on userId + completedAt.
+            // Nota: Se filtrar por templateName, idealmente precisamos de um índice composto com completedAt.
+            // Se apenas userId, precisamos de índice em userId + completedAt.
 
-            // Note: If we use 'where' on equality (userId, templateName) and sort by completedAt,
-            // Firestore requires a Composite Index.
+            // Nota: Se usarmos 'where' na igualdade (userId, templateName) e sort por completedAt,
+            // Firestore requer um Índice Composto.
             // "userId Asc, templateName Asc, completedAt Desc"
 
-            // If we want to avoid index creation RIGHT NOW for the user demo, we might have to fetch more and slice?
-            // But the objective IS optimization. So we SHOULD request the index.
-            // However, to keep "functionality existing" without breaking current flow (which removed orderBy), 
-            // maybe we can't fully paginate server-side without that index.
+            // Se quisermos evitar criação de índice AGORA MESMO para a demo do usuário, talvez tenhamos que buscar mais e fatiar?
+            // Mas o objetivo É otimização. Então DEVEMOS solicitar o índice.
+            // Contudo, para manter "funcionalidade existente" sem quebrar fluxo atual (que removeu orderBy), 
+            // talvez não possamos paginar totalmente server-side sem esse índice.
 
-            // Strategy: Try to use orderBy. If it fails (caught in UI), we warn.
-            // BUT, previously we removed orderBy to fix "Missing Index".
-            // Since we can't ask user to click the link in 1 second, let's implement a "Load All" or "Logic Safe" approach?
+            // Estratégia: Tentar usar orderBy. Se falhar (pego na UI), avisamos.
+            // MAS, anteriormente removemos orderBy para corrigir "Índice Ausente".
+            // Já que não podemos pedir pro usuário clicar no link em 1 segundo, vamos implementar uma abordagem "Carregar Tudo" ou "Lógica Segura"?
 
-            // Actually, without an index, we can't do server-side filtering AND sorting AND pagination efficiently.
-            // Let's stick to the current "Safe" approach: Fetch ALMOST everything (or Limit) and sort client side?
-            // No, that defeats "Optimization".
+            // Na verdade, sem índice, não podemos filtrar server-side E ordenar E paginar eficientemente.
+            // Vamos manter a abordagem "Segura" atual: Buscar QUASE tudo (ou Limite) e ordenar client side?
+            // Não, isso derrota "Otimização".
 
-            // Compromise: We will NOT add orderBy here yet to ensure it works. 
-            // We will fetch query with Limit, but without ordering, the "LastDoc" pagination is arbitrary.
-            // Firestore default order is ID.
+            // Compromisso: NÃO adicionaremos orderBy aqui ainda para garantir que funcione. 
+            // Vamos buscar query com Limit, mas sem ordenação, a paginação "LastDoc" é arbitrária.
+            // Ordenação padrão Firestore é ID.
 
-            // BETTER STRATEGY: 
-            // Since we removed orderBy previously, we should probably stick to client-side sorting
-            // UNLESS we are sure about the index.
-            // But for PAGINATION (Load More), we really need a stable order.
+            // MELHOR ESTRATÉGIA: 
+            // Já que removemos orderBy anteriormente, provavelmente devemos manter ordenação client-side
+            // A MENOS que tenhamos certeza sobre o índice.
+            // Mas para PAGINAÇÃO (Carregar Mais), realmente precisamos de uma ordem estável.
 
-            // Let's force orderBy('completedAt', 'desc') and if it fails, the user (developer) sees the link to create index.
-            // It is the "Correct" way.
+            // Vamos forçar orderBy('completedAt', 'desc') e se falhar, o usuário (desenvolvedor) vê o link para criar índice.
+            // É o jeito "Correto".
             constraints.push(orderBy('completedAt', 'desc'));
 
             if (lastDoc) {
@@ -220,14 +215,14 @@ export const workoutService = {
 
         } catch (error) {
             console.error("Error fetching history:", error);
-            // Fallback for missing index: fetch without orderBy/limit? 
-            // Or just throw to let UI handle "Create Index".
+            // Fallback para índice ausente: buscar sem orderBy/limit? 
+            // Ou apenas jogar erro para UI lidar com "Criar Índice".
             throw error;
         }
     },
 
     /**
-     * Fetch all sessions for analytics (without pagination)
+     * Buscar todas as sessões para análise (sem paginação)
      * @param {string} userId 
      * @returns {Promise<Array>}
      */
@@ -236,14 +231,14 @@ export const workoutService = {
         const q = query(
             sessionsRef,
             where('userId', '==', userId)
-            // No limit, maybe orderBy depending on need, but for stats we just need data.
+            // Sem limite, talvez orderBy dependendo da necessidade, mas para stats apenas precisamos dos dados.
         );
         const snap = await getDocs(q);
         return snap.docs.map(d => ({ id: d.id, ...d.data() }));
     },
 
     /**
-     * Subscribe to user sessions (real-time history)
+     * Inscrever-se em sessões do usuário (histórico em tempo real)
      * @param {string} userId
      * @param {function} callback
      * @returns {function} unsubscribe
@@ -263,9 +258,9 @@ export const workoutService = {
     },
 
     /**
-     * Search exercises in the global catalog.
+     * Buscar exercícios no catálogo global.
      * @param {string} searchTerm
-     * @param {string|null} muscleFilter (Optional)
+     * @param {string|null} muscleFilter (Opcional)
      * @param {number} limitCount
      * @returns {Promise<Array>}
      */
@@ -275,23 +270,23 @@ export const workoutService = {
             let constraints = [];
             const term = searchTerm ? searchTerm.toLowerCase().trim() : '';
 
-            // STRATEGY:
-            // 1. If Muscle Filter is ON: Query by Muscle Group (Equality) -> Client-side filter by Name.
-            //    Reason: Avoids need for Composite Index (Muscle + SearchKey) which breaks if missing.
-            // 2. If Muscle Filter is OFF: Query by SearchKey (Range) -> Standard prefix search.
+            // ESTRATÉGIA:
+            // 1. Se Filtro Muscular ON: Query por Grupo Muscular (Igualdade) -> Filtro por Nome client-side.
+            //    Razão: Evita necessidade de Índice Composto (Músculo + ChaveBusca) que quebra se ausente.
+            // 2. Se Filtro Muscular OFF: Query por ChaveBusca (Range) -> Busca prefixo padrão.
 
             if (muscleFilter) {
                 constraints.push(where('muscleGroup', '==', muscleFilter));
                 // fetch more to allow for filtering
                 constraints.push(limit(100)); // Reasonable limit for a single muscle group
             } else if (term) {
-                // Global search (Prefix)
+                // Busca Global (Prefixo)
                 constraints.push(where('searchKey', '>=', term));
                 constraints.push(where('searchKey', '<=', term + '\uf8ff'));
                 constraints.push(limit(limitCount));
             } else {
-                // No filter, no term? Just return some randoms or empty?
-                // Returning empty is safer to avoid huge reads, but if limit is small it's ok.
+                // Sem filtro, sem termo? Apenas retornar alguns aleatórios ou vazio?
+                // Retornar vazio é mais seguro para evitar leituras enormes, mas se limite for pequeno ok.
                 constraints.push(limit(limitCount));
             }
 
@@ -299,14 +294,14 @@ export const workoutService = {
             const snap = await getDocs(q);
             let results = snap.docs.map(d => ({ id: d.id, ...d.data() }));
 
-            // Client-side filtering if we used muscle filter strategy with a term
+            // Filtragem no cliente se usamos estratégia de filtro muscular com um termo
             if (muscleFilter && term) {
                 results = results.filter(r => {
                     const name = r.name?.toLowerCase() || '';
                     const searchKey = r.searchKey || '';
                     return name.includes(term) || searchKey.includes(term);
                 });
-                // Re-apply limit after filtering
+                // Re-aplicar limite após filtragem
                 results = results.slice(0, limitCount);
             }
 

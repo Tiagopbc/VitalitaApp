@@ -30,10 +30,10 @@ const missingKeys = requiredKeys.filter(key => !firebaseConfig[key]);
 
 if (missingKeys.length > 0) {
     console.error(
-        `%c[CRITICAL] Missing Firebase Environment Variables: ${missingKeys.join(', ')}`,
+        `%c[CRÍTICO] Variáveis de Ambiente Firebase Ausentes: ${missingKeys.join(', ')}`,
         'background: red; color: white; padding: 4px; font-weight: bold;'
     );
-    console.error('Make sure these are set in your .env file (locally) or Vercel Project Settings (production).');
+    console.error('Certifique-se de que estão definidas no seu arquivo .env (localmente) ou nas Configurações do Projeto Vercel (produção).');
     // Optional: throw an error to stop execution explicitly if you want to fail fast
     // throw new Error(`Missing Firebase configuration: ${missingKeys.join(', ')}`);
 }
@@ -42,13 +42,13 @@ const app = initializeApp(firebaseConfig);
 
 export const db = getFirestore(app);
 
-// Enable Offline Persistence
+// Habilitar Persistência Offline
 // Enable Offline Persistence
 enableIndexedDbPersistence(db).catch((err) => {
     if (err.code == 'failed-precondition') {
-        console.warn('Persistence failed: Multiple tabs open');
+        console.warn('Falha na persistência: Múltiplas abas abertas');
     } else if (err.code == 'unimplemented') {
-        console.warn('Persistence not supported by browser');
+        console.warn('Persistência não suportada pelo navegador');
     }
 });
 

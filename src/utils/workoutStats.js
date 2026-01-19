@@ -1,7 +1,7 @@
 /**
  * workoutStats.js
- * Utility to calculate weekly workout statistics, streak, and calendar data
- * shared between HomeDashboard and ProfilePage.
+ * Utilitário para calcular estatísticas semanais de treino, streak e dados do calendário
+ * compartilhado entre HomeDashboard e ProfilePage.
  */
 
 export function calculateWeeklyStats(sessions, currentWeeklyGoal = 4) {
@@ -9,14 +9,14 @@ export function calculateWeeklyStats(sessions, currentWeeklyGoal = 4) {
     const startOfCurrentWeek = getStartOfWeek(now);
 
     const thisWeekSessions = sessions.filter(s => {
-        const d = new Date(s.date || s.completedAt || s.timestamp); // Handle various date formats
+        const d = new Date(s.date || s.completedAt || s.timestamp); // Lidar com vários formatos de data
         return d >= startOfCurrentWeek;
     });
 
     const daysMap = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 
-    // --- Week Days Data ---
-    // Start of week is Monday (from getStartOfWeek)
+    // --- Dados dos Dias da Semana ---
+    // Início da semana é Segunda (de getStartOfWeek)
     const weekDaysData = Array(7).fill(null).map((_, idx) => {
         const dayDate = new Date(startOfCurrentWeek);
         dayDate.setDate(startOfCurrentWeek.getDate() + idx);
@@ -42,20 +42,20 @@ export function calculateWeeklyStats(sessions, currentWeeklyGoal = 4) {
         };
     });
 
-    // --- Month Stats Calculation ---
-    // Updated to start on Monday
+    // --- Cálculo de Estatísticas do Mês ---
+    // Atualizado para começar na Segunda
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
     const daysInMonth = endOfMonth.getDate();
 
-    // Adjust start day: standard getDay() is 0=Sun. 
-    // We want 0=Mon ... 6=Sun.
+    // Ajustar dia de início: padrão getDay() é 0=Dom. 
+    // Queremos 0=Seg ... 6=Dom.
     let startDayOfWeek = startOfMonth.getDay();
     startDayOfWeek = startDayOfWeek === 0 ? 6 : startDayOfWeek - 1;
 
     const monthDaysData = [];
 
-    // Pad start (previous month days)
+    // Preencher início (dias do mês anterior)
     for (let i = startDayOfWeek; i > 0; i--) {
         const d = new Date(startOfMonth);
         d.setDate(d.getDate() - i);
@@ -77,7 +77,7 @@ export function calculateWeeklyStats(sessions, currentWeeklyGoal = 4) {
         });
     }
 
-    // Fill current month
+    // Preencher mês atual
     const todayForStatus = new Date();
     todayForStatus.setHours(0, 0, 0, 0);
 
@@ -88,7 +88,7 @@ export function calculateWeeklyStats(sessions, currentWeeklyGoal = 4) {
 
         const dayOfWeek = currentDayDate.getDay();
 
-        // Sync with sessions
+        // Sincronizar com sessões
         const daySessions = sessions.filter(s => {
             const sd = new Date(s.date || s.completedAt || s.timestamp);
             return isSameDay(sd, currentDayDate);
@@ -96,7 +96,7 @@ export function calculateWeeklyStats(sessions, currentWeeklyGoal = 4) {
         const trained = daySessions.length > 0;
         const lastSession = trained ? daySessions[0] : null;
 
-        // Determine Status
+        // Determinar Status
         let status = 'rest';
         if (trained) {
             status = 'trained';
@@ -119,8 +119,8 @@ export function calculateWeeklyStats(sessions, currentWeeklyGoal = 4) {
         });
     }
 
-    // Pad end (next month days)
-    // We want total cells to be multiple of 7 to fill the row
+    // Preencher final (dias do próximo mês)
+    // Queremos total de células múltiplo de 7 para preencher a linha
     const totalCells = monthDaysData.length;
     const remainingCells = 7 - (totalCells % 7);
 
@@ -140,7 +140,7 @@ export function calculateWeeklyStats(sessions, currentWeeklyGoal = 4) {
         }
     }
 
-    // --- Streak Calculation ---
+    // --- Cálculo de Streak ---
     const weeksWithTraining = new Set();
     sessions.forEach(s => {
         const d = new Date(s.date || s.completedAt || s.timestamp);
@@ -150,12 +150,12 @@ export function calculateWeeklyStats(sessions, currentWeeklyGoal = 4) {
 
     let currentStreak = 0;
     let checkDate = new Date();
-    // Check if current week has training
+    // Verificar se semana atual tem treino
     if (weeksWithTraining.has(getWeekString(checkDate))) {
         currentStreak++;
     }
 
-    // Check previous weeks
+    // Verificar semanas anteriores
     for (let i = 0; i < 52; i++) {
         checkDate.setDate(checkDate.getDate() - 7);
         if (weeksWithTraining.has(getWeekString(checkDate))) {
@@ -165,7 +165,7 @@ export function calculateWeeklyStats(sessions, currentWeeklyGoal = 4) {
         }
     }
 
-    const bestStreak = Math.max(currentStreak, 3); // Mock best streak logic used in HomeDashboard
+    const bestStreak = Math.max(currentStreak, 3); // Lógica de melhor streak simulada usada no HomeDashboard
 
     return {
         currentStreak,
@@ -177,11 +177,11 @@ export function calculateWeeklyStats(sessions, currentWeeklyGoal = 4) {
     };
 }
 
-// Helpers
+// Auxiliares
 function getStartOfWeek(date) {
     const d = new Date(date);
     const day = d.getDay();
-    const diff = d.getDate() - day + (day === 0 ? -6 : 1); // Adjust when day is Sunday
+    const diff = d.getDate() - day + (day === 0 ? -6 : 1); // Ajustar quando dia é Domingo
     d.setDate(diff);
     d.setHours(0, 0, 0, 0);
     return d;

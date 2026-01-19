@@ -9,20 +9,19 @@ export function StreakWeeklyGoalHybrid({
     weekDays,
     monthDays,
     showRings = false,
-    onNavigateToSettings
 }) {
-    const [hoveredDay, setHoveredDay] = useState(null);
-    const [expanded, setExpanded] = useState(false); // Default expanded to show the calendar
+
+    const [expanded, setExpanded] = useState(false); // Padronizado como expandido para mostrar o calendário
     const [showCelebration, setShowCelebration] = useState(false);
     const [animatedProgress, setAnimatedProgress] = useState(0);
 
-    // Calculations
+    // Cálculos
     const progressPercent = Math.min(100, (completedThisWeek / weeklyGoal) * 100);
     const remainingWorkouts = Math.max(0, weeklyGoal - completedThisWeek);
     const daysRemaining = weekDays.filter(d => !d.trained && !d.isRest).length;
     const isAtRisk = remainingWorkouts > daysRemaining && daysRemaining > 0;
 
-    // Animate progress bar on mount
+    // Animar barra de progresso ao montar
     useEffect(() => {
         const timer = setTimeout(() => {
             setAnimatedProgress(progressPercent);
@@ -30,7 +29,7 @@ export function StreakWeeklyGoalHybrid({
         return () => clearTimeout(timer);
     }, [progressPercent]);
 
-    // Helper to identify current week for storage
+    // Helper para identificar a semana atual para armazenamento
     const getWeekKey = () => {
         const d = new Date();
         d.setHours(0, 0, 0, 0);
@@ -40,7 +39,7 @@ export function StreakWeeklyGoalHybrid({
         return `celebration_shown_${d.getFullYear()}_${weekNo}`;
     };
 
-    // Celebration Logic
+    // Lógica de Celebração
     useEffect(() => {
         if (completedThisWeek >= weeklyGoal) {
             const key = getWeekKey();
@@ -52,9 +51,9 @@ export function StreakWeeklyGoalHybrid({
                 setTimeout(() => setShowCelebration(false), 5000);
             }
         }
-    }, [completedThisWeek, weeklyGoal]);
+    }, [completedThisWeek, weeklyGoal, showCelebration]);
 
-    // Streak Level Styles
+    // Estilos de Nível de Sequência
     const getStreakLevel = () => {
         if (currentStreak >= 12) return { color: 'text-purple-400', glow: 'shadow-purple-500/20', name: 'Diamante', icon: '💎' };
         if (currentStreak >= 8) return { color: 'text-amber-400', glow: 'shadow-amber-500/20', name: 'Ouro', icon: '🥇' };
@@ -67,22 +66,22 @@ export function StreakWeeklyGoalHybrid({
     return (
         <div className="relative w-full lg:max-w-xl lg:mx-auto">
 
-            {/* --- CARD CONTAINER --- */}
+            {/* --- CONTAINER DO CARD --- */}
             <div
                 className="relative overflow-hidden rounded-[32px] border border-blue-500/10 bg-[#020617] shadow-xl transition-all duration-300"
                 style={{
                     boxShadow: '0 0 50px -10px rgba(2, 6, 23, 0.9)'
                 }}
             >
-                {/* Background Glows (Subtle) */}
+                {/* Brilhos de Fundo (Sutil) */}
                 <div className="absolute top-[-20%] right-[-10%] w-[80%] h-[80%] bg-blue-600/5 blur-[100px] rounded-full pointer-events-none" />
                 <div className="absolute bottom-[-10%] left-[-10%] w-[60%] h-[60%] bg-cyan-500/5 blur-[80px] rounded-full pointer-events-none" />
 
                 <div className="relative z-10 p-5 sm:p-6">
 
-                    {/* 1. HEADER: STREAK & INFO */}
+                    {/* 1. CABEÇALHO: SEQUÊNCIA E INFO */}
                     <div className="flex flex-col items-center justify-center mb-6 relative">
-                        {/* Streak Badge - ABSOLUTE LEFT */}
+                        {/* Insígnia de Sequência - ABSOLUTO ESQUERDA */}
                         <div className={`absolute left-0 top-0 flex items-center gap-2 px-4 py-1.5 rounded-full bg-slate-900/80 border border-white/5 backdrop-blur-md ${level.glow}`}>
                             <Flame size={14} className={level.color} fill="currentColor" fillOpacity={0.2} />
                             <span className={`text-[11px] font-bold uppercase tracking-widest ${level.color}`}>
@@ -90,7 +89,7 @@ export function StreakWeeklyGoalHybrid({
                             </span>
                         </div>
 
-                        {/* Huge Streak Number - PRESERVED FONT SIZE CHANGE */}
+                        {/* Número de Sequência Gigante - MUDANÇA DE TAMANHO DE FONTE PRESERVADA */}
                         <h1 className="text-4xl sm:text-4xl font-black text-white tracking-tighter leading-none drop-shadow-2xl relative z-10">
                             {currentStreak}
                         </h1>
@@ -98,14 +97,14 @@ export function StreakWeeklyGoalHybrid({
                             Semanas Consecutivas
                         </p>
 
-                        {/* Recorde - ABSOLUTE RIGHT - Visible on Mobile now */}
+                        {/* Recorde - ABSOLUTO DIREITA - Visível no Mobile agora */}
                         <div className="absolute right-0 top-0 flex items-center gap-1.5 sm:gap-2 text-[9px] sm:text-[10px] uppercase font-bold text-amber-500 bg-amber-500/5 px-2 py-1 sm:px-3 sm:py-1.5 rounded-lg border border-amber-500/10">
                             <Trophy size={14} className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                             <span>Recorde: {bestStreak}</span>
                         </div>
                     </div>
 
-                    {/* 2. WEEKLY GOAL PROGRESS */}
+                    {/* 2. PROGRESSO DA META SEMANAL */}
                     <div className="mb-6 px-2">
                         <div className="flex items-center justify-between mb-3 px-1">
                             <div className="flex items-center gap-2">
@@ -119,9 +118,9 @@ export function StreakWeeklyGoalHybrid({
                             </span>
                         </div>
 
-                        {/* Progress Bar Container */}
+                        {/* Container da Barra de Progresso */}
                         <div className="h-4 w-full bg-slate-900/80 rounded-full overflow-hidden border border-white/5 relative shadow-inner">
-                            {/* Animated Bar */}
+                            {/* Barra Animada */}
                             <div
                                 className="h-full bg-gradient-to-r from-cyan-400 to-blue-600 rounded-full relative overflow-hidden transition-all duration-1000 ease-out shadow-[0_0_20px_rgba(34,211,238,0.3)]"
                                 style={{ width: `${animatedProgress}%` }}
@@ -130,14 +129,14 @@ export function StreakWeeklyGoalHybrid({
                             </div>
                         </div>
 
-                        {/* Footer Text */}
+                        {/* Texto de Rodapé */}
                         <div className="mt-3 flex items-center justify-between text-xs font-medium text-slate-400 px-1">
                             <span>
                                 <strong className="text-white text-sm mr-1">{completedThisWeek}</strong>
                                 de {weeklyGoal} treinos
                             </span>
 
-                            {/* Risk Alert */}
+                            {/* Alerta de Risco */}
                             {isAtRisk && (
                                 <span className="text-red-400 flex items-center gap-1.5 bg-red-500/10 px-2 py-1 rounded-md border border-red-500/20">
                                     <AlertCircle size={12} />
@@ -147,12 +146,12 @@ export function StreakWeeklyGoalHybrid({
                         </div>
                     </div>
 
-                    {/* 3. CALENDAR GRID (Collapsible/Hybrid) */}
+                    {/* 3. GRADE DO CALENDÁRIO (Colapsável/Híbrido) */}
                     <div className="transition-all duration-500 ease-in-out">
                         <div className="bg-slate-900/20 rounded-[24px] p-4 sm:p-5 border border-white/5 backdrop-blur-sm">
 
-                            {/* Days Header */}
-                            <div className="grid grid-cols-7 gap-2 mb-4">
+                            {/* Cabeçalho dos Dias */}
+                            <div className="grid grid-cols-7 gap-2 mb-2 max-w-[340px] mx-auto">
                                 {['S', 'T', 'Q', 'Q', 'S', 'S', 'D'].map((day, i) => (
                                     <div key={i} className="text-center text-[10px] font-bold text-slate-600 uppercase tracking-wider">
                                         {day}
@@ -160,13 +159,13 @@ export function StreakWeeklyGoalHybrid({
                                 ))}
                             </div>
 
-                            {/* Days Grid */}
-                            <div className="grid grid-cols-7 gap-3 sm:gap-4 transition-all duration-500">
+                            {/* Grade dos Dias */}
+                            <div className="grid grid-cols-7 gap-2 transition-all duration-500 max-w-[340px] mx-auto">
                                 {(expanded ? (monthDays || []) : weekDays).map((day, idx) => {
                                     const todayDate = new Date();
                                     const isToday = day.dateNumber === todayDate.getDate() && !day.isOutsideMonth && !day.status?.includes('prev');
 
-                                    // Determine Status & Style
+                                    // Determinar Status e Estilo
                                     let status = day.status;
                                     if (!status) {
                                         if (day.trained) status = 'trained';
@@ -175,7 +174,7 @@ export function StreakWeeklyGoalHybrid({
                                     }
 
                                     const isTrained = status === 'trained';
-                                    const isRest = (status === 'rest' || status === 'prev_month_rest') && !isTrained; // Priority to trained
+                                    const isRest = (status === 'rest' || status === 'prev_month_rest') && !isTrained; // Prioridade para treinado
                                     const isFuture = status === 'future';
 
                                     return (
@@ -189,30 +188,30 @@ export function StreakWeeklyGoalHybrid({
                                                 ${isToday ? 'ring-[2px] ring-amber-400 ring-offset-4 ring-offset-[#020617] z-20 shadow-[0_0_20px_rgba(251,191,36,0.15)]' : ''}
                                             `}
                                         >
-                                            {/* Trained State: Glass Square + Check Overlay */}
+                                            {/* Estado Treinado: Quadrado de Vidro + Sobreposição de Check */}
                                             {isTrained && (
                                                 <>
-                                                    {/* Glass Gloss (Top Highlight) */}
+                                                    {/* Brilho de Vidro (Destaque Superior) */}
                                                     <div className="absolute inset-0 rounded-[22%] bg-gradient-to-b from-cyan-400/20 to-transparent pointer-events-none" />
 
-                                                    {/* Date Number - Centered (Behind Check) */}
+                                                    {/* Número da Data - Centralizado (Atrás do Check) */}
                                                     <span className="relative z-10 text-base sm:text-lg font-bold text-white drop-shadow-md">
                                                         {day.dateNumber}
                                                     </span>
 
-                                                    {/* Check Icon - Overlay (On Top, Transparent) */}
+                                                    {/* Ícone de Check - Sobreposição (No Topo, Transparente) */}
                                                     <div className="absolute inset-0 flex items-center justify-center z-20 opacity-30 mix-blend-overlay">
                                                         <Check size={28} className="text-white drop-shadow-sm" strokeWidth={4} />
                                                     </div>
                                                 </>
                                             )}
 
-                                            {/* Rest State: Moon Icon */}
+                                            {/* Estado de Descanso: Ícone de Lua */}
                                             {isRest && (
                                                 <Moon size={14} className="text-indigo-400/60 transition-colors group-hover:text-indigo-400" strokeWidth={2} />
                                             )}
 
-                                            {/* Standard/Future/Today Empty State: Number */}
+                                            {/* Estado Padrão/Futuro/Hoje Vazio: Número */}
                                             {(!isTrained && !isRest) && (
                                                 <span className={`text-xs font-semibold ${isToday ? 'text-white' : 'text-slate-600 group-hover:text-slate-400'}`}>
                                                     {day.dateNumber}
@@ -223,7 +222,7 @@ export function StreakWeeklyGoalHybrid({
                                 })}
                             </div>
 
-                            {/* Legend - Clean & Minimal */}
+                            {/* Legenda - Limpa e Minimalista */}
                             <div className="flex justify-center gap-6 mt-8">
                                 <div className="flex items-center gap-2">
                                     <div className="w-2.5 h-2.5 rounded-[4px] bg-slate-700/50 border border-white/20 flex items-center justify-center">
@@ -244,7 +243,7 @@ export function StreakWeeklyGoalHybrid({
                         </div>
                     </div>
 
-                    {/* Expand/Collapse Trigger */}
+                    {/* Gatilho de Expandir/Colapsar */}
                     <div className="flex justify-center mt-4">
                         <button
                             type="button"

@@ -45,8 +45,8 @@ function format(a, value) {
 }
 
 /**
- * Calculates user statistics from workout sessions history.
- * @param {Array} sessions - Array of workout sessions sorted by date (any order, will be sorted internally if needed).
+ * Calcula estatísticas do usuário a partir do histórico de sessões.
+ * @param {Array} sessions - Array de sessões de treino ordenadas por data (qualquer ordem, será ordenado internamente se necessário).
  * @returns {Object} stats object for evaluateAchievements
  */
 export function calculateStats(sessions) {
@@ -64,7 +64,7 @@ export function calculateStats(sessions) {
         };
     }
 
-    // Sort by date ascending for PR calculation and Streak
+    // Ordenar por data ascendente para cálculo de PR e Streak
     const sortedSessions = [...sessions].sort((a, b) => {
         const dateA = a.completedAt?.toDate ? a.completedAt.toDate() : new Date(a.completedAt || 0);
         const dateB = b.completedAt?.toDate ? b.completedAt.toDate() : new Date(b.completedAt || 0);
@@ -78,7 +78,7 @@ export function calculateStats(sessions) {
     let prsCount = 0;
     let distinctExercisesSet = new Set();
 
-    // Maps for PR tracking: exerciseName -> maxWeight
+    // Mapas para rastrear PR: nomeExercício -> pesoMax
     const exerciseMaxWeight = {};
 
     const now = new Date();
@@ -89,7 +89,7 @@ export function calculateStats(sessions) {
     let workoutsLast7Days = 0;
     let workoutsCurrentYear = 0;
 
-    // Streak Calculation Helpers
+    // Auxiliares de Cálculo de Streak
     let currentStreak = 0;
     let lastDate = null;
 
@@ -102,20 +102,20 @@ export function calculateStats(sessions) {
         if (date >= oneWeekAgo) workoutsLast7Days++;
         if (date >= startOfYear) workoutsCurrentYear++;
 
-        // Streak Logic (simplified: check if same day or next day)
-        // Actually, strictly consecutive days. 
-        // Needs to handle multiple workouts same day.
+        // Lógica de Streak (simplificada: verifica se é mesmo dia ou dia seguinte)
+        // Na verdade, dias estritamente consecutivos. 
+        // Precisa lidar com múltiplos treinos no mesmo dia.
         if (lastDate) {
-            const diffTime = Math.abs(date - lastDate);
-            const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+            // const diffTime = Math.abs(date - lastDate);
+            // const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
 
-            // Same day: ignore
+            // Mesmo dia: ignorar
             const isSameDay = date.getDate() === lastDate.getDate() &&
                 date.getMonth() === lastDate.getMonth() &&
                 date.getFullYear() === lastDate.getFullYear();
 
             if (!isSameDay) {
-                // Check if it is the very next day
+                // Verificar se é o dia seguinte
                 // Construct midnight dates for comparison
                 const d1 = new Date(lastDate); d1.setHours(0, 0, 0, 0);
                 const d2 = new Date(date); d2.setHours(0, 0, 0, 0);
@@ -124,7 +124,7 @@ export function calculateStats(sessions) {
                 if (diffDaysMidnight === 1) {
                     currentStreak++;
                 } else {
-                    currentStreak = 1; // Reset streak if gap > 1 day
+                    currentStreak = 1; // Resetar streak se intervalo > 1 dia
                 }
             }
         } else {
@@ -133,20 +133,20 @@ export function calculateStats(sessions) {
         lastDate = date;
 
 
-        // Exercise Details
-        const exercises = session.results || session.exercises || []; // Support legacy/new layout
+        // Detalhes do Exercício
+        const exercises = session.results || session.exercises || []; // Suporte a layout novo/legado
 
-        // Helper to iterate exercises
+        // Auxiliar para iterar exercícios
         const processExercise = (name, sets) => {
             distinctExercisesSet.add(name);
             let sessionMaxWeight = 0;
 
             if (Array.isArray(sets)) {
-                // New structure: sets array
+                // Nova estrutura: array de séries
                 sets.forEach(set => {
                     const w = Number(set.weight) || 0;
                     const r = Number(set.reps) || 0;
-                    const isCompleted = set.completed !== false; // Assume true if undefined
+                    const isCompleted = set.completed !== false; // Assumir true se indefinido
 
                     if (isCompleted && w > 0 && r > 0) {
                         totalSets++;
@@ -156,30 +156,30 @@ export function calculateStats(sessions) {
                     }
                 });
             } else {
-                // Legacy structure: might be single object {weight, reps}
+                // Estrutura legada: pode ser objeto único {weight, reps}
                 const w = Number(sets.weight) || 0;
                 const r = Number(sets.reps) || 0;
                 if (w > 0 && r > 0) {
-                    totalSets++; // Assume 1 set
+                    totalSets++; // Assumir 1 série
                     totalReps += r;
                     totalTonnageKg += (w * r);
                     sessionMaxWeight = w;
                 }
             }
 
-            // PR Check
+            // Verificação de PR
             if (sessionMaxWeight > 0) {
                 const currentMax = exerciseMaxWeight[name] || 0;
                 if (sessionMaxWeight > currentMax) {
                     if (currentMax > 0) {
-                        // Only count as PR if it beats a previous positive record? 
-                        // Or is first time a PR? Usually first time is a PR too (New PR!).
-                        // User catalog says "Primeiro PR", "10 PRs".
-                        // If I count every first exercise as a PR, users get lots of PRs initially.
-                        // But strictly speaking, a PB is a PB.
+                        // Contar apenas como PR se superar um recorde positivo anterior? 
+                        // Ou a primeira vez é um PR? Geralmente primeira vez é PR também (Novo PR!).
+                        // Catálogo do usuário diz "Primeiro PR", "10 PRs".
+                        // Se eu contar todo primeiro exercício como PR, usuários terão muitos PRs inicialmente.
+                        // Mas estritamente falando, um PB é um PB.
                         prsCount++;
                     } else {
-                        // First time doing exercise is technically a PR.
+                        // Primeira vez fazendo exercício é tecnicamente um PR.
                         prsCount++;
                     }
                     exerciseMaxWeight[name] = sessionMaxWeight;
@@ -207,7 +207,7 @@ export function calculateStats(sessions) {
         totalSets,
         totalReps,
         prsCount,
-        prsCount,
+
         distinctExercises: distinctExercisesSet.size,
         exerciseMaxes: exerciseMaxWeight
     };

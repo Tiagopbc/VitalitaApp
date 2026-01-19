@@ -15,10 +15,10 @@ export function CyanSystemButton({
     showIcon = true
 }) {
 
-    // ========== STATE ==========
+    // ========== ESTADO ==========
     const [isHovered, setIsHovered] = useState(false);
 
-    // ========== HANDLERS ==========
+    // ========== MANIPULADORES ==========
     const handleClick = () => {
         // Vibração háptica (mobile)
         if (navigator.vibrate) {
@@ -31,11 +31,11 @@ export function CyanSystemButton({
         }
     };
 
-    // ========== RENDER ==========
+    // ========== RENDERIZAÇÃO ==========
     return (
         <div style={{ position: 'relative', width: '100%' }}>
 
-            {/* ==================== BORDER GLOW (CAMADA DE FUNDO) ==================== */}
+            {/* ==================== BRILHO DA BORDA (CAMADA DE FUNDO) ==================== */}
             <div
                 style={{
                     // Posicionamento
@@ -49,13 +49,13 @@ export function CyanSystemButton({
                     backgroundImage: 'linear-gradient(135deg, #3abff8, #0ea5e9, #1d4ed8, #06b6d4)',
                     backgroundSize: '300% 300%', // Maior que 100% para permitir movimento
 
-                    // Blur Effect Replacement (Shadow respects border-radius better)
+                    // Substituição do Efeito de Destaque (Sombra respeita melhor o border-radius)
                     boxShadow: '0 0 15px rgba(58, 191, 248, 0.6), inset 0 0 4px rgba(255,255,255,0.2)',
                     opacity: 0.8,
 
                     // Animação
                     animation: 'gradient-shift 8s ease infinite',
-                    transform: 'translateZ(0)', // Force GPU layer
+                    transform: 'translateZ(0)', // Forçar camada da GPU
                 }}
             />
 
@@ -93,7 +93,7 @@ export function CyanSystemButton({
                     letterSpacing: '0.5px',
                     textTransform: 'uppercase',
 
-                    // ===== SOMBRAS & GLOW =====
+                    // ===== SOMBRAS E BRILHO =====
                     boxShadow: isHovered
                         ? `0 12px 40px rgba(0, 0, 0, 0.5),
                0 0 30px rgba(58, 191, 248, 0.6),

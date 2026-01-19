@@ -16,7 +16,7 @@ export function ProtectedRoute({ children }) {
     }
 
     if (!user) {
-        // Redirect to login, saving the current location to redirect back after login
+        // Redireciona para o login, salvando a localização atual para redirecionar de volta após o login
         return <Navigate to="/login" state={{ from: location }} replace />;
     }
 

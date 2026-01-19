@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-// import { db } from './firebaseConfig'; // Removed direct usage
+// import { db } from './firebaseConfig'; // Uso direto removido
 import { workoutService } from '../services/workoutService';
 import {
     TrendingUp,
@@ -14,19 +14,19 @@ import { EvolutionChart } from '../components/analytics/EvolutionChart';
 import { WorkoutDetailsModal } from '../components/history/WorkoutDetailsModal';
 
 function HistoryPage({ onBack, initialTemplate, initialExercise, user, isEmbedded = false }) {
-    // Tab State: 'journal' | 'analytics'
+    // Estado da Aba: 'journal' | 'analytics'
     const [activeTab, setActiveTab] = useState('journal');
 
-    // --- JOURNAL STATE ---
+    // --- ESTADO DO DIÁRIO ---
     const [sessions, setSessions] = useState([]);
     const [fetchingMore, setFetchingMore] = useState(false);
     const [loadingSessions, setLoadingSessions] = useState(false);
     const [lastDocJournal, setLastDocJournal] = useState(null);
     const [hasMoreJournal, setHasMoreJournal] = useState(false);
 
-    // ... (Analytics State) ...
+    // ... (Estado de Análise) ...
 
-    // ================= JOURNAL LOGIC =================
+    // ================= LÓGICA DO DIÁRIO =================
     useEffect(() => {
         if (activeTab === 'journal') {
             loadJournal(true);
@@ -39,7 +39,7 @@ function HistoryPage({ onBack, initialTemplate, initialExercise, user, isEmbedde
         else setFetchingMore(true);
         try {
             const startDoc = reset ? null : lastDocJournal;
-            // Fetch generic history (no template filter)
+            // Buscar histórico genérico (sem filtro de template)
             const result = await workoutService.getHistory(user.uid, null, startDoc, 20);
 
             const loadedSessions = result.data.map(data => ({
@@ -61,7 +61,7 @@ function HistoryPage({ onBack, initialTemplate, initialExercise, user, isEmbedde
 
         } catch (err) {
             console.error("Error fetching sessions:", err);
-            // Handle error (maybe toast or alert)
+            // Lidar com erro (talvez toast ou alerta)
         } finally {
             setLoadingSessions(false);
             setFetchingMore(false);
@@ -77,7 +77,7 @@ function HistoryPage({ onBack, initialTemplate, initialExercise, user, isEmbedde
         }).format(date); // Ex: "Ter., 15 de out."
     }
 
-    // --- GROUPING LOGIC ---
+    // --- LÓGICA DE AGRUPAMENTO ---
     const groupedSessions = useMemo(() => {
         if (!sessions.length) return {};
         const groups = {};
@@ -125,10 +125,10 @@ function HistoryPage({ onBack, initialTemplate, initialExercise, user, isEmbedde
         return `${session.exercisesCount || exerciseList.length} exercícios`;
     };
 
-    // --- MODAL STATE ---
+    // --- ESTADO DO MODAL ---
     const [selectedSessionForDetails, setSelectedSessionForDetails] = useState(null);
 
-    // --- ANALYTICS STATE (Existing) ---
+    // --- ESTADO DE ANÁLISE (Existente) ---
     const [templates, setTemplates] = useState([]);
     const [selectedTemplate, setSelectedTemplate] = useState('');
     const [exerciseOptions, setExerciseOptions] = useState([]);
@@ -137,15 +137,15 @@ function HistoryPage({ onBack, initialTemplate, initialExercise, user, isEmbedde
     const [prRows, setPrRows] = useState([]);
     const [loadingTemplates, setLoadingTemplates] = useState(true);
     const [loadingHistory, setLoadingHistory] = useState(false);
-    const [error, setError] = useState('');
 
-    // --- CHART STATE ---
+
+    // --- ESTADO DO GRÁFICO ---
     const [chartData, setChartData] = useState([]);
     const [chartRange, setChartRange] = useState('3M'); // 1M, 3M, 6M, 1Y, ALL
 
     const hasAppliedInitialFilters = useRef(false);
 
-    // Initial Filter Layout
+    // Layout de Filtro Inicial
     useEffect(() => {
         if (initialTemplate || initialExercise) {
             setActiveTab('analytics');
@@ -153,15 +153,14 @@ function HistoryPage({ onBack, initialTemplate, initialExercise, user, isEmbedde
     }, [initialTemplate, initialExercise]);
 
 
-    // ================= ANALYTICS LOGIC =================
+    // ================= LÓGICA DE ANÁLISE =================
     useEffect(() => {
         async function fetchTemplates() {
             if (activeTab !== 'analytics') return;
 
             setLoadingTemplates(true);
-            setError('');
             try {
-                // Use Service
+                // Usar Serviço
                 const list = await workoutService.getTemplates(user.uid);
                 setTemplates(list);
 
@@ -175,7 +174,6 @@ function HistoryPage({ onBack, initialTemplate, initialExercise, user, isEmbedde
                 }
             } catch (err) {
                 console.error('Erro ao carregar templates do histórico', err);
-                setError('Não foi possível carregar os treinos');
             } finally {
                 setLoadingTemplates(false);
             }
@@ -217,34 +215,33 @@ function HistoryPage({ onBack, initialTemplate, initialExercise, user, isEmbedde
         async function fetchHistory() {
             if (activeTab !== 'analytics' || !selectedTemplate || !selectedExercise || !user) {
                 if (activeTab !== 'analytics') {
-                    // Don't clear rows if just tab switching, but logic reruns anyway.
-                    // Actually let's assume if we leave tab we might keep state? 
-                    // React state persists unless component unmounts.
-                    // But conditional rendering might unmount sub-components. 
-                    // We are keeping state in parent.
+                    // Não limpar linhas se apenas trocar de aba, mas a lógica roda de qualquer jeito.
+                    // Na verdade, vamos assumir que se sairmos da aba podemos manter o estado? 
+                    // O estado do React persiste a menos que o componente desmonte.
+                    // Mas renderização condicional pode desmontar subcomponentes. 
+                    // Estamos mantendo estado no pai.
                 }
                 return;
             }
 
             setLoadingHistory(true);
-            setError('');
             try {
-                // Determine limit based on range? Or just fetch last 100 for analytics context
-                // For a proper chart, we might need more. 
-                // Using 100 as a safe upper bound for now to prevent "excessive data".
-                // Ideally this would be dynamic or use a specific "getAnalytics" service method.
+                // Determinar limite baseado no intervalo? Ou buscar os últimos 100 para contexto de análise
+                // Para um gráfico adequado, podemos precisar de mais. 
+                // Usando 100 como limite seguro por enquanto para evitar "excesso de dados".
+                // Idealmente isso seria dinâmico ou usaria um método de serviço específico "getAnalytics".
                 const result = await workoutService.getHistory(user.uid, selectedTemplate, null, 100);
 
                 const rows = [];
                 const prMap = new Map();
 
-                // Service returns { data, lastDoc, hasMore }
-                // Data is already an array of objects.
-                // We need to sort descending by date for the loop (consistent with previous logic).
-                // Service default sort (if index exists) is completedAt desc.
+                // Serviço retorna { data, lastDoc, hasMore }
+                // Data já é um array de objetos.
+                // Precisamos ordenar decrescente por data para o loop (consistente com lógica anterior).
+                // Ordenação padrão do serviço (se índice existir) é completedAt desc.
 
-                // If service failed to sort (no index), we sort client side.
-                // Note: result.data items have completedAt as Timestamp (or date if service converted it? Service converts? No, service returns .data() so it's Timestamp)
+                // Se serviço falhou ao ordenar (sem índice), ordenamos no cliente.
+                // Nota: items result.data têm completedAt como Timestamp (ou data se serviço converteu? Serviço converte? Não, serviço retorna .data() então é Timestamp)
 
                 const docs = result.data.sort((a, b) => {
                     const dateA = a.completedAt?.toDate?.() || 0;
@@ -253,15 +250,15 @@ function HistoryPage({ onBack, initialTemplate, initialExercise, user, isEmbedde
                 });
 
                 docs.forEach((data) => {
-                    const docId = data.id;
+                    // const docId = data.id; // Não usado
                     const results = data.results || data.exercises || [];
 
-                    // Handle new structure where exercises is an array
+                    // Lidar com nova estrutura onde exercises é um array
                     let exerciseData = null;
                     if (Array.isArray(results)) {
                         exerciseData = results.find(e => e.name === selectedExercise);
                     } else {
-                        exerciseData = results[selectedExercise]; // Legacy map support
+                        exerciseData = results[selectedExercise]; // Suporte a mapa legado
                     }
 
                     if (!exerciseData) return;
@@ -269,7 +266,7 @@ function HistoryPage({ onBack, initialTemplate, initialExercise, user, isEmbedde
                     const completedAt = data.completedAt?.toDate?.() || null;
                     if (!completedAt) return;
 
-                    // ADAPTER: Find "Best Set" (Max Weight)
+                    // ADAPTADOR: Encontrar "Melhor Série" (Peso Máx)
                     let bestWeight = 0;
                     let bestReps = 0;
 
@@ -295,7 +292,7 @@ function HistoryPage({ onBack, initialTemplate, initialExercise, user, isEmbedde
                         notes: exerciseData.notes || '',
                     });
 
-                    // PR Logic
+                    // Lógica de PR
                     const key = String(bestWeight);
                     const existing = prMap.get(key);
                     if (!existing || bestReps > existing.reps) {
@@ -303,7 +300,7 @@ function HistoryPage({ onBack, initialTemplate, initialExercise, user, isEmbedde
                     }
                 });
 
-                // Filter rows based on Range
+                // Filtrar linhas com base no Período
                 const now = new Date();
                 const rangeDate = new Date();
                 if (chartRange === '1M') rangeDate.setMonth(now.getMonth() - 1);
@@ -314,10 +311,10 @@ function HistoryPage({ onBack, initialTemplate, initialExercise, user, isEmbedde
 
                 const filteredRows = rows.filter(r => r.date >= rangeDate);
 
-                // Sort for list
+                // Ordenar para lista
                 setHistoryRows(rows);
 
-                // Sort for chart (ascending date) & Format
+                // Ordenar para gráfico (data ascendente) & Formatar
                 const chartDataParsed = filteredRows
                     .sort((a, b) => a.date - b.date)
                     .map(r => ({
@@ -331,7 +328,7 @@ function HistoryPage({ onBack, initialTemplate, initialExercise, user, isEmbedde
                 setPrRows(Array.from(prMap.values()).sort((a, b) => a.weight - b.weight));
             } catch (err) {
                 console.error('Erro ao carregar histórico', err);
-                setError('Não foi possível carregar o histórico');
+                console.error('Erro ao carregar histórico', err);
             } finally {
                 setLoadingHistory(false);
             }
@@ -342,7 +339,7 @@ function HistoryPage({ onBack, initialTemplate, initialExercise, user, isEmbedde
 
     return (
         <div className="min-h-screen bg-[#020617] pb-32">
-            {/* --- HEADER --- */}
+            {/* --- CABEÇALHO --- */}
             <div className="sticky top-0 z-40 bg-[#020617]/80 backdrop-blur-md border-b border-slate-800/50 pt-4 px-4 pb-4">
                 <div className="w-full max-w-5xl mx-auto space-y-4">
 
@@ -362,7 +359,7 @@ function HistoryPage({ onBack, initialTemplate, initialExercise, user, isEmbedde
                         </div>
                     )}
 
-                    {/* TABS */}
+                    {/* ABAS */}
                     <div className="grid grid-cols-2 bg-slate-900/50 p-1 rounded-xl border border-slate-800">
                         <button
                             onClick={() => setActiveTab('journal')}
@@ -387,11 +384,11 @@ function HistoryPage({ onBack, initialTemplate, initialExercise, user, isEmbedde
             </div>
 
             <div className="px-4 py-6 w-full max-w-5xl mx-auto">
-                {/* === JOURNAL VIEW === */}
+                {/* === VISÃO DE DIÁRIO === */}
                 {activeTab === 'journal' && (
                     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
 
-                        {/* 2. LIST */}
+                        {/* 2. LISTA */}
                         {loadingSessions ? (
                             <div className="py-20 text-center">
                                 <Activity className="animate-spin w-8 h-8 text-cyan-500 mx-auto mb-4" />
@@ -417,7 +414,7 @@ function HistoryPage({ onBack, initialTemplate, initialExercise, user, isEmbedde
                                                     style={{ animationDelay: `${idx * 50}ms` }}
                                                     onClick={() => setSelectedSessionForDetails(session)}
                                                 >
-                                                    {/* Decorative gradient overlay on hover */}
+                                                    {/* Sobreposição de gradiente decorativo no hover */}
                                                     <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/0 via-cyan-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
 
                                                     <div className="flex justify-between items-start mb-3 relative z-10">
@@ -437,7 +434,7 @@ function HistoryPage({ onBack, initialTemplate, initialExercise, user, isEmbedde
                                                         </div>
                                                     </div>
 
-                                                    {/* Highlight / Stats */}
+                                                    {/* Destaque / Estatísticas */}
                                                     <div className="flex items-center gap-2 relative z-10">
                                                         <div className="px-2.5 py-1.5 rounded-lg bg-slate-950/50 border border-slate-800/50 flex items-center gap-2">
                                                             <TrendingUp size={12} className="text-slate-400" />
@@ -475,7 +472,7 @@ function HistoryPage({ onBack, initialTemplate, initialExercise, user, isEmbedde
                     </div>
                 )}
 
-                {/* === ANALYTICS VIEW === */}
+                {/* === VISÃO DE ANÁLISE === */}
                 {activeTab === 'analytics' && (
                     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
                         {loadingTemplates ? (
@@ -485,7 +482,7 @@ function HistoryPage({ onBack, initialTemplate, initialExercise, user, isEmbedde
                             </div>
                         ) : (
                             <>
-                                {/* Filters */}
+                                {/* Filtros */}
                                 <div className="space-y-3 bg-slate-900/50 p-4 rounded-2xl border border-slate-800/50">
                                     <div className="flex flex-col gap-1.5">
                                         <label className="text-xs font-bold text-slate-400 uppercase ml-1">Rotina</label>
@@ -517,7 +514,7 @@ function HistoryPage({ onBack, initialTemplate, initialExercise, user, isEmbedde
                                     </div>
                                 </div>
 
-                                {/* Chart Section */}
+                                {/* Seção de Gráfico */}
                                 {selectedTemplate && selectedExercise && (
                                     <div className="space-y-3">
                                         <div className="flex justify-between items-center px-1">
@@ -541,12 +538,12 @@ function HistoryPage({ onBack, initialTemplate, initialExercise, user, isEmbedde
                                     </div>
                                 )}
 
-                                {/* Results */}
+                                {/* Resultados */}
                                 {loadingHistory ? (
                                     <div className="py-10 text-center"><p className="text-slate-500">Buscando histórico...</p></div>
                                 ) : historyRows.length > 0 ? (
                                     <>
-                                        {/* PR Section */}
+                                        {/* Seção de PR */}
                                         {prRows.length > 0 && (
                                             <div className="bg-gradient-to-br from-amber-500/10 to-orange-600/10 border border-amber-500/20 rounded-2xl p-4">
                                                 <div className="flex items-center gap-2 mb-3">
@@ -564,7 +561,7 @@ function HistoryPage({ onBack, initialTemplate, initialExercise, user, isEmbedde
                                             </div>
                                         )}
 
-                                        {/* Detailed List */}
+                                        {/* Lista Detalhada */}
                                         <div className="space-y-2">
                                             <h3 className="font-bold text-slate-400 uppercase tracking-wide text-xs pl-1">Histórico Completo</h3>
                                             <div className="space-y-2">
@@ -597,7 +594,7 @@ function HistoryPage({ onBack, initialTemplate, initialExercise, user, isEmbedde
                     </div>
                 )}
             </div>
-            {/* DETAILS MODAL */}
+            {/* MODAL DE DETALHES */}
             {
                 selectedSessionForDetails && (
                     <WorkoutDetailsModal

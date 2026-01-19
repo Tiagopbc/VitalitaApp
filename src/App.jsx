@@ -11,7 +11,7 @@ import { BottomNavEnhanced } from './BottomNavEnhanced';
 import { DesktopSidebar } from './DesktopSidebar';
 import { ProtectedRoute } from './components/ProtectedRoute';
 
-// Lazy Load Heavy Pages
+// Carregamento Lazy de Páginas Pesadas
 const HistoryPage = React.lazy(() => import('./pages/HistoryPage'));
 const MethodsPage = React.lazy(() => import('./pages/MethodsPage'));
 const CreateWorkoutPage = React.lazy(() => import('./pages/CreateWorkoutPage'));
@@ -20,11 +20,10 @@ const WorkoutsPage = React.lazy(() => import('./pages/WorkoutsPage'));
 const WorkoutExecutionPage = React.lazy(() => import('./pages/WorkoutExecutionPage').then(module => ({ default: module.WorkoutExecutionPage })));
 const TrainerDashboard = React.lazy(() => import('./pages/TrainerDashboard').then(module => ({ default: module.TrainerDashboard })));
 
-import LoginPage from './pages/LoginPage'; // Keep generic login fast (or lazy load too if large)
+import LoginPage from './pages/LoginPage'; // Manter login genérico rápido (ou carregar via lazy load também se for grande)
 import { userService } from './services/userService';
 import { useAuth } from './AuthContext';
-import { db } from './firebaseConfig';
-import { doc, onSnapshot } from 'firebase/firestore'; // Clean up if specific import not needed
+import { onSnapshot } from 'firebase/firestore'; // Limpar se importação específica não for necessária
 import './style.css';
 import { WorkoutProvider, useWorkout } from './context/WorkoutContext';
 
@@ -54,12 +53,12 @@ function AppContentWithProvider() {
 
 function AppContent() {
     const { user, authLoading, logout } = useAuth();
-    const { startWorkout, finishWorkout } = useWorkout(); // Use context
+    const { startWorkout, finishWorkout } = useWorkout(); // Usar contexto
     const [isTrainer, setIsTrainer] = useState(false);
     const navigate = useNavigate();
     const location = useLocation();
 
-    // Check Trainer Status
+    // Verificar Status de Treinador
     useEffect(() => {
         if (!user) {
             setIsTrainer(false);
@@ -78,9 +77,9 @@ function AppContent() {
         checkTrainerStatus();
     }, [user]);
 
-    // --- REAL-TIME SYNC FOR ACTIVE WORKOUT MOVED TO CONTEXT ---
+    // --- SINCRONIZAÇÃO EM TEMPO REAL PARA TREINO ATIVO MOVIDA PARA O CONTEXTO ---
 
-    // Handlers
+    // Manipuladores
     function handleLogout() {
         localStorage.removeItem('activeWorkoutId');
         clearWelcomeFlags();
@@ -88,7 +87,7 @@ function AppContent() {
         navigate('/login');
     }
 
-    // Welcome Modal Logic
+    // Lógica do Modal de Boas-vindas
     const [welcomeOpen, setWelcomeOpen] = useState(false);
     const [welcomeCanceled, setWelcomeCanceled] = useState(false);
     const [welcomeSeconds, setWelcomeSeconds] = useState(10);
@@ -117,7 +116,7 @@ function AppContent() {
         }
     }, [user]);
 
-    // ... (Welcome timer effects kept same/simplified)
+    // ... (Efeitos do timer de boas-vindas mantidos/simplificados)
     useEffect(() => {
         if (!welcomeOpen || welcomeCanceled) return;
         const id = window.setInterval(() => {
@@ -142,7 +141,7 @@ function AppContent() {
     function handleWelcomeOverlayClick(e) { if (e.target === e.currentTarget) handleWelcomeGo(); }
 
 
-    // Navigation Helpers
+    // Auxiliares de Navegação
     function handleCreateWorkout(workoutToEdit = null, context = null) {
         navigate('/create', { state: { initialData: workoutToEdit, creationContext: context } });
     }
@@ -179,7 +178,7 @@ function AppContent() {
         );
     }
 
-    // Header Logic
+    // Lógica do Cabeçalho
     const showHeader = location.pathname !== '/login' && location.pathname !== '/' && !location.pathname.startsWith('/execute');
 
     return (
@@ -188,7 +187,7 @@ function AppContent() {
             <div className="fixed inset-0 bg-slate-950 z-[-2]" />
             <div className="fixed inset-0 bg-[radial-gradient(ellipse_at_top,rgba(59,130,246,0.15),transparent_50%)] z-[-1]" />
 
-            {/* Layout Components (Sidebar/BottomNav) */}
+            {/* Componentes de Layout (Barra Lateral/Navegação Inferior) */}
             {user && !location.pathname.startsWith('/execute') && location.pathname !== '/login' && (
                 <>
                     <DesktopSidebar
@@ -207,7 +206,7 @@ function AppContent() {
                 </>
             )}
 
-            {/* Main Content */}
+            {/* Conteúdo Principal */}
             <div className={`w-full min-h-screen transition-all duration-300 relative flex flex-col ${user && !location.pathname.startsWith('/execute') && location.pathname !== '/login'
                 ? 'pt-[calc(2rem+env(safe-area-inset-top))] pb-32 lg:pb-8 lg:pt-8 lg:pl-64'
                 : ''
@@ -235,7 +234,7 @@ function AppContent() {
                                         onNavigateToWorkout={startWorkout}
                                         onNavigateToHistory={handleOpenHistory}
                                         onNavigateToAchievements={() => navigate('/profile')}
-                                        onNavigateToVolumeAnalysis={() => navigate('/profile')} // TODO: separate route
+                                        onNavigateToVolumeAnalysis={() => navigate('/profile')} // TODO: rota separada
                                         onNavigateToMyWorkouts={() => navigate('/workouts')}
                                         user={user}
                                     />
@@ -323,7 +322,7 @@ function AppContent() {
     );
 }
 
-// Wrappers to handle location state props
+// Wrappers para lidar com props do estado de localização
 function CreateWorkoutWrapper({ user }) {
     const location = useLocation();
     const navigate = useNavigate();
@@ -357,7 +356,7 @@ function HistoryPageWrapper({ user }) {
 function MethodsWrapper() {
     const location = useLocation();
     const navigate = useNavigate();
-    const { from, initialMethod } = location.state || {}; // from 'home' or 'workout'
+    const { from, initialMethod } = location.state || {}; // de 'home' ou 'workout'
 
     return (
         <MethodsPage
@@ -371,6 +370,7 @@ import { useParams } from 'react-router-dom';
 function ExecutionWrapper({ user }) {
     const { workoutId } = useParams();
     const navigate = useNavigate();
+    const { finishWorkout } = useWorkout();
 
     return (
         <WorkoutExecutionPage

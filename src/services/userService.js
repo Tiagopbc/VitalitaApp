@@ -16,7 +16,7 @@ import {
 
 export const userService = {
     /**
-     * Check if user is a trainer
+     * Verificar se usuário é um treinador
      * @param {string} userId 
      * @returns {Promise<boolean>}
      */
@@ -30,9 +30,9 @@ export const userService = {
     },
 
     /**
-     * Get user profile by ID
+     * Obter perfil de usuário por ID
      * @param {string} userId 
-     * @returns {Promise<Object>} User data or null if not found
+     * @returns {Promise<Object>} Dados do usuário ou null se não encontrado
      */
     async getUserProfile(userId) {
         const docRef = doc(db, 'users', userId);
@@ -41,25 +41,25 @@ export const userService = {
     },
 
     /**
-     * Update user profile
+     * Atualizar perfil de usuário
      * @param {string} userId 
      * @param {Object} data 
      */
     async updateUserProfile(userId, data) {
         const docRef = doc(db, 'users', userId);
-        // Only update, assuming doc exists. If not, setDoc with merge?
-        // Usually profile exists.
+        // Apenas atualizar, assumindo que doc existe. Se não, setDoc com merge?
+        // Geralmente perfil existe.
         await updateDoc(docRef, data);
     },
 
     /**
-     * Link student to trainer
+     * Vincular estudante ao treinador
      * @param {string} studentId 
      * @param {string} trainerCode (trainerId)
      * @returns {Promise<void>}
      */
     async linkTrainer(studentId, trainerCode) {
-        // Check if trainer exists
+        // Verificar se treinador existe
         const trainerRef = doc(db, 'users', trainerCode);
         const trainerSnap = await getDoc(trainerRef);
 
@@ -67,7 +67,7 @@ export const userService = {
             throw new Error("PERSONAL_NOT_FOUND");
         }
 
-        // Check if link already exists? (Optional validation)
+        // Verificar se vínculo já existe? (Validação opcional)
         const q = query(
             collection(db, 'trainer_students'),
             where('studentId', '==', studentId),
@@ -78,7 +78,7 @@ export const userService = {
             throw new Error("ALREADY_LINKED");
         }
 
-        // Create Link
+        // Criar Vínculo
         await addDoc(collection(db, 'trainer_students'), {
             trainerId: trainerCode,
             studentId,
@@ -88,7 +88,7 @@ export const userService = {
     },
 
     /**
-     * Get list of students for a trainer
+     * Obter lista de estudantes para um treinador
      * @param {string} trainerId 
      * @returns {Promise<Array>}
      */
@@ -100,7 +100,7 @@ export const userService = {
         const snap = await getDocs(q);
         const links = snap.docs.map(d => d.data());
 
-        // Fetch student details
+        // Buscar detalhes do estudante
         const students = await Promise.all(links.map(async (link) => {
             const studentDoc = await getDoc(doc(db, 'users', link.studentId));
             if (studentDoc.exists()) {
@@ -113,7 +113,7 @@ export const userService = {
     },
 
     /**
-     * Unlink a student from a trainer
+     * Desvincular um estudante de um treinador
      * @param {string} studentId 
      * @param {string} trainerId 
      */
@@ -125,13 +125,13 @@ export const userService = {
         );
         const snap = await getDocs(q);
 
-        // Delete all matching links (should be one)
+        // Deletar todos os links correspondentes (deve haver um)
         const deletePromises = snap.docs.map(d => deleteDoc(d.ref));
         await Promise.all(deletePromises);
     },
 
     /**
-     * Set the user's active workout
+     * Definir treino ativo do usuário
      * @param {string} userId 
      * @param {string} workoutId 
      */
@@ -144,7 +144,7 @@ export const userService = {
     },
 
     /**
-     * Clear the user's active workout
+     * Limpar treino ativo do usuário
      * @param {string} userId 
      */
     async clearActiveWorkout(userId) {
@@ -156,29 +156,29 @@ export const userService = {
     },
 
     /**
-     * Update the active session data (Deep Sync)
+     * Atualizar dados da sessão ativa (Deep Sync)
      * @param {string} userId
      * @param {Object} sessionData - { exercises, elapsedSeconds, templateId }
      */
     async updateActiveSession(userId, sessionData) {
         const docRef = doc(db, 'active_workouts', userId);
-        // Use setDoc with merge to ensure document exists
+        // Usar setDoc com merge para garantir que o documento exista
         await setDoc(docRef, {
             ...sessionData,
             updatedAt: serverTimestamp(),
-            userId // Ensure ownership
+            userId // Garantir propriedade
         }, { merge: true });
     },
 
     /**
-     * Delete the active session (Cleanup)
+     * Deletar a sessão ativa (Limpeza)
      * @param {string} userId
      */
     async deleteActiveSession(userId) {
         const docRef = doc(db, 'active_workouts', userId);
         await deleteDoc(docRef);
 
-        // Also clear the flag in user profile to stop redirects
+        // Também limpar a flag no perfil do usuário para parar redirects
         await this.clearActiveWorkout(userId);
     }
 };

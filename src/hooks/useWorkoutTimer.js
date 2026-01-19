@@ -1,18 +1,18 @@
 import { useState, useEffect, useRef } from 'react';
 
 /**
- * Hook to manage workout timer
- * @param {boolean} running - Whether the timer should be running
- * @param {number} initialSeconds - Initial elapsed seconds (default 0)
+ * Hook para gerenciar cronômetro de treino
+ * @param {boolean} running - Se o cronômetro deve estar rodando
+ * @param {number} initialSeconds - Segundos iniciais decorridos (padrão 0)
  */
 export function useWorkoutTimer(running = true, initialSeconds = 0) {
     const [elapsedSeconds, setElapsedSeconds] = useState(initialSeconds);
     const intervalRef = useRef(null);
 
-    // Sync with initialSeconds if it changes essentially (e.g. loaded from persistence)
-    // But be careful not to overwrite running timer. 
-    // Usually initialSeconds is only relevant on mount or reset.
-    // For this use case, we trust the component to call setElapsedSeconds if needed externally.
+    // Sincronizar com initialSeconds se mudar essencialmente (e.g. carregado de persistência)
+    // Mas cuidado para não sobrescrever timer rodando. 
+    // Geralmente initialSeconds é relevante apenas na montagem ou reset.
+    // Para este caso de uso, confiamos que o componente chame setElapsedSeconds se necessário externamente.
 
     useEffect(() => {
         if (running) {
@@ -28,7 +28,7 @@ export function useWorkoutTimer(running = true, initialSeconds = 0) {
         };
     }, [running]);
 
-    // Manual controls if needed
+    // Controles manuais se necessário
     const pause = () => {
         if (intervalRef.current) clearInterval(intervalRef.current);
     };

@@ -18,18 +18,18 @@ export function PremiumToggle({ enabled, onChange }) {
                 }
             `}
         >
-            {/* Knob */}
+            {/* Botão (Knob) */}
             <div
                 className={`
                     absolute top-[2px] w-6 h-6 rounded-full bg-white shadow-sm flex items-center justify-center transition-all duration-300 cubic-bezier(0.68,-0.55,0.27,1.55)
                     ${enabled ? 'left-[calc(100%-26px)] scale-110' : 'left-[2px] scale-100'}
                 `}
             >
-                {/* Internal Shine */}
+                {/* Brilho Interno */}
                 <div className="absolute top-0.5 left-0.5 w-2 h-2 rounded-full bg-gradient-to-br from-white to-transparent opacity-60" />
             </div>
 
-            {/* Icons */}
+            {/* Ícones */}
             {enabled ? (
                 <Check
                     size={12}

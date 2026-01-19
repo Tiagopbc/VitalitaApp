@@ -11,7 +11,7 @@ export function PremiumInput({ label, value, onChange, placeholder, type = 'text
 
     return (
         <div className="relative mb-5 group">
-            {/* Animated Label */}
+            {/* Rótulo Animado */}
             <label
                 className={`
                     absolute left-3 transition-all duration-200 pointer-events-none z-10
@@ -41,7 +41,7 @@ export function PremiumInput({ label, value, onChange, placeholder, type = 'text
                 {...props}
             />
 
-            {/* Bottom Progress Bar */}
+            {/* Barra de Progresso Inferior */}
             <div
                 className={`absolute bottom-0 left-0 h-[2px] bg-gradient-to-r from-cyan-500 to-blue-500 transition-all duration-300 ease-out pointer-events-none rounded-b-xl
                     ${isFocused ? 'w-full opacity-100' : 'w-0 opacity-0'}

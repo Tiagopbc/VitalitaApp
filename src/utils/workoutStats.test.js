@@ -11,7 +11,7 @@ describe('workoutStats', () => {
         });
 
         it('should count sessions from this week', () => {
-            const now = new Date();
+
             // Create a date for yesterday
             const today = new Date();
             const sessions = [

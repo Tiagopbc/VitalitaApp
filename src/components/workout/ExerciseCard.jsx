@@ -1,4 +1,4 @@
-import { motion } from 'motion/react';
+import { motion } from 'framer-motion';
 import { TrendingUp, MoreVertical, ChevronRight } from 'lucide-react';
 
 export function ExerciseCard({
@@ -20,7 +20,7 @@ export function ExerciseCard({
             className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-4 hover:border-cyan-500/30 transition-all cursor-pointer group"
         >
             <div className="flex items-center gap-4">
-                {/* Exercise Info */}
+                {/* Info do Exercício */}
                 <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
                         <h3 className="font-semibold text-white truncate uppercase">{name}</h3>
@@ -38,7 +38,7 @@ export function ExerciseCard({
 
                     <p className="text-sm text-slate-400">{muscleGroup}</p>
 
-                    {/* Last Performance */}
+                    {/* Última Performance */}
                     {lastWeight && lastReps && (
                         <div className="flex items-center gap-3 mt-2">
                             <div className="flex items-baseline gap-1">
@@ -59,14 +59,14 @@ export function ExerciseCard({
                     )}
                 </div>
 
-                {/* Actions */}
+                {/* Ações */}
                 <div className="flex items-center gap-2">
                     <motion.button
                         whileHover={{ scale: 1.1 }}
                         whileTap={{ scale: 0.9 }}
                         onClick={(e) => {
                             e.stopPropagation();
-                            // Handle more options
+                            // Lidar com mais opções
                         }}
                         className="p-2 hover:bg-white/5 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
                     >

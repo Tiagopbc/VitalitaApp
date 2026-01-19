@@ -81,7 +81,6 @@ export function WorkoutExecutionPage({ workoutId, onFinish, user }) {
         exercises,
         initialElapsed,
         updateExerciseSet,
-        toggleSet,
         updateNotes,
         completeSetAutoFill,
         finishSession,
@@ -100,7 +99,7 @@ export function WorkoutExecutionPage({ workoutId, onFinish, user }) {
     const {
         elapsedSeconds,
         setElapsedSeconds,
-        formatTime // Unused currently but available
+        // formatTime // Unused currently but available
     } = useWorkoutTimer(!loading && !saving && !isFinished, initialElapsed); // Stop timer on finish
 
     // Sync elapsed time from hook when loaded
@@ -108,6 +107,7 @@ export function WorkoutExecutionPage({ workoutId, onFinish, user }) {
         if (initialElapsed > 0 && elapsedSeconds === 0) {
             setElapsedSeconds(initialElapsed);
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [initialElapsed]);
 
     // Continuous Sync Effect
@@ -115,7 +115,8 @@ export function WorkoutExecutionPage({ workoutId, onFinish, user }) {
         if (!loading && exercises.length > 0 && !isFinished) {
             syncSession(exercises, elapsedSeconds);
         }
-    }, [exercises, elapsedSeconds, loading, syncSession, isFinished]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [exercises, elapsedSeconds, loading, isFinished]);
 
 
     // --- FOCUS NAVIGATION STATE ---
@@ -208,7 +209,7 @@ export function WorkoutExecutionPage({ workoutId, onFinish, user }) {
                     document.body.removeChild(a);
                     URL.revokeObjectURL(url);
                     setError(null);
-                } catch (downloadErr) {
+                } catch {
                     setError('Não foi possível salvar a imagem.');
                 }
                 setSharing(false);

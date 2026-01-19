@@ -3,29 +3,22 @@
  * Exibe uma grade de modelos de treino disponíveis para o usuário.
  * Suporta pesquisa, filtragem (por empurrar/puxar/pernas/etc) e classificação de modelos.
  */
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { db } from '../firebaseConfig';
-import { collection, query, getDocs, deleteDoc, doc, addDoc } from 'firebase/firestore';
-import { motion, AnimatePresence } from 'motion/react';
+import { collection, deleteDoc, doc, addDoc } from 'firebase/firestore';
+import { AnimatePresence, motion } from 'framer-motion';
 import {
     Search,
     Plus,
-    Filter,
     Dumbbell,
     Crown,
-    Clock,
     Calendar,
     MoreVertical,
-    Trophy,
     Play,
-    Star,
-    X,
     Flame,
-    Check,
     Edit2,
     Copy,
-    Trash2,
-    RefreshCw
+    Trash2
 } from 'lucide-react';
 
 import { RippleButton } from '../components/design-system/RippleButton';
@@ -33,7 +26,6 @@ import { PremiumCard } from '../components/design-system/PremiumCard';
 import { ExerciseCard } from '../components/workout/ExerciseCard';
 import { EditExerciseModal } from '../components/workout/EditExerciseModal';
 import { workoutService } from '../services/workoutService';
-import { useAuth } from '../AuthContext';
 
 // --- MOCK DATA FOR ACCORDION DEMO ---
 // Mock data removed
@@ -48,18 +40,16 @@ const FILTERS = [
     { id: 'fullbody', label: 'Full Body' },
 ];
 
-const SORT_OPTIONS = [
-    { id: 'recent', label: 'Recentes' },
-    { id: 'name', label: 'Nome' },
-];
+
 
 export default function WorkoutsPage({ onNavigateToCreate, onNavigateToWorkout, user, isTrainerMode }) {
     // --- STATE ---
+    // State
     const [workouts, setWorkouts] = useState([]);
-    const [loading, setLoading] = useState(true);
+    // const [loading, setLoading] = useState(true); // Unused
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedFilter, setSelectedFilter] = useState('all');
-    const [sortBy, setSortBy] = useState('recent');
+    // const [sortBy, setSortBy] = useState('recent'); // Unused
 
     // New: Source Filter (All / My / Personal)
     const [sourceFilter, setSourceFilter] = useState('all');
@@ -69,14 +59,14 @@ export default function WorkoutsPage({ onNavigateToCreate, onNavigateToWorkout, 
     const [editingExercise, setEditingExercise] = useState(null); // { workoutId, index, data }
 
     // Menus
-    const [activeSortMenu, setActiveSortMenu] = useState(false);
+    // const [activeSortMenu, setActiveSortMenu] = useState(false); // Unused
     const [activeCardMenu, setActiveCardMenu] = useState(null);
-    const sortMenuRef = useRef(null);
+    // const sortMenuRef = useRef(null); // Unused
 
     // --- FETCH DATA ---
     useEffect(() => {
         async function fetchWorkouts() {
-            setLoading(true);
+            // setLoading(true);
             try {
                 // CACHED FETCH
                 const loadedWorkouts = await workoutService.getTemplates(user.uid);
@@ -103,18 +93,18 @@ export default function WorkoutsPage({ onNavigateToCreate, onNavigateToWorkout, 
             } catch (error) {
                 console.error("Error fetching workouts:", error);
             } finally {
-                setLoading(false);
+                // setLoading(false);
             }
         }
-        fetchWorkouts();
+        void fetchWorkouts();
     }, [user]);
 
     // --- CLICK OUTSIDE HANDLERS ---
     useEffect(() => {
         function handleClickOutside(event) {
-            if (sortMenuRef.current && !sortMenuRef.current.contains(event.target)) {
-                setActiveSortMenu(false);
-            }
+            // if (sortMenuRef.current && !sortMenuRef.current.contains(event.target)) {
+            //     setActiveSortMenu(false);
+            // }
             if (activeCardMenu && !event.target.closest('.card-menu-btn')) {
                 // Simple close if clicking outside menu area
                 // setActiveCardMenu(null); 
@@ -132,7 +122,7 @@ export default function WorkoutsPage({ onNavigateToCreate, onNavigateToWorkout, 
         const matchesSearch = workout.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
             (workout.muscleGroups && workout.muscleGroups.some(g => g.toLowerCase().includes(searchQuery.toLowerCase())));
 
-        // 3. Source Filter (My vs Personal)
+        // 3. Source Filter (My vs. Personal)
         let matchesSource = true;
         if (sourceFilter === 'meus') {
             matchesSource = workout.createdBy === user.uid || !workout.createdBy;
@@ -142,13 +132,10 @@ export default function WorkoutsPage({ onNavigateToCreate, onNavigateToWorkout, 
 
         return matchesCategory && matchesSearch && matchesSource;
     }).sort((a, b) => {
-        if (sortBy === 'recent') {
-            if (!a.lastPerformedDate) return 1;
-            if (!b.lastPerformedDate) return -1;
-            return new Date(b.lastPerformedDate) - new Date(a.lastPerformedDate);
-        }
-        if (sortBy === 'name') return a.name.localeCompare(b.name);
-        return 0;
+        // Default sort by recent
+        if (!a.lastPerformedDate) return 1;
+        if (!b.lastPerformedDate) return -1;
+        return new Date(b.lastPerformedDate) - new Date(a.lastPerformedDate);
     });
 
     // --- ACTIONS ---
@@ -322,7 +309,7 @@ export default function WorkoutsPage({ onNavigateToCreate, onNavigateToWorkout, 
                             <div className="flex items-start justify-between gap-3 mb-4">
                                 <div className="flex items-center gap-4">
                                     {/* Avatar */}
-                                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center shadow-lg shadow-cyan-500/20 shrink-0 text-white text-xl font-bold">
+                                    <div className="w-14 h-14 rounded-2xl bg-linear-to-br from-cyan-500 to-blue-600 flex items-center justify-center shadow-lg shadow-cyan-500/20 shrink-0 text-white text-xl font-bold">
                                         {workout.name.charAt(0).toUpperCase()}
                                     </div>
 
@@ -395,8 +382,8 @@ export default function WorkoutsPage({ onNavigateToCreate, onNavigateToWorkout, 
                                 </RippleButton>
 
                                 <RippleButton
-                                    onClick={(e) => handleCardClick(workout.id, workout.name)}
-                                    className="flex-1 py-3 bg-gradient-to-r from-cyan-500 to-blue-600 hover:to-blue-500 rounded-xl text-white text-xs font-bold shadow-lg shadow-cyan-500/20 flex items-center justify-center gap-2"
+                                    onClick={() => handleCardClick(workout.id, workout.name)}
+                                    className="flex-1 py-3 bg-linear-to-r from-cyan-500 to-blue-600 hover:to-blue-500 rounded-xl text-white text-xs font-bold shadow-lg shadow-cyan-500/20 flex items-center justify-center gap-2"
                                 >
                                     <Play size={14} fill="currentColor" /> INICIAR
                                 </RippleButton>
@@ -454,7 +441,7 @@ export default function WorkoutsPage({ onNavigateToCreate, onNavigateToWorkout, 
                     <EditExerciseModal
                         exercise={editingExercise}
                         onClose={() => setEditingExercise(null)}
-                        onSave={(data) => {
+                        onSave={() => {
 
                             // Update logic here
                         }}

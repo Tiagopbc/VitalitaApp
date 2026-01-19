@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Home, Dumbbell, PlusCircle, History, TrendingUp, Users } from 'lucide-react';
 
 export function DesktopSidebar({ activeTab, onTabChange, user, isTrainer }) {
-    const [hoveredTab, setHoveredTab] = useState(null);
+
 
     const tabs = [
         {
@@ -40,16 +40,16 @@ export function DesktopSidebar({ activeTab, onTabChange, user, isTrainer }) {
         <aside
             className="hidden lg:flex flex-col fixed left-0 top-0 bottom-0 w-64 z-50 py-6 px-4 gap-8 font-sans"
             style={{
-                background: '#050B16', // Darker navy background
+                background: '#050B16', // Fundo azul marinho mais escuro
                 borderRight: '1px solid rgba(30, 41, 59, 0.4)',
                 boxShadow: '4px 0 24px rgba(0,0,0,0.4)'
             }}
         >
-            {/* Logo Section */}
+            {/* Seção do Logo */}
             <div className="flex items-center gap-3 px-4 mb-4 mt-2">
                 <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-400 to-blue-600 p-[1px] shadow-lg shadow-blue-500/20">
                     <div className="w-full h-full rounded-[11px] bg-black/40 flex items-center justify-center overflow-hidden">
-                        {/* Placeholder Icon if image missing */}
+                        {/* Ícone de placeholder se imagem faltar */}
                         <Dumbbell size={20} className="text-white" />
                     </div>
                 </div>
@@ -63,7 +63,7 @@ export function DesktopSidebar({ activeTab, onTabChange, user, isTrainer }) {
                 </div>
             </div>
 
-            {/* Navigation */}
+            {/* Navegação */}
             <nav className="flex flex-col gap-2 w-full flex-1 px-2">
                 {tabs.map((tab) => {
                     const Icon = tab.icon;
@@ -91,11 +91,11 @@ export function DesktopSidebar({ activeTab, onTabChange, user, isTrainer }) {
                                 {tab.label}
                             </span>
 
-                            {/* Glow Effect for Active */}
+                            {/* Efeito de brilho para ativo */}
                             {isActive && (
                                 <div className="absolute inset-0 rounded-xl bg-cyan-400/5 blur-sm -z-10" />
                             )}
-                            {/* Active Indicator Line (Left) */}
+                            {/* Linha indicadora ativa (Esquerda) */}
                             {isActive && (
                                 <div className="absolute left-0 top-1/2 -translate-y-1/2 h-8 w-1 bg-cyan-500 rounded-r-full shadow-[0_0_12px_rgba(6,182,212,0.6)]" />
                             )}
@@ -104,7 +104,7 @@ export function DesktopSidebar({ activeTab, onTabChange, user, isTrainer }) {
                 })}
             </nav>
 
-            {/* Bottom User Section - Minimal */}
+            {/* Seção Inferior do Usuário - Minimalista */}
             {user && (
                 <div className="mt-auto px-4 pb-2">
                     <button

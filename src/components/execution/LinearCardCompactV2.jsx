@@ -63,7 +63,7 @@ function getCurrentSetGoal(repsGoal, setNumber, repsType) {
         }
         case 'PYRAMID': {
             // Split by slash or comma
-            const values = repsGoal.split(/[\/,]/).map(v => v.trim());
+            const values = repsGoal.split(/[/,]/).map(v => v.trim());
             return values[setNumber - 1] || values[0] || '';
         }
         case 'CLUSTER':
@@ -75,7 +75,7 @@ function getCurrentSetGoal(repsGoal, setNumber, repsType) {
     }
 }
 
-// --- COLOR DICTIONARIES ---
+// --- DICIONÁRIOS DE CORES ---
 
 const MUSCLE_COLORS = {
     'Peito': { main: '#ec4899', bg: 'rgba(236,72,153,0.15)', border: 'rgba(236,72,153,0.35)' },
@@ -104,9 +104,9 @@ import { NumericKeypad } from '../common/NumericKeypad';
 
 
 
-// ... (Existing Imports)
+// ... (Importações Existentes)
 
-// ... (Existing Helper Functions - detectRepsType, getCurrentSetGoal, COLORS)
+// ... (Funções Auxiliares Existentes - detectRepsType, getCurrentSetGoal, COLORS)
 
 export const LinearCardCompactV2 = memo(function LinearCardCompactV2({
     exerciseId, // New Prop
@@ -126,16 +126,16 @@ export const LinearCardCompactV2 = memo(function LinearCardCompactV2({
     onCompleteSet, // Stable: (exId, setNumber, weight, reps) => ...
     suggestedWeight,
     suggestedReps,
-    lastWeight,
-    lastReps,
-    onMethodClick
+
+    onMethodClick,
+    onSetChange
 }) {
     // Determine completion status
     const completedCount = completedSets.filter(Boolean).length;
     const isExerciseFullyCompleted = completedCount === totalSets && totalSets > 0;
     const isCurrentSetCompleted = completedSets[currentSet - 1];
 
-    // Keypad State
+    // Estado do Teclado
     const [keypadOpen, setKeypadOpen] = useState(false);
     const [activeInputType, setActiveInputType] = useState(null); // 'weight' | 'reps'
 
@@ -153,14 +153,14 @@ export const LinearCardCompactV2 = memo(function LinearCardCompactV2({
     };
 
 
-    // Memoize calculations
+    // Memorizar cálculos
     const { repsType, currentSetGoal } = useMemo(() => {
         const type = detectRepsType(repsGoal);
         const goal = getCurrentSetGoal(repsGoal, currentSet, type);
         return { repsType: type, currentSetGoal: goal };
     }, [repsGoal, currentSet]);
 
-    // Handlers
+    // Manipuladores
     const decrementWeight = () => {
         const current = parseFloat(weight) || parseFloat(suggestedWeight) || 0;
         const newVal = Math.max(0, current - 0.25).toFixed(2);
@@ -204,19 +204,19 @@ export const LinearCardCompactV2 = memo(function LinearCardCompactV2({
             return;
         }
 
-        // Changed to pass arguments directly to support stable parent handler
+        // Alterado para passar argumentos diretamente para suportar manipulador pai estável
         onCompleteSet(exerciseId, currentSet, effectiveWeight.toString(), effectiveReps.toString());
     };
 
-    // ... (Styles) ...
-    // COMPLETE STATE (GREEN) - REDUCED GLOW
+    // ... (Estilos) ...
+    // ESTADO COMPLETO (VERDE) - BRILHO REDUZIDO
     const completeStyle = {
         background: 'linear-gradient(135deg, rgba(16,185,129,0.2), rgba(6,95,70,0.3))', // Darker/Lower opacity
         border: '2px solid rgba(16,185,129,0.5)',
         boxShadow: '0 8px 30px rgba(16,185,129,0.25), inset 0 0 20px rgba(16,185,129,0.05)' // Reduced spread and opacity
     };
 
-    // IN PROGRESS STATE (DEFAULT)
+    // ESTADO EM ANDAMENTO (PADRÃO)
     const normalStyle = {
         background: 'linear-gradient(135deg, rgba(5,8,22,0.95), rgba(11,17,32,0.98))',
         border: '1px solid rgba(59,130,246,0.3)',
@@ -230,7 +230,7 @@ export const LinearCardCompactV2 = memo(function LinearCardCompactV2({
             style={containerStyle}
             className="rounded-[24px] p-[22px] flex flex-col gap-[14px] transition-all duration-300 relative overflow-hidden"
         >
-            {/* Header */}
+            {/* Cabeçalho */}
             <div className="flex justify-between items-start mb-[10px] gap-3">
                 <div className="flex-1 min-w-0">
                     <h3
@@ -245,7 +245,7 @@ export const LinearCardCompactV2 = memo(function LinearCardCompactV2({
                         {exerciseName}
                     </h3>
 
-                    {/* New Sheet Details Row */}
+                    {/* Nova Linha de Detalhes da Ficha */}
                     <div className="flex items-center gap-3 mt-1.5 mb-0.5">
                         <div className="flex items-center gap-1.5 bg-slate-800/50 px-2 py-0.5 rounded-md border border-slate-700/50">
                             <LayoutList size={11} className="text-slate-400" />
@@ -262,9 +262,9 @@ export const LinearCardCompactV2 = memo(function LinearCardCompactV2({
                         </div>
                     </div>
 
-                    {/* Badges Grid */}
+                    {/* Grade de Emblemas */}
                     <div className="flex flex-wrap gap-2 mt-2">
-                        {/* Muscle Badge */}
+                        {/* Emblema de Músculo */}
                         <div
                             className="flex items-center justify-center px-3 py-1.5 rounded-full text-[10px] font-bold tracking-wide uppercase truncate"
                             style={{
@@ -276,7 +276,7 @@ export const LinearCardCompactV2 = memo(function LinearCardCompactV2({
                             {muscleGroup}
                         </div>
 
-                        {/* Method Badge */}
+                        {/* Emblema de Método */}
                         <div
                             onClick={onMethodClick}
                             className="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-bold tracking-wide uppercase truncate cursor-pointer hover:bg-slate-700 active:scale-95 transition-all group/badge"
@@ -290,7 +290,7 @@ export const LinearCardCompactV2 = memo(function LinearCardCompactV2({
                             {method}
                         </div>
 
-                        {/* Goal Badge (Merged) */}
+                        {/* Emblema de Meta (Mesclado) */}
                         {currentSetGoal && (
                             <div
                                 className="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-bold tracking-wide uppercase truncate"
@@ -317,7 +317,7 @@ export const LinearCardCompactV2 = memo(function LinearCardCompactV2({
                 </div>
 
 
-                {/* Counter */}
+                {/* Contador */}
                 <div
                     className={`px-3 py-1.5 rounded-full text-[20px] font-bold flex-shrink-0 border ${isExerciseFullyCompleted ? 'text-green-500 bg-green-500/10 border-green-500/30' : 'text-blue-500 bg-blue-500/10 border-blue-500/25'}`}
                 >
@@ -326,7 +326,7 @@ export const LinearCardCompactV2 = memo(function LinearCardCompactV2({
             </div>
 
 
-            {/* Progress Bar (Numbered Segments) */}
+            {/* Barra de Progresso (Segmentos Numerados) */}
             <div className="flex gap-1.5 mb-2">
                 {Array.from({ length: totalSets }).map((_, idx) => {
                     const setNum = idx + 1;
@@ -341,7 +341,7 @@ export const LinearCardCompactV2 = memo(function LinearCardCompactV2({
                                 ? 'bg-emerald-900/40 border border-emerald-500/50 text-emerald-400'
                                 : isActive
                                     ? 'bg-blue-600/20 border border-blue-500 text-blue-400'
-                                    : 'bg-slate-800/40 border border-slate-700/50 text-slate-400' // Improved contrast from slate-600
+                                    : 'bg-slate-800/40 border border-slate-700/50 text-slate-400' // Contraste melhorado do slate-600
                                 }`}
                             style={isActive ? {
                                 boxShadow: '0 0 15px rgba(59,130,246,0.3)'
@@ -354,13 +354,13 @@ export const LinearCardCompactV2 = memo(function LinearCardCompactV2({
                 })}
             </div>
 
-            {/* Inputs Grid */}
+            {/* Grade de Entradas */}
             <div className="grid grid-cols-2 gap-3 mb-1">
-                {/* Weight Input */}
+                {/* Entrada de Peso */}
                 <div className="bg-slate-900/60 border border-slate-700/30 rounded-full p-1 flex items-center gap-1.5 relative">
                     <button
                         onClick={decrementWeight}
-                        className="w-11 h-11 rounded-full bg-slate-800/60 border-2 border-slate-500/20 text-slate-300 flex items-center justify-center hover:bg-slate-700 active:scale-95 transition-all" // Increased to w-11 h-11 (44px), clearer text
+                        className="w-11 h-11 rounded-full bg-slate-800/60 border-2 border-slate-500/20 text-slate-300 flex items-center justify-center hover:bg-slate-700 active:scale-95 transition-all" // Aumentado para w-11 h-11 (44px), texto mais claro
                         aria-label="Diminuir peso"
                     >
                         <Minus size={20} strokeWidth={2} />
@@ -371,13 +371,13 @@ export const LinearCardCompactV2 = memo(function LinearCardCompactV2({
                         role="button"
                         aria-label="Definir peso"
                     >
-                        <span className="text-[10px] text-slate-400 tracking-wider font-bold mb-0.5">PESO (KG)</span> {/* Increased text size to 10px */}
+                        <span className="text-[10px] text-slate-400 tracking-wider font-bold mb-0.5">PESO (KG)</span> {/* Tamanho do texto aumentado para 10px */}
                         <div className={`text-center font-bold text-lg leading-none ${!weight && suggestedWeight ? 'text-slate-500' : 'text-[#f1f5f9]'}`}>
                             {weight || suggestedWeight || "0.00"}
                         </div>
-                        {/* History Hint */}
+                        {/* Dica de Histórico */}
                         {suggestedWeight && !weight && (
-                            <span className="absolute bottom-1 right-14 text-[9px] text-slate-500">Hist: {suggestedWeight}</span> // Improved contrast slate-500
+                            <span className="absolute bottom-1 right-14 text-[9px] text-slate-500">Hist: {suggestedWeight}</span> // Contraste melhorado slate-500
                         )}
                     </div>
                     <button
@@ -389,11 +389,11 @@ export const LinearCardCompactV2 = memo(function LinearCardCompactV2({
                     </button>
                 </div>
 
-                {/* Reps Input */}
+                {/* Entrada de Repetições */}
                 <div className="bg-slate-900/60 border border-slate-700/30 rounded-full p-1 flex items-center gap-1.5">
                     <button
                         onClick={decrementReps}
-                        className="w-11 h-11 rounded-full bg-slate-800/60 border-2 border-slate-500/20 text-slate-300 flex items-center justify-center hover:bg-slate-700 active:scale-95 transition-all" // Increased size & contrast
+                        className="w-11 h-11 rounded-full bg-slate-800/60 border-2 border-slate-500/20 text-slate-300 flex items-center justify-center hover:bg-slate-700 active:scale-95 transition-all" // Tamanho aumentado & contraste
                         aria-label="Diminuir repetições"
                     >
                         <Minus size={20} strokeWidth={2} />
@@ -404,14 +404,14 @@ export const LinearCardCompactV2 = memo(function LinearCardCompactV2({
                         role="button"
                         aria-label="Definir repetições"
                     >
-                        <span className="text-[10px] text-slate-400 tracking-wider font-bold mb-0.5">REPETIÇÕES</span> {/* Increased Size */}
+                        <span className="text-[10px] text-slate-400 tracking-wider font-bold mb-0.5">REPETIÇÕES</span> {/* Tamanho Aumentado */}
                         <div className={`text-center font-bold text-lg leading-none ${!actualReps && suggestedReps ? 'text-slate-500' : 'text-[#f1f5f9]'}`}>
                             {actualReps || suggestedReps || "0"}
                         </div>
                     </div>
                     <button
                         onClick={incrementReps}
-                        className="w-11 h-11 rounded-full bg-blue-500/15 border-2 border-[#3abff8] text-[#3abff8] flex items-center justify-center shadow-[0_0_16px_rgba(58,191,248,0.25)] hover:bg-blue-500/25 active:scale-95 transition-all" // Increased size
+                        className="w-11 h-11 rounded-full bg-blue-500/15 border-2 border-[#3abff8] text-[#3abff8] flex items-center justify-center shadow-[0_0_16px_rgba(58,191,248,0.25)] hover:bg-blue-500/25 active:scale-95 transition-all" // Tamanho aumentado
                         aria-label="Aumentar repetições"
                     >
                         <Plus size={20} strokeWidth={2} />
@@ -419,7 +419,7 @@ export const LinearCardCompactV2 = memo(function LinearCardCompactV2({
                 </div>
             </div>
 
-            {/* Check Button */}
+            {/* Botão de Check */}
             <button
                 onClick={handleCompleteSet}
                 disabled={isCurrentSetCompleted}
@@ -442,19 +442,19 @@ export const LinearCardCompactV2 = memo(function LinearCardCompactV2({
                 )}
             </button>
 
-            {/* Observation Input (Collapsible) */}
+            {/* Entrada de Observação (Colapsável) */}
             <div className="pt-2">
                 <input
                     type="text"
                     value={observation || ''}
-                    onChange={(e) => onUpdateNotes(exerciseId, e.target.value)} // Use dedicated stable handler
+                    onChange={(e) => onUpdateNotes(exerciseId, e.target.value)} // Usar manipulador estável dedicado
                     placeholder="Adicionar observação..."
-                    className="w-full bg-transparent border-b border-slate-700/50 text-xs text-slate-300 py-3 focus:border-cyan-500/50 focus:text-slate-200 outline-none transition-colors placeholder:text-slate-500" // Increased contrast, padding
+                    className="w-full bg-transparent border-b border-slate-700/50 text-xs text-slate-300 py-3 focus:border-cyan-500/50 focus:text-slate-200 outline-none transition-colors placeholder:text-slate-500" // Contraste aumentado, padding
                     aria-label="Observações do exercício"
                 />
             </div>
 
-            {/* --- KEYPAD OVERLAY --- */}
+            {/* --- SOBREPOSIÇÃO DO TECLADO --- */}
             <NumericKeypad
                 isOpen={keypadOpen}
                 onClose={() => setKeypadOpen(false)}
