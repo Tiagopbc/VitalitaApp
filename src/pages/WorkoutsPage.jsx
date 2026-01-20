@@ -27,20 +27,11 @@ import { ExerciseCard } from '../components/workout/ExerciseCard';
 import { EditExerciseModal } from '../components/workout/EditExerciseModal';
 import { workoutService } from '../services/workoutService';
 
-// --- MOCK DATA FOR ACCORDION DEMO ---
-// Mock data removed
 
-
-// Filter constants
-// removed
 
 export default function WorkoutsPage({ onNavigateToCreate, onNavigateToWorkout, user, isTrainerMode }) {
-    // --- STATE ---
-    // State
     const [workouts, setWorkouts] = useState([]);
-    // const [loading, setLoading] = useState(true); // Unused
     const [searchQuery, setSearchQuery] = useState('');
-    // const [sortBy, setSortBy] = useState('recent'); // Unused
 
     // New: Source Filter (All / My / Personal)
     const [sourceFilter, setSourceFilter] = useState('all');
@@ -50,14 +41,9 @@ export default function WorkoutsPage({ onNavigateToCreate, onNavigateToWorkout, 
     const [editingExercise, setEditingExercise] = useState(null); // { workoutId, index, data }
 
     // Menus
-    // const [activeSortMenu, setActiveSortMenu] = useState(false); // Unused
     const [activeCardMenu, setActiveCardMenu] = useState(null);
-    // const sortMenuRef = useRef(null); // Unused
-
-    // --- FETCH DATA ---
     useEffect(() => {
         async function fetchWorkouts() {
-            // setLoading(true);
             try {
                 // CACHED FETCH
                 const loadedWorkouts = await workoutService.getTemplates(user.uid);
@@ -84,7 +70,6 @@ export default function WorkoutsPage({ onNavigateToCreate, onNavigateToWorkout, 
             } catch (error) {
                 console.error("Error fetching workouts:", error);
             } finally {
-                // setLoading(false);
             }
         }
         void fetchWorkouts();
@@ -93,12 +78,8 @@ export default function WorkoutsPage({ onNavigateToCreate, onNavigateToWorkout, 
     // --- CLICK OUTSIDE HANDLERS ---
     useEffect(() => {
         function handleClickOutside(event) {
-            // if (sortMenuRef.current && !sortMenuRef.current.contains(event.target)) {
-            //     setActiveSortMenu(false);
-            // }
             if (activeCardMenu && !event.target.closest('.card-menu-btn')) {
-                // Simple close if clicking outside menu area
-                // setActiveCardMenu(null); 
+
             }
         }
         document.addEventListener('mousedown', handleClickOutside);

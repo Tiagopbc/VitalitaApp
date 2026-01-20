@@ -174,6 +174,13 @@ export function WorkoutExecutionPage({ workoutId, onFinish, user }) {
 
     const handleShare = async () => {
         if (!shareCardRef.current) return;
+
+        // Security Check: Files API requires Secure Context (HTTPS or localhost)
+        if (!window.isSecureContext) {
+            alert("O compartilhamento requer conexão segura (HTTPS).\n\nSe você está testando localmente via IP, use 'localhost' ou configure SSL.");
+            return;
+        }
+
         setSharing(true);
         try {
             const canvas = await html2canvas(shareCardRef.current, {
@@ -265,7 +272,7 @@ export function WorkoutExecutionPage({ workoutId, onFinish, user }) {
 
                 {/* --- HEADER --- */}
                 <div
-                    className="fixed top-0 left-1/2 -translate-x-1/2 w-full max-w-2xl z-50 px-3 pb-2 flex items-center justify-between pointer-events-none"
+                    className="fixed top-0 left-1/2 -translate-x-1/2 w-full max-w-2xl z-50 px-3 pb-2 flex items-center justify-between pointer-events-none bg-gradient-to-b from-[#020617] via-[#020617]/95 to-transparent backdrop-blur-md"
                     style={{ paddingTop: 'calc(env(safe-area-inset-top) + 1rem)' }}
                 >
                     <div className="pointer-events-auto flex items-center gap-2">

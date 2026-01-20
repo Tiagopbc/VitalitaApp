@@ -45,80 +45,95 @@ export function HomeDashboard({
     const [stats, setStats] = useState(() => calculateWeeklyStats([], 4));
 
 
+    const [templates, setTemplates] = useState([]);
+    const [latestSession, setLatestSession] = useState(null);
+
+    // 1. Lógica de Sugestão de Treino (Executa quando templates ou última sessão mudam)
+    useEffect(() => {
+        if (!templates || templates.length === 0) {
+            setSuggestedWorkout(null);
+            return;
+        }
+
+        // Se não houver última sessão, sugerir o primeiro da lista
+        if (!latestSession) {
+            setSuggestedWorkout(templates[0]);
+            return;
+        }
+
+        // Tentar encontrar o índice do último treino realizado na lista de templates
+        // Prioridade: ID > Nome (caso tenha sido renomeado, o ID mantém o link, mas se foi excluído, usamos nome)
+        const lastIndex = templates.findIndex(t =>
+            t.id === latestSession.templateId ||
+            (t.name && latestSession.templateName && t.name === latestSession.templateName)
+        );
+
+        let nextIndex = 0;
+        if (lastIndex !== -1) {
+            // Próximo da lista (Rotativo)
+            nextIndex = (lastIndex + 1) % templates.length;
+        }
+
+        setSuggestedWorkout(templates[nextIndex]);
+
+    }, [templates, latestSession]); // Dependências cruciais
+
+    // 2. Data Fetching & Subscriptions
     useEffect(() => {
         let unsubscribeTemplates = null;
         let unsubscribeSessions = null;
 
         async function fetchData() {
-            if (!user) {
-                return;
-            }
+            if (!user) return;
 
-            let fetchedGoal = 4;
-
-            // 0. Buscar Meta do Usuário
+            // 0. Buscar Meta do Usuário (Single Fetch, não precisa ser real-time crítico)
             try {
                 const userRef = doc(db, 'users', user.uid);
                 const userSnap = await getDoc(userRef);
                 if (userSnap.exists() && userSnap.data().weeklyGoal) {
-                    fetchedGoal = parseInt(userSnap.data().weeklyGoal);
-                    setUserGoal(fetchedGoal);
+                    setUserGoal(parseInt(userSnap.data().weeklyGoal));
                 }
             } catch (err) {
                 console.error("Error fetching user goal:", err);
             }
 
-            let workoutsData = [];
-
-            // 1. Inscrever-se em Treinos (Templates) - EM TEMPO REAL
+            // A. Inscrever-se em Treinos (Templates)
             unsubscribeTemplates = workoutService.subscribeToTemplates(user.uid, (data) => {
-                if (data.length > 0 && !suggestedWorkout) {
-                    setSuggestedWorkout(data[0]);
-                    // Idealmente deveríamos verificar a lógica de próxima sugestão novamente aqui se treinos mudarem
-                    // Mas padrão simples é mais seguro por enquanto.
-                }
+                setTemplates(data || []);
             });
 
-            // 2. Inscrever-se no Histórico (Sessões) - EM TEMPO REAL
-            // Isso garante atualizações instantâneas quando um treino é finalizado, mesmo sem recarregar a página.
+            // B. Inscrever-se no Histórico (Sessões)
             try {
                 unsubscribeSessions = workoutService.subscribeToSessions(user.uid, (data) => {
-                    // console.log("DASHBOARD: Received sessions update", data.length);
-
                     const sessions = data.map(d => {
                         let dateObj = new Date();
+                        // Lógica defensiva para parse de data
                         try {
-                            // Priorizar completedAtClient para corresponder ao tempo do dispositivo do Usuário
                             const raw = d.completedAtClient || d.completedAt || d.timestamp;
                             if (raw) {
-                                if (typeof raw.toDate === 'function') {
-                                    dateObj = raw.toDate();
-                                } else if (raw instanceof Date) {
-                                    dateObj = raw;
-                                } else if (typeof raw === 'string' || typeof raw === 'number') {
-                                    dateObj = new Date(raw);
-                                } else if (raw.seconds) {
-                                    dateObj = new Date(raw.seconds * 1000);
-                                }
+                                if (typeof raw.toDate === 'function') dateObj = raw.toDate();
+                                else if (raw instanceof Date) dateObj = raw;
+                                else if (typeof raw === 'string' || typeof raw === 'number') dateObj = new Date(raw);
+                                else if (raw.seconds) dateObj = new Date(raw.seconds * 1000);
                             }
-                        } catch (e) {
-                            console.warn("Date parsing error for session", d.id, e);
-                        }
+                        } catch (e) { console.warn("Date parsing error", d.id, e); }
 
-                        // Validar
-                        if (isNaN(dateObj.getTime())) {
-                            dateObj = new Date();
-                        }
-
+                        if (isNaN(dateObj.getTime())) dateObj = new Date();
                         return { ...d, date: dateObj };
                     });
 
+                    // Ordenar por data (Mais recente primeiro)
                     sessions.sort((a, b) => b.date - a.date);
 
-                    // --- LÓGICA DE SUGESTÃO INTELIGENTE ---
+                    // Atualizar Última Sessão para a lógica de sugestão
+                    if (sessions.length > 0) {
+                        setLatestSession(sessions[0]);
+                    } else {
+                        setLatestSession(null);
+                    }
 
-                    const computedStats = calculateWeeklyStats(sessions, fetchedGoal);
-                    // Atualizar estatísticas
+                    // Calcular Estatísticas
+                    const computedStats = calculateWeeklyStats(sessions, userGoal);
                     setStats({ ...computedStats, totalSessions: sessions.length });
                 });
             } catch (err) {
@@ -128,12 +143,11 @@ export function HomeDashboard({
 
         fetchData();
 
-        // Limpeza
         return () => {
             if (unsubscribeTemplates) unsubscribeTemplates();
             if (unsubscribeSessions) unsubscribeSessions();
         };
-    }, [user, userGoal]);
+    }, [user]); // Removed userGoal to prevent potential loops, as we fetch it inside. // Re-executa se user mudar ou goal mudar (embora goal seja atualizado dentro.. cuidado com loop, mas aqui é fetch inicial)
 
 
 

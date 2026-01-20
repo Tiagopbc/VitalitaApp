@@ -58,11 +58,14 @@ export const authService = {
             });
         } catch (error) {
             console.error("Error creating User document:", error);
-            // Considerar se devemos lançar ou apenas logar. 
-            // Se isso falhar, usuário é criado mas sem doc de perfil. 
-            // Em apps críticos, talvez devêssemos deletar o usuário? 
-            // Por enquanto, jogar erro para UI saber que algo deu errado.
-            throw error;
+            // ROLLBACK: Deletar usuário do Auth para evitar conta órfã
+            try {
+                await user.delete();
+                console.info("Rollback: Auth user deleted due to Firestore failure.");
+            } catch (deleteErr) {
+                console.error("Critical: Failed to rollback auth user:", deleteErr);
+            }
+            throw new Error("Cadastro falhou. Tente novamente.");
         }
 
         return user;

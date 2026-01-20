@@ -15,7 +15,7 @@ import { WorkoutDetailsModal } from '../components/history/WorkoutDetailsModal';
 
 function HistoryPage({ onBack, initialTemplate, initialExercise, user, isEmbedded = false }) {
     // Estado da Aba: 'journal' | 'analytics'
-    const [activeTab, setActiveTab] = useState('journal');
+    const [activeTab, setActiveTab] = useState('analytics');
 
     // --- ESTADO DO DIÁRIO ---
     const [sessions, setSessions] = useState([]);
@@ -24,7 +24,31 @@ function HistoryPage({ onBack, initialTemplate, initialExercise, user, isEmbedde
     const [lastDocJournal, setLastDocJournal] = useState(null);
     const [hasMoreJournal, setHasMoreJournal] = useState(false);
 
-    // ... (Estado de Análise) ...
+    // --- ESTADO DO MODAL ---
+    const [selectedSessionForDetails, setSelectedSessionForDetails] = useState(null);
+
+    // --- ESTADO DE ANÁLISE ---
+    const [templates, setTemplates] = useState([]);
+    const [selectedTemplate, setSelectedTemplate] = useState('');
+    const [exerciseOptions, setExerciseOptions] = useState([]);
+    const [selectedExercise, setSelectedExercise] = useState('');
+    const [historyRows, setHistoryRows] = useState([]);
+    const [prRows, setPrRows] = useState([]);
+    const [loadingTemplates, setLoadingTemplates] = useState(true);
+    const [loadingHistory, setLoadingHistory] = useState(false);
+
+    // --- ESTADO DO GRÁFICO ---
+    const [chartData, setChartData] = useState([]);
+    const [chartRange, setChartRange] = useState('3M');
+
+    const hasAppliedInitialFilters = useRef(false);
+
+    // Layout de Filtro Inicial
+    useEffect(() => {
+        if (initialTemplate || initialExercise) {
+            setActiveTab('analytics');
+        }
+    }, [initialTemplate, initialExercise]);
 
     // ================= LÓGICA DO DIÁRIO =================
     useEffect(() => {
@@ -39,7 +63,6 @@ function HistoryPage({ onBack, initialTemplate, initialExercise, user, isEmbedde
         else setFetchingMore(true);
         try {
             const startDoc = reset ? null : lastDocJournal;
-            // Buscar histórico genérico (sem filtro de template)
             const result = await workoutService.getHistory(user.uid, null, startDoc, 20);
 
             const loadedSessions = result.data.map(data => ({
@@ -61,7 +84,6 @@ function HistoryPage({ onBack, initialTemplate, initialExercise, user, isEmbedde
 
         } catch (err) {
             console.error("Error fetching sessions:", err);
-            // Lidar com erro (talvez toast ou alerta)
         } finally {
             setLoadingSessions(false);
             setFetchingMore(false);
@@ -74,7 +96,7 @@ function HistoryPage({ onBack, initialTemplate, initialExercise, user, isEmbedde
             day: '2-digit',
             month: 'short',
             weekday: 'short'
-        }).format(date); // Ex: "Ter., 15 de out."
+        }).format(date);
     }
 
     // --- LÓGICA DE AGRUPAMENTO ---
@@ -125,34 +147,6 @@ function HistoryPage({ onBack, initialTemplate, initialExercise, user, isEmbedde
         return `${session.exercisesCount || exerciseList.length} exercícios`;
     };
 
-    // --- ESTADO DO MODAL ---
-    const [selectedSessionForDetails, setSelectedSessionForDetails] = useState(null);
-
-    // --- ESTADO DE ANÁLISE (Existente) ---
-    const [templates, setTemplates] = useState([]);
-    const [selectedTemplate, setSelectedTemplate] = useState('');
-    const [exerciseOptions, setExerciseOptions] = useState([]);
-    const [selectedExercise, setSelectedExercise] = useState('');
-    const [historyRows, setHistoryRows] = useState([]);
-    const [prRows, setPrRows] = useState([]);
-    const [loadingTemplates, setLoadingTemplates] = useState(true);
-    const [loadingHistory, setLoadingHistory] = useState(false);
-
-
-    // --- ESTADO DO GRÁFICO ---
-    const [chartData, setChartData] = useState([]);
-    const [chartRange, setChartRange] = useState('3M'); // 1M, 3M, 6M, 1Y, ALL
-
-    const hasAppliedInitialFilters = useRef(false);
-
-    // Layout de Filtro Inicial
-    useEffect(() => {
-        if (initialTemplate || initialExercise) {
-            setActiveTab('analytics');
-        }
-    }, [initialTemplate, initialExercise]);
-
-
     // ================= LÓGICA DE ANÁLISE =================
     useEffect(() => {
         async function fetchTemplates() {
@@ -160,7 +154,6 @@ function HistoryPage({ onBack, initialTemplate, initialExercise, user, isEmbedde
 
             setLoadingTemplates(true);
             try {
-                // Usar Serviço
                 const list = await workoutService.getTemplates(user.uid);
                 setTemplates(list);
 
@@ -214,59 +207,35 @@ function HistoryPage({ onBack, initialTemplate, initialExercise, user, isEmbedde
     useEffect(() => {
         async function fetchHistory() {
             if (activeTab !== 'analytics' || !selectedTemplate || !selectedExercise || !user) {
-                if (activeTab !== 'analytics') {
-                    // Não limpar linhas se apenas trocar de aba, mas a lógica roda de qualquer jeito.
-                    // Na verdade, vamos assumir que se sairmos da aba podemos manter o estado? 
-                    // O estado do React persiste a menos que o componente desmonte.
-                    // Mas renderização condicional pode desmontar subcomponentes. 
-                    // Estamos mantendo estado no pai.
-                }
                 return;
             }
 
             setLoadingHistory(true);
             try {
-                // Determinar limite baseado no intervalo? Ou buscar os últimos 100 para contexto de análise
-                // Para um gráfico adequado, podemos precisar de mais. 
-                // Usando 100 como limite seguro por enquanto para evitar "excesso de dados".
-                // Idealmente isso seria dinâmico ou usaria um método de serviço específico "getAnalytics".
                 const result = await workoutService.getHistory(user.uid, selectedTemplate, null, 100);
 
                 const rows = [];
                 const prMap = new Map();
 
-                // Serviço retorna { data, lastDoc, hasMore }
-                // Data já é um array de objetos.
-                // Precisamos ordenar decrescente por data para o loop (consistente com lógica anterior).
-                // Ordenação padrão do serviço (se índice existir) é completedAt desc.
-
-                // Se serviço falhou ao ordenar (sem índice), ordenamos no cliente.
-                // Nota: items result.data têm completedAt como Timestamp (ou data se serviço converteu? Serviço converte? Não, serviço retorna .data() então é Timestamp)
-
                 const docs = result.data.sort((a, b) => {
                     const dateA = a.completedAt?.toDate?.() || 0;
                     const dateB = b.completedAt?.toDate?.() || 0;
-                    return dateB - dateA; // Descending
+                    return dateB - dateA;
                 });
 
                 docs.forEach((data) => {
-                    // const docId = data.id; // Não usado
                     const results = data.results || data.exercises || [];
-
-                    // Lidar com nova estrutura onde exercises é um array
                     let exerciseData = null;
                     if (Array.isArray(results)) {
                         exerciseData = results.find(e => e.name === selectedExercise);
                     } else {
-                        exerciseData = results[selectedExercise]; // Suporte a mapa legado
+                        exerciseData = results[selectedExercise];
                     }
 
                     if (!exerciseData) return;
-
                     const completedAt = data.completedAt?.toDate?.() || null;
                     if (!completedAt) return;
 
-                    // ADAPTADOR: Encontrar "Melhor Série" (Peso Máx)
                     let bestWeight = 0;
                     let bestReps = 0;
 
@@ -292,7 +261,6 @@ function HistoryPage({ onBack, initialTemplate, initialExercise, user, isEmbedde
                         notes: exerciseData.notes || '',
                     });
 
-                    // Lógica de PR
                     const key = String(bestWeight);
                     const existing = prMap.get(key);
                     if (!existing || bestReps > existing.reps) {
@@ -300,7 +268,6 @@ function HistoryPage({ onBack, initialTemplate, initialExercise, user, isEmbedde
                     }
                 });
 
-                // Filtrar linhas com base no Período
                 const now = new Date();
                 const rangeDate = new Date();
                 if (chartRange === '1M') rangeDate.setMonth(now.getMonth() - 1);
@@ -310,11 +277,8 @@ function HistoryPage({ onBack, initialTemplate, initialExercise, user, isEmbedde
                 if (chartRange === 'ALL') rangeDate.setFullYear(1900);
 
                 const filteredRows = rows.filter(r => r.date >= rangeDate);
-
-                // Ordenar para lista
                 setHistoryRows(rows);
 
-                // Ordenar para gráfico (data ascendente) & Formatar
                 const chartDataParsed = filteredRows
                     .sort((a, b) => a.date - b.date)
                     .map(r => ({
@@ -324,47 +288,44 @@ function HistoryPage({ onBack, initialTemplate, initialExercise, user, isEmbedde
                     }));
 
                 setChartData(chartDataParsed);
-
                 setPrRows(Array.from(prMap.values()).sort((a, b) => a.weight - b.weight));
             } catch (err) {
-                console.error('Erro ao carregar histórico', err);
                 console.error('Erro ao carregar histórico', err);
             } finally {
                 setLoadingHistory(false);
             }
         }
         fetchHistory();
-        fetchHistory();
     }, [selectedTemplate, selectedExercise, user, activeTab, chartRange]);
 
     return (
         <div className="min-h-screen bg-[#020617] pb-32">
             {/* --- CABEÇALHO --- */}
-            <div className="sticky top-0 z-40 bg-[#020617]/80 backdrop-blur-md border-b border-slate-800/50 pt-4 px-4 pb-4">
-                <div className="w-full max-w-5xl mx-auto space-y-4">
-
+            <div className="sticky top-0 z-40 bg-[#020617]/95 backdrop-blur-md pt-safe-top pb-4">
+                <div className="w-full max-w-5xl mx-auto px-4 space-y-4">
                     {!isEmbedded && (
-                        <div className="flex items-center justify-between pt-8 mb-2">
+                        <div className="relative flex items-center justify-center mb-6 pt-4">
                             <Button
                                 variant="outline-primary"
                                 size="sm"
                                 onClick={onBack}
-                                className="uppercase font-bold tracking-wider"
+                                className="absolute left-0 uppercase font-bold tracking-wider rounded-full px-4 h-9"
                                 leftIcon={<ChevronLeft size={16} />}
                             >
                                 VOLTAR
                             </Button>
-                            <h1 className="text-xl font-bold text-white">Histórico</h1>
-                            <div className="w-10" />
+
+                            <h2 className="text-xl font-bold text-white tracking-wide">Histórico</h2>
                         </div>
                     )}
 
                     {/* ABAS */}
-                    <div className="grid grid-cols-2 bg-slate-900/50 p-1 rounded-xl border border-slate-800">
+                    <div className="grid grid-cols-2 bg-[#0f172a] p-1.5 rounded-full border border-slate-800 relative">
+                        {/* Background slider could be added here for animation, keeping simple for now */}
                         <button
                             onClick={() => setActiveTab('journal')}
-                            className={`py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'journal'
-                                ? 'bg-slate-800 text-white shadow-sm'
+                            className={`py-2.5 rounded-full text-sm font-bold transition-all duration-300 ${activeTab === 'journal'
+                                ? 'bg-[#1e293b] text-white shadow-lg shadow-black/20'
                                 : 'text-slate-500 hover:text-slate-300'
                                 }`}
                         >
@@ -372,8 +333,8 @@ function HistoryPage({ onBack, initialTemplate, initialExercise, user, isEmbedde
                         </button>
                         <button
                             onClick={() => setActiveTab('analytics')}
-                            className={`py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'analytics'
-                                ? 'bg-slate-800 text-cyan-400 shadow-sm'
+                            className={`py-2.5 rounded-full text-sm font-bold transition-all duration-300 ${activeTab === 'analytics'
+                                ? 'bg-[#1e293b] text-cyan-400 shadow-lg shadow-black/20'
                                 : 'text-slate-500 hover:text-slate-300'
                                 }`}
                         >

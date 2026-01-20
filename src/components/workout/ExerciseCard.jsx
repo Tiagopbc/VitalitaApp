@@ -23,7 +23,7 @@ export function ExerciseCard({
                 {/* Info do Exercício */}
                 <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
-                        <h3 className="font-semibold text-white truncate uppercase">{name}</h3>
+                        <h3 className="text-sm font-semibold text-white truncate uppercase">{name}</h3>
                         {hasProgress && (
                             <motion.div
                                 initial={{ scale: 0 }}
@@ -42,18 +42,18 @@ export function ExerciseCard({
                     {lastWeight && lastReps && (
                         <div className="flex items-center gap-3 mt-2">
                             <div className="flex items-baseline gap-1">
-                                <span className="text-lg font-mono font-bold text-cyan-400">{lastWeight}</span>
+                                <span className="text-base font-mono font-bold text-cyan-400">{lastWeight}</span>
                                 <span className="text-xs text-slate-500">kg</span>
                             </div>
                             <span className="text-slate-600">×</span>
                             <div className="flex items-baseline gap-1">
-                                <span className="text-lg font-mono font-bold text-slate-300">{lastReps}</span>
+                                <span className="text-base font-mono font-bold text-slate-300">{lastReps}</span>
                                 <span className="text-xs text-slate-500">reps</span>
                             </div>
                             <span className="text-slate-600">×</span>
                             <div className="flex items-baseline gap-1">
-                                <span className="text-lg font-mono font-bold text-slate-300">{sets}</span>
-                                <span className="text-xs text-slate-500">sets</span>
+                                <span className="text-base font-mono font-bold text-slate-300">{sets}</span>
+                                <span className="text-base text-slate-500">sets</span>
                             </div>
                         </div>
                     )}

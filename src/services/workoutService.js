@@ -13,6 +13,8 @@ import { db } from '../firebaseConfig'; // Adjust path if needed
 const TEMPLATES_COLLECTION = 'workout_templates';
 const SESSIONS_COLLECTION = 'workout_sessions';
 
+import { toast } from 'sonner';
+
 // Cache em memória
 let templatesCache = {
     userId: null,
@@ -53,19 +55,20 @@ export const workoutService = {
                 ...doc.data()
             }));
 
-            // Ordenação do lado do cliente por nome
-            const sorted = list.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+            // Client-side sort
+            list.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
 
             // Atualizar Cache
             templatesCache = {
                 userId,
-                data: sorted,
+                data: list,
                 timestamp: now
             };
 
-            return sorted;
+            return list;
         } catch (error) {
             console.error("Error fetching templates:", error);
+            toast.error("Erro ao carregar treinos. Verifique sua conexão.");
             throw error;
         }
     },
@@ -136,6 +139,7 @@ export const workoutService = {
             };
         } catch (err) {
             console.error("Error fetching latest session:", err);
+            // Silent fail is acceptable here for UI, but logging is good.
             return null; // Fail gracefully
         }
     },
@@ -193,6 +197,8 @@ export const workoutService = {
 
             // Vamos forçar orderBy('completedAt', 'desc') e se falhar, o usuário (desenvolvedor) vê o link para criar índice.
             // É o jeito "Correto".
+            // Otimização: Ordenação Server-side
+            // Requer índice composto [userId, completedAt] no Firebase Console
             constraints.push(orderBy('completedAt', 'desc'));
 
             if (lastDoc) {
@@ -215,8 +221,7 @@ export const workoutService = {
 
         } catch (error) {
             console.error("Error fetching history:", error);
-            // Fallback para índice ausente: buscar sem orderBy/limit? 
-            // Ou apenas jogar erro para UI lidar com "Criar Índice".
+            toast.error("Erro ao carregar histórico.");
             throw error;
         }
     },

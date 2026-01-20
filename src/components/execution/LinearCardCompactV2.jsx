@@ -273,7 +273,7 @@ export const LinearCardCompactV2 = memo(function LinearCardCompactV2({
 
                 {/* Contador */}
                 <div
-                    className={`px-3 py-1.5 rounded-full text-[20px] font-bold flex-shrink-0 border ${isExerciseFullyCompleted ? 'text-green-500 bg-green-500/10 border-green-500/30' : 'text-blue-500 bg-blue-500/10 border-blue-500/25'}`}
+                    className={`px-3 py-1.5 rounded-full text-base font-bold flex-shrink-0 border ${isExerciseFullyCompleted ? 'text-green-500 bg-green-500/10 border-green-500/30' : 'text-blue-500 bg-blue-500/10 border-blue-500/25'}`}
                 >
                     {completedCount} / {totalSets}
                 </div>

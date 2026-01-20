@@ -5,7 +5,6 @@ import { workoutService } from '../services/workoutService';
 
 import {
     User,
-    Mail,
     Dumbbell,
     CalendarDays,
     Loader2,
@@ -26,7 +25,7 @@ import { Button } from '../components/design-system/Button';
 
 
 
-export default function ProfilePage({ user, onLogout, onNavigateToHistory, onNavigateToVolumeAnalysis, onNavigateToTrainer, isTrainer }) {
+export default function ProfilePage({ user, onLogout, onNavigateToHistory, onNavigateToTrainer, isTrainer }) {
     const [showEditModal, setShowEditModal] = useState(false);
 
     const [loading, setLoading] = useState(true);
@@ -409,8 +408,8 @@ export default function ProfilePage({ user, onLogout, onNavigateToHistory, onNav
                 </button>
 
                 {/* Streak */}
-                <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-5 flex items-center gap-4 relative overflow-hidden group hover:border-slate-700 transition-colors">
-                    <div className="w-12 h-12 rounded-full bg-amber-500/10 flex items-center justify-center text-amber-500 group-hover:scale-110 transition-transform">
+                <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-5 flex items-center gap-4 relative overflow-hidden">
+                    <div className="w-12 h-12 rounded-full bg-amber-500/10 flex items-center justify-center text-amber-500">
                         <Activity size={24} />
                     </div>
                     <div>
@@ -419,12 +418,9 @@ export default function ProfilePage({ user, onLogout, onNavigateToHistory, onNav
                     </div>
                 </div>
 
-                {/* Volume (Clickable) */}
-                <button
-                    onClick={onNavigateToVolumeAnalysis}
-                    className="bg-slate-900/50 border border-slate-800 rounded-2xl p-5 flex items-center gap-4 relative overflow-hidden group hover:border-purple-500/50 hover:bg-slate-900 transition-all text-left"
-                >
-                    <div className="w-12 h-12 rounded-full bg-purple-500/10 flex items-center justify-center text-purple-500 group-hover:scale-110 transition-transform">
+                {/* Volume (Static) */}
+                <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-5 flex items-center gap-4 relative overflow-hidden">
+                    <div className="w-12 h-12 rounded-full bg-purple-500/10 flex items-center justify-center text-purple-500">
                         <BicepsFlexed size={24} />
                     </div>
                     <div>
@@ -434,11 +430,11 @@ export default function ProfilePage({ user, onLogout, onNavigateToHistory, onNav
                         </p>
                         <p className="text-[10px] text-slate-500 font-medium">ton</p>
                     </div>
-                </button>
+                </div>
 
                 {/* Records */}
-                <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-5 flex items-center gap-4 relative overflow-hidden group hover:border-slate-700 transition-colors">
-                    <div className="w-12 h-12 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-500 group-hover:scale-110 transition-transform">
+                <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-5 flex items-center gap-4 relative overflow-hidden">
+                    <div className="w-12 h-12 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-500">
                         <Trophy size={24} />
                     </div>
                     <div>

@@ -99,7 +99,7 @@ export function TrainerDashboard({ user, onBack, onNavigateToCreateWorkout }) {
         return (
             <div className="min-h-screen bg-[#020617] relative">
                 <div className="sticky top-0 z-30 bg-[#020617]/80 backdrop-blur-xl border-b border-white/5 p-4 transition-all">
-                    <div className="flex items-center justify-between max-w-7xl mx-auto">
+                    <div className="flex items-center justify-between max-w-5xl mx-auto">
                         <Button
                             variant="outline-primary"
                             size="sm"
@@ -146,7 +146,7 @@ export function TrainerDashboard({ user, onBack, onNavigateToCreateWorkout }) {
                     </div>
 
                     {/* Abas em Pílula Modernas - Perto do Nome */}
-                    <div className="max-w-7xl mx-auto px-4 flex justify-center mb-4">
+                    <div className="max-w-5xl mx-auto px-4 flex justify-center mb-4">
                         <div className="bg-slate-900/80 backdrop-blur-md p-1 rounded-full inline-flex border border-white/10 shadow-2xl shadow-black/50">
                             <button
                                 onClick={() => setActiveTab('workouts')}
@@ -171,7 +171,7 @@ export function TrainerDashboard({ user, onBack, onNavigateToCreateWorkout }) {
                 </div>
 
                 {/* CONTEÚDO */}
-                <div className="p-4 max-w-7xl mx-auto space-y-6">
+                <div className="p-4 max-w-5xl mx-auto space-y-6">
                     {activeTab === 'workouts' ? (
                         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
                             <div className="flex justify-between items-center mb-6">
@@ -209,7 +209,7 @@ export function TrainerDashboard({ user, onBack, onNavigateToCreateWorkout }) {
 
     // --- VISÃO PRINCIPAL DO DASHBOARD ---
     return (
-        <div className="min-h-screen bg-[#020617] pb-24 lg:pt-0 pt-4 px-4 lg:px-8 max-w-7xl mx-auto">
+        <div className="min-h-screen bg-[#020617] pb-24 lg:pt-0 pt-4 px-4 lg:px-8 max-w-5xl mx-auto">
 
             {/* 1. Cabeçalho & Ações */}
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">

@@ -6,6 +6,7 @@
  */
 import React, { useEffect, useMemo, useRef, useState, Suspense } from 'react';
 import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
+import { Toaster } from 'sonner';
 import { HomeDashboard } from './pages/HomeDashboard';
 import { BottomNavEnhanced } from './BottomNavEnhanced';
 import { DesktopSidebar } from './DesktopSidebar';
@@ -23,7 +24,7 @@ const TrainerDashboard = React.lazy(() => import('./pages/TrainerDashboard').the
 import LoginPage from './pages/LoginPage'; // Manter login genérico rápido (ou carregar via lazy load também se for grande)
 import { userService } from './services/userService';
 import { useAuth } from './AuthContext';
-import { onSnapshot } from 'firebase/firestore'; // Limpar se importação específica não for necessária
+
 import './style.css';
 import { WorkoutProvider, useWorkout } from './context/WorkoutContext';
 
@@ -38,6 +39,7 @@ function getFirstNameFromDisplayName(displayName) {
 function App() {
     return (
         <ErrorBoundary>
+            <Toaster richColors position="top-center" />
             <AppContentWithProvider />
         </ErrorBoundary>
     );
@@ -234,7 +236,7 @@ function AppContent() {
                                         onNavigateToWorkout={startWorkout}
                                         onNavigateToHistory={handleOpenHistory}
                                         onNavigateToAchievements={() => navigate('/profile')}
-                                        onNavigateToVolumeAnalysis={() => navigate('/profile')} // TODO: rota separada
+
                                         onNavigateToMyWorkouts={() => navigate('/workouts')}
                                         user={user}
                                     />
@@ -269,7 +271,7 @@ function AppContent() {
                                         user={user}
                                         onLogout={handleLogout}
                                         onNavigateToHistory={handleOpenHistory}
-                                        onNavigateToVolumeAnalysis={() => navigate('/profile')}
+
                                         onNavigateToTrainer={() => navigate('/trainer')}
                                         isTrainer={isTrainer}
                                     />
