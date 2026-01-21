@@ -42,7 +42,7 @@ export const ShareableWorkoutCard = forwardRef(({ session, userName }, ref) => {
                     height: '100%',
                     objectFit: 'cover',
                     zIndex: 0,
-                    opacity: 0.6 // Increased visibility as requested
+                    opacity: 0.7 // Increased visibility to 70%
                 }}
             />
 

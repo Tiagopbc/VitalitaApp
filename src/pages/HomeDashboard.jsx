@@ -217,7 +217,7 @@ export function HomeDashboard({
                         disabled={sharing}
                         className="mt-4 px-4 py-2 bg-pink-600/20 text-pink-400 border border-pink-500/50 rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-pink-600/30 transition-colors"
                     >
-                        {sharing ? 'Gerando...' : '📸 Testar Card v3.0.8 (20kg)'}
+                        {sharing ? 'Gerando...' : '📸 Testar Card v3.0.9 (20kg)'}
                     </button>
                 </div>
 
