@@ -38,7 +38,12 @@ export default defineConfig({
   build: {
     rollupOptions: {
       output: {
-        // manualChunks removed to prevent circular dependency/loading order issues with React
+        manualChunks: {
+          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+          'vendor-firebase': ['firebase/app', 'firebase/auth', 'firebase/firestore'],
+          'vendor-charts': ['recharts'],
+          'vendor-ui': ['motion', 'lucide-react', 'sonner', 'canvas-confetti'],
+        },
       },
     },
   },

@@ -7,7 +7,7 @@
 import React, { useEffect, useMemo, useRef, useState, Suspense } from 'react';
 import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { Toaster } from 'sonner';
-import { HomeDashboard } from './pages/HomeDashboard';
+const HomeDashboard = React.lazy(() => import('./pages/HomeDashboard').then(module => ({ default: module.HomeDashboard })));
 import { BottomNavEnhanced } from './BottomNavEnhanced';
 import { DesktopSidebar } from './DesktopSidebar';
 import { ProtectedRoute } from './components/ProtectedRoute';
@@ -21,7 +21,7 @@ const WorkoutsPage = React.lazy(() => import('./pages/WorkoutsPage'));
 const WorkoutExecutionPage = React.lazy(() => import('./pages/WorkoutExecutionPage').then(module => ({ default: module.WorkoutExecutionPage })));
 const TrainerDashboard = React.lazy(() => import('./pages/TrainerDashboard').then(module => ({ default: module.TrainerDashboard })));
 
-import LoginPage from './pages/LoginPage'; // Manter login genérico rápido (ou carregar via lazy load também se for grande)
+const LoginPage = React.lazy(() => import('./pages/LoginPage'));
 import { userService } from './services/userService';
 import { useAuth } from './AuthContext';
 
