@@ -17,7 +17,8 @@ import {
     ChevronRight,
     Share2,
     RotateCcw,
-    Trash2
+    Trash2,
+    ArrowLeft
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import html2canvas from 'html2canvas'; // For sharing
@@ -35,6 +36,33 @@ import { Skeleton } from '../components/design-system/Skeleton';
 // --- CUSTOM HOOKS ---
 import { useWorkoutTimer } from '../hooks/useWorkoutTimer';
 import { useWorkoutSession } from '../hooks/useWorkoutSession';
+
+const TopBarButton = ({ icon, label, variant = 'default', onClick, active, isBack = false }) => {
+    // Base styles: "Voltar" gets standard size, others get EXTRA compact size
+    const sizeStyles = isBack
+        ? "px-3 py-2 text-xs"
+        : "px-2 py-1.5 text-[9px] tracking-tight"; // Reduced padding and font size
+
+    const baseStyles = `flex items-center gap-1 rounded-lg font-bold uppercase transition-all duration-300 border backdrop-blur-md whitespace-nowrap ${sizeStyles}`;
+
+    const variants = {
+        primary: "bg-cyan-500/10 text-cyan-400 border-cyan-500/50 hover:bg-cyan-500/20 shadow-[0_0_15px_rgba(34,211,238,0.1)]",
+        danger: "bg-red-500/10 text-red-400 border-red-500/20 hover:bg-red-500/20",
+        default: active
+            ? "bg-slate-800 text-white border-slate-600 shadow-lg"
+            : "bg-black/40 text-slate-400 border-white/5 hover:bg-black/60 hover:text-slate-200"
+    };
+
+    return (
+        <button
+            onClick={onClick}
+            className={`${baseStyles} ${variants[variant]}`}
+        >
+            {React.cloneElement(icon, { size: isBack ? 16 : 13, strokeWidth: 2.5 })}
+            <span>{label}</span>
+        </button>
+    );
+};
 
 // --- SUBCOMPONENT: Progress Card (Kept inline for simplicity or move to separate file later) ---
 function ProgressCard({ completedCount, totalCount }) {
@@ -270,67 +298,69 @@ export function WorkoutExecutionPage({ workoutId, onFinish, user }) {
             {error && <Toast message={error} type="error" onClose={() => setError(null)} />}
             <div className="max-w-2xl mx-auto space-y-6">
 
-                {/* --- HEADER --- */}
                 <div
-                    className="fixed top-0 left-1/2 -translate-x-1/2 w-full max-w-2xl z-50 px-3 pb-2 flex items-center justify-between pointer-events-none bg-gradient-to-b from-[#020617] via-[#020617]/95 to-transparent backdrop-blur-md"
-                    style={{ paddingTop: 'calc(env(safe-area-inset-top) + 1rem)' }}
+                    className="
+                        fixed top-0 left-0 right-0 z-50 pointer-events-none
+                        bg-gradient-to-b from-black/80 via-black/60 to-transparent
+                        backdrop-blur-xl
+                        border-b border-white/5
+                        shadow-2xl shadow-black/20
+                        rounded-b-3xl
+                    "
+                    style={{
+                        paddingTop: 'env(safe-area-inset-top)',
+                        height: 'auto'
+                    }}
                 >
-                    <div className="pointer-events-auto flex items-center gap-2">
-                        <Button
-                            variant="outline-primary"
-                            size="sm"
-                            onClick={() => navigate(-1)}
-                            className="backdrop-blur-md shadow-lg uppercase font-bold tracking-wider"
-                            leftIcon={<ChevronLeft size={16} />}
-                        >
-                            VOLTAR
-                        </Button>
+                    <div className="
+                        relative mx-auto max-w-2xl
+                        px-4 py-3
+                        pointer-events-auto
+                    ">
+                        {/* Ambient glow effect (Full Height) */}
+                        <div className="absolute inset-0 bg-gradient-to-b from-cyan-500/5 via-transparent to-transparent pointer-events-none rounded-b-3xl" />
 
-                        {/* DISCARD BUTTON */}
-                        <button
-                            onClick={handleDiscard}
-                            className="w-8 h-8 flex items-center justify-center rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20 transition-colors backdrop-blur-md"
-                        >
-                            <Trash2 size={16} />
-                        </button>
-                    </div>
+                        <div className="relative z-10 flex items-center justify-between gap-2">
+                            {/* Left side - Back button */}
+                            <TopBarButton
+                                icon={<ArrowLeft />}
+                                label="VOLTAR"
+                                variant="primary"
+                                onClick={() => navigate(-1)}
+                                isBack={true}
+                            />
 
-                    <div className="flex items-center gap-2 pointer-events-auto">
-                        {saving && (
-                            <span className="text-[10px] text-cyan-400 font-bold animate-pulse flex items-center gap-1 mr-2">
-                                <RotateCw size={10} className="animate-spin" /> Salvando...
-                            </span>
-                        )}
+                            {/* Right side - Action buttons */}
+                            <div className="flex items-center gap-1 overflow-x-auto no-scrollbar py-1 mask-linear-fade">
+                                <TopBarButton
+                                    icon={<Trash2 />}
+                                    label="CANCELAR"
+                                    variant="danger"
+                                    onClick={handleDiscard}
+                                />
 
-                        <Button
-                            variant={showTimer ? 'primary' : 'secondary'}
-                            size="xs"
-                            onClick={() => setShowTimer(!showTimer)}
-                            className={showTimer ? 'bg-cyan-950/80 border-cyan-500 text-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.15)]' : 'bg-[#0f172a]/90 backdrop-blur-md border-slate-700 text-slate-400'}
-                            leftIcon={<Timer size={14} />}
-                        >
-                            TIMER
-                        </Button>
+                                <TopBarButton
+                                    icon={<Timer />}
+                                    label="TIMER"
+                                    active={showTimer}
+                                    onClick={() => setShowTimer(!showTimer)}
+                                />
 
-                        <Button
-                            variant={showOneRM ? 'primary' : 'secondary'}
-                            size="xs"
-                            onClick={() => setShowOneRM(!showOneRM)}
-                            className={showOneRM ? 'bg-cyan-950/80 border-cyan-500 text-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.15)]' : 'bg-[#0f172a]/90 backdrop-blur-md border-slate-700 text-slate-400'}
-                            leftIcon={<Dumbbell size={14} />}
-                        >
-                            1RM
-                        </Button>
+                                <TopBarButton
+                                    icon={<Activity />}
+                                    label="1RM"
+                                    active={showOneRM}
+                                    onClick={() => setShowOneRM(!showOneRM)}
+                                />
 
-                        <Button
-                            variant={focusMode ? 'primary' : 'secondary'}
-                            size="xs"
-                            onClick={() => setFocusMode(!focusMode)}
-                            className={focusMode ? 'bg-cyan-950/80 border-cyan-500 text-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.15)]' : 'bg-[#0f172a]/90 backdrop-blur-md border-slate-700 text-slate-400'}
-                            leftIcon={focusMode ? <Eye size={14} /> : <Eye size={14} />}
-                        >
-                            FOCO
-                        </Button>
+                                <TopBarButton
+                                    icon={<Eye />}
+                                    label="FOCO"
+                                    active={focusMode}
+                                    onClick={() => setFocusMode(!focusMode)}
+                                />
+                            </div>
+                        </div>
                     </div>
                 </div>
 
