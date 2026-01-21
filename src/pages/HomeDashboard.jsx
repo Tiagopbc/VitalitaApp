@@ -25,6 +25,8 @@ import { StreakWeeklyGoalHybrid } from '../StreakWeeklyGoalHybrid';
 import { db } from '../firebaseConfig';
 import { calculateWeeklyStats } from '../utils/workoutStats';
 import { workoutService } from '../services/workoutService';
+import html2canvas from 'html2canvas'; // For sharing
+import { ShareableWorkoutCard } from '../components/sharing/ShareableWorkoutCard';
 
 
 export function HomeDashboard({
@@ -38,6 +40,50 @@ export function HomeDashboard({
     const hour = new Date().getHours();
     const greeting = hour < 12 ? 'Bom dia' : hour < 18 ? 'Boa tarde' : 'Boa noite';
     const firstName = user?.displayName?.split(' ')[0] || 'Atleta';
+
+    // --- TESTE SHARE CARD ---
+    const [sharing, setSharing] = useState(false);
+    const shareCardRef = React.useRef(null);
+
+    const handleTestShare = async () => {
+        if (!shareCardRef.current) return;
+        setSharing(true);
+        try {
+            // Force wait for images
+            await new Promise(r => setTimeout(r, 500));
+
+            const canvas = await html2canvas(shareCardRef.current, {
+                backgroundColor: '#020617',
+                scale: 2,
+                useCORS: true,
+                allowTaint: true,
+            });
+
+            canvas.toBlob(async (blob) => {
+                if (!blob) { alert('Erro ao gerar'); setSharing(false); return; }
+                const file = new File([blob], 'treino_teste.png', { type: 'image/png' });
+
+                if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                    try {
+                        await navigator.share({
+                            title: 'Treino Concluído',
+                            text: 'Olha meu treino! 💪',
+                            files: [file]
+                        });
+                    } catch (e) { console.log(e); }
+                } else {
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a'); a.href = url; a.download = 'teste.png';
+                    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+                }
+                setSharing(false);
+            }, 'image/png');
+        } catch (err) {
+            console.error(err);
+            alert('Erro: ' + err.message);
+            setSharing(false);
+        }
+    };
 
     const [suggestedWorkout, setSuggestedWorkout] = useState(null);
     const [userGoal, setUserGoal] = useState(4); // Estado para meta do usuário
@@ -164,6 +210,15 @@ export function HomeDashboard({
                     <p className="text-slate-400 text-sm">
                         Pronto para o próximo treino?
                     </p>
+
+                    {/* BUTTON TESTE CARD */}
+                    <button
+                        onClick={handleTestShare}
+                        disabled={sharing}
+                        className="mt-4 px-4 py-2 bg-pink-600/20 text-pink-400 border border-pink-500/50 rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-pink-600/30 transition-colors"
+                    >
+                        {sharing ? 'Gerando...' : '📸 Testar Novo Card (20kg)'}
+                    </button>
                 </div>
 
                 {/* 2. PROGRESSO */}
@@ -304,6 +359,18 @@ export function HomeDashboard({
                 </div>
 
             </div>
+
+            {/* Hidden Card for Generation */}
+            <ShareableWorkoutCard
+                ref={shareCardRef}
+                session={{
+                    templateName: 'Treino 4 - Full Body + Braços',
+                    duration: '18min',
+                    exercisesCount: 8,
+                    volumeLoad: 20
+                }}
+                userName={user?.displayName || "Atleta"}
+            />
         </div>
     );
 }
