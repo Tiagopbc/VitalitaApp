@@ -37,7 +37,7 @@ function getFirstNameFromDisplayName(displayName) {
 }
 
 function App() {
-    console.log("Vitalita App v3.0.9 - Opacity 70%");
+    console.log("Vitalita App v3.0.10 - Fix Kilos Overlap");
     return (
         <ErrorBoundary>
             <Toaster richColors position="top-center" />

@@ -130,7 +130,7 @@ export const ShareableWorkoutCard = forwardRef(({ session, userName }, ref) => {
                         textShadow: '0 0 20px rgba(0,0,0,0.5)',
                         letterSpacing: '2px',
                         opacity: 0.9,
-                        marginTop: '-10px'
+                        marginTop: '15px' // Positive margin to separate from the number
                     }}>
                         KILOS
                     </h2>
