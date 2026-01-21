@@ -1,15 +1,13 @@
 import React, { forwardRef } from 'react';
-import { Activity, Clock, Dumbbell, Trophy, User, Weight } from 'lucide-react';
+import { Activity, Share2 } from 'lucide-react';
 
 export const ShareableWorkoutCard = forwardRef(({ session, userName }, ref) => {
     if (!session) return null;
 
-    // Data
-    const formattedDate = new Intl.DateTimeFormat('pt-BR', {
-        day: '2-digit',
-        month: 'long',
-        year: 'numeric'
-    }).format(new Date());
+    // Use a high-quality shiny text color to simulate the reference without risky gradients
+    // Reference has a white/cyan metallic look.
+    const metallicColor = '#e0f2fe'; // Sky-100 (very light blue/white)
+    const cyanAccent = '#22d3ee'; // Cyan-400
 
     return (
         <div
@@ -19,21 +17,21 @@ export const ShareableWorkoutCard = forwardRef(({ session, userName }, ref) => {
                 position: 'fixed',
                 left: '-9999px',
                 top: 0,
-                width: '400px', // Story width
-                height: '711px', // 9:16
+                width: '400px',
+                height: '711px', // 9:16 aspect ratio
                 backgroundColor: '#020617',
-                fontFamily: 'Inter, sans-serif',
+                fontFamily: "'Inter', sans-serif",
                 color: 'white',
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
-                justifyContent: 'center', // Center everything
-                padding: '20px',
+                justifyContent: 'space-between',
+                padding: '40px 20px',
                 boxSizing: 'border-box',
                 overflow: 'hidden'
             }}
         >
-            {/* --- BACKGROUND --- */}
+            {/* --- BACKGROUND IMAGE --- */}
             <img
                 src="/bg-share-dumbbells.png"
                 alt="Background"
@@ -44,145 +42,172 @@ export const ShareableWorkoutCard = forwardRef(({ session, userName }, ref) => {
                     height: '100%',
                     objectFit: 'cover',
                     zIndex: 0,
+                    opacity: 0.4 // Reduced opacity as requested
                 }}
             />
 
-            {/* Overall Darkening Overlay (Scrim) */}
+            {/* --- VIGNETTE OVERLAY --- */}
+            {/* Subtle darkening at top/bottom for readability without a full box */}
             <div style={{
                 position: 'absolute',
                 inset: 0,
-                backgroundColor: 'rgba(2, 6, 23, 0.4)', // Slightly darken everything
+                background: `
+                    linear-gradient(to bottom, 
+                        rgba(2,6,23,0.8) 0%, 
+                        rgba(2,6,23,0.2) 25%, 
+                        rgba(2,6,23,0.2) 60%, 
+                        rgba(2,6,23,0.9) 100%
+                    )
+                `,
                 zIndex: 1
             }} />
 
-            {/* --- CENTRAL GLASS CARD --- */}
-            {/* --- CENTRAL CARD (Premium Glass Look) --- */}
+            {/* --- CONTENT CONTAINER --- */}
             <div style={{
-                position: 'relative', // REQUIRED for zIndex
                 zIndex: 10,
                 width: '100%',
-                maxWidth: '320px',
-                // Gradient for depth + transparency (No backdrop-filter to be safe)
-                background: 'linear-gradient(145deg, rgba(30, 41, 59, 0.7) 0%, rgba(2, 6, 23, 0.8) 100%)',
-                borderRadius: '32px',
-                border: '1px solid rgba(255, 255, 255, 0.15)', // Subtler border
-                padding: '40px 24px',
+                height: '100%',
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
-                gap: '24px',
-                boxShadow: `
-                    0 20px 40px rgba(0,0,0,0.6),
-                    inset 0 1px 1px rgba(255,255,255,0.1) 
-                ` // Drop shadow + subtle top highlight
+                justifyContent: 'space-between',
+                position: 'relative' // For zIndex
             }}>
-                {/* Header */}
+
+                {/* 1. TOP LOGO */}
                 <div style={{
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '8px',
-                    color: '#22d3ee', // Cyan
+                    gap: '10px',
+                    marginTop: '20px'
                 }}>
-                    <Activity size={18} />
+                    {/* Custom Logo Icon Mockup */}
+                    <Activity size={28} color={cyanAccent} strokeWidth={2.5} />
                     <span style={{
-                        fontSize: '12px',
+                        fontSize: '18px',
                         fontWeight: '800',
-                        letterSpacing: '2px',
-                        textTransform: 'uppercase'
+                        letterSpacing: '4px',
+                        textTransform: 'uppercase',
+                        color: cyanAccent,
+                        textShadow: `0 0 15px ${cyanAccent}`
                     }}>Vitalità</span>
                 </div>
 
-                {/* Main Stat: Volume */}
+                {/* 2. HERO STATS (CENTERED) */}
                 <div style={{
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: 'center',
-                    borderTop: '1px solid rgba(255,255,255,0.1)',
-                    borderBottom: '1px solid rgba(255,255,255,0.1)',
-                    padding: '24px 0',
-                    width: '100%'
+                    justifyContent: 'center',
+                    flex: 1, // Takes available space
+                    gap: '0px',
+                    marginTop: '-40px' // Visual offset to center over dumbbells
                 }}>
-                    <span style={{
-                        fontSize: '14px',
-                        color: '#94a3b8',
+                    <h1 style={{
+                        fontSize: '150px',
+                        fontWeight: '900',
+                        lineHeight: '0.9',
+                        margin: 0,
+                        color: '#ffffff',
+                        letterSpacing: '-8px',
+                        // Strong dual shadow for "pop" against busy background
+                        textShadow: `
+                            0 10px 30px rgba(0,0,0,0.5),
+                            0 0 20px rgba(34,211,238,0.4)
+                        `
+                    }}>
+                        {session.volumeLoad}
+                    </h1>
+
+                    <h2 style={{
+                        fontSize: '64px',
+                        fontWeight: '800',
                         textTransform: 'uppercase',
+                        margin: 0,
+                        color: 'transparent',
+                        // Outline effect simulation
+                        WebkitTextStroke: `2px ${metallicColor}`,
+                        textShadow: '0 0 20px rgba(0,0,0,0.5)',
+                        letterSpacing: '2px',
+                        opacity: 0.9,
+                        marginTop: '-10px'
+                    }}>
+                        KILOS
+                    </h2>
+                </div>
+
+                {/* 3. FOOTER INFO */}
+                <div style={{
+                    width: '100%',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    textAlign: 'center',
+                    marginBottom: '20px',
+                    gap: '12px'
+                }}>
+                    <div style={{
+                        fontSize: '28px',
+                        color: '#f8fafc',
+                        fontFamily: 'sans-serif',
                         letterSpacing: '1px',
-                        fontWeight: '600',
-                        marginBottom: '8px'
-                    }}>Peso Total Levantado</span>
+                        fontWeight: '500',
+                        textShadow: '0 2px 4px rgba(0,0,0,0.8)'
+                    }}>
+                        Volume Empilhado
+                    </div>
 
                     <div style={{
                         display: 'flex',
-                        alignItems: 'baseline',
+                        flexDirection: 'column',
+                        alignItems: 'center',
                         gap: '4px'
                     }}>
-                        <h1 style={{
-                            fontSize: '80px',
-                            fontWeight: '900',
-                            lineHeight: '1',
-                            margin: 0,
-                            color: 'white',
-                            textShadow: '0 0 20px rgba(34, 211, 238, 0.3)'
+                        <div style={{
+                            fontSize: '18px',
+                            fontWeight: '700',
+                            textTransform: 'uppercase',
+                            color: cyanAccent,
+                            letterSpacing: '1px',
+                            textShadow: '0 2px 4px rgba(0,0,0,0.8)'
                         }}>
-                            {session.volumeLoad}
-                        </h1>
-                        <span style={{
-                            fontSize: '24px',
-                            fontWeight: '800',
-                            color: '#22d3ee'
-                        }}>KG</span>
-                    </div>
-                </div>
-
-                {/* Secondary Info */}
-                <div style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    gap: '8px'
-                }}>
-                    <div style={{
-                        fontSize: '18px',
-                        fontWeight: '700',
-                        color: 'white',
-                        textAlign: 'center'
-                    }}>
-                        {session.templateName}
+                            {session.templateName}
+                        </div>
+                        <div style={{
+                            fontSize: '16px',
+                            color: '#cbd5e1',
+                            fontWeight: '400',
+                            textShadow: '0 2px 4px rgba(0,0,0,0.8)'
+                        }}>
+                            {session.duration} | {session.exercisesCount} Exercícios
+                        </div>
                     </div>
 
+                    {/* Faux Button "Share to Story" */}
                     <div style={{
+                        marginTop: '24px',
+                        padding: '12px 24px',
+                        background: 'linear-gradient(90deg, rgba(6,182,212,0.2) 0%, rgba(34,211,238,0.1) 50%, rgba(6,182,212,0.2) 100%)',
+                        border: `1px solid ${cyanAccent}`,
+                        borderRadius: '12px',
                         display: 'flex',
                         alignItems: 'center',
-                        gap: '16px',
-                        marginTop: '4px'
+                        gap: '8px',
+                        boxShadow: `0 0 15px rgba(34,211,238,0.2)`,
+                        backdropFilter: 'blur(4px)'
                     }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#94a3b8' }}>
-                            <Clock size={14} />
-                            <span style={{ fontSize: '13px', fontWeight: '500' }}>{session.duration}</span>
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#94a3b8' }}>
-                            <Dumbbell size={14} />
-                            <span style={{ fontSize: '13px', fontWeight: '500' }}>Treino Concluído</span>
-                        </div>
+                        <Share2 size={16} color={cyanAccent} />
+                        <span style={{
+                            color: 'white',
+                            fontSize: '12px',
+                            fontWeight: '600',
+                            letterSpacing: '1px',
+                            textTransform: 'uppercase'
+                        }}>Share to Story</span>
                     </div>
                 </div>
-            </div>
 
-            {/* Footer Branding */}
-            <div style={{
-                position: 'absolute',
-                bottom: '30px',
-                zIndex: 10,
-                opacity: 0.6
-            }}>
-                <div style={{
-                    height: '4px',
-                    width: '40px',
-                    borderRadius: '2px',
-                    background: 'white',
-                }} />
             </div>
-
         </div>
     );
 });

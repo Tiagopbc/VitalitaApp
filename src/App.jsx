@@ -37,7 +37,7 @@ function getFirstNameFromDisplayName(displayName) {
 }
 
 function App() {
-    console.log("Vitalita App v3.0.5 - Test Button Ready");
+    console.log("Vitalita App v3.0.6 - Opacity Tweak");
     return (
         <ErrorBoundary>
             <Toaster richColors position="top-center" />
