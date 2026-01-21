@@ -58,7 +58,7 @@ describe('App Smoke Test', () => {
         expect(screen.getByText(/Carregando autenticação/i)).toBeInTheDocument();
     });
 
-    it('renders login page when unauthenticated', () => {
+    it('renders login page when unauthenticated', async () => {
         mockUseAuth.mockReturnValue({ user: null, authLoading: false, logout: mockLogout });
 
         render(
@@ -71,7 +71,9 @@ describe('App Smoke Test', () => {
         // Actually App.jsx: <Route path="/login" ... />
         // And ProtectedRoute protects "/".
 
-        expect(screen.getByText('Mocked Login Page')).toBeInTheDocument();
+        await waitFor(() => {
+            expect(screen.getByText('Mocked Login Page')).toBeInTheDocument();
+        });
     });
 
     it('renders home dashboard when authenticated', async () => {

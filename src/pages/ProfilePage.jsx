@@ -645,7 +645,7 @@ export default function ProfilePage({ user, onLogout, onNavigateToHistory, onNav
                             <div className="mt-8">
                                 <Button
                                     onClick={handleSave}
-                                    isLoading={saving}
+                                    loading={saving}
                                     className="w-full py-3.5 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl shadow-lg shadow-blue-500/20"
                                 >
                                     Salvar Alterações
