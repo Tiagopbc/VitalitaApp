@@ -556,7 +556,9 @@ export function WorkoutExecutionPage({ workoutId, onFinish, user }) {
                         let vol = 0;
                         exercises.forEach(ex => {
                             ex.sets.forEach(s => {
-                                if (s.completed) vol += (Number(s.weight) * Number(s.reps));
+                                // User requested "Sum of Weights" (not Load) logic:
+                                // e.g. 7 sets of 5kg = 35kg.
+                                if (s.completed) vol += Number(s.weight);
                             });
                         });
                         return vol;

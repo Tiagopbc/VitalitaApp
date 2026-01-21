@@ -37,7 +37,7 @@ function getFirstNameFromDisplayName(displayName) {
 }
 
 function App() {
-    console.log("Vitalita App v3.1.0 - Live Share Feature Ready");
+    console.log("Vitalita App v3.1.1 - Sum Weights Logic");
     return (
         <ErrorBoundary>
             <Toaster richColors position="top-center" />
