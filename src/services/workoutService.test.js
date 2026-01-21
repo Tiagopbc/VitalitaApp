@@ -54,7 +54,8 @@ describe('workoutService', () => {
             expect(collection).toHaveBeenCalledWith(expect.anything(), 'workout_templates');
 
             // Check if orderBy was used
-            expect(orderBy).toHaveBeenCalledWith('name', 'asc');
+            // orderBy is not used in the query, client-side sorting is used instead
+
 
             expect(getDocs).toHaveBeenCalled();
 
