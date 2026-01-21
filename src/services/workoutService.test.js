@@ -45,7 +45,7 @@ describe('workoutService', () => {
             }))
         };
 
-        it('should fetch templates and use orderBy for sorting', async () => {
+        it('should fetch templates and sort them client-side', async () => {
             getDocs.mockResolvedValue(mockSnapshot);
 
             const result = await workoutService.getTemplates(mockUserId);
