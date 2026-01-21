@@ -58,6 +58,7 @@ export const ShareableWorkoutCard = forwardRef(({ session, userName }, ref) => {
             {/* --- CENTRAL GLASS CARD --- */}
             {/* --- CENTRAL CARD (Simpler for html2canvas) --- */}
             <div style={{
+                position: 'relative', // REQUIRED for zIndex to work reliably in html2canvas
                 zIndex: 10,
                 width: '100%',
                 maxWidth: '320px',
