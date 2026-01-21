@@ -62,7 +62,6 @@ export const ShareableWorkoutCard = forwardRef(({ session, userName }, ref) => {
                 }}
             />
 
-            {/* Blue Ambient Glow (Bottom-Up) */}
             {/* Darker Gradient Scrim for Contrast */}
             <div style={{
                 position: 'absolute',
@@ -114,18 +113,17 @@ export const ShareableWorkoutCard = forwardRef(({ session, userName }, ref) => {
                 flex: 1,
                 marginTop: '-40px' // Visual offset
             }}>
-                {/* GLOWING NUMBER */}
+                {/* GLOWING NUMBER (SOLID WHITE) */}
                 <h1 style={{
-                    fontSize: '130px',
-                    lineHeight: '0.9',
+                    fontSize: '140px',
+                    lineHeight: '0.85',
                     fontFamily: 'Inter, sans-serif',
                     fontWeight: '900',
                     margin: 0,
-                    background: 'linear-gradient(180deg, #ffffff 0%, #22d3ee 100%)',
-                    WebkitBackgroundClip: 'text',
-                    WebkitTextFillColor: 'transparent',
-                    filter: 'drop-shadow(0 0 20px rgba(34,211,238,0.6))',
-                    letterSpacing: '-6px'
+                    color: '#ffffff', // Branco Sólido
+                    textShadow: '0 0 40px rgba(34,211,238,0.5)', // Strong Cyan Glow
+                    letterSpacing: '-6px',
+                    textAlign: 'center'
                 }}>
                     {session.volumeLoad}
                 </h1>
@@ -138,11 +136,11 @@ export const ShareableWorkoutCard = forwardRef(({ session, userName }, ref) => {
                     textTransform: 'uppercase',
                     letterSpacing: '4px',
                     margin: 0,
-                    marginTop: '5px',
+                    marginTop: '0px',
                     color: 'transparent',
-                    WebkitTextStroke: '2px #22d3ee', // Hollow outline effect like reference
-                    textShadow: '0 0 15px rgba(34,211,238,0.4)',
-                    opacity: 0.9
+                    WebkitTextStroke: '2px #22d3ee', // Hollow outline effect
+                    textShadow: '0 0 20px rgba(34,211,238,0.4)',
+                    opacity: 1
                 }}>
                     KILOS
                 </h2>
@@ -159,11 +157,12 @@ export const ShareableWorkoutCard = forwardRef(({ session, userName }, ref) => {
                 gap: '12px'
             }}>
                 <div style={{
-                    fontSize: '28px',
-                    fontWeight: '400', // Light/Regular
-                    color: '#e2e8f0',
-                    fontFamily: 'sans-serif', // Clean
-                    letterSpacing: '1px'
+                    fontSize: '24px',
+                    fontWeight: '500',
+                    color: '#ffffff', // Branco Sólido
+                    fontFamily: 'sans-serif',
+                    letterSpacing: '1px',
+                    textShadow: '0 2px 4px rgba(0,0,0,0.8)'
                 }}>
                     Volume Empilhado
                 </div>
@@ -174,14 +173,15 @@ export const ShareableWorkoutCard = forwardRef(({ session, userName }, ref) => {
                     color: '#22d3ee', // Cyan accent
                     textTransform: 'uppercase',
                     letterSpacing: '2px',
-                    background: 'rgba(34,211,238,0.1)',
-                    padding: '8px 16px',
+                    background: 'rgba(2, 6, 23, 0.6)',
+                    padding: '10px 20px',
                     borderRadius: '50px',
                     border: '1px solid rgba(34,211,238,0.3)',
-                    boxShadow: '0 0 15px rgba(34,211,238,0.1)'
+                    boxShadow: '0 0 15px rgba(34,211,238,0.1)',
+                    backdropFilter: 'blur(4px)'
                 }}>
                     {session.templateName}
-                    <span style={{ margin: '0 8px', color: '#64748b' }}>|</span>
+                    <span style={{ margin: '0 8px', color: '#94a3b8' }}>|</span>
                     {session.duration}
                 </div>
 
