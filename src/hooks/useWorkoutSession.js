@@ -266,6 +266,12 @@ export function useWorkoutSession(workoutId, user) {
         setExercises(prev => prev.map(ex => ex.id === exId ? { ...ex, notes: val } : ex));
     }, []);
 
+    const updateSetMultiple = useCallback((exId, setId, updates) => {
+        setExercises(prev => prev.map(ex => ex.id === exId ? {
+            ...ex, sets: ex.sets.map(s => s.id === setId ? { ...s, ...updates } : s)
+        } : ex));
+    }, []);
+
     const completeSetAutoFill = useCallback((exId, setNumber, weight, actualReps) => {
         setExercises(prev => prev.map(ex => {
             if (ex.id !== exId) return ex;
@@ -379,7 +385,8 @@ export function useWorkoutSession(workoutId, user) {
         completeSetAutoFill,
         finishSession,
         syncSession,
-        discardSession
+        discardSession,
+        updateSetMultiple
     };
 }
 

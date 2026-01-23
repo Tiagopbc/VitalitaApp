@@ -50,7 +50,7 @@ const TopBarButton = ({ icon, label, variant = 'default', onClick, active, isBac
         danger: "bg-red-500/10 text-red-400 border-red-500/20 hover:bg-red-500/20",
         default: active
             ? "bg-slate-800 text-white border-slate-600 shadow-lg"
-            : "bg-black/40 text-slate-400 border-white/5 hover:bg-black/60 hover:text-slate-200"
+            : "bg-slate-900/60 text-slate-300 border-white/10 hover:bg-slate-800/80 hover:text-white"
     };
 
     return (
@@ -114,7 +114,8 @@ export function WorkoutExecutionPage({ workoutId, onFinish, user }) {
         completeSetAutoFill,
         finishSession,
         syncSession,
-        discardSession
+        discardSession,
+        updateSetMultiple
     } = useWorkoutSession(workoutId, user);
 
 
@@ -125,6 +126,21 @@ export function WorkoutExecutionPage({ workoutId, onFinish, user }) {
     const [selectedMethod, setSelectedMethod] = useState(null);
     const [focusMode, setFocusMode] = useState(false);
     const [isFinished, setIsFinished] = useState(false); // Prevents "Zombie Sessions"
+
+    // Scroll to top when Focus Mode is activated
+    // Scroll to top when Focus Mode is activated
+    useEffect(() => {
+        if (focusMode) {
+            // Força bruta para garantir o scroll
+            const forceScroll = () => window.scrollTo(0, 0);
+
+            forceScroll();
+            requestAnimationFrame(() => {
+                forceScroll();
+                setTimeout(forceScroll, 100);
+            });
+        }
+    }, [focusMode]);
 
     const {
         elapsedSeconds,
@@ -171,12 +187,16 @@ export function WorkoutExecutionPage({ workoutId, onFinish, user }) {
         if (currentExerciseIndex > 0) setCurrentExerciseIndex(prev => prev - 1);
     };
 
-    const handleDiscard = async () => {
-        if (confirm("Tem certeza que deseja cancelar este treino? Todo progresso será perdido.")) {
-            setIsFinished(true); // Stop syncing
-            await discardSession();
-            window.location.href = "/"; // Force navigation home
-        }
+    const [showCancelModal, setShowCancelModal] = useState(false);
+
+    const handleDiscard = () => {
+        setShowCancelModal(true);
+    };
+
+    const confirmDiscard = async () => {
+        setIsFinished(true); // Stop syncing
+        await discardSession();
+        window.location.href = "/"; // Force navigation home
     };
 
     const handleFinishWorkout = async () => {
@@ -364,10 +384,10 @@ export function WorkoutExecutionPage({ workoutId, onFinish, user }) {
                     </div>
                 </div>
 
-                <div className="h-24"></div>
+                <div className="h-[60px]"></div>
 
                 {focusMode && (
-                    <div className="px-4 mb-4 flex items-center justify-between pointer-events-auto">
+                    <div className="px-4 mb-4 mt-2 flex items-center justify-between pointer-events-auto relative z-40">
                         <Button
                             variant="outline-primary"
                             size="sm"
@@ -430,7 +450,10 @@ export function WorkoutExecutionPage({ workoutId, onFinish, user }) {
                                     suggestedReps={activeSet.targetReps || ex.reps || (ex.target ? ex.target.replace(/^\d+\s*x\s*/i, '').trim() : "12")}
                                     lastWeight={activeSet.lastWeight}
                                     lastReps={activeSet.lastReps}
+                                    weightMode={activeSet.weightMode || 'total'}
+                                    baseWeight={activeSet.baseWeight}
                                     onUpdateSet={updateExerciseSet}
+                                    onUpdateSetMultiple={updateSetMultiple}
                                     onSetChange={(setNum) => handleSetNavigation(ex.id, setNum - 1)}
                                     onMethodClick={() => setSelectedMethod(ex.method)}
                                     onCompleteSet={completeSetAutoFill} // Stable Reference (Now supported by V2)
@@ -465,7 +488,10 @@ export function WorkoutExecutionPage({ workoutId, onFinish, user }) {
                                     suggestedReps={activeSet.targetReps || ex.reps || (ex.target ? ex.target.replace(/^\d+\s*x\s*/i, '').trim() : "12")}
                                     lastWeight={activeSet.lastWeight}
                                     lastReps={activeSet.lastReps}
+                                    weightMode={activeSet.weightMode || 'total'}
+                                    baseWeight={activeSet.baseWeight}
                                     onUpdateSet={updateExerciseSet}
+                                    onUpdateSetMultiple={updateSetMultiple}
                                     onSetChange={(setNum) => handleSetNavigation(ex.id, setNum - 1)}
                                     onMethodClick={() => setSelectedMethod(ex.method)}
                                     onCompleteSet={completeSetAutoFill} // Stable Reference
@@ -484,6 +510,34 @@ export function WorkoutExecutionPage({ workoutId, onFinish, user }) {
                     methodName={selectedMethod}
                     onClose={() => setSelectedMethod(null)}
                 />
+
+                {/* MODAL DE CANCELAMENTO */}
+                {showCancelModal && (
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
+                        <div className="w-full max-w-xs bg-[#0f172a] border border-slate-700 rounded-2xl p-6 shadow-2xl animate-in zoom-in-95 duration-200">
+                            <h3 className="text-lg font-bold text-white mb-2">Cancelar Treino?</h3>
+                            <p className="text-slate-400 text-sm mb-6">
+                                Todo o progresso deste treino será perdido e não poderá ser recuperado.
+                            </p>
+                            <div className="flex gap-3">
+                                <Button
+                                    onClick={() => setShowCancelModal(false)}
+                                    variant="ghost"
+                                    className="flex-1 h-10 text-slate-300 hover:text-white hover:bg-slate-800"
+                                >
+                                    Voltar
+                                </Button>
+                                <Button
+                                    onClick={confirmDiscard}
+                                    variant="danger"
+                                    className="flex-1 h-10 bg-red-500/5 text-red-400 border border-red-500/30 hover:bg-red-500/10 shadow-none hover:shadow-none"
+                                >
+                                    Confirmar
+                                </Button>
+                            </div>
+                        </div>
+                    </div>
+                )}
 
                 {showFinishModal && (
                     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-300">
@@ -530,13 +584,15 @@ export function WorkoutExecutionPage({ workoutId, onFinish, user }) {
                     </div>
                 )}
 
+                {/* Footer Fim de Treino */}
                 <div className="fixed bottom-0 left-0 w-full p-4 bg-gradient-to-t from-[#020617] to-transparent z-50">
                     <div className="max-w-2xl mx-auto flex justify-center">
                         <div className="space-y-4 w-full flex flex-col items-center pointer-events-auto relative z-10">
                             <Button
                                 onClick={handleFinishWorkout}
                                 disabled={saving}
-                                className="w-auto min-w-[240px] px-8 bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-400 hover:to-green-500 text-white font-bold h-12 rounded-2xl shadow-[0_0_20px_rgba(16,185,129,0.4)] tracking-wide flex items-center justify-center gap-2"
+                                variant="success"
+                                className="w-auto min-w-[240px] px-8 font-bold h-12 rounded-2xl tracking-wide flex items-center justify-center gap-2"
                             >
                                 {saving ? (
                                     'SALVANDO...'

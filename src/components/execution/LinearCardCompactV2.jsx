@@ -4,7 +4,7 @@
  * Lida com registro de séries, ajustes de peso/repetição e rastreamento visual de progresso.
  */
 import React, { useState, useMemo, memo } from 'react';
-import { Minus, Plus, CheckCircle2, Info, Check, Zap, LayoutList, Target, ArrowRight, History } from 'lucide-react';
+import { Minus, Plus, CheckCircle2, Info, Check, Zap, LayoutList, Target, ArrowRight, History, Scale } from 'lucide-react';
 
 /**
  * @typedef {'NUMERIC' | 'RANGE' | 'PYRAMID' | 'CLUSTER' | 'FAILURE' | 'TEXT'} RepsType
@@ -128,12 +128,29 @@ export const LinearCardCompactV2 = memo(function LinearCardCompactV2({
     suggestedReps,
 
     onMethodClick,
-    onSetChange
+    onSetChange,
+    weightMode = 'total', // 'total' | 'per_side'
+    baseWeight,           // used when mode is 'per_side'
+    onUpdateSetMultiple   // (exId, setId, { weight, weightMode, baseWeight })
 }) {
     // Determine completion status
     const completedCount = completedSets.filter(Boolean).length;
     const isExerciseFullyCompleted = completedCount === totalSets && totalSets > 0;
     const isCurrentSetCompleted = completedSets[currentSet - 1];
+
+    // Determine Display Weight
+    const isPerSide = weightMode === 'per_side';
+    const displayWeight = isPerSide
+        ? (baseWeight || (parseFloat(weight) / 2) || 0)
+        : (weight || suggestedWeight || 0);
+
+    const formatWeight = (val) => {
+        const num = parseFloat(val);
+        if (isNaN(num)) return "0";
+        return Number.isInteger(num) ? num.toString() : num.toFixed(1); // Smart formatting
+    };
+
+    const formattedDisplayWeight = formatWeight(displayWeight);
 
     // Estado do Teclado
     const [keypadOpen, setKeypadOpen] = useState(false);
@@ -146,7 +163,18 @@ export const LinearCardCompactV2 = memo(function LinearCardCompactV2({
 
     const handleKeypadConfirm = (val) => {
         if (activeInputType === 'weight') {
-            onUpdateSet(exerciseId, setId, 'weight', val);
+            const numVal = parseFloat(val);
+            if (isNaN(numVal)) return;
+
+            if (isPerSide) {
+                // Se for por lado, salvamos baseWeight = val, e weight = val * 2
+                onUpdateSetMultiple(exerciseId, setId, {
+                    weight: (numVal * 2).toString(),
+                    baseWeight: val
+                });
+            } else {
+                onUpdateSet(exerciseId, setId, 'weight', val);
+            }
         } else if (activeInputType === 'reps') {
             onUpdateSet(exerciseId, setId, 'reps', val);
         }
@@ -162,15 +190,58 @@ export const LinearCardCompactV2 = memo(function LinearCardCompactV2({
 
     // Manipuladores
     const decrementWeight = () => {
-        const current = parseFloat(weight) || parseFloat(suggestedWeight) || 0;
-        const newVal = Math.max(0, current - 0.5).toFixed(2);
-        onUpdateSet(exerciseId, setId, 'weight', newVal);
+        // Incremento base: 1. Se for por lado, é 1kg por lado (2kg total).
+        // Se estiver num valor quebrado (ex 12.5), arredondar para baixo.
+        const current = parseFloat(displayWeight) || 0;
+        const step = 1;
+        const newVal = Math.max(0, current - step);
+
+        if (isPerSide) {
+            onUpdateSetMultiple(exerciseId, setId, {
+                weight: (newVal * 2).toString(),
+                baseWeight: newVal.toString()
+            });
+        } else {
+            onUpdateSet(exerciseId, setId, 'weight', newVal.toString());
+        }
     };
 
     const incrementWeight = () => {
-        const current = parseFloat(weight) || parseFloat(suggestedWeight) || 0;
-        const newVal = (current + 0.5).toFixed(2);
-        onUpdateSet(exerciseId, setId, 'weight', newVal);
+        const current = parseFloat(displayWeight) || 0;
+        const step = 1;
+        const newVal = current + step;
+
+        if (isPerSide) {
+            onUpdateSetMultiple(exerciseId, setId, {
+                weight: (newVal * 2).toString(),
+                baseWeight: newVal.toString()
+            });
+        } else {
+            onUpdateSet(exerciseId, setId, 'weight', newVal.toString());
+        }
+    };
+
+    const toggleWeightMode = () => {
+        if (!onUpdateSetMultiple) return; // Safety check
+
+        if (isPerSide) {
+            // Mudar para TOTAL
+            // Mantemos o peso total atual. Limpamos o baseWeight.
+            onUpdateSetMultiple(exerciseId, setId, {
+                weightMode: 'total',
+                baseWeight: null
+            });
+        } else {
+            // Mudar para PER SIDE
+            // O peso atual vira o total. BaseWeight vira metade.
+            const currentTotal = parseFloat(weight) || parseFloat(suggestedWeight) || 0;
+            const newBase = currentTotal / 2;
+            onUpdateSetMultiple(exerciseId, setId, {
+                weightMode: 'per_side',
+                baseWeight: newBase.toString(),
+                weight: currentTotal.toString() // Garante consistência
+            });
+        }
     };
 
     const decrementReps = () => {
@@ -286,15 +357,28 @@ export const LinearCardCompactV2 = memo(function LinearCardCompactV2({
                     const isCompleted = completedSets[idx];
                     const isActive = currentSet === setNum && !isCompleted;
 
+                    // Logic to restrict navigation:
+                    // Allow clicking if it's completed (to review) 
+                    // OR if it's the immediate next incomplete set (current focus)
+                    // Disable if it's a future set (skipping ahead)
+                    const firstIncompleteIdx = completedSets.findIndex(c => !c);
+                    const effectiveFirstIncomplete = firstIncompleteIdx === -1 ? totalSets : firstIncompleteIdx;
+
+                    // We allow interaction if index <= effectiveFirstIncomplete
+                    const isDisabled = !isCompleted && idx > effectiveFirstIncomplete;
+
                     return (
                         <button
                             key={idx}
-                            onClick={() => onSetChange(setNum)}
-                            className={`flex-1 h-10 rounded-full transition-all duration-300 relative flex items-center justify-center text-xs font-bold ${isCompleted
+                            onClick={() => !isDisabled && onSetChange(setNum)}
+                            disabled={isDisabled}
+                            className={`flex-1 h-8 rounded-full transition-all duration-300 relative flex items-center justify-center text-xs font-extrabold ${isCompleted
                                 ? 'bg-emerald-900/40 border border-emerald-500/50 text-emerald-400'
                                 : isActive
                                     ? 'bg-blue-600/20 border border-blue-500 text-blue-400'
-                                    : 'bg-slate-800/40 border border-slate-700/50 text-slate-400'
+                                    : isDisabled
+                                        ? 'bg-slate-800/20 border border-slate-800/50 text-slate-600 cursor-not-allowed opacity-50' // Disabled style
+                                        : 'bg-slate-800/40 border border-slate-700/50 text-slate-400'
                                 }`}
                             style={isActive ? {
                                 boxShadow: '0 0 15px rgba(59,130,246,0.3)'
@@ -310,9 +394,30 @@ export const LinearCardCompactV2 = memo(function LinearCardCompactV2({
             {/* Grade de Entradas */}
             <div className="grid grid-cols-2 gap-3 mb-1">
                 {/* Entrada de Peso */}
-                <div className="flex flex-col gap-1.5">
-                    <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider text-center">Peso (kg)</span>
-                    <div className="bg-[#0f172a] border border-slate-800 rounded-[24px] p-1 md:p-1.5 flex items-center justify-between relative h-[56px] md:h-[64px]">
+                <div className="flex flex-col gap-1.5 relative">
+                    {/* Toggle Mode Button - Absolute positioned or in Header? */}
+                    {/* Let's put it inside the header span area or absolute top-right of the container */}
+
+                    <div className="flex items-center justify-center gap-2 relative h-8">
+                        <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider text-center flex items-center justify-center gap-1">
+                            {isPerSide ? (
+                                <>
+                                    <span>LADO</span>
+                                    <span className="text-slate-600">•</span>
+                                    <span className="text-purple-400">TOT: {weight || "0"}</span>
+                                </>
+                            ) : 'PESO (TOTAL)'}
+                        </span>
+                        <button
+                            onClick={toggleWeightMode}
+                            className={`p-1.5 rounded-full transition-colors ${isPerSide ? 'bg-purple-500/20 text-purple-400' : 'bg-slate-800 text-slate-500 hover:text-slate-300'}`}
+                            title={isPerSide ? "Mudar para Peso Total" : "Mudar para Peso por Lado"}
+                        >
+                            <Scale size={14} />
+                        </button>
+                    </div>
+
+                    <div className={`bg-[#0f172a] border ${isPerSide ? 'border-purple-500/50 shadow-[0_0_10px_rgba(168,85,247,0.1)]' : 'border-slate-800'} rounded-[24px] p-1 md:p-1.5 flex items-center justify-between relative h-[56px] md:h-[64px] transition-colors duration-300`}>
                         <button
                             onClick={decrementWeight}
                             className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-slate-800/50 border border-slate-700 text-slate-400 flex items-center justify-center hover:bg-slate-800 hover:text-white active:scale-95 transition-all"
@@ -322,13 +427,13 @@ export const LinearCardCompactV2 = memo(function LinearCardCompactV2({
                         </button>
 
                         <div
-                            className="flex-1 flex flex-col items-center justify-center cursor-pointer active:scale-95 transition-transform"
+                            className="flex-1 flex flex-col items-center justify-center cursor-pointer active:scale-95 transition-transform relative"
                             onClick={() => openKeypad('weight')}
                             role="button"
                             aria-label="Definir peso"
                         >
-                            <div className={`text-xl md:text-2xl font-bold leading-none tracking-tight ${!weight && suggestedWeight ? 'text-slate-600' : 'text-white'}`}>
-                                {weight || suggestedWeight || "0.0"}
+                            <div className={`text-xl md:text-2xl font-bold leading-none tracking-tight ${!formattedDisplayWeight || formattedDisplayWeight === '0' ? 'text-slate-600' : isPerSide ? 'text-purple-400' : 'text-white'}`}>
+                                {formattedDisplayWeight}
                             </div>
                         </div>
 
@@ -351,7 +456,9 @@ export const LinearCardCompactV2 = memo(function LinearCardCompactV2({
 
                 {/* Entrada de Repetições */}
                 <div className="flex flex-col gap-1.5">
-                    <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider text-center">Repetições</span>
+                    <div className="flex items-center justify-center h-8">
+                        <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider text-center">Repetições</span>
+                    </div>
                     <div className="bg-[#0f172a] border border-slate-800 rounded-[24px] p-1 md:p-1.5 flex items-center justify-between h-[56px] md:h-[64px]">
                         <button
                             onClick={decrementReps}
@@ -387,12 +494,13 @@ export const LinearCardCompactV2 = memo(function LinearCardCompactV2({
             <button
                 onClick={handleCompleteSet}
                 disabled={isCurrentSetCompleted}
-                className={`w-full py-4 rounded-[20px] font-bold text-base tracking-wide shadow-lg transition-all duration-300 flex items-center justify-center gap-2 ${isCurrentSetCompleted
+                className={`w-auto min-w-[240px] px-8 self-center py-4 rounded-[20px] font-bold text-base tracking-wide shadow-lg transition-all duration-300 flex items-center justify-center gap-2 ${isCurrentSetCompleted
                     ? 'bg-emerald-500/20 text-emerald-400 cursor-default border border-emerald-500/20'
                     : 'bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white shadow-cyan-500/20 hover:shadow-cyan-500/40 active:scale-[0.98]'
                     }`}
                 aria-label={isCurrentSetCompleted ? "Série concluída" : `Concluir série ${currentSet}`}
             >
+
                 {isCurrentSetCompleted ? (
                     <>
                         <CheckCircle2 size={24} strokeWidth={2.5} />
@@ -423,8 +531,8 @@ export const LinearCardCompactV2 = memo(function LinearCardCompactV2({
                 isOpen={keypadOpen}
                 onClose={() => setKeypadOpen(false)}
                 onConfirm={handleKeypadConfirm}
-                initialValue={activeInputType === 'weight' ? (weight || suggestedWeight || '') : (actualReps || suggestedReps || '')}
-                title={activeInputType === 'weight' ? 'DEFINIR PESO (KG)' : 'DEFINIR REPETIÇÕES'}
+                initialValue={activeInputType === 'weight' ? formattedDisplayWeight : (actualReps || suggestedReps || '')}
+                title={activeInputType === 'weight' ? (isPerSide ? 'DEFINIR PESO (LADO)' : 'DEFINIR PESO (TOTAL)') : 'DEFINIR REPETIÇÕES'}
             />
         </div>
     );
