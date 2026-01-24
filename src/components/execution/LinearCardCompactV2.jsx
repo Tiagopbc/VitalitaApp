@@ -131,7 +131,8 @@ export const LinearCardCompactV2 = memo(function LinearCardCompactV2({
     onSetChange,
     weightMode = 'total', // 'total' | 'per_side'
     baseWeight,           // used when mode is 'per_side'
-    onUpdateSetMultiple   // (exId, setId, { weight, weightMode, baseWeight })
+    onUpdateSetMultiple,   // (exId, setId, { weight, weightMode, baseWeight })
+    onToggleWeightMode    // New Prop: () => void
 }) {
     // Determine completion status
     const completedCount = completedSets.filter(Boolean).length;
@@ -222,25 +223,8 @@ export const LinearCardCompactV2 = memo(function LinearCardCompactV2({
     };
 
     const toggleWeightMode = () => {
-        if (!onUpdateSetMultiple) return; // Safety check
-
-        if (isPerSide) {
-            // Mudar para TOTAL
-            // Mantemos o peso total atual. Limpamos o baseWeight.
-            onUpdateSetMultiple(exerciseId, setId, {
-                weightMode: 'total',
-                baseWeight: null
-            });
-        } else {
-            // Mudar para PER SIDE
-            // O peso atual vira o total. BaseWeight vira metade.
-            const currentTotal = parseFloat(weight) || parseFloat(suggestedWeight) || 0;
-            const newBase = currentTotal / 2;
-            onUpdateSetMultiple(exerciseId, setId, {
-                weightMode: 'per_side',
-                baseWeight: newBase.toString(),
-                weight: currentTotal.toString() // Garante consistência
-            });
+        if (onToggleWeightMode) {
+            onToggleWeightMode();
         }
     };
 

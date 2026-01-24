@@ -300,6 +300,44 @@ export function useWorkoutSession(workoutId, user) {
         }));
     }, []);
 
+    const toggleExerciseWeightMode = useCallback((exId) => {
+        setExercises(prev => prev.map(ex => {
+            if (ex.id !== exId) return ex;
+
+            // Determine target mode based on the first set (or majority, but first set is predictable)
+            // If currently 'total' (default), switch to 'per_side'.
+            // If 'per_side', switch to 'total'.
+            const currentMode = ex.sets[0]?.weightMode || 'total';
+            const targetMode = currentMode === 'total' ? 'per_side' : 'total';
+
+            const newSets = ex.sets.map(s => {
+                const currentWeight = parseFloat(s.weight) || 0;
+
+                if (targetMode === 'per_side') {
+                    // Switching to PER SIDE
+                    // Current weight is Total. BaseWeight becomes Half.
+                    const newBase = currentWeight > 0 ? (currentWeight / 2) : 0;
+                    return {
+                        ...s,
+                        weightMode: 'per_side',
+                        baseWeight: newBase.toString(),
+                        // Weight remains the total value (standard source of truth)
+                    };
+                } else {
+                    // Switching to TOTAL
+                    // Just clear the mode flag and baseWeight.
+                    return {
+                        ...s,
+                        weightMode: 'total',
+                        baseWeight: null
+                    };
+                }
+            });
+
+            return { ...ex, sets: newSets };
+        }));
+    }, []);
+
     const finishSession = async (finalElapsed) => {
         setSaving(true);
         try {
@@ -386,7 +424,8 @@ export function useWorkoutSession(workoutId, user) {
         finishSession,
         syncSession,
         discardSession,
-        updateSetMultiple
+        updateSetMultiple,
+        toggleExerciseWeightMode
     };
 }
 

@@ -115,7 +115,8 @@ export function WorkoutExecutionPage({ workoutId, onFinish, user }) {
         finishSession,
         syncSession,
         discardSession,
-        updateSetMultiple
+        updateSetMultiple,
+        toggleExerciseWeightMode
     } = useWorkoutSession(workoutId, user);
 
 
@@ -186,6 +187,7 @@ export function WorkoutExecutionPage({ workoutId, onFinish, user }) {
     };
 
     const [showCancelModal, setShowCancelModal] = useState(false);
+    const [showConfirmFinishModal, setShowConfirmFinishModal] = useState(false);
 
     const handleDiscard = () => {
         setShowCancelModal(true);
@@ -382,7 +384,7 @@ export function WorkoutExecutionPage({ workoutId, onFinish, user }) {
                     </div>
                 </div>
 
-                <div style={{ height: 'calc(55px + env(safe-area-inset-top))' }}></div>
+                <div style={{ height: 'calc(85px + env(safe-area-inset-top))' }}></div>
 
                 {focusMode && (
                     <div className="px-4 mb-4 mt-2 flex items-center justify-between pointer-events-auto relative z-40">
@@ -454,8 +456,9 @@ export function WorkoutExecutionPage({ workoutId, onFinish, user }) {
                                     onUpdateSetMultiple={updateSetMultiple}
                                     onSetChange={(setNum) => handleSetNavigation(ex.id, setNum - 1)}
                                     onMethodClick={() => setSelectedMethod(ex.method)}
-                                    onCompleteSet={completeSetAutoFill} // Stable Reference (Now supported by V2)
-                                    onUpdateNotes={updateNotes}         // Stable Reference (Now supported by V2)
+                                    onCompleteSet={completeSetAutoFill}
+                                    onUpdateNotes={updateNotes}
+                                    onToggleWeightMode={() => toggleExerciseWeightMode(ex.id)}
                                 />
                             );
                         })()
@@ -492,8 +495,9 @@ export function WorkoutExecutionPage({ workoutId, onFinish, user }) {
                                     onUpdateSetMultiple={updateSetMultiple}
                                     onSetChange={(setNum) => handleSetNavigation(ex.id, setNum - 1)}
                                     onMethodClick={() => setSelectedMethod(ex.method)}
-                                    onCompleteSet={completeSetAutoFill} // Stable Reference
-                                    onUpdateNotes={updateNotes}         // Stable Reference
+                                    onCompleteSet={completeSetAutoFill}
+                                    onUpdateNotes={updateNotes}
+                                    onToggleWeightMode={() => toggleExerciseWeightMode(ex.id)}
                                 />
                             );
                         })
@@ -529,6 +533,37 @@ export function WorkoutExecutionPage({ workoutId, onFinish, user }) {
                                     onClick={confirmDiscard}
                                     variant="danger"
                                     className="flex-1 h-10 bg-red-500/5 text-red-400 border border-red-500/30 hover:bg-red-500/10 shadow-none hover:shadow-none"
+                                >
+                                    Confirmar
+                                </Button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* MODAL DE CONFIRMAÇÃO DE FINALIZAÇÃO */}
+                {showConfirmFinishModal && (
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
+                        <div className="w-full max-w-xs bg-[#0f172a] border border-slate-700 rounded-2xl p-6 shadow-2xl animate-in zoom-in-95 duration-200">
+                            <h3 className="text-lg font-bold text-white mb-2">Finalizar Treino?</h3>
+                            <p className="text-slate-400 text-sm mb-6">
+                                Tem certeza que deseja encerrar o treino agora? Certifique-se de que registrou todas as séries.
+                            </p>
+                            <div className="flex gap-3">
+                                <Button
+                                    onClick={() => setShowConfirmFinishModal(false)}
+                                    variant="ghost"
+                                    className="flex-1 h-10 text-slate-300 hover:text-white hover:bg-slate-800"
+                                >
+                                    Voltar
+                                </Button>
+                                <Button
+                                    onClick={() => {
+                                        setShowConfirmFinishModal(false);
+                                        handleFinishWorkout();
+                                    }}
+                                    variant="success"
+                                    className="flex-1 h-10 bg-green-500/10 text-green-400 border border-green-500/30 hover:bg-green-500/20 shadow-none hover:shadow-none"
                                 >
                                     Confirmar
                                 </Button>
@@ -587,7 +622,7 @@ export function WorkoutExecutionPage({ workoutId, onFinish, user }) {
                     <div className="max-w-2xl mx-auto flex justify-center">
                         <div className="space-y-4 w-full flex flex-col items-center pointer-events-auto relative z-10">
                             <Button
-                                onClick={handleFinishWorkout}
+                                onClick={() => setShowConfirmFinishModal(true)}
                                 disabled={saving}
                                 variant="success"
                                 className="w-auto min-w-[240px] px-8 font-bold h-12 rounded-2xl tracking-wide flex items-center justify-center gap-2"
