@@ -18,7 +18,9 @@ import {
     X,
     Users,
     LogOut,
-    Share2
+    Share2,
+    Zap,
+    Crown
 } from 'lucide-react';
 import { achievementsCatalog } from '../data/achievementsCatalog';
 import { evaluateAchievements, calculateStats, evaluateHistory } from '../utils/evaluateAchievements';
@@ -475,73 +477,139 @@ export default function ProfilePage({ user, onLogout, onNavigateToHistory, onNav
                 ) : (
                     <>
                         {/* DESBLOQUEADAS */}
-                        <div className="flex flex-col gap-3">
+                        <div className="grid gap-3">
                             {achievementsList.filter(a => a.isUnlocked).map(achievement => {
                                 // Lógica de Cor Dinâmica baseada na Categoria
-                                let colorClass = "text-yellow-500";
-                                let bgClass = "bg-yellow-500/10";
-                                let shadowClass = "shadow-[0_0_10px_rgba(234,179,8,0.1)]";
+                                let theme = {
+                                    text: 'text-amber-500',
+                                    bg: 'bg-amber-500/10',
+                                    border: 'border-amber-500/20',
+                                    glow: 'shadow-[0_0_15px_-3px_rgba(245,158,11,0.2)]',
+                                    gradient: 'from-amber-500/20 to-transparent',
+                                    Icon: Medal
+                                };
 
-                                if (achievement.category === 'Consistência') { // Treinos/Streak style
-                                    colorClass = "text-blue-500";
-                                    bgClass = "bg-blue-500/10";
-                                    shadowClass = "shadow-[0_0_10px_rgba(59,130,246,0.1)]";
-                                } else if (achievement.category === 'Volume') { // Volume style
-                                    colorClass = "text-purple-500";
-                                    bgClass = "bg-purple-500/10";
-                                    shadowClass = "shadow-[0_0_10px_rgba(168,85,247,0.1)]";
-                                } else if (achievement.category === 'Força') { // Records style
-                                    colorClass = "text-emerald-500";
-                                    bgClass = "bg-emerald-500/10";
-                                    shadowClass = "shadow-[0_0_10px_rgba(16,185,129,0.1)]";
+                                if (achievement.category === 'Consistência') {
+                                    theme = {
+                                        text: 'text-[#22d3ee]', // Cyan-400
+                                        bg: 'bg-[#083344]', // Cyan-950
+                                        border: 'border-[#155e75]', // Cyan-800
+                                        glow: 'shadow-[0_0_15px_-3px_rgba(34,211,238,0.2)]',
+                                        gradient: 'from-[#06b6d4]/20 to-transparent',
+                                        Icon: Zap
+                                    };
+                                } else if (achievement.category === 'Volume') {
+                                    theme = {
+                                        text: 'text-purple-400',
+                                        bg: 'bg-purple-900/20',
+                                        border: 'border-purple-500/20',
+                                        glow: 'shadow-[0_0_15px_-3px_rgba(192,132,252,0.2)]',
+                                        gradient: 'from-purple-500/20 to-transparent',
+                                        Icon: Dumbbell
+                                    };
+                                } else if (achievement.category === 'Força') {
+                                    theme = {
+                                        text: 'text-emerald-400',
+                                        bg: 'bg-emerald-900/20',
+                                        border: 'border-emerald-500/20',
+                                        glow: 'shadow-[0_0_15px_-3px_rgba(52,211,153,0.2)]',
+                                        gradient: 'from-emerald-500/20 to-transparent',
+                                        Icon: Crown
+                                    };
                                 }
+
+                                const IconComponent = theme.Icon || Medal;
 
                                 return (
                                     <div
                                         key={achievement.id}
                                         onClick={() => setSelectedAchievement(achievement)}
-                                        className="flex items-start gap-4 p-4 rounded-2xl bg-slate-900/50 border border-slate-800 relative overflow-hidden group hover:border-slate-700 transition-all cursor-pointer hover:bg-slate-900/80 active:scale-[0.98]"
+                                        className={`
+                                            relative flex items-center gap-5 p-5 rounded-[24px] 
+                                            bg-[#0f172a] border border-[#1e293b] 
+                                            hover:border-opacity-50 hover:bg-[#1e293b] 
+                                            transition-all duration-300 cursor-pointer active:scale-[0.98]
+                                            group overflow-hidden
+                                        `}
                                     >
-                                        <div className="absolute top-4 right-4 text-slate-600 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        {/* Background Glow Effect on Hover */}
+                                        <div className={`absolute inset-0 bg-gradient-to-r ${theme.gradient} opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
+
+                                        {/* Share Icon Hint */}
+                                        <div className="absolute top-4 right-4 text-[#64748b] opacity-0 group-hover:opacity-100 transition-opacity -translate-y-1 group-hover:translate-y-0 duration-300">
                                             <Share2 size={16} />
                                         </div>
 
                                         {/* Ícone */}
-                                        <div className={`w-12 h-12 rounded-full ${bgClass} flex items-center justify-center ${colorClass} shrink-0 ${shadowClass} group-hover:scale-110 transition-transform`}>
-                                            <Medal size={24} />
+                                        <div className={`
+                                            relative w-14 h-14 rounded-2xl flex items-center justify-center 
+                                            ${theme.bg} ${theme.border} border 
+                                            ${theme.text} ${theme.glow}
+                                            shrink-0 group-hover:scale-110 transition-transform duration-300
+                                        `}>
+                                            {/* Inner Glow */}
+                                            <div className={`absolute inset-0 rounded-2xl opacity-20 bg-current blur-md`} />
+                                            <IconComponent size={28} strokeWidth={1.5} className="relative z-10 drop-shadow-sm" />
                                         </div>
 
                                         {/* Conteúdo */}
-                                        <div className="flex-1 pr-6">
-                                            <h4 className="text-lg font-bold text-white mb-1">{achievement.title}</h4>
-                                            <p className="text-slate-400 text-sm mb-2">{achievement.description}</p>
-                                            <p className={`${colorClass} text-xs font-bold uppercase tracking-wider opacity-80`}>
-                                                Desbloqueada em {achievement.unlockedAt
-                                                    ? new Date(achievement.unlockedAt).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })
-                                                    : 'Hoje'}
-                                            </p>
+                                        <div className="flex-1 min-w-0 relative z-10 ">
+                                            <h4 className="text-lg font-bold text-white mb-1 tracking-tight truncate pr-6">
+                                                {achievement.title}
+                                            </h4>
+
+                                            <div className="flex items-center gap-2">
+                                                <p className="text-[#94a3b8] text-xs font-medium leading-relaxed truncate">
+                                                    {achievement.description}
+                                                </p>
+
+                                                <span className="w-1 h-1 rounded-full bg-[#334155] shrink-0" />
+
+                                                <div className={`inline-flex items-center gap-1 shrink-0 ${theme.bg} px-1.5 py-0.5 rounded-md border ${theme.border} border-opacity-50`}>
+                                                    <Trophy size={9} className={theme.text} />
+                                                    <span className={`${theme.text} text-[9px] font-bold uppercase tracking-wider`}>
+                                                        Desbloqueada em {achievement.unlockedAt
+                                                            ? new Date(achievement.unlockedAt).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
+                                                            : 'Hoje'}
+                                                    </span>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 );
                             })}
                         </div>
 
-                        {/* BLOQUEADAS */}
+                        {/* BLOQUEADAS - Estilo Minimalista */}
                         {achievementsList.filter(a => !a.isUnlocked).length > 0 && (
-                            <div className="mt-6 pt-6 border-t border-slate-800/50">
-                                <h4 className="text-xs font-bold text-slate-500 uppercase mb-4 pl-1">A Desbloquear</h4>
-                                <div className="space-y-3 opacity-60">
+                            <div className="mt-8 pt-8 border-t border-[#1e293b]">
+                                <div className="flex items-center gap-3 mb-6 opacity-60">
+                                    <Lock size={16} className="text-[#64748b]" />
+                                    <h4 className="text-xs font-black text-[#64748b] uppercase tracking-widest">
+                                        Bloqueadas ({achievementsList.filter(a => !a.isUnlocked).length})
+                                    </h4>
+                                </div>
+
+                                <div className="grid gap-3 opacity-50 hover:opacity-100 transition-opacity duration-500">
                                     {achievementsList.filter(a => !a.isUnlocked).slice(0, 3).map(achievement => (
-                                        <div key={achievement.id} className="flex items-center gap-4 p-4 rounded-2xl bg-slate-900/30 border border-slate-800">
-                                            <div className="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center text-slate-600 shrink-0">
+                                        <div
+                                            key={achievement.id}
+                                            className="flex items-center gap-4 p-4 rounded-2xl bg-[#0f172a] border border-[#1e293b] grayscale"
+                                        >
+                                            <div className="w-12 h-12 rounded-2xl bg-[#1e293b] flex items-center justify-center text-[#475569] shrink-0">
                                                 <Lock size={20} />
                                             </div>
-                                            <div>
-                                                <h4 className="text-base font-bold text-slate-400">{achievement.title}</h4>
-                                                <p className="text-xs text-slate-500">{achievement.description}</p>
+                                            <div className="min-w-0">
+                                                <h4 className="text-sm font-bold text-[#94a3b8] truncate">{achievement.title}</h4>
+                                                <p className="text-xs text-[#64748b] truncate">{achievement.description}</p>
                                             </div>
                                         </div>
                                     ))}
+                                    {achievementsList.filter(a => !a.isUnlocked).length > 3 && (
+                                        <p className="text-center text-[10px] text-[#475569] font-medium uppercase tracking-widest mt-2">
+                                            + {achievementsList.filter(a => !a.isUnlocked).length - 3} conquistas ocultas
+                                        </p>
+                                    )}
                                 </div>
                             </div>
                         )}
