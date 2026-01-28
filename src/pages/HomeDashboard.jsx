@@ -71,7 +71,7 @@ export function HomeDashboard({
                             text: 'Olha meu treino! 💪',
                             files: [file]
                         });
-                    } catch (e) { console.log(e); }
+                    } catch (e) { console.error(e); }
                 } else {
                     const url = URL.createObjectURL(blob);
                     const a = document.createElement('a'); a.href = url; a.download = 'teste.png';
@@ -219,10 +219,9 @@ export function HomeDashboard({
             <div className="w-full px-4 lg:px-8 flex flex-col">
 
                 {/* 1. SAUDAÇÃO */}
-                {/* 1. SAUDAÇÃO */}
                 <div className="pt-4 pb-6">
-                    <h1 className="text-2xl lg:text-3xl mb-1">
-                        {greeting}, <span className="font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">{firstName}</span>
+                    <h1 className="text-2xl lg:text-3xl mb-1 text-white font-heading font-bold">
+                        {greeting}, <span className="bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">{firstName}</span>
                     </h1>
                     <p className="text-slate-400 text-sm">
                         Pronto para o próximo treino?
@@ -255,7 +254,7 @@ export function HomeDashboard({
                 {/* 3. SEÇÃO HERO - PRÓXIMO TREINO */}
                 <div className="mb-8">
                     <div className="flex items-center gap-2 mb-3">
-                        <Target size={10} className="text-cyan-400" />
+                        <Target size={18} className="text-cyan-400" />
                         <h3 className="text-base font-bold text-white">Próximo Treino Sugerido</h3>
                     </div>
 
@@ -263,14 +262,14 @@ export function HomeDashboard({
                         <button
                             onClick={() => onNavigateToWorkout(suggestedWorkout.id, suggestedWorkout.name)}
                             className="w-full p-6 rounded-3xl relative overflow-hidden cursor-pointer hover:scale-[1.01] active:scale-[0.99] transition-all duration-300 text-left group
-                            bg-gradient-to-br from-[#0f172a] to-[#020617] border border-cyan-500/30 shadow-[0_0_20px_rgba(6,182,212,0.15)]"
+                            bg-gradient-to-br from-[#0f172a] to-[#020617] border border-cyan-500/20 shadow-[0_0_20px_rgba(6,182,212,0.1)] hover:shadow-[0_0_30px_rgba(6,182,212,0.2)]"
                         >
                             <div className="flex items-center justify-between relative z-10">
                                 <div className="flex-1">
                                     <p className="text-[10px] font-bold uppercase tracking-widest text-cyan-400 mb-1">
                                         Sugerido
                                     </p>
-                                    <h2 className="text-lg lg:text-3xl font-bold text-white mb-3 group-hover:text-cyan-400 transition-colors">
+                                    <h2 className="text-lg lg:text-3xl font-heading font-bold text-white mb-3 group-hover:text-cyan-400 transition-colors">
                                         {suggestedWorkout.name}
                                     </h2>
                                     <div className="flex flex-wrap items-center gap-4 text-sm text-slate-300 font-medium">
@@ -288,8 +287,9 @@ export function HomeDashboard({
                                     <Play size={24} fill="white" className="text-white ml-1" />
                                 </div>
                             </div>
-                            <div className="absolute -top-10 -right-10 w-40 h-40 bg-cyan-500/5 rounded-full blur-3xl"></div>
-                            <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-blue-600/5 rounded-full blur-3xl"></div>
+                            {/* AmbientGlow */}
+                            <div className="absolute -top-10 -right-10 w-40 h-40 bg-cyan-500/5 rounded-full blur-3xl group-hover:bg-cyan-500/10 transition-colors"></div>
+                            <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-blue-600/5 rounded-full blur-3xl group-hover:bg-blue-600/10 transition-colors"></div>
                         </button>
                     ) : (
                         <div className="p-8 rounded-3xl bg-slate-900/50 border border-slate-800 text-center">
@@ -322,7 +322,7 @@ export function HomeDashboard({
                     {nextAchievement ? (
                         <div
                             onClick={onNavigateToAchievements}
-                            className="rounded-2xl relative overflow-hidden cursor-pointer hover:scale-[1.01] active:scale-[0.99] transition-transform bg-gradient-to-br from-slate-900 to-slate-950 border border-slate-800"
+                            className="rounded-2xl relative overflow-hidden cursor-pointer hover:scale-[1.01] active:scale-[0.99] transition-transform bg-gradient-to-br from-slate-900 to-slate-950 border border-slate-800 hover:border-slate-700"
                         >
                             <div className="relative z-10 p-4 flex gap-4 items-center">
                                 {/* Ícone / Badge */}
@@ -377,18 +377,10 @@ export function HomeDashboard({
                     )}
                 </div>
 
-
-
                 {/* 6. MOTIVACIONAL */}
-                <div
-                    className="p-6 rounded-2xl text-center"
-                    style={{
-                        background: 'linear-gradient(135deg, rgba(59,130,246,0.05), rgba(6,182,212,0.05))',
-                        border: '1px solid rgba(59,130,246,0.1)'
-                    }}
-                >
+                <div className="p-6 rounded-2xl text-center bg-gradient-to-br from-blue-500/5 to-cyan-500/5 border border-blue-500/10">
                     <Star size={20} className="text-cyan-400 mx-auto mb-3" />
-                    <p className="text-sm text-slate-300 italic">
+                    <p className="text-sm text-slate-300 italic font-medium">
                         "O progresso acontece fora da zona de conforto."
                     </p>
                 </div>

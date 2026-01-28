@@ -317,9 +317,9 @@ export function useWorkoutSession(workoutId, user) {
         setExercises(prev => prev.map(ex => {
             if (ex.id !== exId) return ex;
 
-            // Determine target mode based on the first set (or majority, but first set is predictable)
-            // If currently 'total' (default), switch to 'per_side'.
-            // If 'per_side', switch to 'total'.
+            // Determinar modo alvo baseado na primeira série (ou maioria, mas a primeira é previsível)
+            // Se atualmente for 'total' (padrão), mudar para 'per_side' (por lado).
+            // Se 'per_side', mudar para 'total'.
             const currentMode = ex.sets[0]?.weightMode || 'total';
             const targetMode = currentMode === 'total' ? 'per_side' : 'total';
 
@@ -327,18 +327,18 @@ export function useWorkoutSession(workoutId, user) {
                 const currentWeight = parseFloat(s.weight) || 0;
 
                 if (targetMode === 'per_side') {
-                    // Switching to PER SIDE
-                    // Current weight is Total. BaseWeight becomes Half.
+                    // Alternando para POR LADO
+                    // Peso atual é Total. PesoBase torna-se Metade.
                     const newBase = currentWeight > 0 ? (currentWeight / 2) : 0;
                     return {
                         ...s,
                         weightMode: 'per_side',
                         baseWeight: newBase.toString(),
-                        // Weight remains the total value (standard source of truth)
+                        // O peso permanece o valor total (fonte da verdade padrão)
                     };
                 } else {
-                    // Switching to TOTAL
-                    // Just clear the mode flag and baseWeight.
+                    // Alternando para TOTAL
+                    // Apenas limpar a flag de modo e o peso base.
                     return {
                         ...s,
                         weightMode: 'total',

@@ -3,6 +3,7 @@
  * Valida a configuração do Tailwind CSS e Variáveis de Tema.
  * Define a paleta de cores 'Vitalità', famílias de fontes personalizadas, grade de espaçamento e classes utilitárias.
  */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
 @import "tailwindcss";
 
 @theme {
@@ -30,6 +31,7 @@
 
     /* Font Families */
     --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+    --font-heading: 'Outfit', system-ui, sans-serif;
     --font-mono: 'JetBrains Mono', monospace;
 
     /* Spacing - 8pt Grid */
@@ -82,6 +84,7 @@
 
     /* Typography System */
     h1 {
+        font-family: var(--font-heading);
         font-size: 28px;
         font-weight: 700;
         line-height: 1.2;
@@ -90,13 +93,16 @@
     }
 
     h2 {
+        font-family: var(--font-heading);
         font-size: 22px;
         font-weight: 700;
         line-height: 1.3;
         color: #f1f5f9;
+        letter-spacing: 0.3px;
     }
 
     h3 {
+        font-family: var(--font-heading);
         font-size: 18px;
         font-weight: 600;
         line-height: 1.4;

@@ -37,7 +37,7 @@ function getFirstNameFromDisplayName(displayName) {
 }
 
 function App() {
-    console.log("Vitalita App v3.1.2 - Volume Load Logic Restored");
+
     return (
         <ErrorBoundary>
             <Toaster richColors position="top-center" />

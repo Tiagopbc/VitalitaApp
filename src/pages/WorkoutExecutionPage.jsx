@@ -33,7 +33,7 @@ import { LinearCardCompactV2 } from '../components/execution/LinearCardCompactV2
 import { Toast } from '../components/design-system/Toast';
 import { Skeleton } from '../components/design-system/Skeleton';
 
-// --- CUSTOM HOOKS ---
+// --- HOOKS PERSONALIZADOS ---
 import { useWorkoutTimer } from '../hooks/useWorkoutTimer';
 import { useWorkoutSession } from '../hooks/useWorkoutSession';
 import { checkNewAchievements } from '../utils/evaluateAchievements';
@@ -42,7 +42,7 @@ import { workoutService } from '../services/workoutService';
 import { userService } from '../services/userService';
 
 const TopBarButton = ({ icon, label, variant = 'default', onClick, active, isBack = false }) => {
-    // Base styles: "Voltar" gets standard size, others get EXTRA compact size
+    // Estilos base: "Voltar" recebe tamanho padrão, outros recebem tamanho EXTRA compacto
     const sizeStyles = isBack
         ? "px-3 py-2 text-xs"
         : "px-2 py-1.5 text-[9px] tracking-tight"; // Reduced padding and font size
@@ -68,32 +68,32 @@ const TopBarButton = ({ icon, label, variant = 'default', onClick, active, isBac
     );
 };
 
-// --- SUBCOMPONENT: Progress Card (Kept inline for simplicity or move to separate file later) ---
+// --- SUBCOMPONENTE: Card de Progresso (Mantido inline por simplicidade ou mover para arquivo separado depois) ---
 function ProgressCard({ completedCount, totalCount }) {
     return (
-        <div className="bg-[#0f172a] rounded-3xl p-5 border border-slate-800 mb-6">
+        <div className="bg-slate-900/40 backdrop-blur-md rounded-3xl p-5 border border-slate-700/50 mb-6 shadow-xl shadow-black/20">
             <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
-                    <div className="w-4 h-4 rounded-full border border-cyan-500 flex items-center justify-center">
-                        <Check size={8} className="text-cyan-500" />
+                    <div className="w-4 h-4 rounded-full border border-cyan-500/50 flex items-center justify-center bg-cyan-500/10">
+                        <Check size={9} className="text-cyan-400" strokeWidth={3} />
                     </div>
                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Progresso do Treino</span>
                 </div>
 
                 <div className="text-sm font-bold text-white">
-                    <span className="text-lg text-cyan-400 mr-1">{completedCount}</span>
-                    <span className="text-slate-500">/ {totalCount}</span>
+                    <span className="text-lg text-cyan-400 mr-1 font-heading">{completedCount}</span>
+                    <span className="text-slate-600">/ {totalCount}</span>
                 </div>
             </div>
 
             {/* Segmented Bar */}
-            <div className="flex gap-1 h-1.5 w-full">
+            <div className="flex gap-1.5 h-1.5 w-full">
                 {Array.from({ length: totalCount }).map((_, idx) => (
                     <div
                         key={idx}
                         className={`flex-1 rounded-full transition-all duration-500 ${idx < completedCount
-                            ? 'bg-cyan-500 shadow-[0_0_8px_rgba(6,182,212,0.4)]'
-                            : 'bg-slate-800'
+                            ? 'bg-cyan-500 shadow-[0_0_10px_rgba(6,182,212,0.5)]'
+                            : 'bg-slate-800/50'
                             }`}
                     />
                 ))}
@@ -102,9 +102,9 @@ function ProgressCard({ completedCount, totalCount }) {
     );
 }
 
-// --- MAIN PAGE COMPONENT ---
+// --- COMPONENTE DA PÁGINA PRINCIPAL ---
 export function WorkoutExecutionPage({ workoutId, onFinish, user }) {
-    // --- HOOKS INTEGRATION ---
+    // --- INTEGRAÇÃO DE HOOKS ---
     const {
         loading,
         saving,
@@ -124,18 +124,18 @@ export function WorkoutExecutionPage({ workoutId, onFinish, user }) {
     } = useWorkoutSession(workoutId, user);
 
 
-    // --- UI STATE ---
+    // --- ESTADO DA UI ---
     const [showFinishModal, setShowFinishModal] = useState(false);
     const [showTimer, setShowTimer] = useState(false);
     const [showOneRM, setShowOneRM] = useState(false);
     const [selectedMethod, setSelectedMethod] = useState(null);
     const [focusMode, setFocusMode] = useState(false);
-    const [isFinished, setIsFinished] = useState(false); // Prevents "Zombie Sessions"
+    const [isFinished, setIsFinished] = useState(false); // Previne "Sessões Zumbis"
     const [newAchievements, setNewAchievements] = useState([]);
     const [showAchievementModal, setShowAchievementModal] = useState(false);
     const [restDuration, setRestDuration] = useState(90);
 
-    // --- LOAD USER PREFERENCE ---
+    // --- CARREGAR PREFERÊNCIAS DO USUÁRIO ---
     useEffect(() => {
         if (user?.uid) {
             userService.getUserProfile(user.uid).then(profile => {
@@ -146,18 +146,18 @@ export function WorkoutExecutionPage({ workoutId, onFinish, user }) {
         }
     }, [user?.uid]);
 
-    // --- PERSIST PREFERENCE ---
+    // --- PERSISTIR PREFERÊNCIA ---
     const handleRestDurationChange = (newDuration) => {
         setRestDuration(newDuration);
         if (user?.uid) {
-            // Fire and forget update
+            // Atualização "fire and forget"
             userService.updateUserProfile(user.uid, { defaultRestTime: newDuration })
                 .catch(err => console.error("Failed to save rest preference:", err));
         }
     };
 
-    // Scroll to top when Focus Mode is activated
-    // Scroll to top when Focus Mode is activated
+    // Rolar para o topo quando o Modo Foco é ativado
+    // Rolar para o topo quando o Modo Foco é ativado
     useEffect(() => {
         if (focusMode) {
             // Força o scroll suave para o topo
@@ -172,10 +172,10 @@ export function WorkoutExecutionPage({ workoutId, onFinish, user }) {
     const {
         elapsedSeconds,
         setElapsedSeconds,
-        // formatTime // Unused currently but available
-    } = useWorkoutTimer(!loading && !saving && !isFinished, initialElapsed); // Stop timer on finish
+        // formatTime // Não utilizado atualmente, mas disponível
+    } = useWorkoutTimer(!loading && !saving && !isFinished, initialElapsed); // Parar timer ao finalizar
 
-    // Sync elapsed time from hook when loaded
+    // Sincronizar tempo decorrido do hook quando carregado
     useEffect(() => {
         if (initialElapsed > 0 && elapsedSeconds === 0) {
             setElapsedSeconds(initialElapsed);
@@ -183,7 +183,7 @@ export function WorkoutExecutionPage({ workoutId, onFinish, user }) {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [initialElapsed]);
 
-    // Continuous Sync Effect
+    // Efeito de Sincronização Contínua
     useEffect(() => {
         if (!loading && exercises.length > 0 && !isFinished) {
             syncSession(exercises, elapsedSeconds);
@@ -206,7 +206,7 @@ export function WorkoutExecutionPage({ workoutId, onFinish, user }) {
     const navigate = (path) => { if (path === -1 && onFinish) onFinish(); };
     const routerNavigate = (path) => { window.location.href = path; }; // Simple redirect for now or use context if available
 
-    // --- ACTIONS ---
+    // --- AÇÕES ---
     const handleNextExercise = () => {
         if (currentExerciseIndex < exercises.length - 1) setCurrentExerciseIndex(prev => prev + 1);
     };
@@ -222,13 +222,13 @@ export function WorkoutExecutionPage({ workoutId, onFinish, user }) {
     };
 
     const confirmDiscard = async () => {
-        setIsFinished(true); // Stop syncing
+        setIsFinished(true); // Parar sincronização
         await discardSession();
-        window.location.href = "/"; // Force navigation home
+        window.location.href = "/"; // Forçar navegação para home
     };
 
     const handleFinishWorkout = async () => {
-        setIsFinished(true); // Stop syncing immediately
+        setIsFinished(true); // Parar sincronização imediatamente
         const success = await finishSession(elapsedSeconds);
         if (success) {
             confetti({
@@ -237,7 +237,7 @@ export function WorkoutExecutionPage({ workoutId, onFinish, user }) {
                 origin: { y: 0.6 }
             });
 
-            // Check for new achievements
+            // Verificar novas conquistas
             if (user) {
                 const sessionPayload = {
                     id: 'temp_current',
@@ -259,18 +259,18 @@ export function WorkoutExecutionPage({ workoutId, onFinish, user }) {
                 setTimeout(() => setShowFinishModal(true), 800);
             }
         } else {
-            setIsFinished(false); // Re-enable if failed
+            setIsFinished(false); // Reativar se falhar
         }
     };
 
-    // --- SHARING ---
+    // --- COMPARTILHAMENTO ---
     const [sharing, setSharing] = useState(false);
     const shareCardRef = useRef(null);
 
     const handleShare = async () => {
         if (!shareCardRef.current) return;
 
-        // Security Check: Files API requires Secure Context (HTTPS or localhost)
+        // Verificação de Segurança: API Files requer Contexto Seguro (HTTPS ou localhost)
         if (!window.isSecureContext) {
             alert("O compartilhamento requer conexão segura (HTTPS).\n\nSe você está testando localmente via IP, use 'localhost' ou configure SSL.");
             return;
@@ -284,8 +284,8 @@ export function WorkoutExecutionPage({ workoutId, onFinish, user }) {
                 useCORS: true,
                 allowTaint: true,
                 ignoreElements: (element) => {
-                    // Ignore global stylesheets to prevent 'oklch' parsing error
-                    // We only want inline styles from the component itself
+                    // Ignora folhas de estilo globais para evitar erro de parsing 'oklch'
+                    // Queremos apenas estilos inline do próprio componente
                     return element.tagName.toLowerCase() === 'link' && element.rel === 'stylesheet' ||
                         element.tagName.toLowerCase() === 'style';
                 }
@@ -341,7 +341,7 @@ export function WorkoutExecutionPage({ workoutId, onFinish, user }) {
     };
 
 
-    // --- RENDER ---
+    // --- RENDERIZAÇÃO ---
     if (loading) {
         return (
             <div className="min-h-screen bg-[#020617] p-4 font-sans max-w-2xl mx-auto space-y-6">
@@ -420,10 +420,10 @@ export function WorkoutExecutionPage({ workoutId, onFinish, user }) {
                 <div
                     className="
                         fixed top-0 left-0 right-0 z-50 pointer-events-none
-                        bg-gradient-to-b from-black/80 via-black/60 to-transparent
+                        bg-slate-950/80
                         backdrop-blur-xl
                         border-b border-white/5
-                        shadow-2xl shadow-black/20
+                        shadow-2xl shadow-black/40
                         rounded-b-3xl
                     "
                     style={{
@@ -437,7 +437,7 @@ export function WorkoutExecutionPage({ workoutId, onFinish, user }) {
                         pointer-events-auto
                     ">
                         {/* Ambient glow effect (Full Height) */}
-                        <div className="absolute inset-0 bg-gradient-to-b from-cyan-500/5 via-transparent to-transparent pointer-events-none rounded-b-3xl" />
+                        <div className="absolute inset-0 bg-gradient-to-b from-cyan-500/5 to-transparent pointer-events-none rounded-b-3xl" />
 
                         <div className="relative z-10 flex items-center justify-between gap-2">
                             {/* Left side - Back button */}
@@ -756,8 +756,8 @@ export function WorkoutExecutionPage({ workoutId, onFinish, user }) {
                         let vol = 0;
                         exercises.forEach(ex => {
                             ex.sets.forEach(s => {
-                                // Standard Volume Load (Tonnage) Logic:
-                                // 5kg x 10 reps = 50kg moved.
+                                // Lógica Padrão de Carga de Volume (Tonelagem):
+                                // 5kg x 10 reps = 50kg movidos.
                                 if (s.completed) vol += (Number(s.weight) * Number(s.reps));
                             });
                         });

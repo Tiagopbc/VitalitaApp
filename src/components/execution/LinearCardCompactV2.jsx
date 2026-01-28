@@ -11,7 +11,7 @@ import { Minus, Plus, CheckCircle2, Info, Check, Zap, LayoutList, Target, ArrowR
  */
 
 /**
- * Detects the type of repetitions based on the goal string.
+ * Detecta o tipo de repetições com base na string de meta.
  * @param {string} repsGoal 
  * @returns {RepsType}
  */
@@ -23,12 +23,12 @@ function detectRepsType(repsGoal) {
     if (cleaned.includes('FALHA') || cleaned.includes('FAILURE') || cleaned.includes('MAX')) {
         return 'FAILURE';
     }
-    // Check for Pyramid (slash or comma separated multiple values). 
-    // REMOVED '+' to allow "8+8+8" to be shown as full text (Cluster/Drop)
+    // Verifica Pirâmide (separado por barra ou vírgula).
+    // REMOVIDO '+' para permitir que "8+8+8" seja mostrado como texto completo (Cluster/Drop)
     if (cleaned.includes('/') || (cleaned.includes(',') && cleaned.split(',').length > 1)) {
         return 'PYRAMID';
     }
-    // Cluster: now explicitly checks for '-' range OR '+' notation
+    // Cluster: agora verifica explicitamente intervalo com '-' OU notação '+'
     if ((cleaned.includes('-') && /^\d+-\d+/.test(cleaned)) || cleaned.includes('+')) {
         return 'CLUSTER';
     }
@@ -42,7 +42,7 @@ function detectRepsType(repsGoal) {
 }
 
 /**
- * Calculates the goal for the current set.
+ * Calcula a meta para a série atual.
  * @param {string} repsGoal 
  * @param {number} setNumber 
  * @param {RepsType} repsType 
@@ -62,7 +62,7 @@ function getCurrentSetGoal(repsGoal, setNumber, repsType) {
             return repsGoal;
         }
         case 'PYRAMID': {
-            // Split by slash or comma
+            // Dividir por barra ou vírgula
             const values = repsGoal.split(/[/,]/).map(v => v.trim());
             return values[setNumber - 1] || values[0] || '';
         }
@@ -109,8 +109,8 @@ import { NumericKeypad } from '../common/NumericKeypad';
 // ... (Funções Auxiliares Existentes - detectRepsType, getCurrentSetGoal, COLORS)
 
 export const LinearCardCompactV2 = memo(function LinearCardCompactV2({
-    exerciseId, // New Prop
-    setId,      // New Prop
+    exerciseId, // Nova Prop
+    setId,      // Nova Prop
     muscleGroup,
     exerciseName,
     method,
@@ -121,9 +121,9 @@ export const LinearCardCompactV2 = memo(function LinearCardCompactV2({
     weight,
     actualReps,
     observation,
-    onUpdateSet, // Stable: (exId, setId, field, val) => ...
-    onUpdateNotes, // Stable: (exId, val) => ...
-    onCompleteSet, // Stable: (exId, setNumber, weight, reps) => ...
+    onUpdateSet, // Estável: (exId, setId, field, val) => ...
+    onUpdateNotes, // Estável: (exId, val) => ...
+    onCompleteSet, // Estável: (exId, setNumber, weight, reps) => ...
     suggestedWeight,
     suggestedReps,
 
@@ -132,14 +132,14 @@ export const LinearCardCompactV2 = memo(function LinearCardCompactV2({
     weightMode = 'total', // 'total' | 'per_side'
     baseWeight,           // used when mode is 'per_side'
     onUpdateSetMultiple,   // (exId, setId, { weight, weightMode, baseWeight })
-    onToggleWeightMode    // New Prop: () => void
+    onToggleWeightMode    // Nova Prop: () => void
 }) {
-    // Determine completion status
+    // Determinar status de conclusão
     const completedCount = completedSets.filter(Boolean).length;
     const isExerciseFullyCompleted = completedCount === totalSets && totalSets > 0;
     const isCurrentSetCompleted = completedSets[currentSet - 1];
 
-    // Determine Display Weight
+    // Determinar Peso de Exibição
     const isPerSide = weightMode === 'per_side';
     const displayWeight = isPerSide
         ? (baseWeight || (parseFloat(weight) / 2) || 0)
@@ -148,7 +148,7 @@ export const LinearCardCompactV2 = memo(function LinearCardCompactV2({
     const formatWeight = (val) => {
         const num = parseFloat(val);
         if (isNaN(num)) return "0";
-        return Number.isInteger(num) ? num.toString() : num.toFixed(1); // Smart formatting
+        return Number.isInteger(num) ? num.toString() : num.toFixed(1); // Formatação inteligente
     };
 
     const formattedDisplayWeight = formatWeight(displayWeight);
@@ -269,24 +269,15 @@ export const LinearCardCompactV2 = memo(function LinearCardCompactV2({
     };
 
     // --- ESTILOS ---
-    const completeStyle = {
-        background: 'linear-gradient(135deg, rgba(16,185,129,0.2), rgba(6,95,70,0.3))',
-        border: '2px solid rgba(16,185,129,0.5)',
-        boxShadow: '0 8px 30px rgba(16,185,129,0.25), inset 0 0 20px rgba(16,185,129,0.05)'
-    };
+    // REMOVIDO: Estilos inline substitúidos por classes Tailwind
 
-    const normalStyle = {
-        background: 'linear-gradient(135deg, rgba(5,8,22,0.95), rgba(11,17,32,0.98))',
-        border: '1px solid rgba(59,130,246,0.3)',
-        boxShadow: '0 8px 32px rgba(0,0,0,0.4)'
-    };
-
-    const containerStyle = isExerciseFullyCompleted ? completeStyle : normalStyle;
+    const containerClassName = isExerciseFullyCompleted
+        ? "bg-emerald-900/20 border border-emerald-500/30 shadow-[0_8px_30px_rgba(16,185,129,0.1)]"
+        : "bg-slate-900/40 border border-slate-700/50 shadow-lg backdrop-blur-md";
 
     return (
         <div
-            style={containerStyle}
-            className="rounded-[24px] p-[22px] flex flex-col gap-[14px] transition-all duration-300 relative overflow-hidden"
+            className={`rounded-[24px] p-[22px] flex flex-col gap-[14px] transition-all duration-300 relative overflow-hidden ${containerClassName}`}
         >
             {/* Cabeçalho */}
             <div className="flex justify-between items-start mb-[10px] gap-3">
@@ -370,8 +361,7 @@ export const LinearCardCompactV2 = memo(function LinearCardCompactV2({
             <div className="grid grid-cols-2 gap-3 mb-1">
                 {/* Entrada de Peso */}
                 <div className="flex flex-col gap-1.5 relative">
-                    {/* Toggle Mode Button - Absolute positioned or in Header? */}
-                    {/* Let's put it inside the header span area or absolute top-right of the container */}
+                    {/* Botão de Alternar Modo - Posicionado na área do cabeçalho */}
 
                     <div className="flex items-center justify-center gap-2 relative h-8">
                         <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider text-center flex items-center justify-center gap-1">

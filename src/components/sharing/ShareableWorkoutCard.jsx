@@ -20,7 +20,7 @@ export const ShareableWorkoutCard = forwardRef(({ session, userName }, ref) => {
                 width: '400px',
                 height: '711px', // 9:16 aspect ratio
                 backgroundColor: '#020617',
-                fontFamily: "'Inter', sans-serif",
+                // fontFamily: "'Inter', sans-serif", // Removed to use global defaults
                 color: 'white',
                 display: 'flex',
                 flexDirection: 'column',

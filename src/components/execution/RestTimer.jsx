@@ -170,7 +170,7 @@ export function RestTimer({ initialTime = 90, onComplete, isOpen, onClose, onDur
 
                     {/* Texto de Tempo */}
                     <div className="absolute inset-0 flex items-center justify-center">
-                        <span className={`text-5xl font-bold font-sans tracking-tighter ${status === 'complete' ? 'text-emerald-400' : 'text-white'}`}>
+                        <span className={`text-5xl font-bold tracking-tighter ${status === 'complete' ? 'text-emerald-400' : 'text-white'}`}>
                             {formatTime(timeLeft)}
                         </span>
                     </div>
