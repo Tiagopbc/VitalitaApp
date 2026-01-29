@@ -397,7 +397,7 @@ export const LinearCardCompactV2 = memo(function LinearCardCompactV2({
                             role="button"
                             aria-label="Definir peso"
                         >
-                            <div className={`text-xl md:text-2xl font-bold leading-none tracking-tight ${!formattedDisplayWeight || formattedDisplayWeight === '0' ? 'text-slate-600' : isPerSide ? 'text-purple-400' : 'text-white'}`}>
+                            <div className={`text-xl md:text-2xl font-bold leading-none tracking-tight ${!formattedDisplayWeight || formattedDisplayWeight === '0' ? 'text-slate-400' : isPerSide ? 'text-purple-400' : 'text-white'}`}>
                                 {formattedDisplayWeight}
                             </div>
                         </div>
@@ -439,7 +439,7 @@ export const LinearCardCompactV2 = memo(function LinearCardCompactV2({
                             role="button"
                             aria-label="Definir repetições"
                         >
-                            <div className={`text-xl md:text-2xl font-bold leading-none tracking-tight ${!actualReps && suggestedReps ? 'text-slate-600' : 'text-white'}`}>
+                            <div className={`text-xl md:text-2xl font-bold leading-none tracking-tight ${!actualReps && suggestedReps ? 'text-slate-400' : 'text-white'}`}>
                                 {actualReps || suggestedReps || "0"}
                             </div>
                         </div>

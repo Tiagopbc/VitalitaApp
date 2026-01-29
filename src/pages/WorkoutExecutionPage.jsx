@@ -21,7 +21,7 @@ import {
     ArrowLeft
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
-import html2canvas from 'html2canvas'; // For sharing
+import { toPng } from 'html-to-image'; // For sharing
 import { ShareableWorkoutCard } from '../components/sharing/ShareableWorkoutCard';
 import { RestTimer } from '../components/execution/RestTimer';
 // import { MuscleFocusDisplay } from '../components/execution/MuscleFocusDisplay'; // Unused
@@ -278,64 +278,34 @@ export function WorkoutExecutionPage({ workoutId, onFinish, user }) {
 
         setSharing(true);
         try {
-            const canvas = await html2canvas(shareCardRef.current, {
+            // Wait for render
+            await new Promise(r => setTimeout(r, 500));
+
+            const dataUrl = await toPng(shareCardRef.current, {
+                cacheBust: true,
                 backgroundColor: '#020617',
-                scale: 2,
-                useCORS: true,
-                allowTaint: true,
-                ignoreElements: (element) => {
-                    // Ignora folhas de estilo globais para evitar erro de parsing 'oklch'
-                    // Queremos apenas estilos inline do próprio componente
-                    return element.tagName.toLowerCase() === 'link' && element.rel === 'stylesheet' ||
-                        element.tagName.toLowerCase() === 'style';
-                }
+                pixelRatio: 2
             });
 
-            canvas.toBlob(async (blob) => {
-                if (!blob) {
-                    setError('Erro ao gerar imagem.');
-                    setSharing(false);
-                    return;
-                }
+            const blob = await (await fetch(dataUrl)).blob();
+            const file = new File([blob], 'treino_concluido.png', { type: 'image/png' });
 
-                const file = new File([blob], 'treino_concluido.png', { type: 'image/png' });
-
-                if (navigator.canShare && navigator.canShare({ files: [file] })) {
-                    try {
-                        await navigator.share({
-                            title: 'Treino Concluído - Vitalitá',
-                            text: `Acabei de completar o treino ${template?.name || 'Personalizado'}! 💪`,
-                            files: [file]
-                        });
-                        setSharing(false);
-                        return;
-                    } catch (shareErr) {
-                        if (shareErr.name === 'AbortError') {
-                            setSharing(false);
-                            return;
-                        }
-                    }
-                }
-
-                // Fallback
-                try {
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = `vitalita_treino_${new Date().toISOString().slice(0, 10)}.png`;
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
-                    URL.revokeObjectURL(url);
-                    setError(null);
-                } catch {
-                    setError('Não foi possível salvar a imagem.');
-                }
-                setSharing(false);
-            }, 'image/png');
+            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                await navigator.share({
+                    title: 'Treino Concluído!',
+                    text: `Acabei de completar o treino ${template?.name || 'Personalizado'}! 💪`, // Adjusted to use template?.name
+                    files: [file]
+                });
+            } else {
+                const link = document.createElement('a');
+                link.download = `treino_${new Date().toISOString().slice(0, 10)}.png`;
+                link.href = dataUrl;
+                link.click();
+            }
+            setSharing(false);
         } catch (err) {
-            console.error(err);
-            setError(`Erro ao gerar imagem: ${err.message || err}`);
+            console.error("Error sharing:", err);
+            setError("Erro ao gerar imagem de compartilhamento."); // Using existing setError
             setSharing(false);
         }
     };

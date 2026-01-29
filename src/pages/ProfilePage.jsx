@@ -1,5 +1,6 @@
 // -----------------------------------------------------------------------------
 import React, { useState, useEffect } from 'react';
+import { toast } from 'sonner';
 import { userService } from '../services/userService';
 import { workoutService } from '../services/workoutService';
 
@@ -83,35 +84,64 @@ export default function ProfilePage({ user, onLogout, onNavigateToHistory, onNav
     const [selectedAchievement, setSelectedAchievement] = useState(null);
 
 
+    const [loadError, setLoadError] = useState(false);
+
     // Derived weekly status
     // const workoutsThisWeekArray = React.useMemo(() => getDaysOfWeekStatus(sessionsState), [sessionsState]); // DESCONTINUADO em favor do componente Híbrido
 
+    const fetchProfileData = React.useCallback(async () => {
+        if (!user?.uid) return;
+
+        setLoading(true);
+        setLoadError(false);
+
+        try {
+            // Timeout de segurança (10 segundos)
+            const timeoutPromise = new Promise((_, reject) =>
+                setTimeout(() => reject(new Error("Timeout fetching profile")), 10000)
+            );
+
+            const docSnapData = await Promise.race([
+                userService.getUserProfile(user.uid),
+                timeoutPromise
+            ]);
+
+            if (docSnapData) {
+                setProfile(prev => ({ ...prev, ...docSnapData }));
+            } else {
+                // Iniciar com dados de autenticação se não houver documento
+                setProfile(prev => ({
+                    ...prev,
+                    displayName: user.displayName || '',
+                    email: user.email
+                }));
+            }
+        } catch (err) {
+            console.error("Error fetching profile (or timeout):", err);
+            setLoadError(true);
+            toast.error("Erro ao carregar dados. Verifique sua conexão.", {
+                action: {
+                    label: 'Tentar Novamente',
+                    onClick: () => fetchProfileData()
+                },
+                duration: 5000
+            });
+
+            // Fallback: mostrar o que temos (dados de auth)
+            setProfile(prev => ({
+                ...prev,
+                displayName: user.displayName || '',
+                email: user.email
+            }));
+        } finally {
+            setLoading(false);
+        }
+    }, [user?.uid, user?.displayName, user?.email]);
+
     // Carregar Perfil
     useEffect(() => {
-        if (!user) return;
-
-        async function loadProfile() {
-            try {
-                const docSnapData = await userService.getUserProfile(user.uid);
-
-                if (docSnapData) {
-                    setProfile(prev => ({ ...prev, ...docSnapData }));
-                } else {
-                    // Iniciar com dados de autenticação se não houver documento
-                    setProfile(prev => ({
-                        ...prev,
-                        displayName: user.displayName || '',
-                        email: user.email
-                    }));
-                }
-            } catch (err) {
-                console.error("Error fetching profile:", err);
-            } finally {
-                setLoading(false);
-            }
-        }
-        void loadProfile();
-    }, [user]);
+        void fetchProfileData();
+    }, [fetchProfileData]);
 
     // Carregar Dados de Conquistas
     useEffect(() => {

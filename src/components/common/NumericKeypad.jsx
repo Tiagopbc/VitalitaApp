@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Delete, Check, X } from 'lucide-react';
 
 export function NumericKeypad({ isOpen, onClose, onConfirm, initialValue = '', title = '' }) {
@@ -38,8 +39,8 @@ export function NumericKeypad({ isOpen, onClose, onConfirm, initialValue = '', t
 
     if (!isOpen) return null;
 
-    return (
-        <div className="fixed inset-0 z-[100] flex flex-col justify-end pointer-events-auto">
+    return createPortal(
+        <div className="fixed inset-0 z-[9999] flex flex-col justify-end pointer-events-auto">
             {/* Fundo (Backdrop) */}
             <div
                 className={`absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity duration-300 ${animateShow ? 'opacity-100' : 'opacity-0'}`}
@@ -48,7 +49,7 @@ export function NumericKeypad({ isOpen, onClose, onConfirm, initialValue = '', t
 
             {/* Container do Teclado */}
             <div
-                className={`w-full bg-[#0f172a] rounded-t-[32px] p-6 pb-12 shadow-[0_-10px_40px_rgba(0,0,0,0.5)] border-t border-slate-800 relative z-10 transition-transform duration-300 ease-out ${animateShow ? 'translate-y-0' : 'translate-y-full'}`}
+                className={`w-full max-w-2xl mx-auto bg-[#0f172a] rounded-t-[32px] md:rounded-3xl md:mb-6 p-6 pb-12 shadow-[0_-10px_40px_rgba(0,0,0,0.5)] border-t border-slate-800 relative z-10 transition-transform duration-300 ease-out ${animateShow ? 'translate-y-0' : 'translate-y-full'}`}
             >
                 {/* Cabeçalho / Display */}
                 <div className="flex justify-between items-center mb-6 px-2">
@@ -60,7 +61,7 @@ export function NumericKeypad({ isOpen, onClose, onConfirm, initialValue = '', t
 
                 {/* Exibição do Valor */}
                 <div className="flex justify-center mb-8">
-                    <span className={`text-6xl font-bold tracking-tight ${!value || value === '0.0' ? 'text-slate-600' : 'text-white'}`}>
+                    <span className={`text-6xl font-bold tracking-tight ${!value || value === '0.0' ? 'text-slate-400' : 'text-white'}`}>
                         {value || '0'}
                     </span>
                 </div>
@@ -109,6 +110,7 @@ export function NumericKeypad({ isOpen, onClose, onConfirm, initialValue = '', t
                     CONFIRMAR
                 </button>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 }

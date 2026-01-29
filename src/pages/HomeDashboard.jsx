@@ -4,6 +4,7 @@
  * Busca e agrega estatísticas do usuário e modelos de treino do Firestore.
  */
 import React, { useState, useEffect } from 'react';
+import { toPng } from 'html-to-image';
 import {
     Flame,
     Dumbbell,
@@ -50,35 +51,30 @@ export function HomeDashboard({
         if (!shareCardRef.current) return;
         setSharing(true);
         try {
-            // Force wait for images
             await new Promise(r => setTimeout(r, 500));
 
-            const canvas = await html2canvas(shareCardRef.current, {
+            const dataUrl = await toPng(shareCardRef.current, {
+                cacheBust: true,
                 backgroundColor: '#020617',
-                scale: 2,
-                useCORS: true,
-                allowTaint: true,
+                pixelRatio: 2
             });
 
-            canvas.toBlob(async (blob) => {
-                if (!blob) { alert('Erro ao gerar'); setSharing(false); return; }
-                const file = new File([blob], 'treino_teste.png', { type: 'image/png' });
+            const blob = await (await fetch(dataUrl)).blob();
+            const file = new File([blob], 'treino_teste.png', { type: 'image/png' });
 
-                if (navigator.canShare && navigator.canShare({ files: [file] })) {
-                    try {
-                        await navigator.share({
-                            title: 'Treino Concluído',
-                            text: 'Olha meu treino! 💪',
-                            files: [file]
-                        });
-                    } catch (e) { console.error(e); }
-                } else {
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement('a'); a.href = url; a.download = 'teste.png';
-                    document.body.appendChild(a); a.click(); document.body.removeChild(a);
-                }
-                setSharing(false);
-            }, 'image/png');
+            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                try {
+                    await navigator.share({
+                        title: 'Treino Concluído',
+                        text: 'Olha meu treino! 💪',
+                        files: [file]
+                    });
+                } catch (e) { console.error(e); }
+            } else {
+                const a = document.createElement('a'); a.href = dataUrl; a.download = 'teste.png';
+                document.body.appendChild(a); a.click(); document.body.removeChild(a);
+            }
+            setSharing(false);
         } catch (err) {
             console.error(err);
             alert('Erro: ' + err.message);
@@ -95,6 +91,9 @@ export function HomeDashboard({
 
     const [templates, setTemplates] = useState([]);
     const [latestSession, setLatestSession] = useState(null);
+
+    const [loadingTemplates, setLoadingTemplates] = useState(true);
+    const [loadingStats, setLoadingStats] = useState(true);
 
     // 1. Lógica de Sugestão de Treino (Executa quando templates ou última sessão mudam)
     useEffect(() => {
@@ -148,6 +147,7 @@ export function HomeDashboard({
             // A. Inscrever-se em Treinos (Templates)
             unsubscribeTemplates = workoutService.subscribeToTemplates(user.uid, (data) => {
                 setTemplates(data || []);
+                setLoadingTemplates(false);
             });
 
             // B. Inscrever-se no Histórico (Sessões)
@@ -198,6 +198,7 @@ export function HomeDashboard({
                         // Se zerou o jogo, podemos mostrar uma conquista "máxima" ou nulo
                         setNextAchievement(null);
                     }
+                    setLoadingStats(false);
                 });
             } catch (err) {
                 console.error("Subscription Error:", err);
@@ -239,15 +240,19 @@ export function HomeDashboard({
                         onClick={onNavigateToHistory}
                         className="cursor-pointer hover:scale-[1.01] active:scale-[0.99] transition-transform"
                     >
-                        <StreakWeeklyGoalHybrid
-                            currentStreak={stats.currentStreak}
-                            bestStreak={stats.bestStreak}
-                            weeklyGoal={stats.weeklyGoal}
-                            completedThisWeek={stats.completedThisWeek}
-                            weekDays={stats.weekDays}
-                            monthDays={stats.monthDays}
-                            showRings={false}
-                        />
+                        {loadingStats ? (
+                            <div className="w-full h-64 bg-slate-900/50 rounded-3xl animate-pulse border border-slate-800" />
+                        ) : (
+                            <StreakWeeklyGoalHybrid
+                                currentStreak={stats.currentStreak}
+                                bestStreak={stats.bestStreak}
+                                weeklyGoal={stats.weeklyGoal}
+                                completedThisWeek={stats.completedThisWeek}
+                                weekDays={stats.weekDays}
+                                monthDays={stats.monthDays}
+                                showRings={false}
+                            />
+                        )}
                     </div>
                 </div>
 
@@ -258,7 +263,9 @@ export function HomeDashboard({
                         <h3 className="text-base font-bold text-white">Próximo Treino Sugerido</h3>
                     </div>
 
-                    {suggestedWorkout ? (
+                    {loadingTemplates ? (
+                        <div className="w-full h-40 bg-slate-900/50 rounded-3xl animate-pulse border border-slate-800" />
+                    ) : suggestedWorkout ? (
                         <button
                             onClick={() => onNavigateToWorkout(suggestedWorkout.id, suggestedWorkout.name)}
                             className="w-full p-6 rounded-3xl relative overflow-hidden cursor-pointer hover:scale-[1.01] active:scale-[0.99] transition-all duration-300 text-left group
@@ -319,7 +326,9 @@ export function HomeDashboard({
                         </button>
                     </div>
 
-                    {nextAchievement ? (
+                    {loadingStats ? (
+                        <div className="w-full h-24 bg-slate-900/50 rounded-3xl animate-pulse border border-slate-800" />
+                    ) : nextAchievement ? (
                         <div
                             onClick={onNavigateToAchievements}
                             className="rounded-2xl relative overflow-hidden cursor-pointer hover:scale-[1.01] active:scale-[0.99] transition-transform bg-gradient-to-br from-slate-900 to-slate-950 border border-slate-800 hover:border-slate-700"

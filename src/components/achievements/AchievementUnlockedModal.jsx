@@ -2,66 +2,48 @@ import React, { useRef, useState } from 'react';
 import { Share2, X, Trophy, Download } from 'lucide-react';
 import { Button } from '../design-system/Button';
 import html2canvas from 'html2canvas';
+import { toPng } from 'html-to-image';
 
 export function AchievementUnlockedModal({ achievements, onClose }) {
-    const [sharing, setSharing] = useState(false);
     const cardRef = useRef(null);
+    const [sharing, setSharing] = useState(false);
 
-    // Se houver mais de uma, mostramos a primeira ou uma lista?
-    // Vamos focar na primeira/principal para o cartão de compartilhamento.
-    const mainAchievement = achievements[0];
+    // Use the first achievement for display/sharing
+    const achievement = achievements && achievements.length > 0 ? achievements[0] : null;
+
+    if (!achievement) return null;
 
     const handleShare = async () => {
         if (!cardRef.current) return;
         setSharing(true);
+
         try {
-            // Wait for images/fonts if needed
+            // Wait for fonts/images
             await new Promise(r => setTimeout(r, 100));
 
-            const canvas = await html2canvas(cardRef.current, {
-                backgroundColor: null, // Transparent background? or use hex
-                // backgroundColor: '#020617', // Match the card bg
-                scale: 3,
-                useCORS: true,
-                allowTaint: true,
-                logging: false
+            // Generate PNG directly
+            const dataUrl = await toPng(cardRef.current, {
+                cacheBust: true,
+                backgroundColor: '#020617', // Force dark background
+                pixelRatio: 2 // High resolution
             });
 
-            canvas.toBlob(async (blob) => {
-                if (!blob) {
-                    alert("Erro ao criar imagem (Blob vazio).");
-                    setSharing(false);
-                    return;
-                }
-                const file = new File([blob], 'conquista_vitalita.png', { type: 'image/png' });
+            const blob = await (await fetch(dataUrl)).blob();
+            const file = new File([blob], `conquista_${achievement.id}.png`, { type: 'image/png' });
 
-                try {
-                    if (navigator.share && navigator.canShare({ files: [file] })) {
-                        await navigator.share({
-                            title: 'Nova Conquista - Vitalità',
-                            text: `Desbloqueei a conquista "${mainAchievement.title}" no Vitalità! 🏆`,
-                            files: [file]
-                        });
-                    } else {
-                        // Fallback download
-                        const url = URL.createObjectURL(blob);
-                        const a = document.createElement('a');
-                        a.href = url;
-                        a.download = 'conquista_vitalita.png';
-                        document.body.appendChild(a);
-                        a.click();
-                        document.body.removeChild(a);
-                        URL.revokeObjectURL(url);
-                    }
-                } catch (shareError) {
-                    console.error("Share error:", shareError);
-                    // Don't alert if user cancelled share
-                    if (shareError.name !== 'AbortError') {
-                        alert("Erro ao compartilhar: " + shareError.message);
-                    }
-                }
-                setSharing(false);
-            }, 'image/png');
+            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                await navigator.share({
+                    title: 'Conquista Desbloqueada!',
+                    text: `Desbloqueei a conquista "${achievement.title}" no Vitalità! 🏆`,
+                    files: [file]
+                });
+            } else {
+                // Fallback de download
+                const link = document.createElement('a');
+                link.download = `conquista_${achievement.id}.png`;
+                link.href = dataUrl;
+                link.click();
+            }
         } catch (err) {
             console.error(err);
             alert("Erro ao gerar card: " + err.message);
@@ -108,11 +90,11 @@ export function AchievementUnlockedModal({ achievements, onClose }) {
                         {/* TEXT */}
                         <div className="text-center space-y-4">
                             <h1 className="text-4xl font-black text-white leading-tight drop-shadow-lg scale-y-110">
-                                <span style={{ color: '#bae6fd' }}>{mainAchievement.title}</span> {/* Sky-200ish */}
+                                <span style={{ color: '#bae6fd' }}>{achievement.title}</span> {/* Sky-200ish */}
                             </h1>
 
                             <p className="text-[#94a3b8] text-sm leading-relaxed max-w-[240px] mx-auto font-medium">
-                                {mainAchievement.description}
+                                {achievement.description}
                             </p>
                         </div>
                     </div>
