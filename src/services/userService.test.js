@@ -3,6 +3,7 @@ import { userService } from './userService';
 import {
     getDoc,
     updateDoc,
+    setDoc,
     addDoc,
 
     getCountFromServer,
@@ -84,7 +85,7 @@ describe('userService', () => {
 
             await userService.updateUserProfile(userId, data);
 
-            expect(updateDoc).toHaveBeenCalled();
+            expect(setDoc).toHaveBeenCalled();
         });
     });
 
@@ -117,14 +118,14 @@ describe('userService', () => {
     describe('setActiveWorkout', () => {
         it('should update user doc with activeWorkoutId', async () => {
             await userService.setActiveWorkout('uid', 'wid');
-            expect(updateDoc).toHaveBeenCalled();
+            expect(setDoc).toHaveBeenCalled();
         });
     });
 
     describe('clearActiveWorkout', () => {
         it('should update user doc setting activeWorkoutId to null', async () => {
             await userService.clearActiveWorkout('uid');
-            expect(updateDoc).toHaveBeenCalled();
+            expect(setDoc).toHaveBeenCalled();
         });
     });
 });
