@@ -7,12 +7,19 @@
 import React, { useEffect, useMemo, useState, Suspense } from 'react';
 import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { Toaster } from 'sonner';
-const HomeDashboard = React.lazy(() => import('./pages/HomeDashboard').then(module => ({ default: module.HomeDashboard })));
 import { BottomNavEnhanced } from './BottomNavEnhanced';
 import { DesktopSidebar } from './DesktopSidebar';
 import { ProtectedRoute } from './components/ProtectedRoute';
+import { userService } from './services/userService';
+import { useAuth } from './AuthContext';
+import { WorkoutProvider, useWorkout } from './context/WorkoutContext';
+import { ErrorBoundary } from './components/ErrorBoundary';
 
-// Carregamento Lazy de Páginas Pesadas
+import './style.css';
+
+// Carregamento Lazy de Páginas
+// Nota: Lazy imports devem ficar APÓS os imports estáticos para evitar problemas de hoisting/ordem
+const HomeDashboard = React.lazy(() => import('./pages/HomeDashboard').then(module => ({ default: module.HomeDashboard })));
 const HistoryPage = React.lazy(() => import('./pages/HistoryPage'));
 const MethodsPage = React.lazy(() => import('./pages/MethodsPage'));
 const CreateWorkoutPage = React.lazy(() => import('./pages/CreateWorkoutPage'));
@@ -20,16 +27,8 @@ const ProfilePage = React.lazy(() => import('./pages/ProfilePage'));
 const WorkoutsPage = React.lazy(() => import('./pages/WorkoutsPage'));
 const WorkoutExecutionPage = React.lazy(() => import('./pages/WorkoutExecutionPage').then(module => ({ default: module.WorkoutExecutionPage })));
 const TrainerDashboard = React.lazy(() => import('./pages/TrainerDashboard').then(module => ({ default: module.TrainerDashboard })));
-
 const LoginPage = React.lazy(() => import('./pages/LoginPage'));
-import { userService } from './services/userService';
-import { useAuth } from './AuthContext';
 
-import './style.css';
-import { WorkoutProvider, useWorkout } from './context/WorkoutContext';
-
-
-import { ErrorBoundary } from './components/ErrorBoundary';
 
 function getFirstNameFromDisplayName(displayName) {
     const parts = (displayName || '').trim().split(/\s+/).filter(Boolean);
