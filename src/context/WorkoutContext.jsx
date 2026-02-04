@@ -1,7 +1,7 @@
 
 /* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { doc, onSnapshot, getDoc } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
 import { userService } from '../services/userService';
@@ -12,13 +12,24 @@ const WorkoutContext = createContext();
 export function WorkoutProvider({ children }) {
     const { user } = useAuth();
     const navigate = useNavigate();
-    const location = useLocation();
 
     // Lógica de Treino Ativo (Persistência)
     const [activeWorkoutId, setActiveWorkoutId] = useState(() => {
         const saved = localStorage.getItem('activeWorkoutId');
         return saved || null;
     });
+
+    const setLocalActiveWorkout = (id) => {
+        setActiveWorkoutId(id);
+        localStorage.setItem('activeWorkoutId', id);
+    };
+
+    const clearLocalActiveWorkout = () => {
+        setActiveWorkoutId(null);
+        localStorage.removeItem('activeWorkoutId');
+    };
+
+    const isExecutePath = () => Boolean(window.location?.pathname?.includes('/execute'));
 
     // --- SINCRONIZAÇÃO EM TEMPO REAL PARA TREINO ATIVO ---
     useEffect(() => {
@@ -34,12 +45,16 @@ export function WorkoutProvider({ children }) {
                     // PARADA DE EMERGÊNCIA: Verificar se usuário acabou de sair manualmente
                     const manualExit = sessionStorage.getItem('manual_exit');
                     if (manualExit) {
-                        if (remoteActiveId) {
-                            await userService.clearActiveWorkout(user.uid);
+                        try {
+                            if (remoteActiveId) {
+                                await userService.clearActiveWorkout(user.uid);
+                            }
+                        } catch (err) {
+                            console.error("Failed to clear active workout after manual exit:", err);
+                        } finally {
+                            clearLocalActiveWorkout();
+                            sessionStorage.removeItem('manual_exit'); // Limpar flag após tratamento
                         }
-                        setActiveWorkoutId(null);
-                        localStorage.removeItem('activeWorkoutId');
-                        sessionStorage.removeItem('manual_exit'); // Limpar flag após tratamento
                         return; // PARE AQUI
                     }
 
@@ -54,17 +69,15 @@ export function WorkoutProvider({ children }) {
 
                             if (activeSnap.exists()) {
                                 // É real. Redirecionar.
-                                setActiveWorkoutId(remoteActiveId);
-                                localStorage.setItem('activeWorkoutId', remoteActiveId);
-                                if (!location.pathname.includes('/execute')) {
+                                setLocalActiveWorkout(remoteActiveId);
+                                if (!isExecutePath()) {
                                     navigate(`/execute/${remoteActiveId}`);
                                 }
                             } else {
                                 // É um fantasma! Limpar.
                                 console.warn("Ghost active session detected. Clearing...");
                                 await userService.clearActiveWorkout(user.uid);
-                                setActiveWorkoutId(null);
-                                localStorage.removeItem('activeWorkoutId');
+                                clearLocalActiveWorkout();
                             }
                         } catch (e) {
                             console.error("Error verifying active session:", e);
@@ -75,10 +88,9 @@ export function WorkoutProvider({ children }) {
                         // ou a limpeza remota aconteceu antes da local. NÃO forçar saída abrupta.
                         // Apenas se NÃO estivermos em execução que limpamos.
                         // FIX: Use window.location directly to avoid stale closue issues
-                        if (!window.location.pathname.includes('/execute')) {
+                        if (!isExecutePath()) {
                             console.log("WorkoutContext: Clearing active session because not on execute page.");
-                            setActiveWorkoutId(null);
-                            localStorage.removeItem('activeWorkoutId');
+                            clearLocalActiveWorkout();
                         } else {
                             console.log("WorkoutContext: PREVENTED clearing active session explicitly on execute page.");
                             // Safety: Do not clear even if logic thinks we should?
@@ -90,11 +102,10 @@ export function WorkoutProvider({ children }) {
         });
 
         return () => unsubscribe();
-    }, [user, location.pathname, navigate]);
+    }, [user, navigate]);
 
     async function startWorkout(id) {
-        setActiveWorkoutId(id);
-        localStorage.setItem('activeWorkoutId', id);
+        setLocalActiveWorkout(id);
         if (user) {
             await userService.setActiveWorkout(user.uid, id);
         }
@@ -103,16 +114,14 @@ export function WorkoutProvider({ children }) {
 
     async function finishWorkout() {
         // Lógica tratada principalmente no WorkoutExecutionPage, mas podemos limpar estado aqui
-        setActiveWorkoutId(null);
-        localStorage.removeItem('activeWorkoutId');
+        clearLocalActiveWorkout();
         navigate('/');
     }
 
     function cancelWorkout() {
         // Lógica para saída manual/cancelamento
         sessionStorage.setItem('manual_exit', '1');
-        setActiveWorkoutId(null);
-        localStorage.removeItem('activeWorkoutId');
+        clearLocalActiveWorkout();
         if (user) {
             userService.clearActiveWorkout(user.uid);
         }

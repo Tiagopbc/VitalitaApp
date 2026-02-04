@@ -29,6 +29,7 @@ export function AuthProvider({ children }) {
             localStorage.removeItem('activeWorkoutId');
         } catch (err) {
             console.error('Erro ao fazer logout', err);
+            throw err;
         }
     };
 

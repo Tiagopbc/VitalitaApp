@@ -4,9 +4,12 @@ import {
     getDoc,
     setDoc,
     addDoc,
+    deleteDoc,
+    doc,
 
     getCountFromServer,
     getDocs,
+    serverTimestamp,
 
 } from 'firebase/firestore';
 
@@ -32,6 +35,7 @@ vi.mock('firebase/firestore', () => ({
 describe('userService', () => {
     beforeEach(() => {
         vi.clearAllMocks();
+        doc.mockReturnValue({ path: 'mock-doc' });
     });
 
     describe('checkTrainerStatus', () => {
@@ -124,6 +128,80 @@ describe('userService', () => {
         it('should update user doc setting activeWorkoutId to null', async () => {
             await userService.clearActiveWorkout('uid');
             expect(setDoc).toHaveBeenCalled();
+        });
+    });
+
+    describe('getTrainerStudents', () => {
+        it('returns student list and filters missing profiles', async () => {
+            const linkedAt = { toDate: () => new Date('2024-01-01') };
+            getDocs.mockResolvedValue({
+                docs: [
+                    { data: () => ({ studentId: 's1', linkedAt }) },
+                    { data: () => ({ studentId: 's2' }) }
+                ]
+            });
+
+            getDoc
+                .mockResolvedValueOnce({ exists: () => true, data: () => ({ name: 'Alice' }) })
+                .mockResolvedValueOnce({ exists: () => false });
+
+            const result = await userService.getTrainerStudents('trainer-1');
+
+            expect(result).toHaveLength(1);
+            expect(result[0]).toMatchObject({ id: 's1', name: 'Alice' });
+            expect(result[0].linkedAt).toBeInstanceOf(Date);
+        });
+    });
+
+    describe('unlinkTrainer', () => {
+        it('deletes all matching trainer-student links', async () => {
+            getDocs.mockResolvedValue({
+                docs: [
+                    { ref: 'ref-1' },
+                    { ref: 'ref-2' }
+                ]
+            });
+
+            await userService.unlinkTrainer('student-1', 'trainer-1');
+
+            expect(deleteDoc).toHaveBeenCalledTimes(2);
+            expect(deleteDoc).toHaveBeenCalledWith('ref-1');
+            expect(deleteDoc).toHaveBeenCalledWith('ref-2');
+        });
+    });
+
+    describe('updateActiveSession', () => {
+        it('updates active session with merge and userId', async () => {
+            serverTimestamp.mockReturnValue('ts');
+
+            await userService.updateActiveSession('user-1', {
+                exercises: [],
+                elapsedSeconds: 120,
+                templateId: 'tmpl-1'
+            });
+
+            expect(setDoc).toHaveBeenCalledWith(
+                expect.anything(),
+                expect.objectContaining({
+                    exercises: [],
+                    elapsedSeconds: 120,
+                    templateId: 'tmpl-1',
+                    userId: 'user-1',
+                    updatedAt: 'ts'
+                }),
+                { merge: true }
+            );
+        });
+    });
+
+    describe('deleteActiveSession', () => {
+        it('deletes active session and clears active workout', async () => {
+            const clearSpy = vi.spyOn(userService, 'clearActiveWorkout').mockResolvedValue();
+
+            await userService.deleteActiveSession('user-1');
+
+            expect(deleteDoc).toHaveBeenCalled();
+            expect(clearSpy).toHaveBeenCalledWith('user-1');
         });
     });
 });

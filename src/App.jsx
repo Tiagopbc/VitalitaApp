@@ -6,7 +6,7 @@
  */
 import React, { useEffect, useMemo, useState, Suspense } from 'react';
 import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
-import { Toaster } from 'sonner';
+import { Toaster, toast } from 'sonner';
 import { BottomNavEnhanced } from './BottomNavEnhanced';
 import { DesktopSidebar } from './DesktopSidebar';
 import { ProtectedRoute } from './components/ProtectedRoute';
@@ -82,13 +82,17 @@ function AppContent() {
     // --- SINCRONIZAÇÃO EM TEMPO REAL PARA TREINO ATIVO MOVIDA PARA O CONTEXTO ---
 
     // Manipuladores
-    function handleLogout() {
-        localStorage.removeItem('activeWorkoutId');
-        clearWelcomeFlags();
-        setIsTrainer(false);
-        setWelcomeOpen(false);
-        logout();
-        navigate('/login');
+    async function handleLogout() {
+        try {
+            await logout();
+            clearWelcomeFlags();
+            setIsTrainer(false);
+            setWelcomeOpen(false);
+            navigate('/login');
+        } catch (err) {
+            console.error('Logout failed:', err);
+            toast.error('Não foi possível sair. Tente novamente.');
+        }
     }
 
     // Lógica do Modal de Boas-vindas

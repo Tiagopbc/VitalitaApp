@@ -1,6 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { workoutService } from './workoutService';
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, getDocs, onSnapshot } from 'firebase/firestore';
+import { toast } from 'sonner';
+
+vi.mock('sonner', () => ({
+    toast: {
+        error: vi.fn()
+    }
+}));
 
 // Mock Firebase Firestore modules
 vi.mock('firebase/firestore', async (importOriginal) => {
@@ -78,6 +85,15 @@ describe('workoutService', () => {
             expect(cachedResult).toHaveLength(2);
         });
 
+        it('should refetch when userId changes', async () => {
+            getDocs.mockResolvedValue(mockSnapshot);
+
+            await workoutService.getTemplates(mockUserId);
+            await workoutService.getTemplates('other-user');
+
+            expect(getDocs).toHaveBeenCalledTimes(2);
+        });
+
         it('should force refresh when flag is true', async () => {
             getDocs.mockResolvedValue(mockSnapshot);
 
@@ -94,6 +110,42 @@ describe('workoutService', () => {
             getDocs.mockRejectedValue(error);
 
             await expect(workoutService.getTemplates(mockUserId)).rejects.toThrow('Network Error');
+            expect(toast.error).toHaveBeenCalledWith('Erro ao carregar treinos. Verifique sua conexão.');
+        });
+    });
+
+    describe('subscribeToTemplates', () => {
+        it('updates cache and delivers sorted templates', async () => {
+            const onUpdate = vi.fn();
+            let snapshotCallback;
+
+            onSnapshot.mockImplementation((_q, cb) => {
+                snapshotCallback = cb;
+                return vi.fn();
+            });
+
+            workoutService.subscribeToTemplates(mockUserId, onUpdate);
+
+            const snapshotTemplates = [
+                { id: 'b', name: 'B Workout', userId: mockUserId },
+                { id: 'a', name: 'A Workout', userId: mockUserId }
+            ];
+
+            snapshotCallback({
+                docs: snapshotTemplates.map(t => ({
+                    id: t.id,
+                    data: () => t
+                }))
+            });
+
+            expect(onUpdate).toHaveBeenCalledWith([
+                { id: 'a', name: 'A Workout', userId: mockUserId },
+                { id: 'b', name: 'B Workout', userId: mockUserId }
+            ]);
+
+            const cached = await workoutService.getTemplates(mockUserId);
+            expect(getDocs).not.toHaveBeenCalled();
+            expect(cached[0].name).toBe('A Workout');
         });
     });
 
@@ -125,6 +177,38 @@ describe('workoutService', () => {
             expect(result).not.toBeNull();
             expect(result.id).toBe('session1');
             expect(result.date).toBeInstanceOf(Date);
+        });
+
+        it('should return null on error', async () => {
+            getDocs.mockRejectedValue(new Error('fail'));
+
+            const result = await workoutService.getLatestSession(mockUserId);
+            expect(result).toBeNull();
+        });
+    });
+
+    describe('getHistory', () => {
+        it('throws and shows index error when missing Firestore index', async () => {
+            const error = new Error('missing index');
+            error.code = 'failed-precondition';
+            getDocs.mockRejectedValue(error);
+
+            await expect(
+                workoutService.getHistory(mockUserId, 'Template A')
+            ).rejects.toThrow('missing index');
+
+            expect(toast.error).toHaveBeenCalledWith('Erro de índice. Verifique o console.');
+        });
+
+        it('throws and shows generic error for other failures', async () => {
+            const error = new Error('boom');
+            getDocs.mockRejectedValue(error);
+
+            await expect(
+                workoutService.getHistory(mockUserId, 'Template A')
+            ).rejects.toThrow('boom');
+
+            expect(toast.error).toHaveBeenCalledWith('Erro ao carregar histórico.');
         });
     });
 });

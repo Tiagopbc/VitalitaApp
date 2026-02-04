@@ -300,6 +300,19 @@ export function WorkoutExecutionPage({ user }) {
             // Wait for render
             await new Promise(r => setTimeout(r, 500));
 
+            const waitForImages = async (root) => {
+                const images = Array.from(root.querySelectorAll('img'));
+                if (images.length === 0) return;
+                await Promise.all(images.map(img => {
+                    if (img.complete && img.naturalWidth > 0) return Promise.resolve();
+                    return new Promise((resolve) => {
+                        img.onload = () => resolve();
+                        img.onerror = () => resolve();
+                    });
+                }));
+            };
+            await waitForImages(shareCardRef.current);
+
             const dataUrl = await toPng(shareCardRef.current, {
                 cacheBust: true,
                 backgroundColor: '#020617',

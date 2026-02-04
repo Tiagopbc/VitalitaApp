@@ -1,6 +1,6 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, act } from '@testing-library/react';
+import { render, screen, act, waitFor } from '@testing-library/react';
 import { WorkoutProvider, useWorkout } from './WorkoutContext';
 import { MemoryRouter } from 'react-router-dom';
 import React from 'react';
@@ -63,13 +63,19 @@ function TestComponent() {
 }
 
 describe('WorkoutContext', () => {
+    let snapshotCallback;
+
     beforeEach(() => {
         vi.clearAllMocks();
         localStorage.clear();
         sessionStorage.clear();
+        snapshotCallback = undefined;
 
-        // Default: onSnapshot returns an unsubscribe function
-        mockOnSnapshot.mockReturnValue(() => { });
+        // Default: capture callback and return unsubscribe
+        mockOnSnapshot.mockImplementation((_ref, cb) => {
+            snapshotCallback = cb;
+            return () => { };
+        });
     });
 
     it('initializes with null activeWorkoutId', () => {
@@ -128,5 +134,91 @@ describe('WorkoutContext', () => {
         expect(localStorage.getItem('activeWorkoutId')).toBeNull();
     });
 
-    // TODO: Add complex test for Remote Sync using onSnapshot mock implementation
+    it('syncs remote active session and navigates when session exists', async () => {
+        window.history.pushState({}, '', '/');
+        mockGetDoc.mockResolvedValueOnce({ exists: () => true });
+
+        render(
+            <MemoryRouter>
+                <WorkoutProvider>
+                    <TestComponent />
+                </WorkoutProvider>
+            </MemoryRouter>
+        );
+
+        await waitFor(() => {
+            expect(snapshotCallback).toBeTypeOf('function');
+        });
+
+        await act(async () => {
+            await snapshotCallback({
+                exists: () => true,
+                data: () => ({ activeWorkoutId: 'remote-123' })
+            });
+        });
+
+        expect(screen.getByTestId('active-id')).toHaveTextContent('remote-123');
+        expect(localStorage.getItem('activeWorkoutId')).toBe('remote-123');
+        expect(mockNavigate).toHaveBeenCalledWith('/execute/remote-123');
+    });
+
+    it('clears ghost session when remote active workout does not exist', async () => {
+        window.history.pushState({}, '', '/');
+        mockGetDoc.mockResolvedValueOnce({ exists: () => false });
+
+        render(
+            <MemoryRouter>
+                <WorkoutProvider>
+                    <TestComponent />
+                </WorkoutProvider>
+            </MemoryRouter>
+        );
+
+        await waitFor(() => {
+            expect(snapshotCallback).toBeTypeOf('function');
+        });
+
+        await act(async () => {
+            await snapshotCallback({
+                exists: () => true,
+                data: () => ({ activeWorkoutId: 'ghost-1' })
+            });
+        });
+
+        expect(mockClearActiveWorkout).toHaveBeenCalledWith('user123');
+        expect(screen.getByTestId('active-id')).toHaveTextContent('NONE');
+        expect(localStorage.getItem('activeWorkoutId')).toBeNull();
+        expect(mockNavigate).not.toHaveBeenCalled();
+    });
+
+    it('clears manual exit flags even if remote clear fails', async () => {
+        window.history.pushState({}, '', '/');
+        sessionStorage.setItem('manual_exit', '1');
+        mockClearActiveWorkout.mockRejectedValueOnce(new Error('fail'));
+
+        render(
+            <MemoryRouter>
+                <WorkoutProvider>
+                    <TestComponent />
+                </WorkoutProvider>
+            </MemoryRouter>
+        );
+
+        await waitFor(() => {
+            expect(snapshotCallback).toBeTypeOf('function');
+        });
+
+        await act(async () => {
+            await snapshotCallback({
+                exists: () => true,
+                data: () => ({ activeWorkoutId: 'remote-err' })
+            });
+        });
+
+        expect(mockClearActiveWorkout).toHaveBeenCalledWith('user123');
+        expect(sessionStorage.getItem('manual_exit')).toBeNull();
+        expect(localStorage.getItem('activeWorkoutId')).toBeNull();
+        expect(screen.getByTestId('active-id')).toHaveTextContent('NONE');
+        expect(mockNavigate).not.toHaveBeenCalled();
+    });
 });

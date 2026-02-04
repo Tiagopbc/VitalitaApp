@@ -2,7 +2,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import CreateWorkoutPage from './CreateWorkoutPage';
 import React from 'react';
-import { addDoc } from 'firebase/firestore';
+import { addDoc, updateDoc } from 'firebase/firestore';
 import { MemoryRouter } from 'react-router-dom';
 
 // ... imports
@@ -11,7 +11,8 @@ import { MemoryRouter } from 'react-router-dom';
 // Mock dependencies
 vi.mock('../services/workoutService', () => ({
     workoutService: {
-        searchExercises: vi.fn()
+        searchExercises: vi.fn().mockResolvedValue([]),
+        getWorkoutById: vi.fn()
     }
 }));
 
@@ -104,6 +105,32 @@ describe('CreateWorkoutPage Integration', () => {
         expect(screen.getByText(/10 reps/i)).toBeInTheDocument();
     });
 
+    it('disables save until name and exercise are provided', async () => {
+        render(
+            <MemoryRouter>
+                <CreateWorkoutPage user={mockUser} />
+            </MemoryRouter>
+        );
+
+        const saveButton = screen.getByText('Salvar Treino');
+        expect(saveButton).toBeDisabled();
+
+        const nameInput = screen.getByPlaceholderText(/Ex: Treino A/i);
+        fireEvent.change(nameInput, { target: { value: 'Upper Body' } });
+        expect(saveButton).toBeDisabled();
+
+        fireEvent.click(screen.getByText('Adicionar Exercício'));
+        const exerciseInput = screen.getByPlaceholderText('Digite para buscar...');
+        fireEvent.change(exerciseInput, { target: { value: 'Remada' } });
+        fireEvent.click(screen.getByText('Adicionar'));
+
+        await waitFor(() => {
+            expect(screen.queryByText('Novo Exercício')).not.toBeInTheDocument();
+        });
+
+        expect(saveButton).not.toBeDisabled();
+    });
+
     it('submits the workout to Firestore', async () => {
         addDoc.mockResolvedValue({ id: 'new-workout-id' });
 
@@ -135,5 +162,56 @@ describe('CreateWorkoutPage Integration', () => {
             expect(addDoc).toHaveBeenCalledTimes(1);
             expect(mockNavigate).toHaveBeenCalledWith(-1);
         });
+    });
+
+    it('updates an existing workout when initialData has id', async () => {
+        updateDoc.mockResolvedValue();
+
+        render(
+            <MemoryRouter initialEntries={[{
+                pathname: '/create',
+                state: {
+                    initialData: {
+                        id: 'workout-1',
+                        name: 'Edit Workout',
+                        exercises: [{ id: 'ex-1', name: 'Supino', sets: '3', reps: '10', method: 'Convencional', muscleGroup: 'Peito' }]
+                    }
+                }
+            }]}>
+                <CreateWorkoutPage user={mockUser} />
+            </MemoryRouter>
+        );
+
+        const saveButton = screen.getByText('Salvar Treino');
+        expect(saveButton).not.toBeDisabled();
+        fireEvent.click(saveButton);
+
+        await waitFor(() => {
+            expect(updateDoc).toHaveBeenCalledTimes(1);
+            expect(addDoc).not.toHaveBeenCalled();
+            expect(mockNavigate).toHaveBeenCalledWith(-1);
+        });
+    });
+
+    it('loads workout data by editId when refreshing URL', async () => {
+        const { workoutService } = await import('../services/workoutService');
+        workoutService.getWorkoutById.mockResolvedValue({
+            id: 'workout-2',
+            name: 'Loaded Workout',
+            exercises: [{ id: 'ex-2', name: 'Agachamento', sets: '4', reps: '8', method: 'Convencional', muscleGroup: 'Quadríceps' }]
+        });
+
+        render(
+            <MemoryRouter initialEntries={['/create?editId=workout-2']}>
+                <CreateWorkoutPage user={mockUser} />
+            </MemoryRouter>
+        );
+
+        await waitFor(() => {
+            expect(workoutService.getWorkoutById).toHaveBeenCalledWith('workout-2');
+        });
+
+        expect(screen.getByDisplayValue('Loaded Workout')).toBeInTheDocument();
+        expect(screen.getByText(/Agachamento/i)).toBeInTheDocument();
     });
 });

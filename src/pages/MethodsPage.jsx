@@ -8,7 +8,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { ChevronLeft } from 'lucide-react';
 import { trainingMethods } from '../data/trainingMethods';
 import { Button } from '../components/design-system/Button';
-import { TrendingDown, TrendingUp, Grid, Link2, Focus, AlertTriangle, Repeat } from 'lucide-react';
+import { TrendingDown, TrendingUp, Grid, Link2, Focus, AlertTriangle, Repeat, Heart, Clock } from 'lucide-react';
 
 const iconMap = {
     'TrendingDown': TrendingDown,
@@ -17,7 +17,9 @@ const iconMap = {
     'Link2': Link2,
     'Focus': Focus,
     'AlertTriangle': AlertTriangle,
-    'Repeat': Repeat
+    'Repeat': Repeat,
+    'Heart': Heart,
+    'Clock': Clock
 };
 
 export default function MethodsPage() {

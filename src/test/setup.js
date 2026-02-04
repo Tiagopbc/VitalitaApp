@@ -29,3 +29,8 @@ vi.mock('firebase/firestore', () => ({
     deleteDoc: vi.fn(),
     addDoc: vi.fn(),
 }));
+
+// JSDOM doesn't implement alert/confirm/prompt reliably; stub for tests that trigger UI dialogs.
+globalThis.alert = vi.fn();
+globalThis.confirm = vi.fn(() => true);
+globalThis.prompt = vi.fn();
