@@ -26,7 +26,7 @@ vi.mock('firebase/firestore', async (importOriginal) => {
 });
 
 // Mock db instance
-vi.mock('../firebaseConfig', () => ({
+vi.mock('../firebaseDb', () => ({
     db: {}
 }));
 

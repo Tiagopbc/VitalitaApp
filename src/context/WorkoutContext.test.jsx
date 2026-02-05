@@ -18,7 +18,7 @@ vi.mock('firebase/firestore', () => ({
     onSnapshot: (...args) => mockOnSnapshot(...args),
 }));
 
-vi.mock('../firebaseConfig', () => ({
+vi.mock('../firebaseDb', () => ({
     db: {}
 }));
 

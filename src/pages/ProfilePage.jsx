@@ -1,8 +1,6 @@
 // -----------------------------------------------------------------------------
 import React, { useState, useEffect } from 'react';
 import { toast } from 'sonner';
-import { userService } from '../services/userService';
-import { workoutService } from '../services/workoutService';
 
 import {
     User,
@@ -26,7 +24,7 @@ import {
 import { achievementsCatalog } from '../data/achievementsCatalog';
 import { evaluateAchievements, calculateStats, evaluateHistory } from '../utils/evaluateAchievements';
 import { Button } from '../components/design-system/Button';
-import { AchievementUnlockedModal } from '../components/achievements/AchievementUnlockedModal';
+const AchievementUnlockedModal = React.lazy(() => import('../components/achievements/AchievementUnlockedModal').then(module => ({ default: module.AchievementUnlockedModal })));
 
 
 
@@ -46,6 +44,7 @@ export default function ProfilePage({ user, onLogout, onNavigateToHistory, onNav
         if (!inviteCode || !user) return;
         setLinking(true);
         try {
+            const { userService } = await import('../services/userService');
             await userService.linkTrainer(user.uid, inviteCode);
             alert("Personal vinculado com sucesso!");
             setShowLinkTrainer(false);
@@ -105,6 +104,7 @@ export default function ProfilePage({ user, onLogout, onNavigateToHistory, onNav
                 setTimeout(() => reject(new Error("Timeout fetching profile")), 10000)
             );
 
+            const { userService } = await import('../services/userService');
             const docSnapData = await Promise.race([
                 userService.getUserProfile(user.uid),
                 timeoutPromise
@@ -164,6 +164,7 @@ export default function ProfilePage({ user, onLogout, onNavigateToHistory, onNav
             setLoadingAchievements(true);
             try {
                 // 1. Buscar todas as sessões de treino (Usando Serviço)
+                const { workoutService } = await import('../services/workoutService');
                 const sessions = await workoutService.getAllSessions(user.uid);
 
                 // 2. Calcular Estatísticas
@@ -211,6 +212,7 @@ export default function ProfilePage({ user, onLogout, onNavigateToHistory, onNav
 
         setSaving(true);
         try {
+            const { userService } = await import('../services/userService');
             await userService.updateUserProfile(user.uid, {
                 ...profile,
                 updatedAt: new Date().toISOString()
@@ -662,10 +664,16 @@ export default function ProfilePage({ user, onLogout, onNavigateToHistory, onNav
 
             {/* ACHIEVEMENT SHARE MODAL */}
             {selectedAchievement && (
-                <AchievementUnlockedModal
-                    achievements={[selectedAchievement]}
-                    onClose={() => setSelectedAchievement(null)}
-                />
+                <React.Suspense fallback={
+                    <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/80">
+                        <div className="h-12 w-12 rounded-full border-2 border-cyan-500/30 border-t-cyan-400 animate-spin" />
+                    </div>
+                }>
+                    <AchievementUnlockedModal
+                        achievements={[selectedAchievement]}
+                        onClose={() => setSelectedAchievement(null)}
+                    />
+                </React.Suspense>
             )}
 
 

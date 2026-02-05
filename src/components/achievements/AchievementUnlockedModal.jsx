@@ -3,7 +3,7 @@ import { VitalitaGlassCard } from './VitalitaGlassCard';
 import { Share2, X, Trophy, Download } from 'lucide-react';
 import { Button } from '../design-system/Button';
 
-import { toPng } from 'html-to-image';
+// Lazy load for performance
 
 export function AchievementUnlockedModal({ achievements, onClose }) {
     const cardRef = useRef(null);
@@ -23,6 +23,7 @@ export function AchievementUnlockedModal({ achievements, onClose }) {
             await new Promise(r => setTimeout(r, 100));
 
             // Generate PNG directly
+            const { toPng } = await import('html-to-image');
             const dataUrl = await toPng(cardRef.current, {
                 cacheBust: true,
                 backgroundColor: '#020617', // Force dark background

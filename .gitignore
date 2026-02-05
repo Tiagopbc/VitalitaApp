@@ -26,3 +26,11 @@ dist-ssr
 *.sln
 *.sw?
 .vercel
+
+# Local run artifacts
+cypress_debug_output.txt
+cypress_output*.txt
+cypress_final_output*.txt
+cypress_final_result*.txt
+lint_*.txt
+output/pdf/*.pdf

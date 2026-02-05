@@ -4,7 +4,7 @@
  * Fornece descrições, guias de execução e dicas de uso para cada método.
  */
 import React from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { ChevronLeft } from 'lucide-react';
 import { trainingMethods } from '../data/trainingMethods';
 import { Button } from '../components/design-system/Button';
@@ -24,9 +24,6 @@ const iconMap = {
 
 export default function MethodsPage() {
     const navigate = useNavigate();
-    const location = useLocation();
-    // eslint-disable-next-line no-unused-vars
-    const { initialMethod } = location.state || {};
     const onBack = () => navigate(-1);
     return (
         <div className="w-full max-w-3xl mx-auto px-4 pt-8 pb-32">

@@ -14,7 +14,7 @@ import {
 } from 'firebase/firestore';
 
 // Mock Firebase
-vi.mock('../firebaseConfig', () => ({
+vi.mock('../firebaseDb', () => ({
     db: {}
 }));
 

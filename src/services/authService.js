@@ -7,8 +7,7 @@ import {
     onAuthStateChanged,
     sendPasswordResetEmail
 } from 'firebase/auth';
-import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
-import { auth, db, googleProvider } from '../firebaseConfig'; // Adjust path
+import { auth, googleProvider } from '../firebaseAuth';
 
 export const authService = {
     /**
@@ -50,6 +49,10 @@ export const authService = {
         }
 
         try {
+            const [{ db }, { doc, setDoc, serverTimestamp }] = await Promise.all([
+                import('../firebaseDb'),
+                import('firebase/firestore')
+            ]);
             await setDoc(doc(db, 'users', user.uid), {
                 fullName,
                 email, // Garantir que o email seja salvo

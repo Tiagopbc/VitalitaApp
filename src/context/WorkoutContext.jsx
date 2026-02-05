@@ -3,8 +3,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { doc, onSnapshot, getDoc } from 'firebase/firestore';
-import { db } from '../firebaseConfig';
-import { userService } from '../services/userService';
+import { db } from '../firebaseDb';
 import { useAuth } from '../AuthContext';
 
 const WorkoutContext = createContext();
@@ -47,6 +46,7 @@ export function WorkoutProvider({ children }) {
                     if (manualExit) {
                         try {
                             if (remoteActiveId) {
+                                const { userService } = await import('../services/userService');
                                 await userService.clearActiveWorkout(user.uid);
                             }
                         } catch (err) {
@@ -76,6 +76,7 @@ export function WorkoutProvider({ children }) {
                             } else {
                                 // É um fantasma! Limpar.
                                 console.warn("Ghost active session detected. Clearing...");
+                                const { userService } = await import('../services/userService');
                                 await userService.clearActiveWorkout(user.uid);
                                 clearLocalActiveWorkout();
                             }
@@ -107,6 +108,7 @@ export function WorkoutProvider({ children }) {
     async function startWorkout(id) {
         setLocalActiveWorkout(id);
         if (user) {
+            const { userService } = await import('../services/userService');
             await userService.setActiveWorkout(user.uid, id);
         }
         navigate(`/execute/${id}`);
@@ -123,7 +125,9 @@ export function WorkoutProvider({ children }) {
         sessionStorage.setItem('manual_exit', '1');
         clearLocalActiveWorkout();
         if (user) {
-            userService.clearActiveWorkout(user.uid);
+            import('../services/userService')
+                .then(({ userService }) => userService.clearActiveWorkout(user.uid))
+                .catch(console.error);
         }
         navigate('/');
     }

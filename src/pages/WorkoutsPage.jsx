@@ -4,7 +4,7 @@
  * Suporta pesquisa, filtragem (por empurrar/puxar/pernas/etc) e classificação de modelos.
  */
 import React, { useState, useEffect } from 'react';
-import { db } from '../firebaseConfig';
+import { db } from '../firebaseDb';
 import { collection, deleteDoc, doc, addDoc } from 'firebase/firestore';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
@@ -23,9 +23,8 @@ import {
 
 import { RippleButton } from '../components/design-system/RippleButton';
 import { PremiumCard } from '../components/design-system/PremiumCard';
-import { ExerciseCard } from '../components/workout/ExerciseCard';
-import { EditExerciseModal } from '../components/workout/EditExerciseModal';
-import { workoutService } from '../services/workoutService';
+const ExerciseCard = React.lazy(() => import('../components/workout/ExerciseCard').then(module => ({ default: module.ExerciseCard })));
+const EditExerciseModal = React.lazy(() => import('../components/workout/EditExerciseModal').then(module => ({ default: module.EditExerciseModal })));
 
 
 
@@ -46,6 +45,7 @@ export default function WorkoutsPage({ onNavigateToCreate, onNavigateToWorkout, 
         async function fetchWorkouts() {
             try {
                 // CACHED FETCH
+                const { workoutService } = await import('../services/workoutService');
                 const loadedWorkouts = await workoutService.getTemplates(user.uid);
 
                 const formattedWorkouts = loadedWorkouts.map(data => ({
@@ -76,8 +76,11 @@ export default function WorkoutsPage({ onNavigateToCreate, onNavigateToWorkout, 
 
     // --- CLICK OUTSIDE HANDLERS ---
     useEffect(() => {
-        function handleClickOutside() {
-            // Logic handled by click handler on activeCardMenu
+        function handleClickOutside(event) {
+            if (!activeCardMenu) return;
+            const target = event.target;
+            if (target && target.closest && target.closest('.card-menu-btn')) return;
+            setActiveCardMenu(null);
         }
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
@@ -132,8 +135,31 @@ export default function WorkoutsPage({ onNavigateToCreate, onNavigateToWorkout, 
                 createdAt: new Date().toISOString()
             };
 
-            await addDoc(collection(db, 'workout_templates'), newWorkoutData);
-            window.location.reload();
+            try {
+                const docRef = await addDoc(collection(db, 'workout_templates'), newWorkoutData);
+                setWorkouts(prev => ([
+                    {
+                        id: docRef.id,
+                        name: newWorkoutData.name,
+                        exercisesCount: newWorkoutData.exercises?.length || 0,
+                        exercises: newWorkoutData.exercises || [],
+                        duration: newWorkoutData.estimatedDuration || '45-60min',
+                        muscleGroups: workout.muscleGroups || [],
+                        lastPerformed: 'Nunca',
+                        lastPerformedDate: null,
+                        frequency: '1x/sem',
+                        timesPerformed: 0,
+                        isFavorite: false,
+                        category: newWorkoutData.category || 'fullbody',
+                        createdBy: user.uid,
+                        assignedByTrainer: false,
+                        completedToday: false
+                    },
+                    ...prev
+                ]));
+            } catch (err) {
+                alert(err.message);
+            }
         } else if (action === 'edit') {
             onNavigateToCreate(workout);
         }
@@ -312,17 +338,25 @@ export default function WorkoutsPage({ onNavigateToCreate, onNavigateToWorkout, 
                                         <div className="pt-4 mt-4 border-t border-slate-800 space-y-2">
                                             {/* Real Exercises List */}
                                             {workout.exercises && workout.exercises.length > 0 ? (
-                                                workout.exercises.map((exercise, i) => (
-                                                    <ExerciseCard
-                                                        key={i}
-                                                        name={exercise.name}
-                                                        muscleGroup={exercise.group || 'Geral'}
-                                                        sets={exercise.target ? exercise.target.split('x')[0] : '?'}
-                                                        lastReps={exercise.target || '-'}
-                                                        lastWeight={null} // We don't have weight in template, only in history
-                                                        onPress={() => setEditingExercise({ workoutId: workout.id, index: i, data: exercise })}
-                                                    />
-                                                ))
+                                                <React.Suspense fallback={
+                                                    <div className="space-y-3">
+                                                        {workout.exercises.map((_, i) => (
+                                                            <div key={i} className="h-16 rounded-2xl bg-slate-900/40 border border-slate-800/60 animate-pulse" />
+                                                        ))}
+                                                    </div>
+                                                }>
+                                                    {workout.exercises.map((exercise, i) => (
+                                                        <ExerciseCard
+                                                            key={i}
+                                                            name={exercise.name}
+                                                            muscleGroup={exercise.group || 'Geral'}
+                                                            sets={exercise.target ? exercise.target.split('x')[0] : '?'}
+                                                            lastReps={exercise.target || '-'}
+                                                            lastWeight={null} // We don't have weight in template, only in history
+                                                            onPress={() => setEditingExercise({ workoutId: workout.id, index: i, data: exercise })}
+                                                        />
+                                                    ))}
+                                                </React.Suspense>
                                             ) : (
                                                 <p className="text-sm text-slate-500 text-center py-4">Nenhum exercício cadastrado.</p>
                                             )}
@@ -349,14 +383,20 @@ export default function WorkoutsPage({ onNavigateToCreate, onNavigateToWorkout, 
             {/* --- Edit Modal --- */}
             <AnimatePresence>
                 {editingExercise && (
-                    <EditExerciseModal
-                        exercise={editingExercise}
-                        onClose={() => setEditingExercise(null)}
-                        onSave={() => {
+                    <React.Suspense fallback={
+                        <div className="fixed inset-0 z-50 flex items-center justify-center">
+                            <div className="h-12 w-12 rounded-full border-2 border-cyan-500/30 border-t-cyan-400 animate-spin" />
+                        </div>
+                    }>
+                        <EditExerciseModal
+                            exercise={editingExercise}
+                            onClose={() => setEditingExercise(null)}
+                            onSave={() => {
 
-                            // Update logic here
-                        }}
-                    />
+                                // Update logic here
+                            }}
+                        />
+                    </React.Suspense>
                 )}
             </AnimatePresence>
 

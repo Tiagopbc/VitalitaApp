@@ -7,10 +7,13 @@ import {
 } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
 
-vi.mock('../firebaseConfig', () => ({
+vi.mock('../firebaseAuth', () => ({
     auth: { currentUser: null },
-    db: {},
     googleProvider: {}
+}));
+
+vi.mock('../firebaseDb', () => ({
+    db: {}
 }));
 
 vi.mock('firebase/auth', () => ({

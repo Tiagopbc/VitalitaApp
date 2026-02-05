@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { db } from '../firebaseConfig';
+import { db } from '../firebaseDb';
 import { doc, getDoc, getDocs, setDoc, query, collection, where, limit, serverTimestamp, addDoc, getDocFromServer } from 'firebase/firestore';
-import { userService } from '../services/userService';
 
 // Auxiliar para gerar IDs
 function generateId() {
@@ -240,13 +239,16 @@ export function useWorkoutSession(workoutId, user) {
         // Sincronização na Nuvem
         const currentString = JSON.stringify(currentExercises);
         if (profileId && currentString !== lastSyncedRef.current) {
-            userService.updateActiveSession(profileId, {
-                templateId: workoutId,
-                elapsedSeconds: currentElapsed,
-                exercises: currentExercises
-            }).then(() => {
-                lastSyncedRef.current = currentString;
-            }).catch(console.error);
+            import('../services/userService')
+                .then(({ userService }) => userService.updateActiveSession(profileId, {
+                    templateId: workoutId,
+                    elapsedSeconds: currentElapsed,
+                    exercises: currentExercises
+                }))
+                .then(() => {
+                    lastSyncedRef.current = currentString;
+                })
+                .catch(console.error);
         }
     }, [backupKey, profileId, workoutId]);
 
@@ -386,6 +388,7 @@ export function useWorkoutSession(workoutId, user) {
             // Limpeza
             localStorage.removeItem(backupKey);
             if (profileId) {
+                const { userService } = await import('../services/userService');
                 await userService.deleteActiveSession(profileId);
             }
 
@@ -409,6 +412,7 @@ export function useWorkoutSession(workoutId, user) {
             // Limpeza
             localStorage.removeItem(backupKey);
             if (profileId) {
+                const { userService } = await import('../services/userService');
                 await userService.deleteActiveSession(profileId);
             }
 

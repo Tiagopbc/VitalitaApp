@@ -24,7 +24,7 @@ import {
 } from 'lucide-react';
 import { doc, getDoc } from 'firebase/firestore';
 import { StreakWeeklyGoalHybrid } from '../StreakWeeklyGoalHybrid';
-import { db } from '../firebaseConfig';
+import { db } from '../firebaseDb';
 import { calculateWeeklyStats } from '../utils/workoutStats';
 import { workoutService } from '../services/workoutService';
 import { achievementsCatalog } from '../data/achievementsCatalog';

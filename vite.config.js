@@ -8,6 +8,9 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
+      workbox: {
+        mode: 'development'
+      },
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
       manifest: {
         name: 'Vitalita Training App',
@@ -42,7 +45,7 @@ export default defineConfig({
           'vendor-react': ['react', 'react-dom', 'react-router-dom'],
           'vendor-firebase': ['firebase/app', 'firebase/auth', 'firebase/firestore'],
           'vendor-charts': ['recharts'],
-          'vendor-ui': ['motion', 'framer-motion', 'lucide-react', 'sonner', 'canvas-confetti'],
+          'vendor-ui': ['framer-motion', 'lucide-react', 'sonner', 'canvas-confetti'],
         },
       },
     },

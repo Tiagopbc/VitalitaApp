@@ -5,7 +5,7 @@
  */
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
-import { db } from '../firebaseConfig';
+import { db } from '../firebaseDb';
 import { collection, addDoc, updateDoc, doc, serverTimestamp } from 'firebase/firestore';
 import { Trash2, Plus, ChevronLeft, GripVertical, X } from 'lucide-react';
 import { Button } from '../components/design-system/Button';
@@ -191,10 +191,6 @@ export default function CreateWorkoutPage({ user }) {
 
         setLoading(true);
         try {
-            const timeout = new Promise((_, reject) =>
-                setTimeout(() => reject(new Error("Timeline excedido (10s). Erro de Conexão com Firebase.")), 10000)
-            );
-
             // Determinar Usuário Alvo
             const targetUserId = creationContext?.targetUserId || user.uid;
             // Determinar Criado Por (Sempre o usuário logado)
@@ -209,22 +205,16 @@ export default function CreateWorkoutPage({ user }) {
             if (initialData?.id) {
                 // ATUALIZAR
                 const docRef = doc(db, 'workout_templates', initialData.id);
-                await Promise.race([
-                    updateDoc(docRef, workoutData),
-                    timeout
-                ]);
+                await updateDoc(docRef, workoutData);
             } else {
                 // CRIAR
-                await Promise.race([
-                    addDoc(collection(db, 'workout_templates'), {
-                        ...workoutData,
-                        createdBy: createdBy,
-                        userId: targetUserId, // Associa o treino ao aluno (ou ao próprio usuário)
-                        assignedByTrainer: creationContext?.targetUserId ? true : false, // Flag opcional
-                        createdAt: serverTimestamp(),
-                    }),
-                    timeout
-                ]);
+                await addDoc(collection(db, 'workout_templates'), {
+                    ...workoutData,
+                    createdBy: createdBy,
+                    userId: targetUserId, // Associa o treino ao aluno (ou ao próprio usuário)
+                    assignedByTrainer: creationContext?.targetUserId ? true : false, // Flag opcional
+                    createdAt: serverTimestamp(),
+                });
             }
             onBack();
         } catch (err) {

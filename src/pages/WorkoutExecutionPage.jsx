@@ -22,9 +22,8 @@ import {
     Trash2,
     ArrowLeft
 } from 'lucide-react';
-import confetti from 'canvas-confetti';
-import { toPng } from 'html-to-image'; // For sharing
-import { ShareableWorkoutCard } from '../components/sharing/ShareableWorkoutCard';
+// Lazy load for performance
+const ShareableWorkoutCard = React.lazy(() => import('../components/sharing/ShareableWorkoutCard').then(module => ({ default: module.ShareableWorkoutCard })));
 import { RestTimer } from '../components/execution/RestTimer';
 // import { MuscleFocusDisplay } from '../components/execution/MuscleFocusDisplay'; // Unused
 // import { OneRMDisplay } from '../components/execution/OneRMDisplay'; // Unused
@@ -39,9 +38,7 @@ import { Skeleton } from '../components/design-system/Skeleton';
 import { useWorkoutTimer } from '../hooks/useWorkoutTimer';
 import { useWorkoutSession } from '../hooks/useWorkoutSession';
 import { checkNewAchievements } from '../utils/evaluateAchievements';
-import { AchievementUnlockedModal } from '../components/achievements/AchievementUnlockedModal';
-import { workoutService } from '../services/workoutService';
-import { userService } from '../services/userService';
+const AchievementUnlockedModal = React.lazy(() => import('../components/achievements/AchievementUnlockedModal').then(module => ({ default: module.AchievementUnlockedModal })));
 
 const TopBarButton = ({ icon, label, variant = 'default', onClick, active, isBack = false }) => {
     // Estilos base: "Voltar" recebe tamanho padrão, outros recebem tamanho EXTRA compacto
@@ -144,11 +141,14 @@ export function WorkoutExecutionPage({ user }) {
     // --- CARREGAR PREFERÊNCIAS DO USUÁRIO ---
     useEffect(() => {
         if (user?.uid) {
-            userService.getUserProfile(user.uid).then(profile => {
-                if (profile?.defaultRestTime) {
-                    setRestDuration(profile.defaultRestTime);
-                }
-            }).catch(console.error);
+            import('../services/userService')
+                .then(({ userService }) => userService.getUserProfile(user.uid))
+                .then(profile => {
+                    if (profile?.defaultRestTime) {
+                        setRestDuration(profile.defaultRestTime);
+                    }
+                })
+                .catch(console.error);
         }
     }, [user?.uid]);
 
@@ -157,7 +157,8 @@ export function WorkoutExecutionPage({ user }) {
         setRestDuration(newDuration);
         if (user?.uid) {
             // Atualização "fire and forget"
-            userService.updateUserProfile(user.uid, { defaultRestTime: newDuration })
+            import('../services/userService')
+                .then(({ userService }) => userService.updateUserProfile(user.uid, { defaultRestTime: newDuration }))
                 .catch(err => console.error("Failed to save rest preference:", err));
         }
     };
@@ -186,16 +187,14 @@ export function WorkoutExecutionPage({ user }) {
         if (initialElapsed > 0 && elapsedSeconds === 0) {
             setElapsedSeconds(initialElapsed);
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [initialElapsed]);
+    }, [initialElapsed, elapsedSeconds, setElapsedSeconds]);
 
     // Efeito de Sincronização Contínua
     useEffect(() => {
         if (!loading && exercises.length > 0 && !isFinished) {
             syncSession(exercises, elapsedSeconds);
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [exercises, elapsedSeconds, loading, isFinished]);
+    }, [exercises, elapsedSeconds, loading, isFinished, syncSession]);
 
 
     // --- FOCUS NAVIGATION STATE ---
@@ -245,6 +244,7 @@ export function WorkoutExecutionPage({ user }) {
         const success = await finishSession(elapsedSeconds);
         console.log("DEBUG: finishSession result:", success);
         if (success) {
+            const { default: confetti } = await import('canvas-confetti');
             confetti({
                 particleCount: 150,
                 spread: 100,
@@ -262,6 +262,7 @@ export function WorkoutExecutionPage({ user }) {
                     userId: user.uid
                 };
 
+                const { workoutService } = await import('../services/workoutService');
                 checkNewAchievements(user.uid, sessionPayload, workoutService).then(unlocked => {
                     console.log("DEBUG: checkNewAchievements result:", unlocked);
                     if (unlocked && unlocked.length > 0) {
@@ -313,6 +314,7 @@ export function WorkoutExecutionPage({ user }) {
             };
             await waitForImages(shareCardRef.current);
 
+            const { toPng } = await import('html-to-image');
             const dataUrl = await toPng(shareCardRef.current, {
                 cacheBust: true,
                 backgroundColor: '#020617',
@@ -387,13 +389,19 @@ export function WorkoutExecutionPage({ user }) {
         <div className="min-h-screen bg-[#020617] text-slate-100 p-4 pb-32 font-sans selection:bg-cyan-500/30">
             {/* ACHIEVEMENT MODAL */}
             {showAchievementModal && newAchievements.length > 0 && (
-                <AchievementUnlockedModal
-                    achievements={newAchievements}
-                    onClose={() => {
-                        setShowAchievementModal(false);
-                        setShowFinishModal(true);
-                    }}
-                />
+                <React.Suspense fallback={
+                    <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/80">
+                        <div className="h-12 w-12 rounded-full border-2 border-cyan-500/30 border-t-cyan-400 animate-spin" />
+                    </div>
+                }>
+                    <AchievementUnlockedModal
+                        achievements={newAchievements}
+                        onClose={() => {
+                            setShowAchievementModal(false);
+                            setShowFinishModal(true);
+                        }}
+                    />
+                </React.Suspense>
             )}
 
             {showFinishModal && !showAchievementModal && (
@@ -411,12 +419,16 @@ export function WorkoutExecutionPage({ user }) {
                             </div>
 
                             <div className="transform scale-[0.85] origin-center -my-10">
-                                <ShareableWorkoutCard
-                                    ref={shareCardRef}
-                                    session={sessionData}
-                                    userName={user?.displayName || 'Atleta'}
-                                    isVisible={true}
-                                />
+                                <React.Suspense fallback={
+                                    <div className="h-72 w-full rounded-2xl bg-slate-900/40 border border-slate-800/60 animate-pulse" />
+                                }>
+                                    <ShareableWorkoutCard
+                                        ref={shareCardRef}
+                                        session={sessionData}
+                                        userName={user?.displayName || 'Atleta'}
+                                        isVisible={true}
+                                    />
+                                </React.Suspense>
                             </div>
 
                             <div className="w-full space-y-3 px-4">

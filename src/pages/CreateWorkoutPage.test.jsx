@@ -16,7 +16,7 @@ vi.mock('../services/workoutService', () => ({
     }
 }));
 
-vi.mock('../firebaseConfig', () => ({
+vi.mock('../firebaseDb', () => ({
     db: {}
 }));
 

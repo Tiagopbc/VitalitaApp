@@ -10,7 +10,7 @@ import {
     doc,
     getDoc
 } from 'firebase/firestore';
-import { db } from '../firebaseConfig'; // Adjust path if needed
+import { db } from '../firebaseDb';
 
 const TEMPLATES_COLLECTION = 'workout_templates';
 const SESSIONS_COLLECTION = 'workout_sessions';
@@ -322,6 +322,7 @@ export const workoutService = {
 
         } catch (error) {
             console.error("Error searching exercises:", error);
+            toast.error("Erro ao buscar exercícios. Verifique sua conexão.");
             return [];
         }
     }

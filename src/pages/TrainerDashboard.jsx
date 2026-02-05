@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Users, UserPlus, Copy, Check, ChevronLeft, PlusCircle, Trash2, X } from 'lucide-react';
-import { db } from '../firebaseConfig';
+import { db } from '../firebaseDb';
 import { collection, query, where, getDocs, getDoc, doc } from 'firebase/firestore';
 import { Button } from '../components/design-system/Button';
 import { PremiumCard } from '../components/design-system/PremiumCard';
 
 import HistoryPage from './HistoryPage';
 import WorkoutsPage from './WorkoutsPage';
-import { userService } from '../services/userService';
 
 export function TrainerDashboard({ user, onBack, onNavigateToCreateWorkout }) {
     const [students, setStudents] = useState([]);
@@ -74,6 +73,7 @@ export function TrainerDashboard({ user, onBack, onNavigateToCreateWorkout }) {
     const handleUnlink = async (student) => {
         if (!window.confirm(`Tem certeza que deseja desvincular ${student.displayName}?`)) return;
         try {
+            const { userService } = await import('../services/userService');
             await userService.unlinkTrainer(student.id, user.uid);
             await fetchStudents();
             setSelectedStudent(null);
