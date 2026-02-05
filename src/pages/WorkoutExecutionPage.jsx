@@ -384,6 +384,7 @@ export function WorkoutExecutionPage({ user }) {
             }, 0);
         }, 0)
     };
+    const volumeDisplay = Number(sessionData.volumeLoad || 0).toLocaleString('pt-BR');
 
     return (
         <div className="min-h-screen bg-[#020617] text-slate-100 p-4 pb-32 font-sans selection:bg-cyan-500/30">
@@ -405,37 +406,89 @@ export function WorkoutExecutionPage({ user }) {
             )}
 
             {showFinishModal && !showAchievementModal && (
-                <div className="fixed inset-0 z-[200] bg-black/95 backdrop-blur-xl animate-in fade-in overflow-y-auto">
+                <div className="fixed inset-0 z-[200] bg-slate-950/95 backdrop-blur-2xl animate-in fade-in overflow-y-auto">
+                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(34,211,238,0.14),_transparent_55%),radial-gradient(circle_at_bottom,_rgba(16,185,129,0.12),_transparent_55%)]" />
                     <div className="min-h-full flex flex-col items-center justify-center p-4">
-                        <div className="w-full max-w-md flex flex-col items-center space-y-6 my-auto">
-                            <div className="text-center space-y-2">
-                                <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full flex items-center justify-center mx-auto shadow-lg shadow-green-500/20 mb-2">
-                                    <Check size={32} className="text-white" strokeWidth={3} />
+                        <div className="relative w-full max-w-md flex flex-col items-center space-y-5 my-auto">
+                            <div className="absolute -top-14 left-1/2 -translate-x-1/2 w-52 h-52 bg-cyan-500/20 blur-3xl" />
+
+                            <div className="relative text-center space-y-3">
+                                <div className="relative w-20 h-20 mx-auto">
+                                    <div className="absolute inset-0 rounded-full bg-emerald-400/25 blur-2xl" />
+                                    <div className="relative w-full h-full bg-gradient-to-br from-emerald-400 to-green-500 rounded-full flex items-center justify-center shadow-xl shadow-emerald-500/30 border border-emerald-300/40">
+                                        <Check size={34} className="text-white" strokeWidth={3} />
+                                    </div>
                                 </div>
-                                <h3 className="text-2xl font-black italic text-white uppercase tracking-tighter">Treino Concluído!</h3>
+
+                                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-[10px] font-bold uppercase tracking-[0.2em] text-cyan-300">
+                                    <Dumbbell size={12} className="text-cyan-300" />
+                                    {sessionData.templateName}
+                                </div>
+
+                                <h3 className="text-2xl font-black uppercase tracking-tight text-white font-heading">Treino Concluído</h3>
                                 <p className="text-slate-400 text-sm">
                                     Parabéns! Confira o resumo da sua performance.
                                 </p>
                             </div>
 
-                            <div className="transform scale-[0.85] origin-center -my-10">
-                                <React.Suspense fallback={
-                                    <div className="h-72 w-full rounded-2xl bg-slate-900/40 border border-slate-800/60 animate-pulse" />
-                                }>
-                                    <ShareableWorkoutCard
-                                        ref={shareCardRef}
-                                        session={sessionData}
-                                        userName={user?.displayName || 'Atleta'}
-                                        isVisible={true}
-                                    />
-                                </React.Suspense>
+                            <div className="grid grid-cols-3 gap-3 w-full">
+                                <div className="rounded-2xl border border-slate-800/70 bg-slate-900/50 px-3 py-3 text-center shadow-lg shadow-black/20">
+                                    <div className="flex items-center justify-center gap-1 text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                                        <Timer size={12} className="text-cyan-400" />
+                                        Duração
+                                    </div>
+                                    <div className="mt-1 text-lg font-extrabold text-white">{sessionData.duration}</div>
+                                </div>
+
+                                <div className="rounded-2xl border border-slate-800/70 bg-slate-900/50 px-3 py-3 text-center shadow-lg shadow-black/20">
+                                    <div className="flex items-center justify-center gap-1 text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                                        <Dumbbell size={12} className="text-cyan-400" />
+                                        Exercícios
+                                    </div>
+                                    <div className="mt-1 text-lg font-extrabold text-white">{sessionData.exercisesCount}</div>
+                                </div>
+
+                                <div className="rounded-2xl border border-slate-800/70 bg-slate-900/50 px-3 py-3 text-center shadow-lg shadow-black/20">
+                                    <div className="flex items-center justify-center gap-1 text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                                        <Activity size={12} className="text-cyan-400" />
+                                        Volume
+                                    </div>
+                                    <div className="mt-1 text-lg font-extrabold text-white">{volumeDisplay} kg</div>
+                                </div>
                             </div>
 
-                            <div className="w-full space-y-3 px-4">
+                            <div className="w-full">
+                                <div className="relative rounded-3xl border border-slate-800/70 bg-slate-900/40 p-4 backdrop-blur-xl shadow-2xl shadow-black/30">
+                                    <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                                        <div className="flex items-center gap-2">
+                                            <Share2 size={12} className="text-cyan-400" />
+                                            Prévia do compartilhamento
+                                        </div>
+                                        <span className="text-slate-600">9:16</span>
+                                    </div>
+
+                                    <div className="mt-3 flex justify-center">
+                                        <div className="origin-top scale-[0.78]">
+                                            <React.Suspense fallback={
+                                                <div className="h-72 w-full rounded-2xl bg-slate-900/40 border border-slate-800/60 animate-pulse" />
+                                            }>
+                                                <ShareableWorkoutCard
+                                                    ref={shareCardRef}
+                                                    session={sessionData}
+                                                    userName={user?.displayName || 'Atleta'}
+                                                    isVisible={true}
+                                                />
+                                            </React.Suspense>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="w-full space-y-3">
                                 <Button
                                     onClick={handleShare}
                                     disabled={sharing}
-                                    className="w-full h-12 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-bold rounded-xl shadow-lg shadow-purple-500/25 flex items-center justify-center gap-2"
+                                    className="w-full h-12 bg-gradient-to-r from-cyan-500 via-blue-500 to-blue-600 hover:from-cyan-400 hover:via-blue-400 hover:to-blue-500 text-white font-bold rounded-2xl shadow-lg shadow-cyan-500/25 flex items-center justify-center gap-2"
                                 >
                                     {sharing ? 'Gerando...' : (
                                         <>
