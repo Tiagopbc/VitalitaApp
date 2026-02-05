@@ -91,6 +91,10 @@ export function BottomNavEnhanced({ activeTab, onTabChange }) {
                                 }}
                                 aria-label={tab.label}
                             >
+                                <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+                                    <span className="pulse-ring" />
+                                    <span className="pulse-ring pulse-ring--delay" />
+                                </div>
                                 <motion.div
                                     className="flex items-center justify-center relative z-20"
                                     animate={{

@@ -226,7 +226,7 @@ export default function CreateWorkoutPage({ user }) {
     }
 
     return (
-        <div className="w-full max-w-3xl mx-auto px-4 py-6 pb-32">
+        <div className="w-full max-w-3xl mx-auto px-4 pt-[calc(1.5rem+env(safe-area-inset-top))] pb-32">
             {/* Cabeçalho */}
             <div className="mb-6">
                 <Button

@@ -7,10 +7,19 @@
 export function calculateWeeklyStats(sessions, currentWeeklyGoal = 4) {
     const now = new Date();
     const startOfCurrentWeek = getStartOfWeek(now);
+    const getSessionDate = (session) => {
+        const raw = session?.date || session?.completedAt || session?.timestamp;
+        if (!raw) return null;
+        if (typeof raw.toDate === 'function') return raw.toDate();
+        if (raw instanceof Date) return raw;
+        if (typeof raw === 'string' || typeof raw === 'number') return new Date(raw);
+        if (raw.seconds) return new Date(raw.seconds * 1000);
+        return null;
+    };
 
     const thisWeekSessions = sessions.filter(s => {
-        const d = new Date(s.date || s.completedAt || s.timestamp); // Lidar com vários formatos de data
-        return d >= startOfCurrentWeek;
+        const d = getSessionDate(s);
+        return d && d >= startOfCurrentWeek;
     });
 
     const daysMap = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
@@ -22,8 +31,8 @@ export function calculateWeeklyStats(sessions, currentWeeklyGoal = 4) {
         dayDate.setDate(startOfCurrentWeek.getDate() + idx);
 
         const daySessions = thisWeekSessions.filter(s => {
-            const sessionDate = new Date(s.date || s.completedAt || s.timestamp);
-            return isSameDay(sessionDate, dayDate);
+            const sessionDate = getSessionDate(s);
+            return sessionDate && isSameDay(sessionDate, dayDate);
         });
         const trained = daySessions.length > 0;
         const lastSession = trained ? daySessions[0] : null;
@@ -61,8 +70,8 @@ export function calculateWeeklyStats(sessions, currentWeeklyGoal = 4) {
         d.setDate(d.getDate() - i);
 
         const daySessions = sessions.filter(s => {
-            const sd = new Date(s.date || s.completedAt || s.timestamp);
-            return isSameDay(sd, d);
+            const sd = getSessionDate(s);
+            return sd && isSameDay(sd, d);
         });
         const trained = daySessions.length > 0;
 
@@ -90,8 +99,8 @@ export function calculateWeeklyStats(sessions, currentWeeklyGoal = 4) {
 
         // Sincronizar com sessões
         const daySessions = sessions.filter(s => {
-            const sd = new Date(s.date || s.completedAt || s.timestamp);
-            return isSameDay(sd, currentDayDate);
+            const sd = getSessionDate(s);
+            return sd && isSameDay(sd, currentDayDate);
         });
         const trained = daySessions.length > 0;
         const lastSession = trained ? daySessions[0] : null;
@@ -140,32 +149,47 @@ export function calculateWeeklyStats(sessions, currentWeeklyGoal = 4) {
         }
     }
 
-    // --- Cálculo de Streak ---
-    const weeksWithTraining = new Set();
+    // --- Cálculo de Streak por meta semanal ---
+    const weekCounts = new Map();
+    const weekStarts = new Map();
     sessions.forEach(s => {
-        const d = new Date(s.date || s.completedAt || s.timestamp);
-        const weekStr = getWeekString(d);
-        weeksWithTraining.add(weekStr);
+        const d = getSessionDate(s);
+        if (!d || isNaN(d.getTime())) return;
+        const weekStart = getStartOfWeek(d);
+        const weekStr = getWeekString(weekStart);
+        weekStarts.set(weekStr, weekStart);
+        weekCounts.set(weekStr, (weekCounts.get(weekStr) || 0) + 1);
     });
 
+    const weeksMeetingGoal = new Set(
+        Array.from(weekCounts.entries())
+            .filter(([, count]) => count >= currentWeeklyGoal)
+            .map(([weekStr]) => weekStr)
+    );
+
     let currentStreak = 0;
-    let checkDate = new Date();
-    // Verificar se semana atual tem treino
-    if (weeksWithTraining.has(getWeekString(checkDate))) {
+    let checkDate = getStartOfWeek(new Date());
+    while (weeksMeetingGoal.has(getWeekString(checkDate))) {
         currentStreak++;
-    }
-
-    // Verificar semanas anteriores
-    for (let i = 0; i < 52; i++) {
         checkDate.setDate(checkDate.getDate() - 7);
-        if (weeksWithTraining.has(getWeekString(checkDate))) {
-            currentStreak++;
-        } else {
-            break;
-        }
     }
 
-    const bestStreak = Math.max(currentStreak, 3); // Lógica de melhor streak simulada usada no HomeDashboard
+    const sortedWeekStarts = Array.from(weeksMeetingGoal)
+        .map(weekStr => weekStarts.get(weekStr))
+        .filter(Boolean)
+        .sort((a, b) => a - b);
+
+    let bestStreak = 0;
+    let run = 0;
+    for (let i = 0; i < sortedWeekStarts.length; i++) {
+        if (i === 0) {
+            run = 1;
+        } else {
+            const diffDays = (sortedWeekStarts[i] - sortedWeekStarts[i - 1]) / (1000 * 60 * 60 * 24);
+            run = diffDays === 7 ? run + 1 : 1;
+        }
+        if (run > bestStreak) bestStreak = run;
+    }
 
     return {
         currentStreak,

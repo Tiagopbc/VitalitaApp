@@ -127,7 +127,7 @@ export function StreakWeeklyGoalHybrid({
                             {currentStreak}
                         </h1>
                         <p className="text-[10px] sm:text-xs font-bold text-slate-500 uppercase tracking-[0.25em] mt-3">
-                            Semanas Consecutivas
+                            Semanas na Meta
                         </p>
 
                         {/* Recorde - ABSOLUTO DIREITA - Visível no Mobile agora */}

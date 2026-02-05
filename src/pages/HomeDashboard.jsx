@@ -178,7 +178,7 @@ export function HomeDashboard({
             <div className="w-full px-4 lg:px-8 flex flex-col">
 
                 {/* 1. SAUDAÇÃO */}
-                <div className="pt-4 pb-6">
+                <div className="pt-6 pb-6">
                     <h1 className="text-2xl lg:text-3xl mb-1 text-white font-heading font-bold">
                         {greeting}, <span className="bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">{firstName}</span>
                     </h1>

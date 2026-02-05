@@ -316,10 +316,10 @@ function HistoryPage({ user, isEmbedded = false }) {
     return (
         <div className="min-h-screen bg-[#020617] pb-32">
             {/* --- CABEÇALHO --- */}
-            <div className="sticky top-0 z-40 bg-[#020617]/95 backdrop-blur-md pt-safe-top pb-4">
+            <div className="sticky top-0 z-40 bg-[#020617]/95 backdrop-blur-md pt-[calc(1.5rem+env(safe-area-inset-top))] pb-4">
                 <div className="w-full max-w-5xl mx-auto px-4 space-y-4">
                     {!isEmbedded && (
-                        <div className="relative flex items-center justify-center mb-6 pt-4">
+                        <div className="relative flex items-center justify-center mb-6 pt-0">
                             <Button
                                 variant="outline-primary"
                                 size="sm"

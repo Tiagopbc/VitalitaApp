@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { achievementsCatalog } from '../data/achievementsCatalog';
 import { evaluateAchievements, calculateStats, evaluateHistory } from '../utils/evaluateAchievements';
+import { calculateWeeklyStats } from '../utils/workoutStats';
 import { Button } from '../components/design-system/Button';
 const AchievementUnlockedModal = React.lazy(() => import('../components/achievements/AchievementUnlockedModal').then(module => ({ default: module.AchievementUnlockedModal })));
 
@@ -169,7 +170,14 @@ export default function ProfilePage({ user, onLogout, onNavigateToHistory, onNav
 
                 // 2. Calcular Estatísticas
                 const computedStats = calculateStats(sessions);
-                setStats(computedStats);
+                const weeklyGoal = profile?.weeklyGoal || 4;
+                const weeklyStats = calculateWeeklyStats(sessions, weeklyGoal);
+                setStats({
+                    ...computedStats,
+                    weeklyStreak: weeklyStats.currentStreak,
+                    weeklyBestStreak: weeklyStats.bestStreak,
+                    weeklyGoal: weeklyStats.weeklyGoal
+                });
 
                 // 3. Calcular Histórico de Conquistas (Datas Reais)
                 const historyMap = evaluateHistory(sessions, achievementsCatalog);
@@ -183,7 +191,7 @@ export default function ProfilePage({ user, onLogout, onNavigateToHistory, onNav
         }
 
         void loadAchievementsData();
-    }, [user]); // Rodar novamente se o usuário mudar. 
+    }, [user, profile?.weeklyGoal]); // Recalcular se meta semanal mudar.
 
     // Reavaliar quando estatísticas ou perfil mudarem
     useEffect(() => {
@@ -257,7 +265,7 @@ export default function ProfilePage({ user, onLogout, onNavigateToHistory, onNav
     }
 
     return (
-        <div className="min-h-screen bg-slate-950 pb-32 px-4 pt-0 w-full max-w-3xl mx-auto">
+        <div className="min-h-screen bg-slate-950 pb-32 px-4 pt-6 w-full max-w-3xl mx-auto">
 
             {/* --- CARTÃO DE CABEÇALHO DO PERFIL --- */}
             <div className="bg-slate-900/50 rounded-3xl p-6 mb-6 border border-slate-800 relative overflow-hidden">
@@ -476,8 +484,8 @@ export default function ProfilePage({ user, onLogout, onNavigateToHistory, onNav
                         <Activity size={24} />
                     </div>
                     <div>
-                        <p className="text-sm font-medium text-slate-500 mb-0.5">Sequência</p>
-                        <p className="text-xl md:text-3xl font-bold text-white">{stats?.currentStreakDays || 0}</p>
+                        <p className="text-sm font-medium text-slate-500 mb-0.5">Semanas na Meta</p>
+                        <p className="text-xl md:text-3xl font-bold text-white">{stats?.weeklyStreak || 0}</p>
                     </div>
                 </div>
 
