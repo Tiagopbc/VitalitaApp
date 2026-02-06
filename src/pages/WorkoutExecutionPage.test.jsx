@@ -147,7 +147,6 @@ describe('WorkoutExecutionPage', () => {
     });
 
     it('finishes workout and shows finish modal', async () => {
-        vi.useFakeTimers();
         render(<WorkoutExecutionPage user={{ uid: 'u1' }} />);
 
         fireEvent.click(screen.getByRole('button', { name: /FINALIZAR TREINO/i }));
@@ -162,10 +161,6 @@ describe('WorkoutExecutionPage', () => {
         });
         expect(baseReturn.finishSession).toHaveBeenCalled();
 
-        await act(async () => {
-            vi.advanceTimersByTime(1000);
-        });
-
-        expect(screen.getByText('Treino Concluído!')).toBeInTheDocument();
+        expect(await screen.findByText('Compartilhar Resultado', {}, { timeout: 2000 })).toBeInTheDocument();
     });
 });

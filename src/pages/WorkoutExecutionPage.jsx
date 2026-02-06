@@ -38,6 +38,8 @@ import { Skeleton } from '../components/design-system/Skeleton';
 import { useWorkoutTimer } from '../hooks/useWorkoutTimer';
 import { useWorkoutSession } from '../hooks/useWorkoutSession';
 import { checkNewAchievements } from '../utils/evaluateAchievements';
+import { userService } from '../services/userService';
+import { workoutService } from '../services/workoutService';
 const AchievementUnlockedModal = React.lazy(() => import('../components/achievements/AchievementUnlockedModal').then(module => ({ default: module.AchievementUnlockedModal })));
 
 const TopBarButton = ({ icon, label, variant = 'default', onClick, active, isBack = false }) => {
@@ -141,8 +143,7 @@ export function WorkoutExecutionPage({ user }) {
     // --- CARREGAR PREFERÊNCIAS DO USUÁRIO ---
     useEffect(() => {
         if (user?.uid) {
-            import('../services/userService')
-                .then(({ userService }) => userService.getUserProfile(user.uid))
+            userService.getUserProfile(user.uid)
                 .then(profile => {
                     if (profile?.defaultRestTime) {
                         setRestDuration(profile.defaultRestTime);
@@ -157,8 +158,8 @@ export function WorkoutExecutionPage({ user }) {
         setRestDuration(newDuration);
         if (user?.uid) {
             // Atualização "fire and forget"
-            import('../services/userService')
-                .then(({ userService }) => userService.updateUserProfile(user.uid, { defaultRestTime: newDuration }))
+            userService
+                .updateUserProfile(user.uid, { defaultRestTime: newDuration })
                 .catch(err => console.error("Failed to save rest preference:", err));
         }
     };
@@ -262,7 +263,6 @@ export function WorkoutExecutionPage({ user }) {
                     userId: user.uid
                 };
 
-                const { workoutService } = await import('../services/workoutService');
                 checkNewAchievements(user.uid, sessionPayload, workoutService).then(unlocked => {
                     console.log("DEBUG: checkNewAchievements result:", unlocked);
                     if (unlocked && unlocked.length > 0) {

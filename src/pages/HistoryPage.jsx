@@ -7,6 +7,7 @@ import {
     Activity
 } from 'lucide-react';
 import { PremiumCard } from '../components/design-system/PremiumCard';
+import { workoutService } from '../services/workoutService';
 
 import { Button } from '../components/design-system/Button';
 const HistoryAnalyticsSection = React.lazy(() => import('../components/history/HistoryAnalyticsSection').then(module => ({ default: module.HistoryAnalyticsSection })));
@@ -64,7 +65,6 @@ function HistoryPage({ user, isEmbedded = false }) {
         else setFetchingMore(true);
         try {
             const startDoc = reset ? null : lastDocJournalRef.current;
-            const { workoutService } = await import('../services/workoutService');
             const result = await workoutService.getHistory(user.uid, null, startDoc, 20);
 
             const loadedSessions = result.data.map(data => ({
@@ -170,7 +170,6 @@ function HistoryPage({ user, isEmbedded = false }) {
 
             setLoadingTemplates(true);
             try {
-                const { workoutService } = await import('../services/workoutService');
                 const list = await workoutService.getTemplates(user.uid);
                 setTemplates(list);
 
@@ -229,7 +228,6 @@ function HistoryPage({ user, isEmbedded = false }) {
 
             setLoadingHistory(true);
             try {
-                const { workoutService } = await import('../services/workoutService');
                 const result = await workoutService.getHistory(user.uid, selectedTemplate, null, 100);
 
                 const rows = [];

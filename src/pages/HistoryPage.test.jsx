@@ -93,6 +93,8 @@ describe('HistoryPage', () => {
         });
 
         fireEvent.click(screen.getByText('Treino A'));
-        expect(screen.getByText('WorkoutDetails')).toBeInTheDocument();
+        await waitFor(() => {
+            expect(screen.getByText('WorkoutDetails')).toBeInTheDocument();
+        });
     });
 });
