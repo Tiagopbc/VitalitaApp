@@ -106,11 +106,16 @@ describe('workoutService', () => {
         });
 
         it('should handle errors gracefully', async () => {
+            const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
             const error = new Error('Network Error');
             getDocs.mockRejectedValue(error);
 
-            await expect(workoutService.getTemplates(mockUserId)).rejects.toThrow('Network Error');
-            expect(toast.error).toHaveBeenCalledWith('Erro ao carregar treinos. Verifique sua conexão.');
+            try {
+                await expect(workoutService.getTemplates(mockUserId)).rejects.toThrow('Network Error');
+                expect(toast.error).toHaveBeenCalledWith('Erro ao carregar treinos. Verifique sua conexão.');
+            } finally {
+                consoleSpy.mockRestore();
+            }
         });
     });
 
@@ -180,35 +185,50 @@ describe('workoutService', () => {
         });
 
         it('should return null on error', async () => {
+            const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
             getDocs.mockRejectedValue(new Error('fail'));
 
-            const result = await workoutService.getLatestSession(mockUserId);
-            expect(result).toBeNull();
+            try {
+                const result = await workoutService.getLatestSession(mockUserId);
+                expect(result).toBeNull();
+            } finally {
+                consoleSpy.mockRestore();
+            }
         });
     });
 
     describe('getHistory', () => {
         it('throws and shows index error when missing Firestore index', async () => {
+            const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
             const error = new Error('missing index');
             error.code = 'failed-precondition';
             getDocs.mockRejectedValue(error);
 
-            await expect(
-                workoutService.getHistory(mockUserId, 'Template A')
-            ).rejects.toThrow('missing index');
+            try {
+                await expect(
+                    workoutService.getHistory(mockUserId, 'Template A')
+                ).rejects.toThrow('missing index');
 
-            expect(toast.error).toHaveBeenCalledWith('Erro de índice. Verifique o console.');
+                expect(toast.error).toHaveBeenCalledWith('Erro de índice. Verifique o console.');
+            } finally {
+                consoleSpy.mockRestore();
+            }
         });
 
         it('throws and shows generic error for other failures', async () => {
+            const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
             const error = new Error('boom');
             getDocs.mockRejectedValue(error);
 
-            await expect(
-                workoutService.getHistory(mockUserId, 'Template A')
-            ).rejects.toThrow('boom');
+            try {
+                await expect(
+                    workoutService.getHistory(mockUserId, 'Template A')
+                ).rejects.toThrow('boom');
 
-            expect(toast.error).toHaveBeenCalledWith('Erro ao carregar histórico.');
+                expect(toast.error).toHaveBeenCalledWith('Erro ao carregar histórico.');
+            } finally {
+                consoleSpy.mockRestore();
+            }
         });
     });
 });

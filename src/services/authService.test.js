@@ -59,41 +59,51 @@ describe('authService', () => {
         });
 
         it('continues when updateProfile fails', async () => {
+            const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
             const user = { uid: 'uid-2', delete: vi.fn() };
             createUserWithEmailAndPassword.mockResolvedValue({ user });
             updateProfile.mockRejectedValue(new Error('fail'));
             doc.mockReturnValue({ path: 'users/uid-2' });
             setDoc.mockResolvedValue();
 
-            const result = await authService.register(
-                'test@example.com',
-                'secret',
-                'Test User',
-                { gender: 'male' }
-            );
+            try {
+                const result = await authService.register(
+                    'test@example.com',
+                    'secret',
+                    'Test User',
+                    { gender: 'male' }
+                );
 
-            expect(result).toBe(user);
-            expect(setDoc).toHaveBeenCalled();
-            expect(user.delete).not.toHaveBeenCalled();
+                expect(result).toBe(user);
+                expect(setDoc).toHaveBeenCalled();
+                expect(user.delete).not.toHaveBeenCalled();
+            } finally {
+                consoleSpy.mockRestore();
+            }
         });
 
         it('rolls back auth user when Firestore write fails', async () => {
+            const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
             const user = { uid: 'uid-3', delete: vi.fn() };
             createUserWithEmailAndPassword.mockResolvedValue({ user });
             updateProfile.mockResolvedValue();
             doc.mockReturnValue({ path: 'users/uid-3' });
             setDoc.mockRejectedValue(new Error('firestore fail'));
 
-            await expect(
-                authService.register(
-                    'test@example.com',
-                    'secret',
-                    'Test User',
-                    { gender: 'male' }
-                )
-            ).rejects.toThrow('Cadastro falhou. Tente novamente.');
+            try {
+                await expect(
+                    authService.register(
+                        'test@example.com',
+                        'secret',
+                        'Test User',
+                        { gender: 'male' }
+                    )
+                ).rejects.toThrow('Cadastro falhou. Tente novamente.');
 
-            expect(user.delete).toHaveBeenCalled();
+                expect(user.delete).toHaveBeenCalled();
+            } finally {
+                consoleSpy.mockRestore();
+            }
         });
     });
 

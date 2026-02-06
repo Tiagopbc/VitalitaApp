@@ -192,33 +192,38 @@ describe('WorkoutContext', () => {
     });
 
     it('clears manual exit flags even if remote clear fails', async () => {
+        const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
         window.history.pushState({}, '', '/');
         sessionStorage.setItem('manual_exit', '1');
         mockClearActiveWorkout.mockRejectedValueOnce(new Error('fail'));
 
-        render(
-            <MemoryRouter>
-                <WorkoutProvider>
-                    <TestComponent />
-                </WorkoutProvider>
-            </MemoryRouter>
-        );
+        try {
+            render(
+                <MemoryRouter>
+                    <WorkoutProvider>
+                        <TestComponent />
+                    </WorkoutProvider>
+                </MemoryRouter>
+            );
 
-        await waitFor(() => {
-            expect(snapshotCallback).toBeTypeOf('function');
-        });
-
-        await act(async () => {
-            await snapshotCallback({
-                exists: () => true,
-                data: () => ({ activeWorkoutId: 'remote-err' })
+            await waitFor(() => {
+                expect(snapshotCallback).toBeTypeOf('function');
             });
-        });
 
-        expect(mockClearActiveWorkout).toHaveBeenCalledWith('user123');
-        expect(sessionStorage.getItem('manual_exit')).toBeNull();
-        expect(localStorage.getItem('activeWorkoutId')).toBeNull();
-        expect(screen.getByTestId('active-id')).toHaveTextContent('NONE');
-        expect(mockNavigate).not.toHaveBeenCalled();
+            await act(async () => {
+                await snapshotCallback({
+                    exists: () => true,
+                    data: () => ({ activeWorkoutId: 'remote-err' })
+                });
+            });
+
+            expect(mockClearActiveWorkout).toHaveBeenCalledWith('user123');
+            expect(sessionStorage.getItem('manual_exit')).toBeNull();
+            expect(localStorage.getItem('activeWorkoutId')).toBeNull();
+            expect(screen.getByTestId('active-id')).toHaveTextContent('NONE');
+            expect(mockNavigate).not.toHaveBeenCalled();
+        } finally {
+            consoleSpy.mockRestore();
+        }
     });
 });
