@@ -4,6 +4,8 @@ import { Activity } from 'lucide-react';
 import bgShareDumbbells from '../../assets/bg-share-dumbbells.png';
 
 export const ShareableWorkoutCard = forwardRef(({ session, isVisible = false, userName = 'Atleta' }, ref) => {
+    const [logoFailed, setLogoFailed] = useState(false);
+
     if (!session) return null;
 
     // Use a high-quality shiny text color to simulate the reference without risky gradients
@@ -16,7 +18,6 @@ export const ShareableWorkoutCard = forwardRef(({ session, isVisible = false, us
     const templateParts = templateLabel.split(/\s[-–—]\s/);
     const templateTitle = (templateParts[0] || templateLabel).trim();
     const templateSubtitle = templateParts.slice(1).join(' - ').trim();
-    const [logoFailed, setLogoFailed] = useState(false);
 
     const baseStyles = isVisible ? {
         position: 'relative',

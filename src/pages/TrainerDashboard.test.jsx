@@ -37,7 +37,7 @@ vi.mock('./WorkoutsPage', () => ({
 }));
 
 vi.mock('../components/design-system/Button', () => ({
-    Button: ({ children, onClick, ...props }) => (
+    Button: ({ children, onClick, leftIcon: _leftIcon, rightIcon: _rightIcon, variant: _variant, size: _size, ...props }) => (
         <button onClick={onClick} {...props}>
             {children}
         </button>

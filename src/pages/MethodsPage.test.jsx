@@ -10,8 +10,8 @@ vi.mock('react-router-dom', () => ({
 }));
 
 vi.mock('../components/design-system/Button', () => ({
-    Button: ({ children, onClick }) => (
-        <button onClick={onClick}>{children}</button>
+    Button: ({ children, onClick, leftIcon: _leftIcon, rightIcon: _rightIcon, variant: _variant, size: _size, ...props }) => (
+        <button onClick={onClick} {...props}>{children}</button>
     )
 }));
 

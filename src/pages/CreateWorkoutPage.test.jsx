@@ -30,8 +30,8 @@ vi.mock('firebase/firestore', () => ({
 
 // Mock Button component to simplify testing
 vi.mock('../components/design-system/Button', () => ({
-    Button: ({ children, onClick, disabled, loading }) => (
-        <button onClick={onClick} disabled={disabled || loading}>
+    Button: ({ children, onClick, disabled, loading, leftIcon: _leftIcon, rightIcon: _rightIcon, variant: _variant, size: _size, fullWidth: _fullWidth, ...props }) => (
+        <button onClick={onClick} disabled={disabled || loading} {...props}>
             {children}
         </button>
     )
