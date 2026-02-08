@@ -12,7 +12,15 @@ import { AuthProvider } from './AuthContext';
 import './index.css';
 
 import { SpeedInsights } from "@vercel/speed-insights/react"
-import './sentry'; // Initialize Sentry
+
+if (import.meta.env.PROD && typeof window !== 'undefined') {
+    const loadSentry = () => import('./sentry');
+    if ('requestIdleCallback' in window) {
+        window.requestIdleCallback(loadSentry);
+    } else {
+        setTimeout(loadSentry, 2000);
+    }
+}
 
 ReactDOM.createRoot(document.getElementById('root')).render(
     <React.StrictMode>
