@@ -4,6 +4,7 @@
  */
 import React, { useEffect, useMemo, useState, Suspense } from 'react';
 import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
+import { Toaster } from 'sonner';
 import { DesktopSidebar } from './DesktopSidebar';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { useAuth } from './AuthContext';
@@ -305,6 +306,7 @@ function AppAuthedContent() {
 export default function AppAuthed() {
     return (
         <WorkoutProvider>
+            <Toaster richColors position="top-center" />
             <AppAuthedContent />
         </WorkoutProvider>
     );

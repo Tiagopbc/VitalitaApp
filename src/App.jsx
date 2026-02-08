@@ -6,7 +6,6 @@
  */
 import React, { Suspense } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { Toaster } from 'sonner';
 import { useAuth } from './AuthContext';
 import { ErrorBoundary } from './components/ErrorBoundary';
 
@@ -19,7 +18,6 @@ function App() {
 
     return (
         <ErrorBoundary>
-            <Toaster richColors position="top-center" />
             <AppContentRoot />
         </ErrorBoundary>
     );

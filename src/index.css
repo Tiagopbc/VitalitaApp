@@ -3,7 +3,6 @@
  * Valida a configuração do Tailwind CSS e Variáveis de Tema.
  * Define a paleta de cores 'Vitalità', famílias de fontes personalizadas, grade de espaçamento e classes utilitárias.
  */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
 @import "tailwindcss";
 
 @theme {
