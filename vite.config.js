@@ -1,10 +1,13 @@
-import { defineConfig } from 'vite'
+import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
+import { fileURLToPath } from 'node:url'
 
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => {
-  const pwaWorkboxMode = process.env.VITE_PWA_MODE || (mode === 'development' ? 'development' : 'production');
+  const rootDir = fileURLToPath(new URL('.', import.meta.url))
+  const env = loadEnv(mode, rootDir, '')
+  const pwaWorkboxMode = env.VITE_PWA_MODE || (mode === 'development' ? 'development' : 'production')
 
   return ({
   plugins: [

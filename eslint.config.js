@@ -8,7 +8,7 @@ import pluginCypress from 'eslint-plugin-cypress/flat'
 import pluginReact from 'eslint-plugin-react'
 
 export default defineConfig([
-  globalIgnores(['dist']),
+  globalIgnores(['dist', 'coverage']),
   pluginCypress.configs.recommended,
   pluginReact.configs.flat.recommended,
   {
