@@ -6,7 +6,6 @@
  * Envolve o listener do Firebase Auth para gerenciar sessões globalmente.
  */
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { authService } from './services/authService';
 
 const AuthContext = createContext(null);
 
@@ -15,16 +14,38 @@ export function AuthProvider({ children }) {
     const [authLoading, setAuthLoading] = useState(true);
 
     useEffect(() => {
-        const unsubscribe = authService.subscribe((firebaseUser) => {
-            setUser(firebaseUser || null);
-            setAuthLoading(false);
-        });
+        let isMounted = true;
+        let unsubscribe = null;
 
-        return () => unsubscribe();
+        const initAuth = async () => {
+            try {
+                const { authService } = await import('./services/authService');
+                if (!isMounted) return;
+                unsubscribe = authService.subscribe((firebaseUser) => {
+                    setUser(firebaseUser || null);
+                    setAuthLoading(false);
+                });
+            } catch (err) {
+                console.error('Erro ao iniciar Auth:', err);
+                if (isMounted) setAuthLoading(false);
+            }
+        };
+
+        if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
+            window.requestIdleCallback(initAuth);
+        } else {
+            setTimeout(initAuth, 0);
+        }
+
+        return () => {
+            isMounted = false;
+            if (unsubscribe) unsubscribe();
+        };
     }, []);
 
     const logout = async () => {
         try {
+            const { authService } = await import('./services/authService');
             await authService.logout();
             localStorage.removeItem('activeWorkoutId');
         } catch (err) {
