@@ -4,6 +4,7 @@
  * Define a paleta de cores 'Vitalità', famílias de fontes personalizadas, grade de espaçamento e classes utilitárias.
  */
 @import "tailwindcss";
+@import "./fonts.css";
 
 @theme {
     /* Cores - Vitalità Palette */
