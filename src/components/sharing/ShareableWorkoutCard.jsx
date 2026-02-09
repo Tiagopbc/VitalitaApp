@@ -74,6 +74,11 @@ export const ShareableWorkoutCard = forwardRef(({ session, isVisible = false, us
                 position: 'absolute',
                 inset: 0,
                 background: `
+                    radial-gradient(240px 200px at 14% 6%,
+                        rgba(2,6,23,0.98) 0%,
+                        rgba(2,6,23,0.85) 40%,
+                        rgba(2,6,23,0) 70%
+                    ),
                     linear-gradient(to bottom, 
                         rgba(2,6,23,0.85) 0%, 
                         rgba(2,6,23,0.25) 30%, 

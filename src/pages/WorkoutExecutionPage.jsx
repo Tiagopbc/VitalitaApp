@@ -302,24 +302,48 @@ export function WorkoutExecutionPage({ user }) {
 
         setSharing(true);
         try {
-            // Wait for render and font load
+            // Wait for render and font load (with safety timeouts to avoid hangs)
+            const waitWithTimeout = async (promise, timeoutMs = 2000) => {
+                try {
+                    await Promise.race([
+                        promise,
+                        new Promise(resolve => setTimeout(resolve, timeoutMs))
+                    ]);
+                } catch {
+                    // Ignore font/image load errors and proceed
+                }
+            };
+
             await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
             if (document.fonts && document.fonts.ready) {
-                await document.fonts.ready;
+                await waitWithTimeout(document.fonts.ready, 2000);
             }
 
-            const waitForImages = async (root) => {
+            const waitForImages = async (root, timeoutMs = 2000) => {
                 const images = Array.from(root.querySelectorAll('img'));
                 if (images.length === 0) return;
-                await Promise.all(images.map(img => {
-                    if (img.complete && img.naturalWidth > 0) return Promise.resolve();
-                    return new Promise((resolve) => {
-                        img.onload = () => resolve();
-                        img.onerror = () => resolve();
-                    });
-                }));
+                await Promise.all(images.map(img => new Promise((resolve) => {
+                    if (img.complete) return resolve();
+                    let settled = false;
+                    const finish = () => {
+                        if (settled) return;
+                        settled = true;
+                        img.onload = null;
+                        img.onerror = null;
+                        resolve();
+                    };
+                    const timer = setTimeout(finish, timeoutMs);
+                    img.onload = () => {
+                        clearTimeout(timer);
+                        finish();
+                    };
+                    img.onerror = () => {
+                        clearTimeout(timer);
+                        finish();
+                    };
+                })));
             };
-            await waitForImages(shareCardRef.current);
+            await waitForImages(shareCardRef.current, 2500);
 
             const { toPng } = await import('html-to-image');
             const dataUrl = await toPng(shareCardRef.current, {
