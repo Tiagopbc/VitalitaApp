@@ -26,15 +26,7 @@ function App() {
 export default App;
 
 function AppContentRoot() {
-    const { user, authLoading } = useAuth();
-
-    if (authLoading) {
-        return (
-            <div className="app-shell">
-                <div className="app-inner"><p>Carregando autenticação...</p></div>
-            </div>
-        );
-    }
+    const { user } = useAuth();
 
     if (!user) {
         return (

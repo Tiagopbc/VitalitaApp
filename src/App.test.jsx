@@ -46,7 +46,7 @@ describe('App Smoke Test', () => {
         });
     });
 
-    it('renders loading state initially', () => {
+    it('renders login page even while auth is loading', async () => {
         mockUseAuth.mockReturnValue({ user: null, authLoading: true, logout: mockLogout });
 
         render(
@@ -55,7 +55,9 @@ describe('App Smoke Test', () => {
             </MemoryRouter>
         );
 
-        expect(screen.getByText(/Carregando autenticação/i)).toBeInTheDocument();
+        await waitFor(() => {
+            expect(screen.getByText('Mocked Login Page')).toBeInTheDocument();
+        });
     });
 
     it('renders login page when unauthenticated', async () => {
