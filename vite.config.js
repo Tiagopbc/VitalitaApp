@@ -59,7 +59,6 @@ export default defineConfig(({ mode }) => {
           'vendor-firebase-auth': ['firebase/auth'],
           'vendor-firebase-firestore': ['firebase/firestore'],
           'vendor-charts': ['recharts'],
-          'vendor-framer': ['framer-motion'],
           'vendor-lucide': ['lucide-react'],
           'vendor-sonner': ['sonner'],
         },
