@@ -226,7 +226,7 @@ describe('CreateWorkoutPage Integration', () => {
             expect(workoutService.getWorkoutById).toHaveBeenCalledWith('workout-2');
         });
 
-        expect(screen.getByDisplayValue('Loaded Workout')).toBeInTheDocument();
-        expect(screen.getByText(/Agachamento/i)).toBeInTheDocument();
+        expect(await screen.findByDisplayValue('Loaded Workout')).toBeInTheDocument();
+        expect(await screen.findByText(/Agachamento/i)).toBeInTheDocument();
     });
 });
