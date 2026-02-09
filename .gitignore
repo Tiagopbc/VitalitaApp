@@ -34,3 +34,6 @@ cypress_final_output*.txt
 cypress_final_result*.txt
 lint_*.txt
 output/pdf/*.pdf
+output/
+*.trace.json
+*.devtoolslog.json
