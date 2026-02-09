@@ -12,7 +12,8 @@ import { AuthProvider } from './AuthContext';
 import './index.css';
 import { SpeedInsightsLoader } from './components/SpeedInsightsLoader';
 
-if (import.meta.env.PROD && typeof window !== 'undefined') {
+const sentryDsn = import.meta.env.VITE_SENTRY_DSN;
+if (import.meta.env.PROD && sentryDsn && typeof window !== 'undefined') {
     const loadSentry = () => import('./sentry');
     if ('requestIdleCallback' in window) {
         window.requestIdleCallback(loadSentry);

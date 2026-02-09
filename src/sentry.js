@@ -1,24 +1,26 @@
 import { useEffect } from 'react';
 import { useLocation, useNavigationType, createRoutesFromChildren, matchRoutes } from 'react-router-dom';
-import * as Sentry from '@sentry/react';
+import { browserTracingIntegration, init } from '@sentry/react';
 
-Sentry.init({
-    dsn: import.meta.env.VITE_SENTRY_DSN,
-    integrations: [
-        Sentry.browserTracingIntegration({
-            useEffect,
-            useLocation,
-            useNavigationType,
-            createRoutesFromChildren,
-            matchRoutes,
-        }),
-        Sentry.replayIntegration(),
-    ],
-    // Performance Monitoring
-    tracesSampleRate: 1.0,
-    // Session Replay
-    replaysSessionSampleRate: 0.1,
-    replaysOnErrorSampleRate: 1.0,
-});
+const dsn = import.meta.env.VITE_SENTRY_DSN;
+const enableTracing = import.meta.env.VITE_SENTRY_TRACING === 'true';
 
-export default Sentry;
+if (dsn) {
+    const integrations = enableTracing
+        ? [
+            browserTracingIntegration({
+                useEffect,
+                useLocation,
+                useNavigationType,
+                createRoutesFromChildren,
+                matchRoutes,
+            })
+        ]
+        : [];
+
+    init({
+        dsn,
+        integrations,
+        tracesSampleRate: enableTracing ? 0.2 : 0.0,
+    });
+}
