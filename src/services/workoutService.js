@@ -70,7 +70,7 @@ export const workoutService = {
             return list;
         } catch (error) {
             console.error("Error fetching templates:", error);
-            void showToastError("Erro ao carregar treinos. Verifique sua conexão.");
+            await showToastError("Erro ao carregar treinos. Verifique sua conexão.");
             throw error;
         }
     },
@@ -230,9 +230,9 @@ export const workoutService = {
             console.error("Error fetching history:", error);
             if (error.code === 'failed-precondition') {
                 console.warn("🔥 FIRESTORE INDEX MISSING! Open this link to create it:", error.message);
-                void showToastError("Erro de índice. Verifique o console.");
+                await showToastError("Erro de índice. Verifique o console.");
             } else {
-                void showToastError("Erro ao carregar histórico.");
+                await showToastError("Erro ao carregar histórico.");
             }
             throw error;
         }
@@ -329,7 +329,7 @@ export const workoutService = {
 
         } catch (error) {
             console.error("Error searching exercises:", error);
-            void showToastError("Erro ao buscar exercícios. Verifique sua conexão.");
+            await showToastError("Erro ao buscar exercícios. Verifique sua conexão.");
             return [];
         }
     }

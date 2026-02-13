@@ -34,3 +34,35 @@ vi.mock('firebase/firestore', () => ({
 globalThis.alert = vi.fn();
 globalThis.confirm = vi.fn(() => true);
 globalThis.prompt = vi.fn();
+
+function ensureStorageArea(storageName) {
+    const storage = globalThis[storageName];
+    if (storage
+        && typeof storage.getItem === 'function'
+        && typeof storage.setItem === 'function'
+        && typeof storage.removeItem === 'function'
+        && typeof storage.clear === 'function') {
+        return;
+    }
+
+    const data = new Map();
+    const polyfill = {
+        getItem: (key) => (data.has(key) ? data.get(key) : null),
+        setItem: (key, value) => data.set(String(key), String(value)),
+        removeItem: (key) => data.delete(String(key)),
+        clear: () => data.clear(),
+        key: (index) => Array.from(data.keys())[index] ?? null,
+        get length() {
+            return data.size;
+        }
+    };
+
+    Object.defineProperty(globalThis, storageName, {
+        configurable: true,
+        writable: true,
+        value: polyfill
+    });
+}
+
+ensureStorageArea('localStorage');
+ensureStorageArea('sessionStorage');
