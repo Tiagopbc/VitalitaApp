@@ -414,7 +414,7 @@ export default function ProfilePage({ user, onLogout, onNavigateToHistory, onNav
             <div className="bg-slate-900/50 border border-slate-800 rounded-3xl p-6 mt-6">
                 <div className="flex items-center gap-2 mb-4">
                     <Trophy size={18} className="text-amber-500" />
-                    <h3 className="text-sm font-bold text-white uppercase tracking-wider">Melhores Marcas (1RM Estimado)</h3>
+                    <h3 className="text-sm font-bold text-white uppercase tracking-wider">Melhores Marcas (Carga Máxima)</h3>
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">

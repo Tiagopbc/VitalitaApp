@@ -12,7 +12,6 @@ import {
     RotateCw,
     Check,
     CheckCircle2,
-    Activity,
     Timer,
     Dumbbell,
     Eye,
@@ -26,7 +25,6 @@ import {
 const ShareableWorkoutCard = React.lazy(() => import('../components/sharing/ShareableWorkoutCard').then(module => ({ default: module.ShareableWorkoutCard })));
 import { RestTimer } from '../components/execution/RestTimer';
 // import { MuscleFocusDisplay } from '../components/execution/MuscleFocusDisplay'; // Unused
-// import { OneRMDisplay } from '../components/execution/OneRMDisplay'; // Unused
 import { RippleButton } from '../components/design-system/RippleButton';
 import { Button } from '../components/design-system/Button';
 import MethodModal from '../MethodModal';
@@ -42,13 +40,16 @@ import { userService } from '../services/userService';
 import { workoutService } from '../services/workoutService';
 const AchievementUnlockedModal = React.lazy(() => import('../components/achievements/AchievementUnlockedModal').then(module => ({ default: module.AchievementUnlockedModal })));
 
-const TopBarButton = ({ icon, label, variant = 'default', onClick, active, isBack = false }) => {
-    // Estilos base: "Voltar" recebe tamanho padrão, outros recebem tamanho EXTRA compacto
+const TopBarButton = ({ icon, label, variant = 'default', onClick, active, isBack = false, prominence = 'compact' }) => {
+    // Estilos base: "Voltar" recebe tamanho padrão; ações podem ser compactas ou destacadas.
     const sizeStyles = isBack
         ? "px-3 py-2 text-xs"
-        : "px-2 py-1.5 text-[9px] tracking-tight"; // Reduced padding and font size
+        : prominence === 'large'
+            ? "px-3.5 py-2 text-[11px] tracking-wide min-h-9"
+            : "px-2 py-1.5 text-[9px] tracking-tight";
 
     const baseStyles = `flex items-center gap-1 rounded-lg font-bold uppercase transition-all duration-300 border backdrop-blur-md whitespace-nowrap ${sizeStyles}`;
+    const iconSize = isBack ? 16 : prominence === 'large' ? 15 : 13;
 
     const variants = {
         primary: "bg-cyan-500/10 text-cyan-400 border-cyan-500/50 hover:bg-cyan-500/20 shadow-[0_0_15px_rgba(34,211,238,0.1)]",
@@ -63,7 +64,7 @@ const TopBarButton = ({ icon, label, variant = 'default', onClick, active, isBac
             onClick={onClick}
             className={`${baseStyles} ${variants[variant]}`}
         >
-            {React.cloneElement(icon, { size: isBack ? 16 : 13, strokeWidth: 2.5 })}
+            {React.cloneElement(icon, { size: iconSize, strokeWidth: 2.5 })}
             <span>{label}</span>
         </button>
     );
@@ -132,7 +133,6 @@ export function WorkoutExecutionPage({ user }) {
     const [frozenSession, setFrozenSession] = useState(null); // Frozen data for summary
     const [showFinishModal, setShowFinishModal] = useState(false);
     const [showTimer, setShowTimer] = useState(false);
-    const [showOneRM, setShowOneRM] = useState(false);
     const [selectedMethod, setSelectedMethod] = useState(null);
     const [focusMode, setFocusMode] = useState(false);
     const [isFinished, setIsFinished] = useState(false); // Previne "Sessões Zumbis"
@@ -538,20 +538,15 @@ export function WorkoutExecutionPage({ user }) {
                                     icon={<Timer />}
                                     label="TIMER"
                                     active={showTimer}
+                                    prominence="large"
                                     onClick={() => setShowTimer(!showTimer)}
-                                />
-
-                                <TopBarButton
-                                    icon={<Activity />}
-                                    label="1RM"
-                                    active={showOneRM}
-                                    onClick={() => setShowOneRM(!showOneRM)}
                                 />
 
                                 <TopBarButton
                                     icon={<Eye />}
                                     label="FOCO"
                                     active={focusMode}
+                                    prominence="large"
                                     onClick={() => setFocusMode(!focusMode)}
                                 />
                             </div>

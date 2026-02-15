@@ -26,7 +26,7 @@ Eu queria algo diferente. Queria uma ferramenta que respeitasse o **"Deep Work"*
 
 *   Sem distrações.
 *   Foco total na execução (carga, repetições, descanso).
-*   Dados que realmente importam para progredir (Volume acumulado, 1RM estimado, consistência).
+*   Dados que realmente importam para progredir (Volume acumulado, carga máxima, consistência).
 
 O Vitalità é a resposta para essa busca: um ecossistema sério, estético e funcional para quem trata o treino como disciplina, e não apenas como passatempo.
 
