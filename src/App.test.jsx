@@ -46,7 +46,7 @@ describe('App Smoke Test', () => {
         });
     });
 
-    it('renders login page even while auth is loading', async () => {
+    it('renders loading state while auth is loading', async () => {
         mockUseAuth.mockReturnValue({ user: null, authLoading: true, logout: mockLogout });
 
         render(
@@ -56,7 +56,7 @@ describe('App Smoke Test', () => {
         );
 
         await waitFor(() => {
-            expect(screen.getByText('Mocked Login Page')).toBeInTheDocument();
+            expect(document.querySelector('.animate-spin')).toBeInTheDocument();
         });
     });
 
