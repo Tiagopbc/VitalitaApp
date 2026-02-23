@@ -20,7 +20,7 @@ export default defineConfig(({ mode }) => {
       devOptions: {
         enabled: mode === 'development'
       },
-      includeAssets: ['favicon.ico', 'apple-touch-icon.png'],
+      includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'bg-share-dumbbells.jpg'],
       manifest: {
         name: 'Vitalita Training App',
         short_name: 'Vitalita',

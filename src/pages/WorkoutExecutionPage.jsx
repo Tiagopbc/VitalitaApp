@@ -21,8 +21,6 @@ import {
     Trash2,
     ArrowLeft
 } from 'lucide-react';
-// Lazy load for performance
-const ShareableWorkoutCard = React.lazy(() => import('../components/sharing/ShareableWorkoutCard').then(module => ({ default: module.ShareableWorkoutCard })));
 import { RestTimer } from '../components/execution/RestTimer';
 // import { MuscleFocusDisplay } from '../components/execution/MuscleFocusDisplay'; // Unused
 import { RippleButton } from '../components/design-system/RippleButton';
@@ -39,6 +37,37 @@ import { checkNewAchievements } from '../utils/evaluateAchievements';
 import { userService } from '../services/userService';
 import { workoutService } from '../services/workoutService';
 const AchievementUnlockedModal = React.lazy(() => import('../components/achievements/AchievementUnlockedModal').then(module => ({ default: module.AchievementUnlockedModal })));
+const loadShareableWorkoutCard = () => import('../components/sharing/ShareableWorkoutCard').then(module => ({ default: module.ShareableWorkoutCard }));
+const ShareableWorkoutCard = React.lazy(loadShareableWorkoutCard);
+const shareCardBgSrc = '/bg-share-dumbbells.jpg';
+
+const preloadedImages = new Map();
+
+function preloadImage(src) {
+    if (!src || typeof window === 'undefined') return Promise.resolve();
+    if (preloadedImages.has(src)) return preloadedImages.get(src);
+
+    const preloadPromise = new Promise((resolve) => {
+        const img = new Image();
+        let settled = false;
+        const finish = () => {
+            if (settled) return;
+            settled = true;
+            img.onload = null;
+            img.onerror = null;
+            resolve();
+        };
+
+        img.onload = finish;
+        img.onerror = finish;
+        img.src = src;
+
+        if (img.complete) finish();
+    });
+
+    preloadedImages.set(src, preloadPromise);
+    return preloadPromise;
+}
 
 const TopBarButton = ({ icon, label, variant = 'default', onClick, active, isBack = false, prominence = 'compact' }) => {
     // Estilos base: "Voltar" recebe tamanho padrão; ações podem ser compactas ou destacadas.
@@ -139,6 +168,41 @@ export function WorkoutExecutionPage({ user }) {
     const [newAchievements, setNewAchievements] = useState([]);
     const [showAchievementModal, setShowAchievementModal] = useState(false);
     const [restDuration, setRestDuration] = useState(90);
+
+    // Aquece recursos de compartilhamento para evitar atraso no modal final.
+    useEffect(() => {
+        if (typeof window === 'undefined') return undefined;
+
+        let cancelled = false;
+        let idleId = null;
+        let timerId = null;
+
+        const warmupShareResources = () => {
+            if (cancelled) return;
+            Promise.allSettled([
+                loadShareableWorkoutCard(),
+                import('html-to-image'),
+                preloadImage(shareCardBgSrc),
+                preloadImage('/pwa-192x192.png')
+            ]).catch(() => undefined);
+        };
+
+        if ('requestIdleCallback' in window) {
+            idleId = window.requestIdleCallback(warmupShareResources, { timeout: 1800 });
+        } else {
+            timerId = window.setTimeout(warmupShareResources, 900);
+        }
+
+        return () => {
+            cancelled = true;
+            if (idleId !== null && 'cancelIdleCallback' in window) {
+                window.cancelIdleCallback(idleId);
+            }
+            if (timerId !== null) {
+                window.clearTimeout(timerId);
+            }
+        };
+    }, []);
 
     // --- CARREGAR PREFERÊNCIAS DO USUÁRIO ---
     useEffect(() => {

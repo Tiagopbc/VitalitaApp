@@ -1,7 +1,7 @@
 import React, { forwardRef, useState } from 'react';
 import { Activity } from 'lucide-react';
 
-import bgShareDumbbells from '../../assets/bg-share-dumbbells.jpg';
+const shareCardBgSrc = '/bg-share-dumbbells.jpg';
 
 export const ShareableWorkoutCard = forwardRef(({ session, isVisible = false, userName = 'Atleta' }, ref) => {
     const [logoFailed, setLogoFailed] = useState(false);
@@ -54,11 +54,11 @@ export const ShareableWorkoutCard = forwardRef(({ session, isVisible = false, us
         >
             {/* --- BACKGROUND IMAGE --- */}
             <img
-                src={bgShareDumbbells}
+                src={shareCardBgSrc}
                 alt="Background"
                 crossOrigin="anonymous"
                 loading="eager"
-                decoding="sync"
+                decoding="async"
                 style={{
                     position: 'absolute',
                     inset: 0,
@@ -135,7 +135,7 @@ export const ShareableWorkoutCard = forwardRef(({ session, isVisible = false, us
                                 src="/pwa-192x192.png"
                                 alt="Vitalità"
                                 loading="eager"
-                                decoding="sync"
+                                decoding="async"
                                 style={{
                                     width: '70px',
                                     height: '70px',
