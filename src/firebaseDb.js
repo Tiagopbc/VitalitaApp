@@ -18,17 +18,35 @@ export function loadFirestore() {
 export async function getDb() {
     if (!dbPromise) {
         dbPromise = (async () => {
-            const { getFirestore, enableIndexedDbPersistence } = await loadFirestore();
-            const db = getFirestore(app);
-            // Habilitar Persistência Offline
-            enableIndexedDbPersistence(db).catch((err) => {
-                if (err.code === 'failed-precondition') {
-                    console.warn('Falha na persistência: Múltiplas abas abertas');
-                } else if (err.code === 'unimplemented') {
-                    console.warn('Persistência não suportada pelo navegador');
+            const firestore = await loadFirestore();
+            const {
+                getFirestore,
+                initializeFirestore,
+                persistentLocalCache,
+                persistentMultipleTabManager
+            } = firestore;
+
+            if (typeof initializeFirestore !== 'function' || typeof persistentLocalCache !== 'function') {
+                return getFirestore(app);
+            }
+
+            try {
+                const localCache =
+                    typeof persistentMultipleTabManager === 'function'
+                        ? persistentLocalCache({ tabManager: persistentMultipleTabManager() })
+                        : persistentLocalCache();
+
+                return initializeFirestore(app, { localCache });
+            } catch (err) {
+                if (err?.code === 'unimplemented') {
+                    console.warn('Persistência não suportada pelo navegador, usando cache em memória.');
+                } else if (err?.code === 'failed-precondition') {
+                    console.warn('Falha na persistência local do Firestore; usando cache em memória.');
+                } else {
+                    console.warn('Falha ao configurar cache persistente do Firestore; usando cache em memória.', err);
                 }
-            });
-            return db;
+                return getFirestore(app);
+            }
         })();
     }
     return dbPromise;
