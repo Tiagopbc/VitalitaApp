@@ -76,7 +76,7 @@ export const ShareableWorkoutCard = forwardRef(({ session, isVisible = false, us
                 position: 'absolute',
                 inset: 0,
                 background: `
-                    radial-gradient(240px 200px at 14% 6%,
+                    radial-gradient(ellipse at 14% 6%,
                         rgba(2,6,23,0.98) 0%,
                         rgba(2,6,23,0.85) 40%,
                         rgba(2,6,23,0) 70%
@@ -95,11 +95,14 @@ export const ShareableWorkoutCard = forwardRef(({ session, isVisible = false, us
             <div style={{
                 position: 'absolute',
                 inset: 0,
-                background: `
-                    radial-gradient(circle at 50% 20%, rgba(34,211,238,0.18), transparent 55%),
-                    radial-gradient(circle at 50% 85%, rgba(56,189,248,0.12), transparent 60%)
-                `,
+                background: `radial-gradient(circle at 50% 20%, rgba(34,211,238,0.18), transparent 55%)`,
                 zIndex: 2
+            }} />
+            <div style={{
+                position: 'absolute',
+                inset: 0,
+                background: `radial-gradient(circle at 50% 85%, rgba(56,189,248,0.12), transparent 60%)`,
+                zIndex: 3
             }} />
 
             {/* --- CONTENT CONTAINER --- */}
@@ -131,20 +134,30 @@ export const ShareableWorkoutCard = forwardRef(({ session, isVisible = false, us
                         justifyContent: 'center'
                     }}>
                         {!logoFailed && (
-                            <img
-                                src="/pwa-192x192.png"
-                                alt="Vitalità"
-                                loading="eager"
-                                decoding="async"
-                                style={{
-                                    width: '70px',
-                                    height: '70px',
-                                    borderRadius: '16px',
-                                    objectFit: 'cover',
-                                    boxShadow: '0 0 18px rgba(34,211,238,0.35)'
-                                }}
-                                onError={() => setLogoFailed(true)}
-                            />
+                            <div style={{
+                                width: '70px',
+                                height: '70px',
+                                borderRadius: '16px',
+                                boxShadow: '0 0 18px rgba(34,211,238,0.35)',
+                                overflow: 'hidden',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                backgroundColor: '#020617'
+                            }}>
+                                <img
+                                    src="/pwa-192x192.png"
+                                    alt="Vitalità"
+                                    loading="eager"
+                                    decoding="async"
+                                    style={{
+                                        width: '100%',
+                                        height: '100%',
+                                        objectFit: 'cover'
+                                    }}
+                                    onError={() => setLogoFailed(true)}
+                                />
+                            </div>
                         )}
                         {logoFailed && <Activity size={22} color={cyanAccent} strokeWidth={2.5} />}
                     </div>
@@ -184,7 +197,7 @@ export const ShareableWorkoutCard = forwardRef(({ session, isVisible = false, us
                             height: '26px',
                             borderRadius: '999px',
                             background: 'linear-gradient(90deg, rgba(34,211,238,0) 0%, rgba(34,211,238,0.32) 40%, rgba(34,211,238,0) 100%)',
-                            filter: 'blur(8px)',
+                            boxShadow: '0 0 16px 8px rgba(34,211,238,0.2)',
                             opacity: 0.7
                         }} />
                         <div style={{
