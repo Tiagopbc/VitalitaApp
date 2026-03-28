@@ -148,6 +148,7 @@ export const ShareableWorkoutCard = forwardRef(({ session, isVisible = false, us
                                 <img
                                     src="/pwa-192x192.png"
                                     alt="Vitalità"
+                                    crossOrigin="anonymous"
                                     loading="eager"
                                     decoding="async"
                                     style={{
@@ -261,9 +262,14 @@ export const ShareableWorkoutCard = forwardRef(({ session, isVisible = false, us
                             fontWeight: '800',
                             textTransform: 'uppercase',
                             margin: 0,
-                            color: 'rgba(2,6,23,0.9)',
-                            WebkitTextStroke: `2px ${metallicColor}`,
-                            textShadow: '0 0 18px rgba(0,0,0,0.45)',
+                            color: '#020617', // Dark background color for hollow effect
+                            textShadow: `
+                                -1.5px -1.5px 0 ${metallicColor},
+                                 1.5px -1.5px 0 ${metallicColor},
+                                -1.5px  1.5px 0 ${metallicColor},
+                                 1.5px  1.5px 0 ${metallicColor},
+                                 0px 4px 18px rgba(0,0,0,0.65)
+                            `,
                             letterSpacing: '2px',
                             opacity: 0.95,
                             fontFamily: 'var(--font-heading)'
