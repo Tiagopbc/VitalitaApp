@@ -228,7 +228,7 @@ export default function WorkoutsPage({ onNavigateToCreate, onNavigateToWorkout, 
                 {/* New: Source Tabs - Hide if Trainer Mode (since trainer sees all relevant) */}
                 {!isTrainerMode && (
                     <div className="flex p-1 bg-slate-900/50 rounded-xl mb-6 border border-slate-800 backdrop-blur-sm overflow-x-auto no-scrollbar">
-                        {['all', 'meus', 'arquivados'].map((filter) => (
+                        {['all', 'meus', 'personal', 'arquivados'].map((filter) => (
                             <button
                                 key={filter}
                                 onClick={() => setSourceFilter(filter)}
