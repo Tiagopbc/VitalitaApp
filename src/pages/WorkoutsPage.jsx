@@ -17,7 +17,9 @@ import {
     Flame,
     Edit2,
     Copy,
-    Trash2
+    Trash2,
+    Archive,
+    ArchiveRestore
 } from 'lucide-react';
 
 import { RippleButton } from '../components/design-system/RippleButton';
@@ -62,7 +64,8 @@ export default function WorkoutsPage({ onNavigateToCreate, onNavigateToWorkout, 
                     category: data.category || 'fullbody',
                     createdBy: data.createdBy,
                     assignedByTrainer: data.assignedByTrainer,
-                    completedToday: false
+                    completedToday: false,
+                    isArchived: !!data.isArchived
                 }));
 
                 setWorkouts(formattedWorkouts);
@@ -92,12 +95,21 @@ export default function WorkoutsPage({ onNavigateToCreate, onNavigateToWorkout, 
         const matchesSearch = workout.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
             (workout.muscleGroups && workout.muscleGroups.some(g => g.toLowerCase().includes(searchQuery.toLowerCase())));
 
-        // 2. Source Filter (My vs. Personal)
+        // 2. Source Filter (My vs. Personal vs. Archived)
         let matchesSource = true;
-        if (sourceFilter === 'meus') {
-            matchesSource = workout.createdBy === user.uid || !workout.createdBy;
-        } else if (sourceFilter === 'personal') {
-            matchesSource = workout.createdBy && workout.createdBy !== user.uid;
+        
+        if (sourceFilter === 'arquivados') {
+            // Só mostra arquivados
+            matchesSource = workout.isArchived;
+        } else {
+            // Em todas as outras abas, ESCONDE os arquivados
+            if (workout.isArchived) return false;
+            
+            if (sourceFilter === 'meus') {
+                matchesSource = workout.createdBy === user.uid || !workout.createdBy;
+            } else if (sourceFilter === 'personal') {
+                matchesSource = workout.createdBy && workout.createdBy !== user.uid;
+            }
         }
 
         return matchesSearch && matchesSource;
@@ -163,6 +175,22 @@ export default function WorkoutsPage({ onNavigateToCreate, onNavigateToWorkout, 
             }
         } else if (action === 'edit') {
             onNavigateToCreate(workout);
+        } else if (action === 'archive') {
+            try {
+                const { db, doc, updateDoc } = await getFirestoreDeps();
+                await updateDoc(doc(db, 'workout_templates', workout.id), {
+                    isArchived: true
+                });
+                setWorkouts(prev => prev.map(w => w.id === workout.id ? { ...w, isArchived: true } : w));
+            } catch (err) { alert(err.message); }
+        } else if (action === 'unarchive') {
+            try {
+                const { db, doc, updateDoc } = await getFirestoreDeps();
+                await updateDoc(doc(db, 'workout_templates', workout.id), {
+                    isArchived: false
+                });
+                setWorkouts(prev => prev.map(w => w.id === workout.id ? { ...w, isArchived: false } : w));
+            } catch (err) { alert(err.message); }
         }
     };
 
@@ -199,17 +227,17 @@ export default function WorkoutsPage({ onNavigateToCreate, onNavigateToWorkout, 
 
                 {/* New: Source Tabs - Hide if Trainer Mode (since trainer sees all relevant) */}
                 {!isTrainerMode && (
-                    <div className="flex p-1 bg-slate-900/50 rounded-xl mb-6 border border-slate-800 backdrop-blur-sm">
-                        {['all', 'meus', 'personal'].map((filter) => (
+                    <div className="flex p-1 bg-slate-900/50 rounded-xl mb-6 border border-slate-800 backdrop-blur-sm overflow-x-auto no-scrollbar">
+                        {['all', 'meus', 'arquivados'].map((filter) => (
                             <button
                                 key={filter}
                                 onClick={() => setSourceFilter(filter)}
-                                className={`flex-1 py-2 px-4 rounded-lg text-sm font-semibold transition-all duration-300 ${sourceFilter === filter
+                                className={`flex-1 py-2 px-4 rounded-lg text-sm font-semibold transition-all duration-300 whitespace-nowrap ${sourceFilter === filter
                                     ? 'bg-cyan-500 text-black shadow-lg shadow-cyan-500/20'
                                     : 'text-slate-400 hover:text-white hover:bg-slate-800'
                                     }`}
                             >
-                                {filter === 'all' ? 'Todos' : filter === 'meus' ? 'Meus Treinos' : 'Personal Play'}
+                                {filter === 'all' ? 'Todos' : filter === 'meus' ? 'Meus Treinos' : filter === 'personal' ? 'Personal Play' : 'Arquivados'}
                             </button>
                         ))}
                     </div>
@@ -289,6 +317,13 @@ export default function WorkoutsPage({ onNavigateToCreate, onNavigateToWorkout, 
                                             <div className="absolute right-0 top-full mt-2 w-48 bg-slate-900/95 backdrop-blur-xl border border-slate-700 rounded-xl shadow-2xl z-20 overflow-hidden" onClick={(e) => e.stopPropagation()}>
                                                 <button onClick={(e) => handleMenuAction(e, 'edit', workout)} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-slate-300 hover:bg-slate-800 hover:text-cyan-400"><Edit2 size={16} /> Editar</button>
                                                 <button onClick={(e) => handleMenuAction(e, 'duplicate', workout)} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-slate-300 hover:bg-slate-800 hover:text-white"><Copy size={16} /> Duplicar</button>
+                                                
+                                                {workout.isArchived ? (
+                                                    <button onClick={(e) => handleMenuAction(e, 'unarchive', workout)} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-slate-300 hover:bg-slate-800 hover:text-white"><ArchiveRestore size={16} /> Desarquivar</button>
+                                                ) : (
+                                                    <button onClick={(e) => handleMenuAction(e, 'archive', workout)} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-slate-300 hover:bg-slate-800 hover:text-white"><Archive size={16} /> Arquivar</button>
+                                                )}
+
                                                 <div className="h-px bg-slate-800" />
                                                 <button onClick={(e) => handleMenuAction(e, 'delete', workout)} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-400 hover:bg-red-500/10"><Trash2 size={16} /> Excluir</button>
                                             </div>
