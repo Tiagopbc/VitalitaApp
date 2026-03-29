@@ -134,6 +134,11 @@ export default function WorkoutsPage({ onNavigateToCreate, onNavigateToWorkout, 
                 try {
                     const { db, doc, deleteDoc } = await getFirestoreDeps();
                     await deleteDoc(doc(db, 'workout_templates', workout.id));
+                    
+                    // Limpar cache após mutação
+                    const { workoutService } = await import('../services/workoutService');
+                    workoutService.clearCache();
+
                     setWorkouts(prev => prev.filter(w => w.id !== workout.id));
                 } catch (err) { alert(err.message); }
             }
@@ -150,6 +155,11 @@ export default function WorkoutsPage({ onNavigateToCreate, onNavigateToWorkout, 
             try {
                 const { db, collection, addDoc } = await getFirestoreDeps();
                 const docRef = await addDoc(collection(db, 'workout_templates'), newWorkoutData);
+                
+                // Limpar cache após mutação
+                const { workoutService } = await import('../services/workoutService');
+                workoutService.clearCache();
+
                 setWorkouts(prev => ([
                     {
                         id: docRef.id,
@@ -181,6 +191,10 @@ export default function WorkoutsPage({ onNavigateToCreate, onNavigateToWorkout, 
                 await updateDoc(doc(db, 'workout_templates', workout.id), {
                     isArchived: true
                 });
+                // Limpar cache após mutação
+                const { workoutService } = await import('../services/workoutService');
+                workoutService.clearCache();
+
                 setWorkouts(prev => prev.map(w => w.id === workout.id ? { ...w, isArchived: true } : w));
             } catch (err) { alert(err.message); }
         } else if (action === 'unarchive') {
@@ -189,6 +203,10 @@ export default function WorkoutsPage({ onNavigateToCreate, onNavigateToWorkout, 
                 await updateDoc(doc(db, 'workout_templates', workout.id), {
                     isArchived: false
                 });
+                // Limpar cache após mutação
+                const { workoutService } = await import('../services/workoutService');
+                workoutService.clearCache();
+
                 setWorkouts(prev => prev.map(w => w.id === workout.id ? { ...w, isArchived: false } : w));
             } catch (err) { alert(err.message); }
         }
