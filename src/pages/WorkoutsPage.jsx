@@ -166,94 +166,6 @@ export default function WorkoutsPage({ onNavigateToCreate, onNavigateToWorkout, 
         }
     };
 
-    // ----- SCRIPT DE IMPORTAÇÃO TEMPORÁRIA -----
-    const importNewWorkouts = async () => {
-        if (!window.confirm("Isso vai adicionar os 5 novos treinos à sua lista. Confirmar?")) return;
-        try {
-            const { db, collection, addDoc } = await getFirestoreDeps();
-            const wCol = collection(db, 'workout_templates');
-            
-            const newWorkouts = [
-              {
-                name: "Treino A - Peito e Tríceps", category: "push", muscleGroups: ["Peito", "Tríceps"],
-                exercises: [
-                  { name: "Supino reto com halteres", group: "Peito", target: "4x8", method: "Convencional", notes: "Base pesada. Intensidade controlada no final." },
-                  { name: "Supino inclinado com halteres", group: "Peito", target: "3x8-10", method: "Pirâmide Crescente", notes: "" },
-                  { name: "Flexão de braço", group: "Peito", target: "3x8-10", method: "Convencional", notes: "" },
-                  { name: "Crucifixo com halteres", group: "Peito", target: "3x10-15", method: "Pico de Contração", notes: "Segura 1 seg maior contração" },
-                  { name: "Tríceps francês com halter", group: "Tríceps", target: "3x10-15", method: "Convencional", notes: "" },
-                  { name: "Tríceps coice com halteres", group: "Tríceps", target: "2x12-15", method: "Drop Set", notes: "Drop set na última série" }
-                ]
-              },
-              {
-                name: "Treino B - Costas e Bíceps", category: "pull", muscleGroups: ["Costas", "Bíceps"],
-                exercises: [
-                  { name: "Remada curvada com halteres", group: "Costas", target: "4x8", method: "Convencional", notes: "Foco: costas fortes" },
-                  { name: "Remada unilateral com halter", group: "Costas", target: "3x8", method: "Convencional", notes: "3x8 cada lado" },
-                  { name: "Pullover com halter", group: "Costas", target: "3x8-10", method: "Pirâmide Crescente", notes: "" },
-                  { name: "Rosca alternada", group: "Bíceps", target: "3x10-12", method: "Convencional", notes: "" },
-                  { name: "Rosca martelo", group: "Bíceps", target: "3x10-12", method: "Bi-set", notes: "Bi set com rosca concentrada. Sem desc." },
-                  { name: "Rosca concentrada", group: "Bíceps", target: "2x10-15", method: "Pico de Contração", notes: "Segura 1 seg no topo" }
-                ]
-              },
-              {
-                name: "Treino C - Pernas Foco Quadríceps e Glúteos", category: "legs", muscleGroups: ["Pernas", "Glúteos"],
-                exercises: [
-                  { name: "Agachamento goblet", group: "Pernas", target: "4x8", method: "Convencional", notes: "S/ falha ext - gerenciar fadiga" },
-                  { name: "Agachamento búlgaro com halteres", group: "Pernas", target: "3x8", method: "Convencional", notes: "3x8 cada perna" },
-                  { name: "Afundo com halteres", group: "Pernas", target: "3x8-10", method: "Pirâmide Crescente", notes: "3x8-10 cada perna" },
-                  { name: "Elevação pélvica com halter", group: "Glúteos", target: "3x8-10", method: "Pico de Contração", notes: "Segura 2 seg no topo" },
-                  { name: "Panturrilha em pé com halteres", group: "Panturrilhas", target: "4x12-15", method: "Rest Pause", notes: "Rest pause últ série: reps+desc(15s)+reps" },
-                  { name: "Abdominal infra", group: "Abdômen", target: "3x12-15", method: "Convencional", notes: "" }
-                ]
-              },
-              {
-                name: "Treino D - Ombros e Abdômen", category: "push", muscleGroups: ["Ombros", "Abdômen"],
-                exercises: [
-                  { name: "Desenvolvimento com halteres", group: "Ombros", target: "4x8", method: "Convencional", notes: "" },
-                  { name: "Desenvolvimento Arnold com halteres", group: "Ombros", target: "3x8-10", method: "Convencional", notes: "" },
-                  { name: "Remada alta com halteres", group: "Ombros", target: "3x8-10", method: "Pirâmide Crescente", notes: "" },
-                  { name: "Elevação lateral", group: "Ombros", target: "4x10-15", method: "Drop Set", notes: "Drop set na última série" },
-                  { name: "Crucifixo inverso com halteres", group: "Ombros", target: "3x10-15", method: "Pico de Contração", notes: "" },
-                  { name: "Prancha", group: "Abdômen", target: "3x30-60", method: "Convencional", notes: "Segundos" },
-                  { name: "Abdominal com carga", group: "Abdômen", target: "3x12-15", method: "Convencional", notes: "" }
-                ]
-              },
-              {
-                name: "Treino E - Posteriores de Coxa, Glúteos", category: "legs", muscleGroups: ["Posterior", "Glúteos", "Panturrilhas"],
-                exercises: [
-                  { name: "Levantamento romeno com halteres", group: "Posterior", target: "4x8", method: "Convencional", notes: "" },
-                  { name: "Stiff com halteres", group: "Posterior", target: "3x8", method: "Convencional", notes: "" },
-                  { name: "Passada reversa com halteres", group: "Posterior", target: "3x8-10", method: "Pirâmide Crescente", notes: "ada perna" },
-                  { name: "Elevação pélvica com halter", group: "Glúteos", target: "3x8-10", method: "Pico de Contração", notes: "" },
-                  { name: "Panturrilha sentado com halter sobre os joelhos", group: "Panturrilhas", target: "4x12-15", method: "Rest Pause", notes: "Rest pause na última série" },
-                  { name: "Encolhimento com halteres", group: "Trapézio", target: "3x10-15", method: "Pico de Contração", notes: "Segura 1-2 seg no alto" },
-                  { name: "Elevação lateral extra ou rosca inversa", group: "Ombros", target: "2x12-15", method: "Convencional", notes: "" }
-                ]
-              }
-            ];
-            
-            for (const w of newWorkouts) {
-                await addDoc(wCol, {
-                    ...w,
-                    userId: user.uid,
-                    createdBy: user.uid,
-                    createdAt: new Date().toISOString(),
-                    estimatedDuration: '45-60min',
-                    lastPerformedDate: null,
-                    assignedByTrainer: false,
-                    isFavorite: false
-                });
-            }
-            alert("✅ Todos os 5 treinos foram cadastrados com sucesso! Pode recarregar a tela ou apertar OK.");
-            window.location.reload();
-        } catch (err) {
-            alert('Erro ao importar: ' + err.message);
-        }
-    };
-    // ---------------------------------------------
-
-
     // --- RENDER ---
     return (
         <div className="min-h-screen pb-32 pt-[calc(1.5rem+env(safe-area-inset-top))] px-4 lg:px-8 w-full max-w-5xl mx-auto">
@@ -272,23 +184,14 @@ export default function WorkoutsPage({ onNavigateToCreate, onNavigateToWorkout, 
                             </p>
                         </div>
                         
-                        <div className="flex flex-col gap-2">
-                            <RippleButton
-                                onClick={importNewWorkouts}
-                                className="bg-green-500 hover:bg-green-400 text-white font-bold py-2 px-3 rounded-xl flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(34,197,94,0.3)] animate-pulse"
-                            >
-                                ⬇️ IMPORTAR
-                            </RippleButton>
-
-                            <RippleButton
-                                onClick={() => onNavigateToCreate(null, { targetUserId: user.uid })}
-                                className="bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold py-3 px-6 rounded-xl flex items-center gap-2 shadow-[0_0_20px_rgba(6,182,212,0.3)] transition-all"
-                            >
-                                <Plus size={20} strokeWidth={2.5} />
-                                <span className="hidden sm:inline">Novo Treino</span>
-                                <span className="sm:hidden">Novo</span>
-                            </RippleButton>
-                        </div>
+                        <RippleButton
+                            onClick={() => onNavigateToCreate(null, { targetUserId: user.uid })}
+                            className="bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold py-3 px-6 rounded-xl flex items-center gap-2 shadow-[0_0_20px_rgba(6,182,212,0.3)] transition-all"
+                        >
+                            <Plus size={20} strokeWidth={2.5} />
+                            <span className="hidden sm:inline">Novo Treino</span>
+                            <span className="sm:hidden">Novo</span>
+                        </RippleButton>
                     </div>
                 )}
 
