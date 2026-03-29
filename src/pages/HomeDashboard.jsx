@@ -167,25 +167,27 @@ export function HomeDashboard({
 
     // 1. Lógica de Sugestão de Treino (Derivado via useMemo)
     const suggestedWorkout = React.useMemo(() => {
-        if (!templates || templates.length === 0) {
+        const activeTemplates = templates ? templates.filter(t => !t.isArchived) : [];
+        
+        if (activeTemplates.length === 0) {
             return null;
         }
 
         if (!latestSession) {
-            return templates[0];
+            return activeTemplates[0];
         }
 
-        const lastIndex = templates.findIndex(t =>
+        const lastIndex = activeTemplates.findIndex(t =>
             t.id === latestSession.templateId ||
             (t.name && latestSession.templateName && t.name === latestSession.templateName)
         );
 
         let nextIndex = 0;
         if (lastIndex !== -1) {
-            nextIndex = (lastIndex + 1) % templates.length;
+            nextIndex = (lastIndex + 1) % activeTemplates.length;
         }
 
-        return templates[nextIndex];
+        return activeTemplates[nextIndex];
 
     }, [templates, latestSession]);
 
