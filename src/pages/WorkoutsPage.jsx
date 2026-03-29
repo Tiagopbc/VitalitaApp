@@ -166,6 +166,94 @@ export default function WorkoutsPage({ onNavigateToCreate, onNavigateToWorkout, 
         }
     };
 
+    // ----- SCRIPT DE IMPORTAÇÃO TEMPORÁRIA -----
+    const importNewWorkouts = async () => {
+        if (!window.confirm("Isso vai adicionar os 5 novos treinos à sua lista. Confirmar?")) return;
+        try {
+            const { db, collection, addDoc } = await getFirestoreDeps();
+            const wCol = collection(db, 'workout_templates');
+            
+            const newWorkouts = [
+              {
+                name: "Treino A - Peito e Tríceps", category: "push", muscleGroups: ["Peito", "Tríceps"],
+                exercises: [
+                  { name: "Supino reto com halteres", group: "Peito", target: "4x8", method: "Convencional", notes: "Base pesada. Intensidade controlada no final." },
+                  { name: "Supino inclinado com halteres", group: "Peito", target: "3x8-10", method: "Pirâmide Crescente", notes: "" },
+                  { name: "Flexão de braço", group: "Peito", target: "3x8-10", method: "Convencional", notes: "" },
+                  { name: "Crucifixo com halteres", group: "Peito", target: "3x10-15", method: "Pico de Contração", notes: "Segura 1 seg maior contração" },
+                  { name: "Tríceps francês com halter", group: "Tríceps", target: "3x10-15", method: "Convencional", notes: "" },
+                  { name: "Tríceps coice com halteres", group: "Tríceps", target: "2x12-15", method: "Drop Set", notes: "Drop set na última série" }
+                ]
+              },
+              {
+                name: "Treino B - Costas e Bíceps", category: "pull", muscleGroups: ["Costas", "Bíceps"],
+                exercises: [
+                  { name: "Remada curvada com halteres", group: "Costas", target: "4x8", method: "Convencional", notes: "Foco: costas fortes" },
+                  { name: "Remada unilateral com halter", group: "Costas", target: "3x8", method: "Convencional", notes: "3x8 cada lado" },
+                  { name: "Pullover com halter", group: "Costas", target: "3x8-10", method: "Pirâmide Crescente", notes: "" },
+                  { name: "Rosca alternada", group: "Bíceps", target: "3x10-12", method: "Convencional", notes: "" },
+                  { name: "Rosca martelo", group: "Bíceps", target: "3x10-12", method: "Bi-set", notes: "Bi set com rosca concentrada. Sem desc." },
+                  { name: "Rosca concentrada", group: "Bíceps", target: "2x10-15", method: "Pico de Contração", notes: "Segura 1 seg no topo" }
+                ]
+              },
+              {
+                name: "Treino C - Pernas Foco Quadríceps e Glúteos", category: "legs", muscleGroups: ["Pernas", "Glúteos"],
+                exercises: [
+                  { name: "Agachamento goblet", group: "Pernas", target: "4x8", method: "Convencional", notes: "S/ falha ext - gerenciar fadiga" },
+                  { name: "Agachamento búlgaro com halteres", group: "Pernas", target: "3x8", method: "Convencional", notes: "3x8 cada perna" },
+                  { name: "Afundo com halteres", group: "Pernas", target: "3x8-10", method: "Pirâmide Crescente", notes: "3x8-10 cada perna" },
+                  { name: "Elevação pélvica com halter", group: "Glúteos", target: "3x8-10", method: "Pico de Contração", notes: "Segura 2 seg no topo" },
+                  { name: "Panturrilha em pé com halteres", group: "Panturrilhas", target: "4x12-15", method: "Rest Pause", notes: "Rest pause últ série: reps+desc(15s)+reps" },
+                  { name: "Abdominal infra", group: "Abdômen", target: "3x12-15", method: "Convencional", notes: "" }
+                ]
+              },
+              {
+                name: "Treino D - Ombros e Abdômen", category: "push", muscleGroups: ["Ombros", "Abdômen"],
+                exercises: [
+                  { name: "Desenvolvimento com halteres", group: "Ombros", target: "4x8", method: "Convencional", notes: "" },
+                  { name: "Desenvolvimento Arnold com halteres", group: "Ombros", target: "3x8-10", method: "Convencional", notes: "" },
+                  { name: "Remada alta com halteres", group: "Ombros", target: "3x8-10", method: "Pirâmide Crescente", notes: "" },
+                  { name: "Elevação lateral", group: "Ombros", target: "4x10-15", method: "Drop Set", notes: "Drop set na última série" },
+                  { name: "Crucifixo inverso com halteres", group: "Ombros", target: "3x10-15", method: "Pico de Contração", notes: "" },
+                  { name: "Prancha", group: "Abdômen", target: "3x30-60", method: "Convencional", notes: "Segundos" },
+                  { name: "Abdominal com carga", group: "Abdômen", target: "3x12-15", method: "Convencional", notes: "" }
+                ]
+              },
+              {
+                name: "Treino E - Posteriores de Coxa, Glúteos", category: "legs", muscleGroups: ["Posterior", "Glúteos", "Panturrilhas"],
+                exercises: [
+                  { name: "Levantamento romeno com halteres", group: "Posterior", target: "4x8", method: "Convencional", notes: "" },
+                  { name: "Stiff com halteres", group: "Posterior", target: "3x8", method: "Convencional", notes: "" },
+                  { name: "Passada reversa com halteres", group: "Posterior", target: "3x8-10", method: "Pirâmide Crescente", notes: "ada perna" },
+                  { name: "Elevação pélvica com halter", group: "Glúteos", target: "3x8-10", method: "Pico de Contração", notes: "" },
+                  { name: "Panturrilha sentado com halter sobre os joelhos", group: "Panturrilhas", target: "4x12-15", method: "Rest Pause", notes: "Rest pause na última série" },
+                  { name: "Encolhimento com halteres", group: "Trapézio", target: "3x10-15", method: "Pico de Contração", notes: "Segura 1-2 seg no alto" },
+                  { name: "Elevação lateral extra ou rosca inversa", group: "Ombros", target: "2x12-15", method: "Convencional", notes: "" }
+                ]
+              }
+            ];
+            
+            for (const w of newWorkouts) {
+                await addDoc(wCol, {
+                    ...w,
+                    userId: user.uid,
+                    createdBy: user.uid,
+                    createdAt: new Date().toISOString(),
+                    estimatedDuration: '45-60min',
+                    lastPerformedDate: null,
+                    assignedByTrainer: false,
+                    isFavorite: false
+                });
+            }
+            alert("✅ Todos os 5 treinos foram cadastrados com sucesso! Pode recarregar a tela ou apertar OK.");
+            window.location.reload();
+        } catch (err) {
+            alert('Erro ao importar: ' + err.message);
+        }
+    };
+    // ---------------------------------------------
+
+
 
     // --- RENDER ---
     return (
@@ -201,18 +289,13 @@ export default function WorkoutsPage({ onNavigateToCreate, onNavigateToWorkout, 
                 {/* New: Source Tabs - Hide if Trainer Mode (since trainer sees all relevant) */}
                 {!isTrainerMode && (
                     <div className="flex p-1 bg-slate-900/50 rounded-xl mb-6 border border-slate-800 backdrop-blur-sm">
-                        {['all', 'meus', 'personal'].map((filter) => (
-                            <button
-                                key={filter}
-                                onClick={() => setSourceFilter(filter)}
-                                className={`flex-1 py-2 px-4 rounded-lg text-sm font-semibold transition-all duration-300 ${sourceFilter === filter
-                                    ? 'bg-cyan-500 text-black shadow-lg shadow-cyan-500/20'
-                                    : 'text-slate-400 hover:text-white hover:bg-slate-800'
-                                    }`}
-                            >
-                                {filter === 'all' ? 'Todos' : filter === 'meus' ? 'Meus Treinos' : 'Personal Play'}
-                            </button>
-                        ))}
+                        
+                        <button 
+                            onClick={importNewWorkouts}
+                            className="flex-1 py-2 px-4 rounded-lg text-sm font-bold bg-green-500 text-white shadow-[0_0_15px_rgba(34,197,94,0.3)] animate-pulse"
+                        >
+                            ⬇️ IMPORTAR OS 5 NOVOS TREINOS
+                        </button>
                     </div>
                 )}
 
