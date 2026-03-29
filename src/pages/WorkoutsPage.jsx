@@ -268,7 +268,7 @@ export default function WorkoutsPage({ onNavigateToCreate, onNavigateToWorkout, 
                             key={workout.id}
                             style={{ animationDelay: `${idx * 100}ms` }}
                             onClick={() => handleCardClick(workout.id, workout.name)}
-                            className={`bg-slate-900/40 hover:border-cyan-500/30 group p-5 transition-all ${selectedWorkout === workout.id ? 'border-cyan-500/50 ring-1 ring-cyan-500/20' : ''}`}
+                            className={`relative bg-slate-900/40 hover:border-cyan-500/30 group p-5 transition-all ${selectedWorkout === workout.id ? 'border-cyan-500/50 ring-1 ring-cyan-500/20' : ''} ${activeCardMenu === workout.id ? 'z-50' : 'z-0'}`}
                         >
                             {/* --- Card Header --- */}
                             <div className="flex items-start justify-between gap-3 mb-4">
