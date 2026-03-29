@@ -254,7 +254,6 @@ export default function WorkoutsPage({ onNavigateToCreate, onNavigateToWorkout, 
     // ---------------------------------------------
 
 
-
     // --- RENDER ---
     return (
         <div className="min-h-screen pb-32 pt-[calc(1.5rem+env(safe-area-inset-top))] px-4 lg:px-8 w-full max-w-5xl mx-auto">
@@ -272,15 +271,24 @@ export default function WorkoutsPage({ onNavigateToCreate, onNavigateToWorkout, 
                                 Gerencie suas fichas de treino
                             </p>
                         </div>
+                        
+                        <div className="flex flex-col gap-2">
+                            <RippleButton
+                                onClick={importNewWorkouts}
+                                className="bg-green-500 hover:bg-green-400 text-white font-bold py-2 px-3 rounded-xl flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(34,197,94,0.3)] animate-pulse"
+                            >
+                                ⬇️ IMPORTAR
+                            </RippleButton>
 
-                        <RippleButton
-                            onClick={() => onNavigateToCreate(null, { targetUserId: user.uid })}
-                            className="bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold py-3 px-6 rounded-xl flex items-center gap-2 shadow-[0_0_20px_rgba(6,182,212,0.3)] transition-all"
-                        >
-                            <Plus size={20} strokeWidth={2.5} />
-                            <span className="hidden sm:inline">Novo Treino</span>
-                            <span className="sm:hidden">Novo</span>
-                        </RippleButton>
+                            <RippleButton
+                                onClick={() => onNavigateToCreate(null, { targetUserId: user.uid })}
+                                className="bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold py-3 px-6 rounded-xl flex items-center gap-2 shadow-[0_0_20px_rgba(6,182,212,0.3)] transition-all"
+                            >
+                                <Plus size={20} strokeWidth={2.5} />
+                                <span className="hidden sm:inline">Novo Treino</span>
+                                <span className="sm:hidden">Novo</span>
+                            </RippleButton>
+                        </div>
                     </div>
                 )}
 
@@ -289,13 +297,18 @@ export default function WorkoutsPage({ onNavigateToCreate, onNavigateToWorkout, 
                 {/* New: Source Tabs - Hide if Trainer Mode (since trainer sees all relevant) */}
                 {!isTrainerMode && (
                     <div className="flex p-1 bg-slate-900/50 rounded-xl mb-6 border border-slate-800 backdrop-blur-sm">
-                        
-                        <button 
-                            onClick={importNewWorkouts}
-                            className="flex-1 py-2 px-4 rounded-lg text-sm font-bold bg-green-500 text-white shadow-[0_0_15px_rgba(34,197,94,0.3)] animate-pulse"
-                        >
-                            ⬇️ IMPORTAR OS 5 NOVOS TREINOS
-                        </button>
+                        {['all', 'meus', 'personal'].map((filter) => (
+                            <button
+                                key={filter}
+                                onClick={() => setSourceFilter(filter)}
+                                className={`flex-1 py-2 px-4 rounded-lg text-sm font-semibold transition-all duration-300 ${sourceFilter === filter
+                                    ? 'bg-cyan-500 text-black shadow-lg shadow-cyan-500/20'
+                                    : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                                    }`}
+                            >
+                                {filter === 'all' ? 'Todos' : filter === 'meus' ? 'Meus Treinos' : 'Personal Play'}
+                            </button>
+                        ))}
                     </div>
                 )}
 
