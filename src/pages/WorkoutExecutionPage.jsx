@@ -494,7 +494,7 @@ export function WorkoutExecutionPage({ user }) {
     };
 
     return (
-        <div className="min-h-screen bg-[#020617] text-slate-100 p-4 pb-32 font-sans selection:bg-cyan-500/30">
+        <div className={`min-h-screen bg-[#020617] text-slate-100 p-4 ${focusMode ? 'pb-20' : 'pb-32'} font-sans selection:bg-cyan-500/30`}>
             {/* ACHIEVEMENT MODAL */}
             {showAchievementModal && newAchievements.length > 0 && (
                 <React.Suspense fallback={
@@ -654,12 +654,13 @@ export function WorkoutExecutionPage({ user }) {
                     </div>
                 )}
 
-                <div className="px-4 mb-2">
-                    <ProgressCard completedCount={completedExercisesCount} totalCount={totalExercises} />
-                </div>
+                {!focusMode && (
+                    <div className="px-4 mb-2">
+                        <ProgressCard completedCount={completedExercisesCount} totalCount={totalExercises} />
+                    </div>
+                )}
 
-
-                <main className="px-4 pb-32 space-y-4">
+                <main className={`px-4 ${focusMode ? 'pb-4' : 'pb-32'} space-y-4`}>
                     {focusMode ? (
                         exercises.length > 0 && (() => {
                             const ex = exercises[currentExerciseIndex];
