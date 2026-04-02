@@ -538,7 +538,7 @@ export function WorkoutExecutionPage({ user }) {
                 <div className="fixed inset-0 z-[200] bg-black/95 backdrop-blur-xl animate-in fade-in overflow-y-auto">
                     <div className="min-h-full flex flex-col items-center justify-center p-4">
                         <div className="w-full max-w-md flex flex-col items-center space-y-4 my-auto">
-                            <div className="origin-top scale-[0.85] sm:scale-100">
+                            <div className="origin-top scale-[0.85] sm:scale-100 -mb-[92px] sm:mb-0">
                                 <React.Suspense fallback={
                                     <div className="h-96 w-full rounded-3xl bg-slate-900/40 border border-slate-800/60 animate-pulse" />
                                 }>
