@@ -1,17 +1,12 @@
-import React, { forwardRef, useState } from 'react';
-import { Activity } from 'lucide-react';
+import React, { forwardRef } from 'react';
 
-const shareCardBgSrc = '/bg-share-dumbbells.jpg';
+// Fundo otimizado com elementos fixos assados.
+const shareCardBgSrc = '/bg-share-template.png';
 
 export const ShareableWorkoutCard = forwardRef(({ session, isVisible = false, userName = 'Atleta' }, ref) => {
-    const [logoFailed, setLogoFailed] = useState(false);
 
     if (!session) return null;
 
-    // Use a high-quality shiny text color to simulate the reference without risky gradients
-    // Reference has a white/cyan metallic look.
-    const metallicColor = '#e0f2fe'; // Sky-100 (very light blue/white)
-    const cyanAccent = '#22d3ee'; // Cyan-400
     const volumeValue = Number(session.volumeLoad || 0).toLocaleString('pt-BR');
     const volumeFontSize = Math.max(92, 126 - Math.max(0, volumeValue.length - 6) * 12);
     const volumeLetterSpacing = volumeValue.length >= 7 ? '-4px' : '-6px';
@@ -20,6 +15,8 @@ export const ShareableWorkoutCard = forwardRef(({ session, isVisible = false, us
     const templateParts = templateLabel.split(/\s[-–—]\s/);
     const templateTitle = (templateParts[0] || templateLabel).trim();
     const templateSubtitle = templateParts.slice(1).join(' - ').trim();
+
+    const cyanAccent = '#22d3ee';
 
     const baseStyles = isVisible ? {
         position: 'relative',
@@ -37,22 +34,16 @@ export const ShareableWorkoutCard = forwardRef(({ session, isVisible = false, us
             style={{
                 ...baseStyles,
                 width: '400px',
-                height: '711px', // 9:16 aspect ratio
+                height: '711px', // Proporção 9:16 controlada
                 backgroundColor: '#020617',
-                // fontFamily: "'Inter', sans-serif", // Removed to use global defaults
                 color: 'white',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                padding: '32px 22px',
-                boxSizing: 'border-box',
+                position: 'relative',
                 overflow: 'hidden',
                 borderRadius: isVisible ? '24px' : '0',
                 border: '1px solid rgba(148, 163, 184, 0.15)'
             }}
         >
-            {/* --- BACKGROUND IMAGE --- */}
+            {/* LADO FIXO (TEMPLATE ASSADO DA IMAGEM) */}
             <img
                 src={shareCardBgSrc}
                 alt="Background"
@@ -66,304 +57,165 @@ export const ShareableWorkoutCard = forwardRef(({ session, isVisible = false, us
                     height: '100%',
                     objectFit: 'cover',
                     zIndex: 0,
-                    opacity: 0.65
+                    opacity: 1 // Degradês e brilhos removidos daqui, pois estão na imagem!
                 }}
             />
 
-            {/* --- VIGNETTE OVERLAY --- */}
-            {/* Subtle darkening at top/bottom for readability without a full box */}
+            {/* LADO DINÂMICO (DADOS QUE FLUTUAM) */}
+            
+            {/* 1. NOME DO USUÁRIO */}
             <div style={{
                 position: 'absolute',
-                inset: 0,
-                background: `
-                    radial-gradient(ellipse at 14% 6%,
-                        rgba(2,6,23,0.98) 0%,
-                        rgba(2,6,23,0.85) 40%,
-                        rgba(2,6,23,0) 70%
-                    ),
-                    linear-gradient(to bottom, 
-                        rgba(2,6,23,0.85) 0%, 
-                        rgba(2,6,23,0.25) 30%, 
-                        rgba(2,6,23,0.25) 65%, 
-                        rgba(2,6,23,0.92) 100%
-                    )
-                `,
-                zIndex: 1
-            }} />
-
-            {/* --- SOFT GLOW LAYERS --- */}
-            <div style={{
-                position: 'absolute',
-                inset: 0,
-                background: `radial-gradient(circle at 50% 20%, rgba(34,211,238,0.18), transparent 55%)`,
-                zIndex: 2
-            }} />
-            <div style={{
-                position: 'absolute',
-                inset: 0,
-                background: `radial-gradient(circle at 50% 85%, rgba(56,189,248,0.12), transparent 60%)`,
-                zIndex: 3
-            }} />
-
-            {/* --- CONTENT CONTAINER --- */}
-            <div style={{
-                zIndex: 5,
+                top: '160px', /* IMPORTANTE: Ajuste essa distância se a pílula não cair acima do número */
+                left: '0',
                 width: '100%',
-                height: '100%',
+                display: 'flex',
+                justifyContent: 'center',
+                zIndex: 10
+            }}>
+                <div style={{
+                    position: 'relative',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                }}>
+                    <div style={{
+                        position: 'absolute',
+                        left: '-32px',
+                        right: '-32px',
+                        height: '26px',
+                        borderRadius: '999px',
+                        background: 'linear-gradient(90deg, rgba(34,211,238,0) 0%, rgba(34,211,238,0.32) 40%, rgba(34,211,238,0) 100%)',
+                        boxShadow: '0 0 16px 8px rgba(34,211,238,0.2)',
+                        opacity: 0.7
+                    }} />
+                    <div style={{
+                        fontSize: '15px',
+                        textTransform: 'uppercase',
+                        letterSpacing: '4px',
+                        color: '#e2f8ff',
+                        fontWeight: '800',
+                        textShadow: '0 2px 10px rgba(34,211,238,0.35), 0 2px 6px rgba(0,0,0,0.7)',
+                        maxWidth: '300px',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                        fontFamily: 'var(--font-heading)',
+                        padding: '4px 10px',
+                        borderRadius: '999px',
+                        background: 'rgba(2,6,23,0.35)',
+                        border: '1px solid rgba(34,211,238,0.25)',
+                        position: 'relative'
+                    }}>
+                        {displayName}
+                    </div>
+                </div>
+            </div>
+
+            {/* 2. NÚMERO GIGANTE (VOLUME) */}
+            <div style={{
+                position: 'absolute',
+                top: '210px', /* IMPORTANTE: Ajuste se o número não cair no exato centro antes da palavra KILOS */
+                left: '0',
+                width: '100%',
+                display: 'flex',
+                justifyContent: 'center',
+                zIndex: 10
+            }}>
+                <h1 style={{
+                    fontSize: `${volumeFontSize}px`,
+                    fontWeight: '900',
+                    lineHeight: '0.92',
+                    margin: 0,
+                    color: '#ffffff',
+                    letterSpacing: volumeLetterSpacing,
+                    textShadow: '0 6px 18px rgba(0,0,0,0.42)',
+                    fontFamily: 'var(--font-heading)'
+                }}>
+                    {volumeValue}
+                </h1>
+            </div>
+
+            {/* 3. TÍTULO E SUBTÍTULO DO TREINO */}
+            <div style={{
+                position: 'absolute',
+                bottom: '120px', /* IMPORTANTE: Ajuste se as palavras Costas e Bíceps ficarem ruins */
+                left: '0',
+                width: '100%',
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
-                justifyContent: 'space-between',
-                position: 'relative' // For zIndex
+                gap: '4px',
+                zIndex: 10
             }}>
-
-                {/* 1. TOP BRAND */}
                 <div style={{
-                    width: '100%',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    gap: '8px',
-                    marginTop: '0px'
+                    fontSize: '18px',
+                    fontWeight: '800',
+                    textTransform: 'uppercase',
+                    color: cyanAccent,
+                    letterSpacing: '1.5px',
+                    textShadow: '0 2px 4px rgba(0,0,0,0.8)',
+                    fontFamily: 'var(--font-heading)'
                 }}>
-                    <div style={{
-                        width: '72px',
-                        height: '72px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center'
-                    }}>
-                        {!logoFailed && (
-                            <div style={{
-                                width: '70px',
-                                height: '70px',
-                                borderRadius: '16px',
-                                boxShadow: '0 0 18px rgba(34,211,238,0.35)',
-                                overflow: 'hidden',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                backgroundColor: '#020617'
-                            }}>
-                                <img
-                                    src="/pwa-192x192.png"
-                                    alt="Vitalità"
-                                    crossOrigin="anonymous"
-                                    loading="eager"
-                                    decoding="async"
-                                    style={{
-                                        width: '100%',
-                                        height: '100%',
-                                        objectFit: 'cover'
-                                    }}
-                                    onError={() => setLogoFailed(true)}
-                                />
-                            </div>
-                        )}
-                        {logoFailed && <Activity size={22} color={cyanAccent} strokeWidth={2.5} />}
-                    </div>
-
-                    <div style={{
-                        padding: '6px 12px',
-                        borderRadius: '999px',
-                        background: 'rgba(2,6,23,0.35)',
-                        border: '1px solid rgba(148,163,184,0.35)',
-                        color: '#e2e8f0',
-                        fontSize: '10px',
-                        fontWeight: '700',
-                        letterSpacing: '2px',
-                        textTransform: 'uppercase',
-                        fontFamily: 'var(--font-sans)',
-                        boxShadow: '0 0 12px rgba(34,211,238,0.2)'
-                    }}>
-                        Treino Concluído
-                    </div>
+                    {templateTitle}
                 </div>
+                {templateSubtitle && (
+                    <div style={{
+                        fontSize: '13px',
+                        fontWeight: '600',
+                        textTransform: 'uppercase',
+                        color: '#94a3b8',
+                        letterSpacing: '1.5px',
+                        textShadow: '0 2px 4px rgba(0,0,0,0.65)',
+                        fontFamily: 'var(--font-sans)'
+                    }}>
+                        {templateSubtitle}
+                    </div>
+                )}
+            </div>
 
-                {/* 2. HERO STATS (CENTERED) */}
+            {/* 4. TEMPO E EXERCÍCIOS (TENTANDO DENTRO DAS CAPSULAS) */}
+            <div style={{
+                position: 'absolute',
+                bottom: '38px', /* IMPORTANTE: Ajuste vertical (Top/Bottom) para cair centro na linha contornada da capsula */
+                left: '0',
+                width: '100%',
+                display: 'flex',
+                justifyContent: 'center',
+                gap: '24px', /* IMPORTANTE: Largura separando as duas informações. Aumente se não encaixar na caixinha */
+                zIndex: 10
+            }}>
+                {/* Duração */}
                 <div style={{
+                    width: '130px', 
                     display: 'flex',
-                    flexDirection: 'column',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    flex: 1, // Takes available space
-                    gap: '6px',
-                    marginTop: '8px' // More breathing room below brand
+                    fontSize: '13px',
+                    color: '#e2e8f0',
+                    fontWeight: '700',
+                    textTransform: 'uppercase',
+                    letterSpacing: '2px',
+                    textShadow: '0 2px 4px rgba(0,0,0,0.65)',
                 }}>
-                    <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <div style={{
-                            position: 'absolute',
-                            left: '-32px',
-                            right: '-32px',
-                            height: '26px',
-                            borderRadius: '999px',
-                            background: 'linear-gradient(90deg, rgba(34,211,238,0) 0%, rgba(34,211,238,0.32) 40%, rgba(34,211,238,0) 100%)',
-                            boxShadow: '0 0 16px 8px rgba(34,211,238,0.2)',
-                            opacity: 0.7
-                        }} />
-                        <div style={{
-                            fontSize: '15px',
-                            textTransform: 'uppercase',
-                            letterSpacing: '4px',
-                            color: '#e2f8ff',
-                            fontWeight: '800',
-                            textShadow: '0 2px 10px rgba(34,211,238,0.35), 0 2px 6px rgba(0,0,0,0.7)',
-                            maxWidth: '300px',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            whiteSpace: 'nowrap',
-                            fontFamily: 'var(--font-heading)',
-                            marginTop: '6px',
-                            padding: '4px 10px',
-                            borderRadius: '999px',
-                            background: 'rgba(2,6,23,0.35)',
-                            border: '1px solid rgba(34,211,238,0.25)',
-                            position: 'relative'
-                        }}>
-                            {displayName}
-                        </div>
-                    </div>
-                    <div style={{
-                        position: 'relative',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center'
-                    }}>
-                        <h1 style={{
-                            fontSize: `${volumeFontSize}px`,
-                            fontWeight: '900',
-                            lineHeight: '0.92',
-                            margin: 0,
-                            color: '#ffffff',
-                            letterSpacing: volumeLetterSpacing,
-                            textShadow: '0 6px 18px rgba(0,0,0,0.42)',
-                            fontFamily: 'var(--font-heading)'
-                        }}>
-                            {volumeValue}
-                        </h1>
-                    </div>
-                    <div style={{
-                        width: '140px',
-                        height: '2px',
-                        borderRadius: '999px',
-                        background: 'linear-gradient(90deg, rgba(34,211,238,0) 0%, rgba(34,211,238,0.7) 50%, rgba(34,211,238,0) 100%)',
-                        boxShadow: '0 0 14px rgba(34,211,238,0.35)',
-                        marginTop: '2px'
-                    }} />
-                    <div style={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        gap: '6px',
-                        marginTop: '10px'
-                    }}>
-                        <h2 style={{
-                            fontSize: '44px',
-                            fontWeight: '800',
-                            textTransform: 'uppercase',
-                            margin: 0,
-                            color: '#020617', // Dark background color for hollow effect
-                            textShadow: `
-                                -1.5px -1.5px 0 ${metallicColor},
-                                 1.5px -1.5px 0 ${metallicColor},
-                                -1.5px  1.5px 0 ${metallicColor},
-                                 1.5px  1.5px 0 ${metallicColor},
-                                 0px 4px 18px rgba(0,0,0,0.65)
-                            `,
-                            letterSpacing: '2px',
-                            opacity: 0.95,
-                            fontFamily: 'var(--font-heading)'
-                        }}>
-                            KILOS
-                        </h2>
-                        <span style={{
-                            fontSize: '12px',
-                            color: '#cbd5e1',
-                            textTransform: 'uppercase',
-                            letterSpacing: '2.5px',
-                            fontWeight: '600'
-                        }}>
-                            Volume Empilhado
-                        </span>
-                    </div>
+                    {session.duration}
                 </div>
 
-                {/* 3. FOOTER INFO */}
+                {/* Quantidade */}
                 <div style={{
-                    width: '100%',
+                    width: '130px',
                     display: 'flex',
-                    flexDirection: 'column',
                     alignItems: 'center',
-                    textAlign: 'center',
-                    marginBottom: '6px',
-                    gap: '12px'
+                    justifyContent: 'center',
+                    fontSize: '13px',
+                    color: '#e2e8f0',
+                    fontWeight: '700',
+                    textTransform: 'uppercase',
+                    letterSpacing: '2px',
+                    textShadow: '0 2px 4px rgba(0,0,0,0.65)',
                 }}>
-                    <div style={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        gap: '4px'
-                    }}>
-                        <div style={{
-                            fontSize: '18px',
-                            fontWeight: '800',
-                            textTransform: 'uppercase',
-                            color: cyanAccent,
-                            letterSpacing: '1.5px',
-                            textShadow: '0 2px 4px rgba(0,0,0,0.8)',
-                            fontFamily: 'var(--font-heading)'
-                        }}>
-                            {templateTitle}
-                        </div>
-                        {templateSubtitle && (
-                            <div style={{
-                                fontSize: '13px',
-                                fontWeight: '600',
-                                textTransform: 'uppercase',
-                                color: '#94a3b8',
-                                letterSpacing: '1.5px',
-                                textShadow: '0 2px 4px rgba(0,0,0,0.65)',
-                                fontFamily: 'var(--font-sans)'
-                            }}>
-                                {templateSubtitle}
-                            </div>
-                        )}
-                        <div style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '10px',
-                            marginTop: '6px'
-                        }}>
-                            <span style={{
-                                fontSize: '13px',
-                                color: '#e2e8f0',
-                                fontWeight: '700',
-                                padding: '6px 10px',
-                                borderRadius: '999px',
-                                background: 'rgba(15,23,42,0.7)',
-                                border: '1px solid rgba(148,163,184,0.25)',
-                                textTransform: 'uppercase',
-                                letterSpacing: '2px'
-                            }}>
-                                {session.duration}
-                            </span>
-                            <span style={{
-                                fontSize: '13px',
-                                color: '#e2e8f0',
-                                fontWeight: '700',
-                                padding: '6px 10px',
-                                borderRadius: '999px',
-                                background: 'rgba(15,23,42,0.7)',
-                                border: '1px solid rgba(148,163,184,0.25)',
-                                textTransform: 'uppercase',
-                                letterSpacing: '2px'
-                            }}>
-                                {session.exercisesCount} Exercícios
-                            </span>
-                        </div>
-                    </div>
+                    {session.exercisesCount} Exercícios
                 </div>
-
             </div>
         </div>
     );

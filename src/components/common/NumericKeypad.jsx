@@ -23,12 +23,12 @@ export function NumericKeypad({ isOpen, onClose, onConfirm, initialValue = '', t
             setValue(prev => prev.slice(0, -1));
         } else if (key === '.') {
             if (!value.includes('.')) {
-                setValue(prev => prev + '.');
+                setValue(prev => prev === '' ? '0.' : prev + '.');
             }
         } else {
             // Prevenir comprimento absurdo
             if (value.length < 6) {
-                setValue(prev => prev + key);
+                setValue(prev => prev === '0' ? key : prev + key);
             }
         }
     };
