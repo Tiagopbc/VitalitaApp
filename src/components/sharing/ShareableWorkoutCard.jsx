@@ -34,7 +34,7 @@ export const ShareableWorkoutCard = forwardRef(({ session, isVisible = false, us
             style={{
                 ...baseStyles,
                 width: '400px',
-                height: '711px', // Proporção 9:16 controlada
+                height: '610px', // Altura reduzida para cropar o espaço morto e encurtar o card
                 backgroundColor: '#020617',
                 color: 'white',
                 position: 'relative',
@@ -56,6 +56,7 @@ export const ShareableWorkoutCard = forwardRef(({ session, isVisible = false, us
                     width: '100%',
                     height: '100%',
                     objectFit: 'cover',
+                    objectPosition: 'top', // Prende a imagem ao topo para que a redução de altura corte apenas baixo
                     zIndex: 0,
                     opacity: 1 // Degradês e brilhos removidos daqui, pois estão na imagem!
                 }}
@@ -119,7 +120,7 @@ export const ShareableWorkoutCard = forwardRef(({ session, isVisible = false, us
             {/* 3. TÍTULO E SUBTÍTULO DO TREINO */}
             <div style={{
                 position: 'absolute',
-                bottom: '120px', /* IMPORTANTE: Ajuste se as palavras Costas e Bíceps ficarem ruins */
+                bottom: '88px', // Aproximado do rodapé para fechar o buraco do cropping
                 left: '0',
                 width: '100%',
                 display: 'flex',
@@ -157,7 +158,7 @@ export const ShareableWorkoutCard = forwardRef(({ session, isVisible = false, us
             {/* 4. TEMPO E EXERCÍCIOS (TENTANDO DENTRO DAS CAPSULAS) */}
             <div style={{
                 position: 'absolute',
-                bottom: '28px', /* Descido para o centro das capsulas do footer */
+                bottom: '34px', /* Distância segura da nova borda inferor encortada */
                 left: '0',
                 width: '100%',
                 display: 'flex',
