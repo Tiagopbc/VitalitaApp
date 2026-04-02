@@ -49,6 +49,7 @@ function preloadImage(src) {
 
     const preloadPromise = new Promise((resolve) => {
         const img = new Image();
+        img.crossOrigin = 'anonymous'; // CRITICAL: Match the component's crossOrigin to stop Safari caching conflicts
         let settled = false;
         const finish = () => {
             if (settled) return;
@@ -416,17 +417,22 @@ export function WorkoutExecutionPage({ user }) {
             };
             await waitForImages(shareCardRef.current, 2500);
 
-            const { toBlob } = await import('html-to-image');
-            const blob = await toBlob(shareCardRef.current, {
+            const { toJpeg } = await import('html-to-image');
+            const dataUrl = await toJpeg(shareCardRef.current, {
                 cacheBust: false,
+                quality: 0.88, // Excelente relação peso/qualidade para o card jpg
                 backgroundColor: '#020617',
                 pixelRatio: Math.min(1.5, window.devicePixelRatio || 1)
             });
-            if (!blob) {
+            if (!dataUrl) {
                 throw new Error('Falha ao gerar imagem de compartilhamento.');
             }
 
-            const file = new File([blob], 'treino_concluido.png', { type: 'image/png' });
+            // Converter o base64 para Blob
+            const res = await fetch(dataUrl);
+            const blob = await res.blob();
+
+            const file = new File([blob], 'treino_concluido.jpg', { type: 'image/jpeg' });
 
             if (navigator.canShare && navigator.canShare({ files: [file] })) {
                 try {
@@ -447,7 +453,7 @@ export function WorkoutExecutionPage({ user }) {
             // Fallback de download
             const blobUrl = URL.createObjectURL(blob);
             const link = document.createElement('a');
-            link.download = `treino_${new Date().toISOString().slice(0, 10)}.png`;
+            link.download = `treino_${new Date().toISOString().slice(0, 10)}.jpg`;
             link.href = blobUrl;
             link.click();
             URL.revokeObjectURL(blobUrl);
