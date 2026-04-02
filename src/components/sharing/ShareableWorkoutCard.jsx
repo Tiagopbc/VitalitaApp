@@ -66,7 +66,7 @@ export const ShareableWorkoutCard = forwardRef(({ session, isVisible = false, us
             {/* 1. NOME DO USUÁRIO */}
             <div style={{
                 position: 'absolute',
-                top: '160px', /* IMPORTANTE: Ajuste essa distância se a pílula não cair acima do número */
+                top: '140px', /* Movido para cima */
                 left: '0',
                 width: '100%',
                 display: 'flex',
@@ -115,7 +115,7 @@ export const ShareableWorkoutCard = forwardRef(({ session, isVisible = false, us
             {/* 2. NÚMERO GIGANTE (VOLUME) */}
             <div style={{
                 position: 'absolute',
-                top: '210px', /* IMPORTANTE: Ajuste se o número não cair no exato centro antes da palavra KILOS */
+                top: '182px', /* Movido para cima, evitando sobrepor KILOS */
                 left: '0',
                 width: '100%',
                 display: 'flex',
@@ -177,17 +177,17 @@ export const ShareableWorkoutCard = forwardRef(({ session, isVisible = false, us
             {/* 4. TEMPO E EXERCÍCIOS (TENTANDO DENTRO DAS CAPSULAS) */}
             <div style={{
                 position: 'absolute',
-                bottom: '38px', /* IMPORTANTE: Ajuste vertical (Top/Bottom) para cair centro na linha contornada da capsula */
+                bottom: '31px', /* Descido levemente para alinhar no centro vertical da cápsula */
                 left: '0',
                 width: '100%',
                 display: 'flex',
                 justifyContent: 'center',
-                gap: '24px', /* IMPORTANTE: Largura separando as duas informações. Aumente se não encaixar na caixinha */
+                gap: '16px', /* Ajustado para bater com o espaçamento da imagem */
                 zIndex: 10
             }}>
                 {/* Duração */}
                 <div style={{
-                    width: '130px', 
+                    width: '150px', 
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -203,7 +203,7 @@ export const ShareableWorkoutCard = forwardRef(({ session, isVisible = false, us
 
                 {/* Quantidade */}
                 <div style={{
-                    width: '130px',
+                    width: '150px',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
