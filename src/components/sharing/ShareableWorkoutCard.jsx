@@ -47,7 +47,6 @@ export const ShareableWorkoutCard = forwardRef(({ session, isVisible = false, us
             <img
                 src={shareCardBgSrc}
                 alt="Background"
-                crossOrigin="anonymous"
                 loading="eager"
                 decoding="async"
                 style={{
