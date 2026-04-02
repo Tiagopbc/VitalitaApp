@@ -165,6 +165,7 @@ export function WorkoutExecutionPage({ user }) {
     const [selectedMethod, setSelectedMethod] = useState(null);
     const [focusMode, setFocusMode] = useState(false);
     const [isFinished, setIsFinished] = useState(false); // Previne "Sessões Zumbis"
+    const [isFinishingSession, setIsFinishingSession] = useState(false);
     const [newAchievements, setNewAchievements] = useState([]);
     const [showAchievementModal, setShowAchievementModal] = useState(false);
     const [restDuration, setRestDuration] = useState(90);
@@ -298,8 +299,8 @@ export function WorkoutExecutionPage({ user }) {
 
     const handleFinishWorkout = async () => {
         console.log("DEBUG: handleFinishWorkout started");
+        setIsFinishingSession(true);
 
-        // Capture data immediately to prevent "0 Kilos" issue
         setFrozenSession({
             exercises: JSON.parse(JSON.stringify(exercises)), // Deep clone
             elapsedSeconds
@@ -308,6 +309,7 @@ export function WorkoutExecutionPage({ user }) {
         setIsFinished(true); // Parar sincronização imediatamente
         const success = await finishSession(elapsedSeconds);
         console.log("DEBUG: finishSession result:", success);
+        
         if (success) {
             const { default: confetti } = await import('canvas-confetti');
             confetti({
@@ -316,7 +318,6 @@ export function WorkoutExecutionPage({ user }) {
                 origin: { y: 0.6 }
             });
 
-            // Verificar novas conquistas
             if (user) {
                 console.log("DEBUG: Checking achievements for user", user.uid);
                 const sessionPayload = {
@@ -327,23 +328,29 @@ export function WorkoutExecutionPage({ user }) {
                     userId: user.uid
                 };
 
-                checkNewAchievements(user.uid, sessionPayload, workoutService).then(unlocked => {
-                    console.log("DEBUG: checkNewAchievements result:", unlocked);
+                try {
+                    const unlocked = await checkNewAchievements(user.uid, sessionPayload, workoutService);
+                    setIsFinishingSession(false);
                     if (unlocked && unlocked.length > 0) {
                         setNewAchievements(unlocked);
                         setShowAchievementModal(true);
                     } else {
-                        console.log("DEBUG: Showing Finish Modal");
-                        setTimeout(() => setShowFinishModal(true), 800);
+                        setShowFinishModal(true);
                     }
-                }).catch(err => console.error("DEBUG: checkNewAchievements error", err));
+                } catch (err) {
+                    console.error("DEBUG: checkNewAchievements error", err);
+                    setIsFinishingSession(false);
+                    setShowFinishModal(true);
+                }
             } else {
-                console.log("DEBUG: No user, showing modal");
-                setTimeout(() => setShowFinishModal(true), 800);
+                setIsFinishingSession(false);
+                setShowFinishModal(true);
             }
         } else {
             console.error("DEBUG: finishSession returned false");
+            setIsFinishingSession(false);
             setIsFinished(false); // Reativar se falhar
+            setFrozenSession(null);
         }
     };
 
@@ -495,6 +502,15 @@ export function WorkoutExecutionPage({ user }) {
 
     return (
         <div className={`min-h-screen bg-[#020617] text-slate-100 p-4 ${focusMode ? 'pb-20' : 'pb-32'} font-sans selection:bg-cyan-500/30`}>
+            {/* LOADER DE FINALIZAÇÃO DA SESSÃO */}
+            {isFinishingSession && (
+                <div className="fixed inset-0 z-[300] flex flex-col items-center justify-center p-4 bg-[#020617]/95 backdrop-blur-xl animate-in fade-in duration-300 text-white">
+                    <div className="h-16 w-16 mb-6 rounded-full border-[3px] border-cyan-500/20 border-t-cyan-400 animate-spin" />
+                    <h3 className="text-xl font-extrabold tracking-widest text-cyan-400 mb-2 uppercase">Finalizando</h3>
+                    <p className="text-slate-400 text-sm font-medium animate-pulse">Salvando o seu esforço de hoje...</p>
+                </div>
+            )}
+
             {/* ACHIEVEMENT MODAL */}
             {showAchievementModal && newAchievements.length > 0 && (
                 <React.Suspense fallback={

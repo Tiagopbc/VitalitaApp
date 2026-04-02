@@ -1,7 +1,7 @@
 import React, { forwardRef } from 'react';
 
 // Fundo otimizado com elementos fixos assados.
-const shareCardBgSrc = '/bg-share-template.png';
+const shareCardBgSrc = '/bg-share-template.jpg';
 
 export const ShareableWorkoutCard = forwardRef(({ session, isVisible = false, userName = 'Atleta' }, ref) => {
 
