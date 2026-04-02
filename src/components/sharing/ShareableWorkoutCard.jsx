@@ -47,6 +47,7 @@ export const ShareableWorkoutCard = forwardRef(({ session, isVisible = false, us
             <img
                 src={shareCardBgSrc}
                 alt="Background"
+                crossOrigin="anonymous"
                 loading="eager"
                 decoding="async"
                 style={{
@@ -65,7 +66,7 @@ export const ShareableWorkoutCard = forwardRef(({ session, isVisible = false, us
             {/* 1. NOME DO USUÁRIO */}
             <div style={{
                 position: 'absolute',
-                top: '140px', /* Movido para cima */
+                top: '143px', /* Subido milímetros para alinhar na sua arte */
                 left: '0',
                 width: '100%',
                 display: 'flex',
@@ -73,48 +74,28 @@ export const ShareableWorkoutCard = forwardRef(({ session, isVisible = false, us
                 zIndex: 10
             }}>
                 <div style={{
-                    position: 'relative',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    justifyContent: 'center'
+                    fontSize: '15px',
+                    textTransform: 'uppercase',
+                    letterSpacing: '4px',
+                    color: '#e2f8ff',
+                    fontWeight: '800',
+                    textShadow: '0 2px 10px rgba(34,211,238,0.35), 0 2px 6px rgba(0,0,0,0.7)',
+                    maxWidth: '300px',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                    fontFamily: 'var(--font-heading)',
+                    position: 'relative'
+                    /* Removi fundos e bordas CSS daqui, pois a cápsula gráfica já está na sua imagem JPG de fundo */
                 }}>
-                    <div style={{
-                        position: 'absolute',
-                        left: '-32px',
-                        right: '-32px',
-                        height: '26px',
-                        borderRadius: '999px',
-                        background: 'linear-gradient(90deg, rgba(34,211,238,0) 0%, rgba(34,211,238,0.32) 40%, rgba(34,211,238,0) 100%)',
-                        boxShadow: '0 0 16px 8px rgba(34,211,238,0.2)',
-                        opacity: 0.7
-                    }} />
-                    <div style={{
-                        fontSize: '15px',
-                        textTransform: 'uppercase',
-                        letterSpacing: '4px',
-                        color: '#e2f8ff',
-                        fontWeight: '800',
-                        textShadow: '0 2px 10px rgba(34,211,238,0.35), 0 2px 6px rgba(0,0,0,0.7)',
-                        maxWidth: '300px',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                        fontFamily: 'var(--font-heading)',
-                        padding: '4px 10px',
-                        borderRadius: '999px',
-                        background: 'rgba(2,6,23,0.35)',
-                        border: '1px solid rgba(34,211,238,0.25)',
-                        position: 'relative'
-                    }}>
-                        {displayName}
-                    </div>
+                    {displayName}
                 </div>
             </div>
 
             {/* 2. NÚMERO GIGANTE (VOLUME) */}
             <div style={{
                 position: 'absolute',
-                top: '182px', /* Movido para cima, evitando sobrepor KILOS */
+                top: '170px', /* Movido ainda mais pra cima para desencostar do KILOS */
                 left: '0',
                 width: '100%',
                 display: 'flex',
@@ -176,17 +157,17 @@ export const ShareableWorkoutCard = forwardRef(({ session, isVisible = false, us
             {/* 4. TEMPO E EXERCÍCIOS (TENTANDO DENTRO DAS CAPSULAS) */}
             <div style={{
                 position: 'absolute',
-                bottom: '31px', /* Descido levemente para alinhar no centro vertical da cápsula */
+                bottom: '28px', /* Descido para o centro das capsulas do footer */
                 left: '0',
                 width: '100%',
                 display: 'flex',
                 justifyContent: 'center',
-                gap: '16px', /* Ajustado para bater com o espaçamento da imagem */
+                gap: '30px', /* Gap maior para empurrar as palavras para os polos */
                 zIndex: 10
             }}>
                 {/* Duração */}
                 <div style={{
-                    width: '150px', 
+                    width: '130px', 
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -202,7 +183,7 @@ export const ShareableWorkoutCard = forwardRef(({ session, isVisible = false, us
 
                 {/* Quantidade */}
                 <div style={{
-                    width: '150px',
+                    width: '130px',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
