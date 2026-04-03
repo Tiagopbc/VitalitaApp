@@ -63,7 +63,6 @@ export function useWorkoutSession(workoutId, user) {
 
                 // 2. Verificar Backup Local
                 const savedBackup = localStorage.getItem(backupKey);
-                let restored = false;
                 let localBackupData = null;
                 if (savedBackup) {
                     try {
