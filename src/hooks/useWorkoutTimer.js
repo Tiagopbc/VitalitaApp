@@ -8,6 +8,7 @@ import { useState, useEffect, useRef } from 'react';
 export function useWorkoutTimer(running = true, initialSeconds = 0) {
     const [elapsedSeconds, setElapsedSeconds] = useState(initialSeconds);
     const intervalRef = useRef(null);
+    const startTimeRef = useRef(null);
 
     // Sincronizar com initialSeconds se mudar essencialmente (e.g. carregado de persistência)
     // Mas cuidado para não sobrescrever timer rodando. 
@@ -16,8 +17,18 @@ export function useWorkoutTimer(running = true, initialSeconds = 0) {
 
     useEffect(() => {
         if (running) {
+            // Em vez de piscar +1 cegamente, calculamos a diferença real de tempo passado.
+            // Isso previne que o timer congele caso o Safari/Chrome no celular suspenda a aba.
+            // setElapsedSeconds "atual (prev)" já pode ter um valor (se pausou e voltou, ou se o DB carregou x tempo).
+            setElapsedSeconds(prev => {
+                startTimeRef.current = Date.now() - (prev * 1000);
+                return prev;
+            });
+
             intervalRef.current = setInterval(() => {
-                setElapsedSeconds(prev => prev + 1);
+                const now = Date.now();
+                const totalElapsed = Math.floor((now - startTimeRef.current) / 1000);
+                setElapsedSeconds(totalElapsed);
             }, 1000);
         } else {
             if (intervalRef.current) clearInterval(intervalRef.current);
@@ -27,6 +38,20 @@ export function useWorkoutTimer(running = true, initialSeconds = 0) {
             if (intervalRef.current) clearInterval(intervalRef.current);
         };
     }, [running]);
+
+    // Setter customizado: se o código de fora forçar o tempo (ex: puxar backup da nuvem ou inicial), a base Date muda também
+    const handleSetElapsedSeconds = (newVal) => {
+        if (typeof newVal === 'function') {
+            setElapsedSeconds(prev => {
+                const next = newVal(prev);
+                startTimeRef.current = Date.now() - (next * 1000);
+                return next;
+            });
+        } else {
+            startTimeRef.current = Date.now() - (newVal * 1000);
+            setElapsedSeconds(newVal);
+        }
+    };
 
     // Controles manuais se necessário
     const pause = () => {
@@ -46,7 +71,7 @@ export function useWorkoutTimer(running = true, initialSeconds = 0) {
 
     return {
         elapsedSeconds,
-        setElapsedSeconds,
+        setElapsedSeconds: handleSetElapsedSeconds,
         formatTime,
         pause
     };

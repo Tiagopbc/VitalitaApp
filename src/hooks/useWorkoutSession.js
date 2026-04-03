@@ -61,45 +61,54 @@ export function useWorkoutSession(workoutId, user) {
                     }
                 }
 
-                // Se encontrar sessão ativa, usá-la
-                if (activeData) {
-                    // Carregar dados do template (apenas metadados)
-                    const templateDoc = await getDoc(doc(db, 'workout_templates', workoutId));
-                    if (templateDoc.exists()) {
-                        setTemplate({ id: templateDoc.id, ...templateDoc.data() });
-                    }
-
-                    if (activeData.exercises) {
-                        setExercises(activeData.exercises);
-                        setInitialElapsed(activeData.elapsedSeconds || 0);
-                        lastSyncedRef.current = JSON.stringify(activeData.exercises);
-                        setLoading(false);
-                        return;
-                    }
-                }
-
                 // 2. Verificar Backup Local
                 const savedBackup = localStorage.getItem(backupKey);
                 let restored = false;
+                let localBackupData = null;
                 if (savedBackup) {
                     try {
                         const parsed = JSON.parse(savedBackup);
                         if (parsed.exercises && Array.isArray(parsed.exercises)) {
-                            setExercises(parsed.exercises);
-                            setInitialElapsed(parsed.elapsedSeconds || 0);
-
-                            const templateDoc = await getDoc(doc(db, 'workout_templates', workoutId));
-                            if (templateDoc.exists()) {
-                                setTemplate({ id: templateDoc.id, ...templateDoc.data() });
-                            }
-                            restored = true;
+                            localBackupData = parsed;
                         }
                     } catch {
                         localStorage.removeItem(backupKey);
                     }
                 }
 
-                if (restored) {
+                // Resolver conflito entre Nuvem e Local
+                // Usar o maior elapsedSeconds se ambos existirem
+                if (activeData) {
+                    const cloudElapsed = activeData.elapsedSeconds || 0;
+                    const localElapsed = localBackupData ? (localBackupData.elapsedSeconds || 0) : 0;
+                    
+                    const bestExercises = (localElapsed > cloudElapsed && localBackupData?.exercises) 
+                        ? localBackupData.exercises 
+                        : activeData.exercises;
+                    
+                    const bestElapsed = Math.max(cloudElapsed, localElapsed);
+
+                    // Carregar dados do template (apenas metadados)
+                    const templateDoc = await getDoc(doc(db, 'workout_templates', workoutId));
+                    if (templateDoc.exists()) {
+                        setTemplate({ id: templateDoc.id, ...templateDoc.data() });
+                    }
+
+                    if (bestExercises) {
+                        setExercises(bestExercises);
+                        setInitialElapsed(bestElapsed);
+                        lastSyncedRef.current = JSON.stringify(bestExercises);
+                        setLoading(false);
+                        return;
+                    }
+                } else if (localBackupData) {
+                    setExercises(localBackupData.exercises);
+                    setInitialElapsed(localBackupData.elapsedSeconds || 0);
+
+                    const templateDoc = await getDoc(doc(db, 'workout_templates', workoutId));
+                    if (templateDoc.exists()) {
+                        setTemplate({ id: templateDoc.id, ...templateDoc.data() });
+                    }
                     setLoading(false);
                     return;
                 }

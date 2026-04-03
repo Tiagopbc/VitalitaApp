@@ -501,7 +501,12 @@ export function WorkoutExecutionPage({ user }) {
         exercisesCount: completedExercisesCount,
         volumeLoad: displayExercises.reduce((acc, ex) => {
             return acc + ex.sets.reduce((sAcc, s) => {
-                return sAcc + (s.completed ? (Number(s.weight) * Number(s.reps)) : 0);
+                if (!s.completed) return sAcc;
+                const weightStr = (s.weight || '').toString().replace(',', '.');
+                const repsStr = (s.reps || '').toString().replace(',', '.');
+                const w = parseFloat(weightStr) || 0;
+                const r = parseFloat(repsStr) || 0;
+                return sAcc + (w * r);
             }, 0);
         }, 0)
     };
