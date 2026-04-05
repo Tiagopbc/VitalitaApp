@@ -502,6 +502,13 @@ export function WorkoutExecutionPage({ user }) {
         volumeLoad: displayExercises.reduce((acc, ex) => {
             return acc + ex.sets.reduce((sAcc, s) => {
                 if (!s.completed) return sAcc;
+                if (s.drops && s.drops.length > 0) {
+                    return sAcc + s.drops.reduce((dAcc, d) => {
+                        const dw = parseFloat((d.weight || '').toString().replace(',', '.')) || 0;
+                        const dr = parseFloat((d.reps || '').toString().replace(',', '.')) || 0;
+                        return dAcc + (dw * dr);
+                    }, 0);
+                }
                 const weightStr = (s.weight || '').toString().replace(',', '.');
                 const repsStr = (s.reps || '').toString().replace(',', '.');
                 const w = parseFloat(weightStr) || 0;
@@ -718,6 +725,7 @@ export function WorkoutExecutionPage({ user }) {
                                     lastReps={activeSet.lastReps}
                                     weightMode={activeSet.weightMode || 'total'}
                                     baseWeight={activeSet.baseWeight}
+                                    drops={activeSet.drops}
                                     onUpdateSet={updateExerciseSet}
                                     onUpdateSetMultiple={updateSetMultiple}
                                     onSetChange={(setNum) => handleSetNavigation(ex.id, setNum - 1)}
@@ -757,6 +765,7 @@ export function WorkoutExecutionPage({ user }) {
                                     lastReps={activeSet.lastReps}
                                     weightMode={activeSet.weightMode || 'total'}
                                     baseWeight={activeSet.baseWeight}
+                                    drops={activeSet.drops}
                                     onUpdateSet={updateExerciseSet}
                                     onUpdateSetMultiple={updateSetMultiple}
                                     onSetChange={(setNum) => handleSetNavigation(ex.id, setNum - 1)}
