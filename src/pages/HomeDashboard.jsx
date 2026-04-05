@@ -20,7 +20,11 @@ import {
     Crown,
     Target,
     Clock,
-    ChevronRight
+    ChevronRight,
+    ArrowDown,
+    Layers,
+    Info,
+    Minus
 } from 'lucide-react';
 import { StreakWeeklyGoalHybrid } from '../StreakWeeklyGoalHybrid';
 import { getFirestoreDeps } from '../firebaseDb';
@@ -413,6 +417,126 @@ export function HomeDashboard({
                     <p className="text-slate-400 text-sm">
                         Pronto para o próximo treino?
                     </p>
+                </div>
+
+                {/* MÚLTIPLAS DEMONSTRAÇÕES VISUAIS INJETADAS */}
+                <div className="mb-10 space-y-8">
+                    <div className="px-2">
+                        <h2 className="text-white text-xl font-bold flex items-center gap-2">
+                            <Layers className="text-cyan-400" /> Comparativo UI Drop Sets
+                        </h2>
+                        <p className="text-slate-400 text-xs mt-1">Veja as 3 abordagens lado a lado.</p>
+                    </div>
+
+                    {/* PROPOSTA 1 */}
+                    <div className="p-5 bg-slate-900/40 border border-cyan-500/30 rounded-[24px] shadow-[0_0_20px_rgba(6,182,212,0.1)] backdrop-blur-md relative overflow-hidden">
+                        <div className="absolute top-0 left-0 bg-gradient-to-r from-cyan-500 to-blue-500 text-white text-[9px] font-bold px-3 py-0.5 rounded-br-lg z-50 uppercase shadow-lg">
+                            Proposta 1: Lista em Cascata (Visão Total)
+                        </div>
+                        <div className="flex justify-between items-start mb-[10px] gap-3 mt-4">
+                            <div className="flex-1 min-w-0">
+                                <h3 className="text-[#e2e8f0] text-[20px] font-bold leading-tight uppercase">
+                                    AGACHAMENTO SMITH
+                                </h3>
+                                <div className="flex flex-wrap items-center gap-2 mt-2 mb-0.5">
+                                    <div className="flex items-center gap-1.5 bg-slate-800/50 px-2 py-0.5 rounded-md border border-cyan-700/50">
+                                        <Info size={11} className="text-cyan-400" />
+                                        <span className="text-[10px] font-bold text-cyan-300 uppercase">DROP SET</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="px-3 py-1.5 rounded-full text-base font-bold flex-shrink-0 border text-blue-500 bg-blue-500/10 border-blue-500/25">1 / 4</div>
+                        </div>
+                        <div className="flex gap-3 mt-4">
+                            <div className="w-1/2 flex justify-center h-8"><span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider text-center">PESO</span></div>
+                            <div className="w-1/2 flex justify-center h-8"><span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider text-center">REPETIÇÕES</span></div>
+                        </div>
+
+                        {/* Drop 1 */}
+                        <div className="grid grid-cols-2 gap-3 relative z-10">
+                            <div className="bg-[#0f172a] border border-cyan-500/30 rounded-[24px] p-1 flex items-center justify-between h-[48px]"><button className="w-10 h-10 rounded-full bg-slate-800/50 border border-slate-700 text-slate-400 flex items-center justify-center"><Minus size={16}/></button><div className="text-xl font-bold text-white">50</div><button className="w-10 h-10 rounded-full bg-cyan-500/10 border border-cyan-500/50 text-cyan-400 flex items-center justify-center"><Plus size={16}/></button></div>
+                            <div className="bg-[#0f172a] border border-slate-800 rounded-[24px] p-1 flex items-center justify-between h-[48px]"><button className="w-10 h-10 rounded-full bg-slate-800/50 border border-slate-700 text-slate-400 flex items-center justify-center"><Minus size={16}/></button><div className="text-xl font-bold text-white">15</div><button className="w-10 h-10 rounded-full bg-cyan-500/10 border border-cyan-500/50 text-cyan-400 flex items-center justify-center"><Plus size={16}/></button></div>
+                        </div>
+                        <div className="flex justify-center -my-3 relative z-0"><div className="bg-slate-900 border border-slate-700 p-0.5 rounded-full text-cyan-500"><ArrowDown size={14}/></div></div>
+                        
+                        {/* Drop 2 */}
+                        <div className="grid grid-cols-2 gap-3 relative z-10">
+                            <div className="bg-[#0f172a] border border-slate-800 rounded-[24px] p-1 flex items-center justify-between h-[48px]"><button className="w-10 h-10 rounded-full bg-slate-800/50 border border-slate-700 text-slate-400 flex items-center justify-center"><Minus size={16}/></button><div className="text-xl font-bold text-slate-300">40</div><button className="w-10 h-10 rounded-full bg-slate-800 border border-slate-700 text-slate-300 flex items-center justify-center"><Plus size={16}/></button></div>
+                            <div className="bg-[#0f172a] border border-slate-800 rounded-[24px] p-1 flex items-center justify-between h-[48px]"><button className="w-10 h-10 rounded-full bg-slate-800/50 border border-slate-700 text-slate-400 flex items-center justify-center"><Minus size={16}/></button><div className="text-xl font-bold text-slate-300">12</div><button className="w-10 h-10 rounded-full bg-slate-800 border border-slate-700 text-slate-300 flex items-center justify-center"><Plus size={16}/></button></div>
+                        </div>
+                        
+                        <button className="mt-2 mx-auto text-[10px] uppercase font-bold text-slate-400 border border-dashed border-slate-700 rounded-xl py-2 px-6 hover:border-cyan-500 hover:text-cyan-400">Adicionar Redução</button>
+                        <button className="w-auto min-w-[240px] px-8 py-4 mx-auto mt-4 rounded-[20px] font-bold text-sm tracking-wide bg-gradient-to-r from-blue-600 to-cyan-500 text-white flex items-center justify-center gap-2">CONCLUIR SÉRIE 1 COMPLETA <ArrowRight size={20}/></button>
+                    </div>
+
+
+                    {/* PROPOSTA 2 */}
+                    <div className="p-5 bg-slate-900/40 border border-indigo-500/30 rounded-[24px] shadow-lg backdrop-blur-md relative overflow-hidden">
+                        <div className="absolute top-0 left-0 bg-gradient-to-r from-indigo-500 to-purple-500 text-white text-[9px] font-bold px-3 py-0.5 rounded-br-lg z-50 uppercase shadow-lg">
+                            Proposta 2: Carrossel (Foco Unitário)
+                        </div>
+                        <div className="flex justify-between items-start mb-[10px] gap-3 mt-4">
+                            <div className="flex-1 min-w-0">
+                                <h3 className="text-[#e2e8f0] text-[20px] font-bold leading-tight uppercase relative">
+                                    AGACHAMENTO SMITH
+                                </h3>
+                                <div className="text-indigo-400 font-mono text-sm tracking-wide font-bold mb-2">SÉRIE 1 - <span className="underline decoration-indigo-400/50 underline-offset-4">DROP 2</span></div>
+                                
+                            </div>
+                        </div>
+                        <div className="flex gap-3 mt-2">
+                            <div className="w-1/2 flex justify-center h-8"><span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider text-center">PESO (NOVA CARGA)</span></div>
+                            <div className="w-1/2 flex justify-center h-8"><span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider text-center">REPETIÇÕES</span></div>
+                        </div>
+
+                        {/* Apenas 1 Drop Visível de cada vez (como série normal) */}
+                        <div className="grid grid-cols-2 gap-3 relative z-10">
+                            <div className="bg-[#0f172a] border border-indigo-500/50 rounded-[24px] p-1 flex items-center justify-between h-[64px] ring-2 ring-indigo-500/20"><button className="w-12 h-12 rounded-full bg-slate-800/50 border border-slate-700 text-slate-400 flex items-center justify-center"><Minus size={20}/></button><div className="text-2xl font-bold text-white">40</div><button className="w-12 h-12 rounded-full bg-indigo-500/10 border border-indigo-500/50 text-indigo-400 flex items-center justify-center"><Plus size={20}/></button></div>
+                            <div className="bg-[#0f172a] border border-slate-800 rounded-[24px] p-1 flex items-center justify-between h-[64px]"><button className="w-12 h-12 rounded-full bg-slate-800/50 border border-slate-700 text-slate-400 flex items-center justify-center"><Minus size={20}/></button><div className="text-2xl font-bold text-white">12</div><button className="w-12 h-12 rounded-full bg-slate-800 border border-slate-700 text-slate-300 flex items-center justify-center"><Plus size={20}/></button></div>
+                        </div>
+
+                        <div className="flex mt-2 justify-center gap-1.5"><div className="w-2 h-2 rounded-full bg-indigo-500 blur-[1px]"></div><div className="w-2 h-2 rounded-full bg-indigo-400"></div><div className="w-2 h-2 rounded-full bg-slate-700"></div></div>
+                        
+                        <button className="w-auto min-w-[240px] px-8 py-4 mx-auto mt-4 rounded-[20px] font-bold text-sm tracking-wide bg-gradient-to-r from-indigo-500 to-purple-500 text-white flex items-center justify-center gap-2">CONCLUIR Drop E AÇANCAR <ArrowRight size={20}/></button>
+                    </div>
+
+
+                    {/* PROPOSTA 3 */}
+                    <div className="p-5 bg-slate-900/40 border border-emerald-500/30 rounded-[24px] shadow-lg backdrop-blur-md relative overflow-hidden">
+                         <div className="absolute top-0 left-0 bg-gradient-to-r from-emerald-500 to-teal-500 text-white text-[9px] font-bold px-3 py-0.5 rounded-br-lg z-50 uppercase shadow-lg">
+                            Proposta 3: Texto Combinado / Array
+                        </div>
+                        <div className="flex justify-between items-start mb-[10px] gap-3 mt-4">
+                             <div className="flex-1 min-w-0">
+                                <h3 className="text-[#e2e8f0] text-[20px] font-bold leading-tight uppercase">
+                                    AGACHAMENTO SMITH
+                                </h3>
+                                <div className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest mt-1 mb-2">Drop Set Textual</div>
+                            </div>
+                        </div>
+
+                        <div className="flex gap-3 mt-2">
+                            <div className="w-1/2 flex justify-center h-8"><span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider text-center">HISTÓRICO PESO</span></div>
+                            <div className="w-1/2 flex justify-center h-8"><span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider text-center">HISTÓRICO REPS</span></div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-3 relative z-10">
+                            <div className="bg-[#0f172a] border border-emerald-500/20 rounded-[24px] p-1 flex items-center justify-between h-[64px]">
+                                <button className="w-10 h-10 rounded-full bg-slate-800/50 border border-slate-700 text-slate-400 opacity-50"><Minus size={16}/></button>
+                                <div className="text-base font-bold text-emerald-300 tracking-widest px-1">50/40/30</div>
+                                <button className="w-10 h-10 rounded-full bg-slate-800/50 border border-slate-700 text-slate-400 opacity-50"><Plus size={16}/></button>
+                            </div>
+                            <div className="bg-[#0f172a] border border-slate-800 rounded-[24px] p-1 flex items-center justify-between h-[64px]">
+                                <button className="w-10 h-10 rounded-full bg-slate-800/50 border border-slate-700 text-slate-400 opacity-50"><Minus size={16}/></button>
+                                <div className="text-base font-bold text-slate-200 tracking-widest px-1">15/12/10</div>
+                                <button className="w-10 h-10 rounded-full bg-slate-800/50 border border-slate-700 text-slate-400 opacity-50"><Plus size={16}/></button>
+                            </div>
+                        </div>
+                        <div className="text-center mt-3"><p className="text-[10px] text-slate-500">Usando o teclado T9 para digitar múltiplos valores.</p></div>
+
+                        <button className="w-auto min-w-[240px] px-8 py-4 mx-auto mt-4 rounded-[20px] font-bold text-sm tracking-wide bg-gradient-to-r from-emerald-600 to-teal-500 text-white flex items-center justify-center gap-2">CONCLUIR SÉRIE COMPLETA <ArrowRight size={20}/></button>
+                    </div>
+
                 </div>
 
                 {/* 2. PROGRESSO */}
