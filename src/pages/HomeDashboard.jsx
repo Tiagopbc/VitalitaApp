@@ -352,22 +352,13 @@ export function HomeDashboard({
             <div className="w-full px-4 lg:px-8 flex flex-col">
 
                 {/* 1. SAUDAÇÃO */}
-                <div className="pt-6 pb-6 relative">
+                <div className="pt-6 pb-6">
                     <h1 className="text-2xl lg:text-3xl mb-1 text-white font-heading font-bold">
                         {greeting}, <span className="bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">{firstName}</span>
                     </h1>
                     <p className="text-slate-400 text-sm">
                         Pronto para o próximo treino?
                     </p>
-                    <button 
-                        onClick={async () => {
-                            const { seedWorkoutData } = await import('../utils/seedTiago.js');
-                            await seedWorkoutData(user);
-                        }}
-                        className="absolute right-0 top-6 px-4 py-2 bg-green-600 hover:bg-green-500 text-white font-bold rounded-lg shadow-xl animate-pulse"
-                    >
-                        Importar Treinos Tiago
-                    </button>
                 </div>
 
                 {/* 2. PROGRESSO */}
