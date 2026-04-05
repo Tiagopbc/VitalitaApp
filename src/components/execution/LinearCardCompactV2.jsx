@@ -19,7 +19,6 @@ export const LinearCardCompactV2 = memo(function LinearCardCompactV2({
     actualReps,
     drops,
     observation,
-    onUpdateSet,
     onUpdateNotes,
     onCompleteSet,
     suggestedWeight,
