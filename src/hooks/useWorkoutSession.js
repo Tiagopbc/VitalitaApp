@@ -388,7 +388,8 @@ export function useWorkoutSession(workoutId, user) {
                         reps: s.reps || '',
                         completed: !!s.completed,
                         weightMode: s.weightMode || 'total',
-                        baseWeight: s.baseWeight || null
+                        baseWeight: s.baseWeight || null,
+                        drops: s.drops || null
                     })),
                     notes: ex.notes || ''
                 }))

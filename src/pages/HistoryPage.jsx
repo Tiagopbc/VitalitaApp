@@ -316,9 +316,22 @@ function HistoryPage({ user, isEmbedded = false }) {
 
                     if (exerciseData.sets && Array.isArray(exerciseData.sets)) {
                         exerciseData.sets.forEach(s => {
-                            if (s.completed && Number(s.weight) > bestWeight) {
+                            if (!s.completed) return;
+                            
+                            // Check the root weight first
+                            if (Number(s.weight) > bestWeight) {
                                 bestWeight = Number(s.weight);
                                 bestReps = Number(s.reps);
+                            }
+                            
+                            // Also iterate safely over drops, if any
+                            if (s.drops && Array.isArray(s.drops)) {
+                                s.drops.forEach(d => {
+                                    if (Number(d.weight) > bestWeight) {
+                                        bestWeight = Number(d.weight);
+                                        bestReps = Number(d.reps);
+                                    }
+                                });
                             }
                         });
                     } else if (exerciseData.weight) {
