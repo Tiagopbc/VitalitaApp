@@ -234,7 +234,7 @@ export const LinearCardCompactV2 = memo(function LinearCardCompactV2({
                         </div>
                         <div className="flex items-center gap-1.5 bg-slate-800/50 px-2 py-0.5 rounded-md border border-slate-700/50">
                             <Target size={11} className="text-cyan-500" />
-                            <span className="text-[11px] font-bold text-cyan-400 tracking-wide">{repsGoal}</span>
+                            <span className="text-[11px] font-bold text-cyan-400 tracking-wide">Meta: {repsGoal}</span>
                         </div>
                         <div onClick={onMethodClick} className="flex items-center gap-1.5 bg-slate-800/50 px-2 py-0.5 rounded-md border border-slate-700/50 cursor-pointer hover:bg-slate-700 transition-all group/badge">
                             <Info size={11} className="text-blue-400 group-hover/badge:text-cyan-400 transition-colors" />
