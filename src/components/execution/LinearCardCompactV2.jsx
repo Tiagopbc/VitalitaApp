@@ -190,7 +190,7 @@ export const LinearCardCompactV2 = memo(function LinearCardCompactV2({
                 alert('Preencha os valores de peso e repetição em todas as sub-séries (drops)!');
                 return;
             }
-            onCompleteSet(exerciseId, currentSet, drops[0].weight, drops[0].reps, drops[0].weightMode, drops[0].baseWeight);
+            onCompleteSet(exerciseId, currentSet, drops[0].weight, drops[0].reps, drops[0].weightMode, drops[0].baseWeight, drops);
         } else {
             const w = (weight && parseFloat(weight) > 0) ? weight : suggestedWeight;
             const r = (actualReps && actualReps.trim() !== '') ? actualReps : suggestedReps;

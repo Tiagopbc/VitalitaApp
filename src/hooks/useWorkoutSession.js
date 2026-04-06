@@ -284,7 +284,7 @@ export function useWorkoutSession(workoutId, user) {
         } : ex));
     }, []);
 
-    const completeSetAutoFill = useCallback((exId, setNumber, weight, actualReps, weightMode = 'total', baseWeight = null) => {
+    const completeSetAutoFill = useCallback((exId, setNumber, weight, actualReps, weightMode = 'total', baseWeight = null, drops = null) => {
         setExercises(prev => prev.map(ex => {
             if (ex.id !== exId) return ex;
 
@@ -314,7 +314,8 @@ export function useWorkoutSession(workoutId, user) {
                             weight: weight,
                             reps: actualReps,
                             weightMode: weightMode,
-                            baseWeight: baseWeight
+                            baseWeight: baseWeight,
+                            drops: drops ? drops.map(d => ({ ...d, id: generateId(), reps: d.reps })) : null
                         };
                     }
                     return s;
