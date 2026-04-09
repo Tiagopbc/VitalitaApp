@@ -423,7 +423,7 @@ export function WorkoutExecutionPage({ user }) {
             // Executar uma vez rápido e descartar o resultado resolve esse bug de CORS/Cache.
             try {
                 await toJpeg(shareCardRef.current, { pixelRatio: 0.1 });
-            } catch (e) {
+            } catch {
                 // ignora erros do warmup
             }
 
