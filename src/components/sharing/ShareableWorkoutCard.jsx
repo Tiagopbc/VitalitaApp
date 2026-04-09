@@ -67,7 +67,7 @@ export const ShareableWorkoutCard = forwardRef(({ session, isVisible = false, us
             {/* 1. NOME DO USUÁRIO */}
             <div style={{
                 position: 'absolute',
-                top: '143px', /* Subido milímetros para alinhar na sua arte */
+                top: '120px', /* Movido mais para cima para não espremer o número */
                 left: '0',
                 width: '100%',
                 display: 'flex',
@@ -96,7 +96,7 @@ export const ShareableWorkoutCard = forwardRef(({ session, isVisible = false, us
             {/* 2. NÚMERO GIGANTE (VOLUME) */}
             <div style={{
                 position: 'absolute',
-                top: '170px', /* Movido ainda mais pra cima para desencostar do KILOS */
+                top: '145px', /* Subido para não colidir com o "KILOS" vazado do fundo */
                 left: '0',
                 width: '100%',
                 display: 'flex',
@@ -120,7 +120,7 @@ export const ShareableWorkoutCard = forwardRef(({ session, isVisible = false, us
             {/* 3. TÍTULO E SUBTÍTULO DO TREINO */}
             <div style={{
                 position: 'absolute',
-                bottom: '88px', // Aproximado do rodapé para fechar o buraco do cropping
+                bottom: '80px', // Abaixado um pouco para encaixar melhor no espaço vazio
                 left: '0',
                 width: '100%',
                 display: 'flex',
@@ -163,7 +163,7 @@ export const ShareableWorkoutCard = forwardRef(({ session, isVisible = false, us
                 width: '100%',
                 display: 'flex',
                 justifyContent: 'center',
-                gap: '30px', /* Gap maior para empurrar as palavras para os polos */
+                gap: '85px', /* Gap maior para empurrar as palavras certinho para o centro das pílulas no fundo */
                 zIndex: 10
             }}>
                 {/* Duração */}

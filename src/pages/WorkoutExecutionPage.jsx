@@ -418,8 +418,18 @@ export function WorkoutExecutionPage({ user }) {
             await waitForImages(shareCardRef.current, 2500);
 
             const { toJpeg } = await import('html-to-image');
+            
+            // WARM-UP PASS: O Safari geralmente falha na 1ª geração da imagem (fundo preto). 
+            // Executar uma vez rápido e descartar o resultado resolve esse bug de CORS/Cache.
+            try {
+                await toJpeg(shareCardRef.current, { pixelRatio: 0.1 });
+            } catch (e) {
+                // ignora erros do warmup
+            }
+
+            // Geração Real
             const dataUrl = await toJpeg(shareCardRef.current, {
-                cacheBust: false,
+                cacheBust: true, // Forçar ignorar cache zoado do Safari para carregar a imagem
                 quality: 0.88, // Excelente relação peso/qualidade para o card jpg
                 backgroundColor: '#020617',
                 pixelRatio: Math.min(1.5, window.devicePixelRatio || 1)
