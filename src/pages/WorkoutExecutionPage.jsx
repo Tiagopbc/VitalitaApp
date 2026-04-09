@@ -519,7 +519,7 @@ export function WorkoutExecutionPage({ user }) {
     };
 
     return (
-        <div className={`min-h-screen bg-[#020617] text-slate-100 p-4 ${focusMode ? 'pb-20' : 'pb-32'} font-sans selection:bg-cyan-500/30`}>
+        <div className={`min-h-screen bg-[#020617] text-slate-100 p-4 pb-40 font-sans selection:bg-cyan-500/30`}>
             {/* LOADER DE FINALIZAÇÃO DA SESSÃO */}
             {isFinishingSession && (
                 <div className="fixed inset-0 z-[300] flex flex-col items-center justify-center p-4 bg-[#020617]/95 backdrop-blur-xl animate-in fade-in duration-300 text-white">
@@ -694,7 +694,7 @@ export function WorkoutExecutionPage({ user }) {
                     </div>
                 )}
 
-                <main className={`px-4 ${focusMode ? 'pb-4' : 'pb-32'} space-y-4`}>
+                <main className={`px-4 space-y-4`}>
                     {focusMode ? (
                         exercises.length > 0 && (() => {
                             const ex = exercises[currentExerciseIndex];
