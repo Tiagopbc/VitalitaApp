@@ -1,9 +1,28 @@
-import React, { forwardRef } from 'react';
+import React, { forwardRef, useState, useEffect } from 'react';
 
 // Fundo otimizado com elementos fixos assados.
 const shareCardBgSrc = '/bg-share-template.jpg';
 
 export const ShareableWorkoutCard = forwardRef(({ session, isVisible = false, userName = 'Atleta' }, ref) => {
+
+    const [bgImage, setBgImage] = useState(shareCardBgSrc);
+
+    // Converte a imagem de fundo em Base64 assim que o card renderiza invisível, 
+    // garantindo que o html-to-image e o Safari sempre renderizem a foto na hora do click.
+    useEffect(() => {
+        let isMounted = true;
+        fetch(shareCardBgSrc)
+            .then(res => res.blob())
+            .then(blob => {
+                const reader = new FileReader();
+                reader.onloadend = () => {
+                    if (isMounted) setBgImage(reader.result);
+                };
+                reader.readAsDataURL(blob);
+            })
+            .catch(console.error);
+        return () => { isMounted = false; };
+    }, []);
 
     if (!session) return null;
 
@@ -45,9 +64,8 @@ export const ShareableWorkoutCard = forwardRef(({ session, isVisible = false, us
         >
             {/* LADO FIXO (TEMPLATE ASSADO DA IMAGEM) */}
             <img
-                src={shareCardBgSrc}
+                src={bgImage}
                 alt="Background"
-                crossOrigin="anonymous"
                 loading="eager"
                 decoding="async"
                 style={{
@@ -67,7 +85,7 @@ export const ShareableWorkoutCard = forwardRef(({ session, isVisible = false, us
             {/* 1. NOME DO USUÁRIO */}
             <div style={{
                 position: 'absolute',
-                top: '120px', /* Movido mais para cima para não espremer o número */
+                top: '100px', /* Subido mais para não colidir com o topo do número grande */
                 left: '0',
                 width: '100%',
                 display: 'flex',
@@ -96,7 +114,7 @@ export const ShareableWorkoutCard = forwardRef(({ session, isVisible = false, us
             {/* 2. NÚMERO GIGANTE (VOLUME) */}
             <div style={{
                 position: 'absolute',
-                top: '145px', /* Subido para não colidir com o "KILOS" vazado do fundo */
+                top: '130px', /* Subido para livrar a letra "KILOS" do png vazado no fundo */
                 left: '0',
                 width: '100%',
                 display: 'flex',
@@ -158,7 +176,7 @@ export const ShareableWorkoutCard = forwardRef(({ session, isVisible = false, us
             {/* 4. TEMPO E EXERCÍCIOS (TENTANDO DENTRO DAS CAPSULAS) */}
             <div style={{
                 position: 'absolute',
-                bottom: '34px', /* Distância segura da nova borda inferor encortada */
+                bottom: '46px', /* Subido pois estava abaixo das cápsulas na foto */
                 left: '0',
                 width: '100%',
                 display: 'flex',
