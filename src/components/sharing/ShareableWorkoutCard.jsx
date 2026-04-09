@@ -26,197 +26,129 @@ export const ShareableWorkoutCard = forwardRef(({ session, isVisible = false, us
 
     if (!session) return null;
 
-    const volumeValue = Number(session.volumeLoad || 0).toLocaleString('pt-BR');
-    const volumeFontSize = Math.max(92, 126 - Math.max(0, volumeValue.length - 6) * 12);
-    const volumeLetterSpacing = volumeValue.length >= 7 ? '-4px' : '-6px';
-    const displayName = (userName || 'Atleta').toString().trim() || 'Atleta';
-    const templateLabel = (session.templateName || 'Treino Personalizado').toString();
-    const templateParts = templateLabel.split(/\s[-–—]\s/);
-    const templateTitle = (templateParts[0] || templateLabel).trim();
-    const templateSubtitle = templateParts.slice(1).join(' - ').trim();
+    // Resolução visual: 400x610 | Resolução interna (Retina 2x): 800x1220
+    const canvasWidth = 800;
+    const canvasHeight = 1220;
 
-    const cyanAccent = '#22d3ee';
+    React.useEffect(() => {
+        const canvas = ref?.current;
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+
+        // Limpar canvas
+        ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+
+        // Preenche de preto padrão se demorar
+        ctx.fillStyle = '#020617';
+        ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+
+        const img = new Image();
+        img.crossOrigin = 'anonymous'; // apenas para sanidade
+        img.onload = () => {
+            // 1. Desenha Imagem de Fundo (100% de cobertura)
+            ctx.drawImage(img, 0, 0, canvasWidth, canvasHeight);
+
+            // FUNÇÃO AUXILIAR PARA COR E SOMBRA
+            const applyGlow = (color, blurClass, offsetClass) => {
+                ctx.fillStyle = color;
+                ctx.shadowColor = blurClass;
+                ctx.shadowBlur = offsetClass.blur || 0;
+                ctx.shadowOffsetY = offsetClass.y || 0;
+                ctx.shadowOffsetX = 0;
+            };
+
+            const resetShadow = () => {
+                ctx.shadowColor = 'transparent';
+                ctx.shadowBlur = 0;
+                ctx.shadowOffsetY = 0;
+            };
+
+            ctx.textAlign = 'center';
+
+            // ATENÇÃO: As posições Y abaixo foram traduzidas em escala 2x usando a sua referência!
+            // Ex: CSS top 100px -> Canvas Y = 200px.
+
+            // ============================================
+            // 1. NOME
+            // ============================================
+            ctx.textBaseline = 'top';
+            applyGlow('#e2f8ff', 'rgba(0,0,0,0.7)', { blur: 12, y: 4 });
+            ctx.font = '800 30px "Outfit", "Inter", sans-serif'; 
+            // LetterSpacing em canvas é recente, podemos simular adicionando espaços,
+            // mas o suporte nativo já é bom via estilo do Javascript moderno:
+            canvas.style.letterSpacing = '4px'; // Fallback visual, não afeta fillText em alguns browsers!
+            // Para garantir o visual no canvas nativo sem bugs:
+            const nameToDraw = displayName.split('').join(String.fromCharCode(8201)); // Thin space hack
+            ctx.fillText(nameToDraw, canvasWidth / 2, 200);
+
+            // ============================================
+            // 2. VOLUME GIGANTE
+            // ============================================
+            applyGlow('#ffffff', 'rgba(0,0,0,0.42)', { blur: 18, y: 6 });
+            ctx.font = `900 ${volumeFontSize * 2}px "Outfit", "Inter", sans-serif`;
+            // Reduzimos o tracking (letterSpacing negativo) um pouquinho na fonte grande.
+            ctx.fillText(volumeValue, canvasWidth / 2, 260);
+
+            // ============================================
+            // 3. TÍTULO DO TREINO
+            // ============================================
+            applyGlow(cyanAccent, 'rgba(0,0,0,0.8)', { blur: 4, y: 2 });
+            ctx.font = '800 36px "Outfit", "Inter", sans-serif';
+            ctx.fillText(templateTitle.split('').join(String.fromCharCode(8201)), canvasWidth / 2, 980);
+
+            // ============================================
+            // 4. SUBTÍTULO
+            // ============================================
+            if (templateSubtitle) {
+                applyGlow('#94a3b8', 'rgba(0,0,0,0.65)', { blur: 4, y: 2 });
+                ctx.font = '600 26px "Inter", sans-serif';
+                ctx.fillText(templateSubtitle.split('').join(String.fromCharCode(8201)), canvasWidth / 2, 1030);
+            }
+
+            // ============================================
+            // 5. CÁPSULAS DE BASE (Exatamente nas Metades Polares: 25% e 75% da largura)
+            // ============================================
+            ctx.textBaseline = 'middle'; 
+            applyGlow('#e2e8f0', 'rgba(0,0,0,0.65)', { blur: 4, y: 2 });
+            ctx.font = '700 26px "Inter", sans-serif';
+            
+            // X: 200 (25% = Centro da Pílula Esquerda), Y: 1116 (calculado para encaixar)
+            ctx.fillText(session.duration.split('').join(String.fromCharCode(8201)), 200, 1111);
+            
+            // X: 600 (75% = Centro da Pílula Direita)
+            const exTxt = `${session.exercisesCount} EXERCÍCIOS`.split('').join(String.fromCharCode(8201));
+            ctx.fillText(exTxt, 600, 1111);
+
+            resetShadow(); // Limpeza
+        };
+        img.src = shareCardBgSrc;
+
+    }, [session, displayName, volumeValue, volumeFontSize, templateTitle, templateSubtitle, cyanAccent, ref]);
 
     const baseStyles = isVisible ? {
         position: 'relative',
-        boxShadow: '0 18px 44px -22px rgba(0, 0, 0, 0.65)'
+        boxShadow: '0 18px 44px -22px rgba(0, 0, 0, 0.65)',
+        width: '400px',
+        height: '610px',
+        borderRadius: '24px',
+        border: '1px solid rgba(148, 163, 184, 0.15)',
+        backgroundColor: '#020617',
     } : {
         position: 'fixed',
         left: '-9999px',
-        top: 0
+        top: 0,
+        width: '400px',
+        height: '610px'
     };
 
     return (
-        <div
+        <canvas
             ref={ref}
-            id="share-card"
-            style={{
-                ...baseStyles,
-                width: '400px',
-                height: '610px', // Altura reduzida para cropar o espaço morto e encurtar o card
-                backgroundColor: '#020617',
-                color: 'white',
-                position: 'relative',
-                overflow: 'hidden',
-                borderRadius: isVisible ? '24px' : '0',
-                border: '1px solid rgba(148, 163, 184, 0.15)'
-            }}
-        >
-            {/* LADO FIXO (TEMPLATE ASSADO DA IMAGEM) */}
-            <img
-                src={bgImage}
-                alt="Background"
-                loading="eager"
-                decoding="async"
-                style={{
-                    position: 'absolute',
-                    inset: 0,
-                    width: '100%',
-                    height: '100%',
-                    objectFit: 'cover',
-                    objectPosition: 'top', // Prende a imagem ao topo para que a redução de altura corte apenas baixo
-                    zIndex: 0,
-                    opacity: 1 // Degradês e brilhos removidos daqui, pois estão na imagem!
-                }}
-            />
-
-            {/* LADO DINÂMICO (DADOS QUE FLUTUAM) */}
-            
-            {/* 1. NOME DO USUÁRIO */}
-            <div style={{
-                position: 'absolute',
-                top: '100px', /* Subido mais para não colidir com o topo do número grande */
-                left: '0',
-                width: '100%',
-                display: 'flex',
-                justifyContent: 'center',
-                zIndex: 10
-            }}>
-                <div style={{
-                    fontSize: '15px',
-                    textTransform: 'uppercase',
-                    letterSpacing: '4px',
-                    color: '#e2f8ff',
-                    fontWeight: '800',
-                    textShadow: '0 2px 10px rgba(34,211,238,0.35), 0 2px 6px rgba(0,0,0,0.7)',
-                    maxWidth: '300px',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
-                    fontFamily: 'var(--font-heading)',
-                    position: 'relative'
-                    /* Removi fundos e bordas CSS daqui, pois a cápsula gráfica já está na sua imagem JPG de fundo */
-                }}>
-                    {displayName}
-                </div>
-            </div>
-
-            {/* 2. NÚMERO GIGANTE (VOLUME) */}
-            <div style={{
-                position: 'absolute',
-                top: '130px', /* Subido para livrar a letra "KILOS" do png vazado no fundo */
-                left: '0',
-                width: '100%',
-                display: 'flex',
-                justifyContent: 'center',
-                zIndex: 10
-            }}>
-                <h1 style={{
-                    fontSize: `${volumeFontSize}px`,
-                    fontWeight: '900',
-                    lineHeight: '0.92',
-                    margin: 0,
-                    color: '#ffffff',
-                    letterSpacing: volumeLetterSpacing,
-                    textShadow: '0 6px 18px rgba(0,0,0,0.42)',
-                    fontFamily: 'var(--font-heading)'
-                }}>
-                    {volumeValue}
-                </h1>
-            </div>
-
-            {/* 3. TÍTULO E SUBTÍTULO DO TREINO */}
-            <div style={{
-                position: 'absolute',
-                bottom: '80px', // Abaixado um pouco para encaixar melhor no espaço vazio
-                left: '0',
-                width: '100%',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                gap: '4px',
-                zIndex: 10
-            }}>
-                <div style={{
-                    fontSize: '18px',
-                    fontWeight: '800',
-                    textTransform: 'uppercase',
-                    color: cyanAccent,
-                    letterSpacing: '1.5px',
-                    textShadow: '0 2px 4px rgba(0,0,0,0.8)',
-                    fontFamily: 'var(--font-heading)'
-                }}>
-                    {templateTitle}
-                </div>
-                {templateSubtitle && (
-                    <div style={{
-                        fontSize: '13px',
-                        fontWeight: '600',
-                        textTransform: 'uppercase',
-                        color: '#94a3b8',
-                        letterSpacing: '1.5px',
-                        textShadow: '0 2px 4px rgba(0,0,0,0.65)',
-                        fontFamily: 'var(--font-sans)'
-                    }}>
-                        {templateSubtitle}
-                    </div>
-                )}
-            </div>
-
-            {/* 4. TEMPO E EXERCÍCIOS (TENTANDO DENTRO DAS CAPSULAS) */}
-            <div style={{
-                position: 'absolute',
-                bottom: '46px', /* Subido pois estava abaixo das cápsulas na foto */
-                left: '0',
-                width: '100%',
-                display: 'flex',
-                justifyContent: 'center',
-                gap: '85px', /* Gap maior para empurrar as palavras certinho para o centro das pílulas no fundo */
-                zIndex: 10
-            }}>
-                {/* Duração */}
-                <div style={{
-                    width: '130px', 
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '13px',
-                    color: '#e2e8f0',
-                    fontWeight: '700',
-                    textTransform: 'uppercase',
-                    letterSpacing: '2px',
-                    textShadow: '0 2px 4px rgba(0,0,0,0.65)',
-                }}>
-                    {session.duration}
-                </div>
-
-                {/* Quantidade */}
-                <div style={{
-                    width: '130px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '13px',
-                    color: '#e2e8f0',
-                    fontWeight: '700',
-                    textTransform: 'uppercase',
-                    letterSpacing: '2px',
-                    textShadow: '0 2px 4px rgba(0,0,0,0.65)',
-                }}>
-                    {session.exercisesCount} Exercícios
-                </div>
-            </div>
-        </div>
+            width={canvasWidth}
+            height={canvasHeight}
+            id="share-card-canvas"
+            style={baseStyles}
+        />
     );
 });
 

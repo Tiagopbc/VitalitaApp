@@ -391,56 +391,19 @@ export function WorkoutExecutionPage({ user }) {
                 await waitWithTimeout(document.fonts.ready, 2000);
             }
 
-            const waitForImages = async (root, timeoutMs = 2000) => {
-                const images = Array.from(root.querySelectorAll('img'));
-                if (images.length === 0) return;
-                await Promise.all(images.map(img => new Promise((resolve) => {
-                    if (img.complete) return resolve();
-                    let settled = false;
-                    const finish = () => {
-                        if (settled) return;
-                        settled = true;
-                        img.onload = null;
-                        img.onerror = null;
-                        resolve();
-                    };
-                    const timer = setTimeout(finish, timeoutMs);
-                    img.onload = () => {
-                        clearTimeout(timer);
-                        finish();
-                    };
-                    img.onerror = () => {
-                        clearTimeout(timer);
-                        finish();
-                    };
-                })));
-            };
-            await waitForImages(shareCardRef.current, 2500);
-
-            const { toJpeg } = await import('html-to-image');
-            
-            // WARM-UP PASS: O Safari geralmente falha na 1ª geração da imagem (fundo preto). 
-            // Executar uma vez rápido e descartar o resultado resolve esse bug de CORS/Cache.
-            try {
-                await toJpeg(shareCardRef.current, { pixelRatio: 0.1 });
-            } catch {
-                // ignora erros do warmup
+            // Pega o Canvas montado (já nativo!)
+            const canvas = shareCardRef.current;
+            if (!canvas || !canvas.toBlob) {
+                throw new Error('Canvas não disponível para exportação.');
             }
 
-            // Geração Real
-            const dataUrl = await toJpeg(shareCardRef.current, {
-                cacheBust: true, // Forçar ignorar cache zoado do Safari para carregar a imagem
-                quality: 0.88, // Excelente relação peso/qualidade para o card jpg
-                backgroundColor: '#020617',
-                pixelRatio: Math.min(1.5, window.devicePixelRatio || 1)
+            // Extrai a imagem hiper rápida
+            const blob = await new Promise((resolve, reject) => {
+                canvas.toBlob((b) => {
+                    if (b) resolve(b);
+                    else reject(new Error('Falha gerar blob do canvas'));
+                }, 'image/jpeg', 0.88);
             });
-            if (!dataUrl) {
-                throw new Error('Falha ao gerar imagem de compartilhamento.');
-            }
-
-            // Converter o base64 para Blob
-            const res = await fetch(dataUrl);
-            const blob = await res.blob();
 
             const file = new File([blob], 'treino_concluido.jpg', { type: 'image/jpeg' });
 
