@@ -143,59 +143,41 @@ export function RestTimer({ initialTime = 90, onComplete, isOpen, onClose, onDur
                     </div>
                 </div>
 
-                {/* Display Circular do Cronômetro ou Botão OK */}
-                <div className="relative my-6 flex items-center justify-center w-64 h-64">
-                    {status === 'complete' ? (
-                        <button
-                            onClick={onClose}
-                            className="group relative w-56 h-28 rounded-full flex items-center justify-center transition-all duration-500 ease-out animate-in zoom-in-75 fade-in shadow-[0_4px_30px_rgba(16,185,129,0.2)] hover:shadow-[0_8px_40px_rgba(16,185,129,0.4)] hover:scale-105 active:scale-95 overflow-hidden z-10"
-                        >
-                            {/* Fundo Premium Glassmorphism */}
-                            <div className="absolute inset-0 bg-gradient-to-br from-emerald-400/20 to-emerald-600/40 backdrop-blur-md rounded-full border border-emerald-400/30 group-hover:from-emerald-400/30 group-hover:to-emerald-500/50 transition-colors duration-500"></div>
-                            {/* Efeito de brilho rotativo / pulse */}
-                            <div className="absolute inset-0 rounded-full bg-emerald-400/10 animate-pulse"></div>
-                            {/* Texto Premium */}
-                            <span className="relative text-6xl font-black tracking-widest text-transparent bg-clip-text bg-gradient-to-b from-emerald-50 to-emerald-200 drop-shadow-sm ml-1">
-                                OK
-                            </span>
-                        </button>
-                    ) : (
-                        <>
-                            {/* Círculo SVG */}
-                            <svg className="absolute inset-0 w-64 h-64 transform -rotate-90 drop-shadow-2xl z-0">
-                                {/* Trilho de Fundo */}
-                                <circle
-                                    cx="128"
-                                    cy="128"
-                                    r={radius}
-                                    stroke="#1e293b"
-                                    strokeWidth="6"
-                                    fill="transparent"
-                                />
-                                {/* Progresso */}
-                                <circle
-                                    cx="128"
-                                    cy="128"
-                                    r={radius}
-                                    stroke="#06b6d4"
-                                    strokeWidth="6"
-                                    fill="transparent"
-                                    strokeDasharray={circumference}
-                                    strokeDashoffset={progressOffset}
-                                    strokeLinecap="round"
-                                    className="transition-all duration-300 ease-linear"
-                                    style={{ filter: status === 'running' ? 'drop-shadow(0 0 8px rgba(6,182,212,0.5))' : 'none' }}
-                                />
-                            </svg>
+                {/* Display Circular do Cronômetro */}
+                <div className="relative my-6">
+                    {/* Círculo SVG */}
+                    <svg className="w-64 h-64 transform -rotate-90 drop-shadow-2xl">
+                        {/* Trilho de Fundo */}
+                        <circle
+                            cx="128"
+                            cy="128"
+                            r={radius}
+                            stroke="#1e293b"
+                            strokeWidth="6"
+                            fill="transparent"
+                        />
+                        {/* Progresso */}
+                        <circle
+                            cx="128"
+                            cy="128"
+                            r={radius}
+                            stroke={status === 'complete' ? '#22c55e' : '#06b6d4'}
+                            strokeWidth="6"
+                            fill="transparent"
+                            strokeDasharray={circumference}
+                            strokeDashoffset={progressOffset}
+                            strokeLinecap="round"
+                            className="transition-all duration-300 ease-linear"
+                            style={{ filter: status === 'running' ? 'drop-shadow(0 0 8px rgba(6,182,212,0.5))' : 'none' }}
+                        />
+                    </svg>
 
-                            {/* Texto de Tempo */}
-                            <div className="absolute inset-0 flex items-center justify-center z-10">
-                                <span className="text-5xl font-bold tracking-tighter text-white animate-in fade-in duration-300">
-                                    {formatTime(timeLeft)}
-                                </span>
-                            </div>
-                        </>
-                    )}
+                    {/* Texto de Tempo */}
+                    <div className="absolute inset-0 flex items-center justify-center">
+                        <span className={`text-5xl font-bold tracking-tighter ${status === 'complete' ? 'text-emerald-400' : 'text-white'}`}>
+                            {formatTime(timeLeft)}
+                        </span>
+                    </div>
                 </div>
 
                 {/* Área de Controles */}
