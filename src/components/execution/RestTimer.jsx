@@ -174,9 +174,18 @@ export function RestTimer({ initialTime = 90, onComplete, isOpen, onClose, onDur
 
                     {/* Texto de Tempo */}
                     <div className="absolute inset-0 flex items-center justify-center">
-                        <span className={`text-5xl font-bold tracking-tighter ${status === 'complete' ? 'text-emerald-400' : 'text-white'}`}>
-                            {formatTime(timeLeft)}
-                        </span>
+                        {status === 'complete' ? (
+                            <button
+                                onClick={onClose}
+                                className="text-7xl font-black text-emerald-400 tracking-widest hover:scale-105 active:scale-95 transition-all drop-shadow-[0_0_15px_rgba(52,211,153,0.6)] animate-in zoom-in duration-300"
+                            >
+                                OK
+                            </button>
+                        ) : (
+                            <span className="text-5xl font-bold tracking-tighter text-white">
+                                {formatTime(timeLeft)}
+                            </span>
+                        )}
                     </div>
                 </div>
 
