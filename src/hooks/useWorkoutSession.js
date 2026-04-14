@@ -180,7 +180,12 @@ export function useWorkoutSession(workoutId, user) {
                                     lastWeight: lastSet?.weight || null,
                                     lastReps: lastSet?.reps || null,
                                     weightMode: lastSet?.weightMode || s.weightMode || 'total',
-                                    baseWeight: lastSet?.baseWeight || null
+                                    baseWeight: lastSet?.baseWeight || null,
+                                    drops: lastSet?.drops ? lastSet.drops.map(d => ({ 
+                                        ...d, 
+                                        id: generateId(), 
+                                        completed: false // Ensures drops from history are copied fresh
+                                    })) : null
                                 };
                             });
 
