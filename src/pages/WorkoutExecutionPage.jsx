@@ -170,6 +170,7 @@ export function WorkoutExecutionPage({ user }) {
     const [newAchievements, setNewAchievements] = useState([]);
     const [showAchievementModal, setShowAchievementModal] = useState(false);
     const [restDuration, setRestDuration] = useState(90);
+    const [autoStartTimer, setAutoStartTimer] = useState(false);
 
     // Aquece recursos de compartilhamento para evitar atraso no modal final.
     useEffect(() => {
@@ -214,6 +215,9 @@ export function WorkoutExecutionPage({ user }) {
                     if (profile?.defaultRestTime) {
                         setRestDuration(profile.defaultRestTime);
                     }
+                    if (profile?.autoStartTimer !== undefined) {
+                        setAutoStartTimer(profile.autoStartTimer);
+                    }
                 })
                 .catch(console.error);
         }
@@ -227,6 +231,22 @@ export function WorkoutExecutionPage({ user }) {
             userService
                 .updateUserProfile(user.uid, { defaultRestTime: newDuration })
                 .catch(err => console.error("Failed to save rest preference:", err));
+        }
+    };
+
+    const handleAutoStartChange = (newVal) => {
+        setAutoStartTimer(newVal);
+        if (user?.uid) {
+            userService
+                .updateUserProfile(user.uid, { autoStartTimer: newVal })
+                .catch(err => console.error("Failed to save auto start preference:", err));
+        }
+    };
+
+    const handleCompleteSetWrapper = (...args) => {
+        completeSetAutoFill(...args);
+        if (autoStartTimer) {
+            setShowTimer(true);
         }
     };
 
@@ -703,7 +723,7 @@ export function WorkoutExecutionPage({ user }) {
                                     onUpdateSetMultiple={updateSetMultiple}
                                     onSetChange={(setNum) => handleSetNavigation(ex.id, setNum - 1)}
                                     onMethodClick={() => setSelectedMethod(ex.method)}
-                                    onCompleteSet={completeSetAutoFill}
+                                    onCompleteSet={handleCompleteSetWrapper}
                                     onUpdateNotes={updateNotes}
                                     onToggleWeightMode={() => toggleExerciseWeightMode(ex.id)}
                                 />
@@ -743,7 +763,7 @@ export function WorkoutExecutionPage({ user }) {
                                     onUpdateSetMultiple={updateSetMultiple}
                                     onSetChange={(setNum) => handleSetNavigation(ex.id, setNum - 1)}
                                     onMethodClick={() => setSelectedMethod(ex.method)}
-                                    onCompleteSet={completeSetAutoFill}
+                                    onCompleteSet={handleCompleteSetWrapper}
                                     onUpdateNotes={updateNotes}
                                     onToggleWeightMode={() => toggleExerciseWeightMode(ex.id)}
                                 />
@@ -758,6 +778,8 @@ export function WorkoutExecutionPage({ user }) {
                         isOpen={showTimer}
                         onClose={() => setShowTimer(false)}
                         onDurationChange={handleRestDurationChange}
+                        autoStartTimer={autoStartTimer}
+                        onAutoStartChange={handleAutoStartChange}
                     />
                 )}
 
@@ -830,14 +852,14 @@ export function WorkoutExecutionPage({ user }) {
 
                 {/* Footer Fim de Treino - Apenas mostra se o modal de finalização NÃO estiver visível */}
                 {!showFinishModal && (
-                    <div className="fixed bottom-0 left-0 w-full p-4 bg-gradient-to-t from-[#020617] to-transparent z-50">
+                    <div className="fixed bottom-0 left-0 w-full p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-12 bg-gradient-to-t from-[#020617] via-[#020617]/90 to-transparent z-50">
                         <div className="max-w-2xl mx-auto flex justify-center">
                             <div className="space-y-4 w-full flex flex-col items-center pointer-events-auto relative z-10">
                                 <Button
                                     onClick={() => setShowConfirmFinishModal(true)}
                                     disabled={saving}
                                     variant="success"
-                                    className="w-auto min-w-[240px] px-8 font-bold h-12 rounded-2xl tracking-wide flex items-center justify-center gap-2"
+                                    className="w-auto min-w-[240px] px-8 font-bold h-12 rounded-2xl tracking-wide flex items-center justify-center gap-2 shadow-[0_4px_30px_rgba(34,197,94,0.2)]"
                                 >
                                     {saving ? (
                                         'SALVANDO...'
@@ -852,6 +874,9 @@ export function WorkoutExecutionPage({ user }) {
                         </div>
                     </div>
                 )}
+                
+                {/* Spacer to ensure content isn't covered by the fixed footer */}
+                <div className="h-32 md:h-48 w-full shrink-0 pointer-events-none"></div>
 
             </div>
 
