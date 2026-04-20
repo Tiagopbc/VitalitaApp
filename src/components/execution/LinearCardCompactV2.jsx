@@ -1,4 +1,4 @@
-import React, { useState, memo } from 'react';
+import React, { useState, memo, useRef } from 'react';
 import { Minus, Plus, CheckCircle2, Info, Check, ArrowRight, Scale, LayoutList, Target, ArrowDown } from 'lucide-react';
 import { NumericKeypad } from '../common/NumericKeypad';
 
@@ -133,6 +133,8 @@ export const LinearCardCompactV2 = memo(function LinearCardCompactV2({
         handleUpdateActiveRow(index, { reps: newVal });
     };
 
+    const cardEndRef = useRef(null);
+
     const handleAddDrop = () => {
         let newDrops = [];
         if (!hasDrops) {
@@ -148,6 +150,13 @@ export const LinearCardCompactV2 = memo(function LinearCardCompactV2({
             ];
         }
         onUpdateSetMultiple(exerciseId, setId, { drops: newDrops });
+        
+        // Timeout para permitir que o DOM atualize
+        setTimeout(() => {
+            if (cardEndRef.current) {
+                cardEndRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+        }, 150);
     };
 
     const handleRemoveDrop = (index) => {
@@ -334,6 +343,7 @@ export const LinearCardCompactV2 = memo(function LinearCardCompactV2({
             </div>
 
             <NumericKeypad isOpen={keypadOpen} onClose={() => setKeypadOpen(false)} onConfirm={handleKeypadConfirm} initialValue={numpadInitial} title={numpadTitle} />
+            <div ref={cardEndRef} className="h-1" />
         </div>
     );
 });

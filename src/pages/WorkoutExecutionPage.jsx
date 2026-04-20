@@ -852,14 +852,14 @@ export function WorkoutExecutionPage({ user }) {
 
                 {/* Footer Fim de Treino - Apenas mostra se o modal de finalização NÃO estiver visível */}
                 {!showFinishModal && (
-                    <div className="fixed bottom-0 left-0 w-full p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-12 bg-gradient-to-t from-[#020617] via-[#020617]/90 to-transparent z-50">
+                    <div className="w-full mt-8 pb-[calc(2rem+env(safe-area-inset-bottom))]">
                         <div className="max-w-2xl mx-auto flex justify-center">
-                            <div className="space-y-4 w-full flex flex-col items-center pointer-events-auto relative z-10">
+                            <div className="space-y-4 w-full flex flex-col items-center px-4">
                                 <Button
                                     onClick={() => setShowConfirmFinishModal(true)}
                                     disabled={saving}
                                     variant="success"
-                                    className="w-auto min-w-[240px] px-8 font-bold h-12 rounded-2xl tracking-wide flex items-center justify-center gap-2 shadow-[0_4px_30px_rgba(34,197,94,0.2)]"
+                                    className="w-auto min-w-[240px] px-8 font-bold h-12 rounded-full tracking-wide flex items-center justify-center gap-2 shadow-[0_4px_30px_rgba(34,197,94,0.2)]"
                                 >
                                     {saving ? (
                                         'SALVANDO...'
@@ -874,9 +874,6 @@ export function WorkoutExecutionPage({ user }) {
                         </div>
                     </div>
                 )}
-                
-                {/* Spacer to ensure content isn't covered by the fixed footer */}
-                <div className="h-32 md:h-48 w-full shrink-0 pointer-events-none"></div>
 
             </div>
 
