@@ -15,6 +15,8 @@ export function HistoryAnalyticsSection({
     onChartRangeChange,
     chartData,
     loadingHistory,
+    historyRows,
+    prRows,
     searchMode,
     onSearchModeChange,
     globalSearchTerm,

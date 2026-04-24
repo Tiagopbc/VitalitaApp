@@ -463,7 +463,7 @@ function HistoryPage({ user, isEmbedded = false }) {
             }
         }
         fetchHistory();
-    }, [selectedTemplate, selectedExercise, user, activeTab, chartRange, searchMode, globalSearchTerm, selectedGlobalExercises]);
+    }, [selectedTemplate, selectedExercise, user, activeTab, chartRange, searchMode, globalSearchTerm, selectedGlobalExercises, globalSessionsCache]);
 
     return (
         <div className="min-h-screen bg-[#020617] pb-32">
