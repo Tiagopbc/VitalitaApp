@@ -45,6 +45,10 @@ function HistoryPage({ user, isEmbedded = false }) {
     const [prRows, setPrRows] = useState([]);
     const [loadingTemplates, setLoadingTemplates] = useState(true);
     const [loadingHistory, setLoadingHistory] = useState(false);
+    
+    // --- ESTADO DA BUSCA INTELIGENTE ---
+    const [searchMode, setSearchMode] = useState('template'); // 'template' | 'global'
+    const [globalSearchTerm, setGlobalSearchTerm] = useState('');
 
     // --- ESTADO DO GRÁFICO ---
     const [chartData, setChartData] = useState([]);
@@ -284,75 +288,122 @@ function HistoryPage({ user, isEmbedded = false }) {
 
     useEffect(() => {
         async function fetchHistory() {
-            if (activeTab !== 'analytics' || !selectedTemplate || !selectedExercise || !user) {
+            if (activeTab !== 'analytics' || !user) return;
+
+            if (searchMode === 'template' && (!selectedTemplate || !selectedExercise)) {
+                return;
+            }
+
+            if (searchMode === 'global' && (!globalSearchTerm || globalSearchTerm.length < 2)) {
                 return;
             }
 
             setLoadingHistory(true);
             try {
-                const result = await workoutService.getHistory(user.uid, selectedTemplate, null, 100);
+                let docs = [];
+
+                if (searchMode === 'global') {
+                    // Fetch all sessions or a large chunk for global search
+                    // If the user has hundreds of sessions, we rely on getAllSessions returning them all quickly
+                    // In a production app with thousands of sessions, you might need a different index or limit.
+                    docs = await workoutService.getAllSessions(user.uid);
+                } else {
+                    const result = await workoutService.getHistory(user.uid, selectedTemplate, null, 100);
+                    docs = result.data;
+                }
 
                 const rows = [];
                 const prMap = new Map();
 
-                // Server-side sort is now trusted
-                const docs = result.data;
-
                 docs.forEach((data) => {
                     const results = data.results || data.exercises || [];
-                    let exerciseData = null;
-                    if (Array.isArray(results)) {
-                        exerciseData = results.find(e => e.name === selectedExercise);
+                    let matchedExercises = [];
+
+                    if (searchMode === 'global') {
+                        const term = globalSearchTerm.toLowerCase();
+                        if (Array.isArray(results)) {
+                            matchedExercises = results.filter(e => (e.name || '').toLowerCase().includes(term));
+                        } else {
+                            Object.keys(results).forEach(key => {
+                                if (key.toLowerCase().includes(term)) {
+                                    matchedExercises.push({ name: key, ...results[key] });
+                                }
+                            });
+                        }
                     } else {
-                        exerciseData = results[selectedExercise];
+                        // Template Mode
+                        let exerciseData = null;
+                        if (Array.isArray(results)) {
+                            exerciseData = results.find(e => e.name === selectedExercise);
+                        } else {
+                            exerciseData = results[selectedExercise];
+                        }
+                        if (exerciseData) {
+                            matchedExercises.push({ name: selectedExercise, ...exerciseData });
+                        }
                     }
 
-                    if (!exerciseData) return;
+                    if (matchedExercises.length === 0) return;
+                    
                     const completedAt = data.completedAt?.toDate?.() || null;
                     if (!completedAt) return;
 
-                    let bestWeight = 0;
-                    let bestReps = 0;
+                    // Find the absolute best among all matched exercises in this session
+                    let sessionBestWeight = 0;
+                    let sessionBestReps = 0;
+                    let bestExerciseName = '';
+                    let bestNotes = '';
 
-                    if (exerciseData.sets && Array.isArray(exerciseData.sets)) {
-                        exerciseData.sets.forEach(s => {
-                            if (!s.completed) return;
-                            
-                            // Check the root weight first
-                            if (Number(s.weight) > bestWeight) {
-                                bestWeight = Number(s.weight);
-                                bestReps = Number(s.reps);
-                            }
-                            
-                            // Also iterate safely over drops, if any
-                            if (s.drops && Array.isArray(s.drops)) {
-                                s.drops.forEach(d => {
-                                    if (Number(d.weight) > bestWeight) {
-                                        bestWeight = Number(d.weight);
-                                        bestReps = Number(d.reps);
-                                    }
-                                });
-                            }
-                        });
-                    } else if (exerciseData.weight) {
-                        bestWeight = Number(exerciseData.weight);
-                        bestReps = Number(exerciseData.reps);
-                    }
+                    matchedExercises.forEach(exerciseData => {
+                        let localBestWeight = 0;
+                        let localBestReps = 0;
 
-                    if (bestWeight === 0) return;
+                        if (exerciseData.sets && Array.isArray(exerciseData.sets)) {
+                            exerciseData.sets.forEach(s => {
+                                if (!s.completed) return;
+                                
+                                if (Number(s.weight) > localBestWeight) {
+                                    localBestWeight = Number(s.weight);
+                                    localBestReps = Number(s.reps);
+                                }
+                                
+                                if (s.drops && Array.isArray(s.drops)) {
+                                    s.drops.forEach(d => {
+                                        if (Number(d.weight) > localBestWeight) {
+                                            localBestWeight = Number(d.weight);
+                                            localBestReps = Number(d.reps);
+                                        }
+                                    });
+                                }
+                            });
+                        } else if (exerciseData.weight) {
+                            localBestWeight = Number(exerciseData.weight);
+                            localBestReps = Number(exerciseData.reps);
+                        }
+
+                        if (localBestWeight > sessionBestWeight) {
+                            sessionBestWeight = localBestWeight;
+                            sessionBestReps = localBestReps;
+                            bestExerciseName = exerciseData.name || '';
+                            bestNotes = exerciseData.notes || '';
+                        }
+                    });
+
+                    if (sessionBestWeight === 0) return;
 
                     rows.push({
                         id: data.id,
                         date: completedAt,
-                        weight: bestWeight,
-                        reps: bestReps,
-                        notes: exerciseData.notes || '',
+                        weight: sessionBestWeight,
+                        reps: sessionBestReps,
+                        notes: bestNotes,
+                        originalName: bestExerciseName
                     });
 
-                    const key = String(bestWeight);
+                    const key = String(sessionBestWeight);
                     const existing = prMap.get(key);
-                    if (!existing || bestReps > existing.reps) {
-                        prMap.set(key, { weight: bestWeight, reps: bestReps });
+                    if (!existing || sessionBestReps > existing.reps) {
+                        prMap.set(key, { weight: sessionBestWeight, reps: sessionBestReps });
                     }
                 });
 
@@ -384,7 +435,7 @@ function HistoryPage({ user, isEmbedded = false }) {
             }
         }
         fetchHistory();
-    }, [selectedTemplate, selectedExercise, user, activeTab, chartRange]);
+    }, [selectedTemplate, selectedExercise, user, activeTab, chartRange, searchMode, globalSearchTerm]);
 
     return (
         <div className="min-h-screen bg-[#020617] pb-32">
@@ -559,6 +610,10 @@ function HistoryPage({ user, isEmbedded = false }) {
                             loadingHistory={loadingHistory}
                             historyRows={historyRows}
                             prRows={prRows}
+                            searchMode={searchMode}
+                            onSearchModeChange={setSearchMode}
+                            globalSearchTerm={globalSearchTerm}
+                            onGlobalSearchChange={setGlobalSearchTerm}
                         />
                     </React.Suspense>
                 )}

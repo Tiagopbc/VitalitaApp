@@ -16,7 +16,11 @@ export function HistoryAnalyticsSection({
     chartData,
     loadingHistory,
     historyRows,
-    prRows
+    prRows,
+    searchMode,
+    onSearchModeChange,
+    globalSearchTerm,
+    onGlobalSearchChange
 }) {
     return (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -28,39 +32,84 @@ export function HistoryAnalyticsSection({
             ) : (
                 <>
                     {/* Filtros */}
-                    <div className="space-y-3 bg-slate-900/50 p-4 rounded-2xl border border-slate-800/50">
-                        <div className="flex flex-col gap-1.5">
-                            <label className="text-xs font-bold text-slate-400 uppercase ml-1">Rotina</label>
-                            <select
-                                value={selectedTemplate}
-                                onChange={(e) => onTemplateChange(e.target.value)}
-                                className="w-full bg-slate-950 text-white border border-slate-800 rounded-xl px-4 py-3 appearance-none focus:border-cyan-500 outline-none transition-colors"
+                    <div className="space-y-4 bg-slate-900/50 p-4 rounded-2xl border border-slate-800/50">
+                        {/* Toggle de Modo de Busca */}
+                        <div className="flex bg-slate-950 rounded-xl p-1 border border-slate-800/80">
+                            <button
+                                onClick={() => onSearchModeChange('template')}
+                                className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all ${
+                                    searchMode === 'template' 
+                                        ? 'bg-slate-800 text-cyan-400 shadow-sm' 
+                                        : 'text-slate-500 hover:text-slate-300'
+                                }`}
                             >
-                                <option value="" disabled>Selecione um treino...</option>
-                                {templates.map(t => (
-                                    <option key={t.id} value={t.name}>{t.name}</option>
-                                ))}
-                            </select>
+                                Por Rotina
+                            </button>
+                            <button
+                                onClick={() => onSearchModeChange('global')}
+                                className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all ${
+                                    searchMode === 'global' 
+                                        ? 'bg-slate-800 text-cyan-400 shadow-sm' 
+                                        : 'text-slate-500 hover:text-slate-300'
+                                }`}
+                            >
+                                Busca Global
+                            </button>
                         </div>
 
-                        <div className="flex flex-col gap-1.5">
-                            <label className="text-xs font-bold text-slate-400 uppercase ml-1">Exercício</label>
-                            <select
-                                value={selectedExercise}
-                                onChange={(e) => onExerciseChange(e.target.value)}
-                                disabled={!selectedTemplate}
-                                className="w-full bg-slate-950 text-white border border-slate-800 rounded-xl px-4 py-3 appearance-none focus:border-cyan-500 outline-none transition-colors disabled:opacity-50"
-                            >
-                                <option value="" disabled>Selecione...</option>
-                                {exerciseOptions.map(opt => (
-                                    <option key={opt} value={opt}>{opt}</option>
-                                ))}
-                            </select>
-                        </div>
+                        {searchMode === 'template' ? (
+                            <div className="space-y-3 animate-in fade-in zoom-in-95 duration-300">
+                                <div className="flex flex-col gap-1.5">
+                                    <label className="text-xs font-bold text-slate-400 uppercase ml-1">Rotina</label>
+                                    <select
+                                        value={selectedTemplate}
+                                        onChange={(e) => onTemplateChange(e.target.value)}
+                                        className="w-full bg-slate-950 text-white border border-slate-800 rounded-xl px-4 py-3 appearance-none focus:border-cyan-500 outline-none transition-colors"
+                                    >
+                                        <option value="" disabled>Selecione um treino...</option>
+                                        {templates.map(t => (
+                                            <option key={t.id} value={t.name}>{t.name}</option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                <div className="flex flex-col gap-1.5">
+                                    <label className="text-xs font-bold text-slate-400 uppercase ml-1">Exercício</label>
+                                    <select
+                                        value={selectedExercise}
+                                        onChange={(e) => onExerciseChange(e.target.value)}
+                                        disabled={!selectedTemplate}
+                                        className="w-full bg-slate-950 text-white border border-slate-800 rounded-xl px-4 py-3 appearance-none focus:border-cyan-500 outline-none transition-colors disabled:opacity-50"
+                                    >
+                                        <option value="" disabled>Selecione...</option>
+                                        {exerciseOptions.map(opt => (
+                                            <option key={opt} value={opt}>{opt}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="space-y-3 animate-in fade-in zoom-in-95 duration-300">
+                                <div className="flex flex-col gap-1.5">
+                                    <label className="text-xs font-bold text-slate-400 uppercase ml-1">Palavra-chave do Exercício</label>
+                                    <input
+                                        type="text"
+                                        value={globalSearchTerm}
+                                        onChange={(e) => onGlobalSearchChange(e.target.value)}
+                                        placeholder="Ex: Supino, Agachamento..."
+                                        className="w-full bg-slate-950 text-white border border-slate-800 rounded-xl px-4 py-3 focus:border-cyan-500 outline-none transition-colors"
+                                    />
+                                    <p className="text-[10px] text-slate-500 ml-1 mt-1">
+                                        Irá buscar em todo o seu histórico qualquer exercício que contenha este nome.
+                                    </p>
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     {/* Seção de Gráfico */}
-                    {selectedTemplate && selectedExercise && (
+                    {((searchMode === 'template' && selectedTemplate && selectedExercise) || 
+                      (searchMode === 'global' && globalSearchTerm && globalSearchTerm.length >= 2)) && (
                         <div className="space-y-3">
                             <div className="flex justify-between items-center px-1">
                                 <h3 className="font-bold text-slate-400 uppercase tracking-wide text-xs">Evolução de Carga</h3>
@@ -122,7 +171,8 @@ export function HistoryAnalyticsSection({
                                                 <span className="text-sm font-bold text-slate-200">
                                                     {row.date ? new Date(row.date).toLocaleDateString('pt-BR') : '-'}
                                                 </span>
-                                                <span className="text-[10px] text-slate-500">{row.notes || 'Sem observações'}</span>
+                                                <span className="text-[10px] text-cyan-500 font-medium mt-0.5">{row.originalName || selectedExercise}</span>
+                                                <span className="text-[10px] text-slate-500 mt-0.5">{row.notes || 'Sem observações'}</span>
                                             </div>
                                             <div className="text-right">
                                                 <div className="text-lg font-bold text-cyan-400">{row.weight}kg</div>
@@ -134,7 +184,8 @@ export function HistoryAnalyticsSection({
                             </div>
                         </>
                     ) : (
-                        selectedTemplate && selectedExercise && (
+                        ((searchMode === 'template' && selectedTemplate && selectedExercise) || 
+                         (searchMode === 'global' && globalSearchTerm && globalSearchTerm.length >= 2)) && (
                             <div className="py-12 text-center border border-dashed border-slate-800 rounded-2xl">
                                 <p className="text-slate-500">Nenhum registro encontrado.</p>
                             </div>
