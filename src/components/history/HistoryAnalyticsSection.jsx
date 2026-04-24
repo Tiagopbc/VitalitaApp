@@ -77,9 +77,18 @@ export function HistoryAnalyticsSection({
                                         className="w-full bg-slate-950 text-white border border-slate-800 rounded-xl px-4 py-3 appearance-none focus:border-cyan-500 outline-none transition-colors"
                                     >
                                         <option value="" disabled>Selecione um treino...</option>
-                                        {templates.map(t => (
-                                            <option key={t.id} value={t.name}>{t.name}</option>
-                                        ))}
+                                        <optgroup label="Treinos Ativos">
+                                            {templates.filter(t => !t.archived).map(t => (
+                                                <option key={t.id} value={t.name}>{t.name}</option>
+                                            ))}
+                                        </optgroup>
+                                        {templates.some(t => t.archived) && (
+                                            <optgroup label="Treinos Arquivados">
+                                                {templates.filter(t => t.archived).map(t => (
+                                                    <option key={t.id} value={t.name}>{t.name}</option>
+                                                ))}
+                                            </optgroup>
+                                        )}
                                     </select>
                                 </div>
 
