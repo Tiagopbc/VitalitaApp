@@ -15,13 +15,21 @@ export function HistoryAnalyticsSection({
     onChartRangeChange,
     chartData,
     loadingHistory,
-    historyRows,
-    prRows,
     searchMode,
     onSearchModeChange,
     globalSearchTerm,
-    onGlobalSearchChange
+    onGlobalSearchChange,
+    allUserExercises = [],
+    selectedGlobalExercises = [],
+    toggleGlobalExercise
 }) {
+    // Filtrar sugestões baseadas no termo digitado
+    const suggestedExercises = React.useMemo(() => {
+        if (!globalSearchTerm || globalSearchTerm.length < 2) return [];
+        const term = globalSearchTerm.toLowerCase();
+        return allUserExercises.filter(ex => ex.toLowerCase().includes(term));
+    }, [allUserExercises, globalSearchTerm]);
+
     return (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
             {loadingTemplates ? (
@@ -100,16 +108,44 @@ export function HistoryAnalyticsSection({
                                         className="w-full bg-slate-950 text-white border border-slate-800 rounded-xl px-4 py-3 focus:border-cyan-500 outline-none transition-colors"
                                     />
                                     <p className="text-[10px] text-slate-500 ml-1 mt-1">
-                                        Irá buscar em todo o seu histórico qualquer exercício que contenha este nome.
+                                        Digite para buscar. Selecione abaixo as variações que deseja agrupar no gráfico.
                                     </p>
                                 </div>
+
+                                {/* Chips de Seleção */}
+                                {globalSearchTerm.length >= 2 && (
+                                    <div className="mt-4">
+                                        {suggestedExercises.length > 0 ? (
+                                            <div className="flex flex-wrap gap-2">
+                                                {suggestedExercises.map(exName => {
+                                                    const isSelected = selectedGlobalExercises.includes(exName);
+                                                    return (
+                                                        <button
+                                                            key={exName}
+                                                            onClick={() => toggleGlobalExercise(exName)}
+                                                            className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all border ${
+                                                                isSelected 
+                                                                    ? 'bg-cyan-500/20 text-cyan-400 border-cyan-500/50' 
+                                                                    : 'bg-slate-800 text-slate-400 border-slate-700 hover:border-slate-500'
+                                                            }`}
+                                                        >
+                                                            {exName}
+                                                        </button>
+                                                    );
+                                                })}
+                                            </div>
+                                        ) : (
+                                            <p className="text-xs text-slate-500 italic mt-2 ml-1">Nenhum exercício encontrado com esse nome no seu histórico.</p>
+                                        )}
+                                    </div>
+                                )}
                             </div>
                         )}
                     </div>
 
                     {/* Seção de Gráfico */}
                     {((searchMode === 'template' && selectedTemplate && selectedExercise) || 
-                      (searchMode === 'global' && globalSearchTerm && globalSearchTerm.length >= 2)) && (
+                      (searchMode === 'global' && selectedGlobalExercises.length > 0)) && (
                         <div className="space-y-3">
                             <div className="flex justify-between items-center px-1">
                                 <h3 className="font-bold text-slate-400 uppercase tracking-wide text-xs">Evolução de Carga</h3>
@@ -185,7 +221,7 @@ export function HistoryAnalyticsSection({
                         </>
                     ) : (
                         ((searchMode === 'template' && selectedTemplate && selectedExercise) || 
-                         (searchMode === 'global' && globalSearchTerm && globalSearchTerm.length >= 2)) && (
+                         (searchMode === 'global' && selectedGlobalExercises.length > 0)) && (
                             <div className="py-12 text-center border border-dashed border-slate-800 rounded-2xl">
                                 <p className="text-slate-500">Nenhum registro encontrado.</p>
                             </div>
