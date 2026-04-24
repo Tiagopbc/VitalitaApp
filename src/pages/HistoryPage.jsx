@@ -49,6 +49,17 @@ function HistoryPage({ user, isEmbedded = false }) {
     // --- ESTADO DA BUSCA INTELIGENTE ---
     const [searchMode, setSearchMode] = useState('template'); // 'template' | 'global'
     const [globalSearchTerm, setGlobalSearchTerm] = useState('');
+    const [selectedGlobalExercises, setSelectedGlobalExercises] = useState([]);
+    const [allUserExercises, setAllUserExercises] = useState([]);
+    const [globalSessionsCache, setGlobalSessionsCache] = useState(null);
+
+    const toggleGlobalExercise = (exName) => {
+        setSelectedGlobalExercises(prev => 
+            prev.includes(exName)
+                ? prev.filter(n => n !== exName)
+                : [...prev, exName]
+        );
+    };
 
     // --- ESTADO DO GRÁFICO ---
     const [chartData, setChartData] = useState([]);
@@ -294,8 +305,11 @@ function HistoryPage({ user, isEmbedded = false }) {
                 return;
             }
 
-            if (searchMode === 'global' && (!globalSearchTerm || globalSearchTerm.length < 2)) {
-                return;
+            if (searchMode === 'global' && selectedGlobalExercises.length === 0 && (!globalSearchTerm || globalSearchTerm.length < 2)) {
+                // If nothing is selected and no search term, don't fetch chart data
+                // But we still need to fetch the session cache if it's empty so the search bar can work!
+                // Wait, if we return early, we never populate allUserExercises.
+                // We should only return early from drawing the chart, but we must populate the cache.
             }
 
             setLoadingHistory(true);
@@ -303,10 +317,23 @@ function HistoryPage({ user, isEmbedded = false }) {
                 let docs = [];
 
                 if (searchMode === 'global') {
-                    // Fetch all sessions or a large chunk for global search
-                    // If the user has hundreds of sessions, we rely on getAllSessions returning them all quickly
-                    // In a production app with thousands of sessions, you might need a different index or limit.
-                    docs = await workoutService.getAllSessions(user.uid);
+                    if (globalSessionsCache) {
+                        docs = globalSessionsCache;
+                    } else {
+                        docs = await workoutService.getAllSessions(user.uid);
+                        setGlobalSessionsCache(docs);
+
+                        const uniqueNames = new Set();
+                        docs.forEach(data => {
+                            const results = data.results || data.exercises || [];
+                            if (Array.isArray(results)) {
+                                results.forEach(e => { if (e.name) uniqueNames.add(e.name); });
+                            } else {
+                                Object.keys(results).forEach(key => uniqueNames.add(key));
+                            }
+                        });
+                        setAllUserExercises(Array.from(uniqueNames).sort());
+                    }
                 } else {
                     const result = await workoutService.getHistory(user.uid, selectedTemplate, null, 100);
                     docs = result.data;
@@ -320,15 +347,16 @@ function HistoryPage({ user, isEmbedded = false }) {
                     let matchedExercises = [];
 
                     if (searchMode === 'global') {
-                        const term = globalSearchTerm.toLowerCase();
-                        if (Array.isArray(results)) {
-                            matchedExercises = results.filter(e => (e.name || '').toLowerCase().includes(term));
-                        } else {
-                            Object.keys(results).forEach(key => {
-                                if (key.toLowerCase().includes(term)) {
-                                    matchedExercises.push({ name: key, ...results[key] });
-                                }
-                            });
+                        if (selectedGlobalExercises.length > 0) {
+                            if (Array.isArray(results)) {
+                                matchedExercises = results.filter(e => selectedGlobalExercises.includes(e.name));
+                            } else {
+                                Object.keys(results).forEach(key => {
+                                    if (selectedGlobalExercises.includes(key)) {
+                                        matchedExercises.push({ name: key, ...results[key] });
+                                    }
+                                });
+                            }
                         }
                     } else {
                         // Template Mode
@@ -435,7 +463,7 @@ function HistoryPage({ user, isEmbedded = false }) {
             }
         }
         fetchHistory();
-    }, [selectedTemplate, selectedExercise, user, activeTab, chartRange, searchMode, globalSearchTerm]);
+    }, [selectedTemplate, selectedExercise, user, activeTab, chartRange, searchMode, globalSearchTerm, selectedGlobalExercises]);
 
     return (
         <div className="min-h-screen bg-[#020617] pb-32">
@@ -614,6 +642,9 @@ function HistoryPage({ user, isEmbedded = false }) {
                             onSearchModeChange={setSearchMode}
                             globalSearchTerm={globalSearchTerm}
                             onGlobalSearchChange={setGlobalSearchTerm}
+                            allUserExercises={allUserExercises}
+                            selectedGlobalExercises={selectedGlobalExercises}
+                            toggleGlobalExercise={toggleGlobalExercise}
                         />
                     </React.Suspense>
                 )}
