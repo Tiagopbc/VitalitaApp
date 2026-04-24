@@ -96,7 +96,7 @@ export const LinearCardCompactV2 = memo(function LinearCardCompactV2({
     const decrementWeight = (index) => {
         const item = itemsToRender[index];
         const isPerSideLocal = item.weightMode === 'per_side';
-        const displayW = isPerSideLocal ? (item.baseWeight || (parseFloat(item.weight) / 2) || 0) : (parseFloat(item.weight) || parseFloat(suggestedWeight) || 0);
+        const displayW = isPerSideLocal ? (parseFloat(item.baseWeight) || (parseFloat(item.weight) / 2) || 0) : (parseFloat(item.weight) || parseFloat(suggestedWeight) || 0);
         const newVal = Math.max(0, displayW - 2.5);
 
         if (isPerSideLocal) {
@@ -109,7 +109,7 @@ export const LinearCardCompactV2 = memo(function LinearCardCompactV2({
     const incrementWeight = (index) => {
         const item = itemsToRender[index];
         const isPerSideLocal = item.weightMode === 'per_side';
-        const displayW = isPerSideLocal ? (item.baseWeight || (parseFloat(item.weight) / 2) || 0) : (parseFloat(item.weight) || parseFloat(suggestedWeight) || 0);
+        const displayW = isPerSideLocal ? (parseFloat(item.baseWeight) || (parseFloat(item.weight) / 2) || 0) : (parseFloat(item.weight) || parseFloat(suggestedWeight) || 0);
         const newVal = displayW + 2.5;
 
         if (isPerSideLocal) {
@@ -220,7 +220,7 @@ export const LinearCardCompactV2 = memo(function LinearCardCompactV2({
         const item = itemsToRender[activeInput.index];
         if (activeInput.type === 'weight') {
             const isPerSideL = item.weightMode === 'per_side';
-            const dispW = isPerSideL ? (item.baseWeight || (parseFloat(item.weight) / 2) || 0) : (item.weight || suggestedWeight || 0);
+            const dispW = isPerSideL ? (parseFloat(item.baseWeight) || (parseFloat(item.weight) / 2) || 0) : (parseFloat(item.weight) || parseFloat(suggestedWeight) || 0);
             numpadInitial = formatWeight(dispW);
             numpadTitle = isPerSideL ? 'DEFINIR PESO (LADO)' : 'DEFINIR PESO (TOTAL)';
         } else {
@@ -272,7 +272,7 @@ export const LinearCardCompactV2 = memo(function LinearCardCompactV2({
             <div className="flex flex-col gap-3 relative leading-none z-10">
                 {itemsToRender.map((item, index) => {
                     const isPerSideL = item.weightMode === 'per_side';
-                    const dispW = isPerSideL ? (item.baseWeight || (parseFloat(item.weight) / 2) || 0) : (item.weight || (index === 0 ? suggestedWeight : 0) || 0);
+                    const dispW = isPerSideL ? (parseFloat(item.baseWeight) || (parseFloat(item.weight) / 2) || 0) : (parseFloat(item.weight) || (index === 0 ? parseFloat(suggestedWeight) : 0) || 0);
                     const formattedDisplay = formatWeight(dispW);
                     
                     return (

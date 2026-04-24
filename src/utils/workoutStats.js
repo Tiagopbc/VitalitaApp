@@ -169,6 +169,16 @@ export function calculateWeeklyStats(sessions, currentWeeklyGoal = 4) {
 
     let currentStreak = 0;
     let checkDate = getStartOfWeek(new Date());
+    
+    // Se a semana atual atingiu a meta, conta 1
+    if (weeksMeetingGoal.has(getWeekString(checkDate))) {
+        currentStreak++;
+    }
+    
+    // Move para a semana anterior para continuar a contagem
+    checkDate.setDate(checkDate.getDate() - 7);
+    
+    // Conta as semanas anteriores consecutivas
     while (weeksMeetingGoal.has(getWeekString(checkDate))) {
         currentStreak++;
         checkDate.setDate(checkDate.getDate() - 7);
