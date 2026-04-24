@@ -78,13 +78,13 @@ export function HistoryAnalyticsSection({
                                     >
                                         <option value="" disabled>Selecione um treino...</option>
                                         <optgroup label="Treinos Ativos">
-                                            {templates.filter(t => !t.archived).map(t => (
+                                            {templates.filter(t => !t.isArchived).map(t => (
                                                 <option key={t.id} value={t.name}>{t.name}</option>
                                             ))}
                                         </optgroup>
-                                        {templates.some(t => t.archived) && (
+                                        {templates.some(t => t.isArchived) && (
                                             <optgroup label="Treinos Arquivados">
-                                                {templates.filter(t => t.archived).map(t => (
+                                                {templates.filter(t => t.isArchived).map(t => (
                                                     <option key={t.id} value={t.name}>{t.name}</option>
                                                 ))}
                                             </optgroup>
