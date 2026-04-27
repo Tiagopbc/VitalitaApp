@@ -54,7 +54,7 @@ export const ShareableWorkoutCard = forwardRef(({ session, isVisible = false, us
         logoImg.onerror = fallbackReady;
         
         img.src = shareCardBgSrc;
-        logoImg.src = '/apple-touch-icon.png';
+        logoImg.src = '/pwa-512x512.png'; // Usando o icone do PWA que normalmente tem fundo transparente
 
         const drawCanvas = () => {
             // Desenha a imagem cobrindo o canvas
@@ -178,7 +178,7 @@ export const ShareableWorkoutCard = forwardRef(({ session, isVisible = false, us
             const drawPill = (x, y, text) => {
                 ctx.font = '700 34px "Inter", sans-serif';
                 const metrics = ctx.measureText(text);
-                const capsWidth = Math.max(240, metrics.width + 80); // Ajusta a largura com base no texto
+                const capsWidth = Math.max(160, metrics.width + 70); // Mais justo ao texto
                 
                 ctx.fillStyle = 'rgba(15, 23, 42, 0.4)'; 
                 ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
