@@ -1,7 +1,7 @@
 import React, { forwardRef, useEffect } from 'react';
 
-// Fundo otimizado com elementos fixos assados.
-const shareCardBgSrc = '/bg-share-template.jpg';
+// Fundo limpo sem elementos pré-renderizados
+const shareCardBgSrc = '/bg-share-dumbbells.jpg';
 
 export const ShareableWorkoutCard = forwardRef(({ session, isVisible = false, userName = 'Atleta' }, ref) => {
 
@@ -32,13 +32,32 @@ export const ShareableWorkoutCard = forwardRef(({ session, isVisible = false, us
         ctx.fillRect(0, 0, canvasWidth, canvasHeight);
 
         const img = new Image();
+        const logoImg = new Image();
         img.crossOrigin = 'anonymous'; 
-        img.onload = () => {
+        logoImg.crossOrigin = 'anonymous'; 
+
+        let imagesLoaded = 0;
+        const checkReady = () => {
+            imagesLoaded++;
+            if (imagesLoaded === 2) drawCanvas();
+        };
+
+        img.onload = checkReady;
+        logoImg.onload = checkReady;
+        
+        img.src = shareCardBgSrc;
+        logoImg.src = '/apple-touch-icon.png';
+
+        const drawCanvas = () => {
             // Desenha a imagem cobrindo o canvas (object-fit: cover)
             const scale = Math.max(canvasWidth / img.width, canvasHeight / img.height);
             const dx = (canvasWidth / 2) - (img.width / 2) * scale;
             const dy = (canvasHeight / 2) - (img.height / 2) * scale;
             ctx.drawImage(img, dx, dy, img.width * scale, img.height * scale);
+
+            // Escurecer sutilmente o fundo para os textos destacarem mais
+            ctx.fillStyle = 'rgba(2, 6, 23, 0.2)';
+            ctx.fillRect(0, 0, canvasWidth, canvasHeight);
 
             // FUNÇÃO AUXILIAR PARA COR E SOMBRA
             const applyGlow = (color, blurClass, offsetClass) => {
@@ -55,46 +74,112 @@ export const ShareableWorkoutCard = forwardRef(({ session, isVisible = false, us
                 ctx.shadowOffsetY = 0;
             };
 
+            ctx.textBaseline = 'middle';
             ctx.textAlign = 'center';
 
-            // 1. NOME
-            ctx.textBaseline = 'top';
-            applyGlow('#e2f8ff', 'rgba(0,0,0,0.7)', { blur: 12, y: 4 });
-            ctx.font = '800 47px "Outfit", "Inter", sans-serif'; 
-            canvas.style.letterSpacing = '4px'; 
+            // 1. LOGO DO APP
+            const logoSize = 160;
+            const logoY = 120;
+            ctx.drawImage(logoImg, (canvasWidth / 2) - (logoSize / 2), logoY, logoSize, logoSize);
+
+            // 2. TREINO CONCLUÍDO (Cápsula)
+            const labelY = 360;
+            ctx.font = '700 26px "Inter", sans-serif';
+            const labelText = 'TREINO CONCLUÍDO'.split('').join(String.fromCharCode(8201)); 
+            
+            const labelMetrics = ctx.measureText(labelText);
+            const labelWidth = labelMetrics.width + 80;
+            const labelHeight = 56;
+
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.25)';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.roundRect((canvasWidth / 2) - (labelWidth / 2), labelY - (labelHeight / 2), labelWidth, labelHeight, 28);
+            ctx.stroke();
+
+            applyGlow('#e2f8ff', 'rgba(0,0,0,0.5)', { blur: 4, y: 2 });
+            ctx.fillText(labelText, canvasWidth / 2, labelY);
+            resetShadow();
+
+            // 3. NOME DO ATLETA
+            const nameY = 440;
+            applyGlow('#ffffff', 'rgba(0,0,0,0.7)', { blur: 12, y: 4 });
+            ctx.font = '800 48px "Outfit", "Inter", sans-serif'; 
             const nameToDraw = displayName.split('').join(String.fromCharCode(8201)); 
-            ctx.fillText(nameToDraw, canvasWidth / 2, 315);
+            ctx.fillText(nameToDraw, canvasWidth / 2, nameY);
+            resetShadow();
 
-            // 2. VOLUME GIGANTE
-            applyGlow('#ffffff', 'rgba(0,0,0,0.42)', { blur: 18, y: 6 });
+            // 4. VOLUME GIGANTE
+            const volumeY = 820;
+            applyGlow('#ffffff', 'rgba(0,0,0,0.6)', { blur: 20, y: 8 });
             ctx.font = `900 ${volumeFontSize * 2}px "Outfit", "Inter", sans-serif`;
-            ctx.fillText(volumeValue, canvasWidth / 2, 409);
+            ctx.fillText(volumeValue, canvasWidth / 2, volumeY);
+            resetShadow();
 
-            // 3. TÍTULO DO TREINO
-            applyGlow(cyanAccent, 'rgba(0,0,0,0.8)', { blur: 4, y: 2 });
+            // 5. KILOS (Texto Vazado)
+            const kilosY = 1040;
+            ctx.font = '900 140px "Outfit", "Inter", sans-serif';
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 4;
+            ctx.shadowColor = 'rgba(0,0,0,0.5)';
+            ctx.shadowBlur = 12;
+            ctx.shadowOffsetY = 6;
+            ctx.strokeText('KILOS', canvasWidth / 2, kilosY);
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.05)';
+            ctx.fillText('KILOS', canvasWidth / 2, kilosY);
+            resetShadow();
+
+            // 6. VOLUME EMPILHADO
+            const subtitleVolY = 1240;
+            applyGlow('#cbd5e1', 'rgba(0,0,0,0.5)', { blur: 4, y: 2 });
+            ctx.font = '600 32px "Inter", sans-serif';
+            const volEmpText = 'VOLUME EMPILHADO'.split('').join(String.fromCharCode(8201));
+            ctx.fillText(volEmpText, canvasWidth / 2, subtitleVolY);
+            resetShadow();
+
+            // 7. TÍTULO DO TREINO
+            const titleY = 1520;
+            applyGlow(cyanAccent, 'rgba(0,0,0,0.8)', { blur: 8, y: 4 });
             ctx.font = '800 56px "Outfit", "Inter", sans-serif';
-            ctx.fillText(templateTitle.split('').join(String.fromCharCode(8201)), canvasWidth / 2, 1542);
+            ctx.fillText(templateTitle.split('').join(String.fromCharCode(8201)), canvasWidth / 2, titleY);
+            resetShadow();
 
-            // 4. SUBTÍTULO
+            // 8. SUBTÍTULO DO TREINO
             if (templateSubtitle) {
+                const subTitleY = 1600;
                 applyGlow('#94a3b8', 'rgba(0,0,0,0.65)', { blur: 4, y: 2 });
                 ctx.font = '600 41px "Inter", sans-serif';
-                ctx.fillText(templateSubtitle.split('').join(String.fromCharCode(8201)), canvasWidth / 2, 1621);
+                ctx.fillText(templateSubtitle.split('').join(String.fromCharCode(8201)), canvasWidth / 2, subTitleY);
+                resetShadow();
             }
 
-            // 5. CÁPSULAS DE BASE
-            ctx.textBaseline = 'middle'; 
-            applyGlow('#e2e8f0', 'rgba(0,0,0,0.65)', { blur: 4, y: 2 });
-            ctx.font = '700 41px "Inter", sans-serif';
+            // 9. CÁPSULAS DE TEMPO E EXERCÍCIOS
+            const capsY = 1760;
+            const capsWidth = 360;
+            const capsHeight = 84;
             
-            ctx.fillText(session.duration.split('').join(String.fromCharCode(8201)), 220, 1749);
-            
-            const exTxt = `${session.exercisesCount} EXERCÍCIOS`.split('').join(String.fromCharCode(8201));
-            ctx.fillText(exTxt, 860, 1749);
+            const leftX = canvasWidth / 2 - 220;
+            const rightX = canvasWidth / 2 + 220;
 
-            resetShadow(); 
+            const drawPill = (x, y, text) => {
+                ctx.fillStyle = 'rgba(15, 23, 42, 0.4)'; 
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+                ctx.lineWidth = 2;
+                
+                ctx.beginPath();
+                ctx.roundRect(x - (capsWidth / 2), y - (capsHeight / 2), capsWidth, capsHeight, capsHeight / 2);
+                ctx.fill();
+                ctx.stroke();
+
+                applyGlow('#f8fafc', 'rgba(0,0,0,0.65)', { blur: 4, y: 2 });
+                ctx.font = '700 38px "Inter", sans-serif';
+                ctx.fillText(text.split('').join(String.fromCharCode(8201)), x, y);
+                resetShadow();
+            };
+
+            drawPill(leftX, capsY, session.duration);
+            drawPill(rightX, capsY, `${session.exercisesCount} EXERCÍCIOS`);
         };
-        img.src = shareCardBgSrc;
 
     }, [session, displayName, volumeValue, volumeFontSize, templateTitle, templateSubtitle, cyanAccent, ref]);
 
