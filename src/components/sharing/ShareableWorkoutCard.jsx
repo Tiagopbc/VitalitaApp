@@ -42,18 +42,28 @@ export const ShareableWorkoutCard = forwardRef(({ session, isVisible = false, us
             if (imagesLoaded === 2) drawCanvas();
         };
 
+        const fallbackReady = () => {
+            // Em caso de erro numa imagem, ainda tentamos desenhar para não travar no fundo preto
+            imagesLoaded++;
+            if (imagesLoaded === 2) drawCanvas();
+        };
+
         img.onload = checkReady;
+        img.onerror = fallbackReady;
         logoImg.onload = checkReady;
+        logoImg.onerror = fallbackReady;
         
         img.src = shareCardBgSrc;
         logoImg.src = '/apple-touch-icon.png';
 
         const drawCanvas = () => {
-            // Desenha a imagem cobrindo o canvas (object-fit: cover)
+            // Desenha a imagem cobrindo o canvas
             const scale = Math.max(canvasWidth / img.width, canvasHeight / img.height);
             const dx = (canvasWidth / 2) - (img.width / 2) * scale;
             const dy = (canvasHeight / 2) - (img.height / 2) * scale;
-            ctx.drawImage(img, dx, dy, img.width * scale, img.height * scale);
+            if (img.width > 0) {
+                ctx.drawImage(img, dx, dy, img.width * scale, img.height * scale);
+            }
 
             // Escurecer sutilmente o fundo para os textos destacarem mais
             ctx.fillStyle = 'rgba(2, 6, 23, 0.2)';
@@ -77,24 +87,31 @@ export const ShareableWorkoutCard = forwardRef(({ session, isVisible = false, us
             ctx.textBaseline = 'middle';
             ctx.textAlign = 'center';
 
-            // 1. LOGO DO APP
-            const logoSize = 160;
-            const logoY = 120;
-            ctx.drawImage(logoImg, (canvasWidth / 2) - (logoSize / 2), logoY, logoSize, logoSize);
+            // 1. LOGO DO APP (Com clip path arredondado para evitar bordas pretas do PNG)
+            const logoSize = 130;
+            const logoY = 130;
+            if (logoImg.width > 0) {
+                ctx.save();
+                ctx.beginPath();
+                ctx.roundRect((canvasWidth / 2) - (logoSize / 2), logoY, logoSize, logoSize, 30);
+                ctx.clip();
+                ctx.drawImage(logoImg, (canvasWidth / 2) - (logoSize / 2), logoY, logoSize, logoSize);
+                ctx.restore();
+            }
 
             // 2. TREINO CONCLUÍDO (Cápsula)
-            const labelY = 360;
-            ctx.font = '700 26px "Inter", sans-serif';
-            const labelText = 'TREINO CONCLUÍDO'.split('').join(String.fromCharCode(8201)); 
+            const labelY = 340;
+            ctx.font = '700 28px "Inter", sans-serif';
+            const labelText = 'TREINO CONCLUÍDO';
             
             const labelMetrics = ctx.measureText(labelText);
-            const labelWidth = labelMetrics.width + 80;
-            const labelHeight = 56;
+            const labelWidth = labelMetrics.width + 80; // Padding horizontal seguro
+            const labelHeight = 54;
 
-            ctx.strokeStyle = 'rgba(255, 255, 255, 0.25)';
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
             ctx.lineWidth = 2;
             ctx.beginPath();
-            ctx.roundRect((canvasWidth / 2) - (labelWidth / 2), labelY - (labelHeight / 2), labelWidth, labelHeight, 28);
+            ctx.roundRect((canvasWidth / 2) - (labelWidth / 2), labelY - (labelHeight / 2), labelWidth, labelHeight, 27);
             ctx.stroke();
 
             applyGlow('#e2f8ff', 'rgba(0,0,0,0.5)', { blur: 4, y: 2 });
@@ -102,15 +119,14 @@ export const ShareableWorkoutCard = forwardRef(({ session, isVisible = false, us
             resetShadow();
 
             // 3. NOME DO ATLETA
-            const nameY = 440;
+            const nameY = 415;
             applyGlow('#ffffff', 'rgba(0,0,0,0.7)', { blur: 12, y: 4 });
             ctx.font = '800 48px "Outfit", "Inter", sans-serif'; 
-            const nameToDraw = displayName.split('').join(String.fromCharCode(8201)); 
-            ctx.fillText(nameToDraw, canvasWidth / 2, nameY);
+            ctx.fillText(displayName, canvasWidth / 2, nameY);
             resetShadow();
 
             // 4. VOLUME GIGANTE
-            const volumeY = 820;
+            const volumeY = 800;
             applyGlow('#ffffff', 'rgba(0,0,0,0.6)', { blur: 20, y: 8 });
             ctx.font = `900 ${volumeFontSize * 2}px "Outfit", "Inter", sans-serif`;
             ctx.fillText(volumeValue, canvasWidth / 2, volumeY);
@@ -118,7 +134,7 @@ export const ShareableWorkoutCard = forwardRef(({ session, isVisible = false, us
 
             // 5. KILOS (Texto Vazado)
             const kilosY = 1040;
-            ctx.font = '900 140px "Outfit", "Inter", sans-serif';
+            ctx.font = '900 130px "Outfit", "Inter", sans-serif';
             ctx.strokeStyle = '#ffffff';
             ctx.lineWidth = 4;
             ctx.shadowColor = 'rgba(0,0,0,0.5)';
@@ -130,18 +146,17 @@ export const ShareableWorkoutCard = forwardRef(({ session, isVisible = false, us
             resetShadow();
 
             // 6. VOLUME EMPILHADO
-            const subtitleVolY = 1240;
-            applyGlow('#cbd5e1', 'rgba(0,0,0,0.5)', { blur: 4, y: 2 });
-            ctx.font = '600 32px "Inter", sans-serif';
-            const volEmpText = 'VOLUME EMPILHADO'.split('').join(String.fromCharCode(8201));
-            ctx.fillText(volEmpText, canvasWidth / 2, subtitleVolY);
+            const subtitleVolY = 1250;
+            applyGlow('#94a3b8', 'rgba(0,0,0,0.6)', { blur: 4, y: 2 });
+            ctx.font = '600 38px "Inter", sans-serif';
+            ctx.fillText('VOLUME EMPILHADO', canvasWidth / 2, subtitleVolY);
             resetShadow();
 
             // 7. TÍTULO DO TREINO
             const titleY = 1520;
             applyGlow(cyanAccent, 'rgba(0,0,0,0.8)', { blur: 8, y: 4 });
             ctx.font = '800 56px "Outfit", "Inter", sans-serif';
-            ctx.fillText(templateTitle.split('').join(String.fromCharCode(8201)), canvasWidth / 2, titleY);
+            ctx.fillText(templateTitle, canvasWidth / 2, titleY);
             resetShadow();
 
             // 8. SUBTÍTULO DO TREINO
@@ -149,19 +164,22 @@ export const ShareableWorkoutCard = forwardRef(({ session, isVisible = false, us
                 const subTitleY = 1600;
                 applyGlow('#94a3b8', 'rgba(0,0,0,0.65)', { blur: 4, y: 2 });
                 ctx.font = '600 41px "Inter", sans-serif';
-                ctx.fillText(templateSubtitle.split('').join(String.fromCharCode(8201)), canvasWidth / 2, subTitleY);
+                ctx.fillText(templateSubtitle, canvasWidth / 2, subTitleY);
                 resetShadow();
             }
 
             // 9. CÁPSULAS DE TEMPO E EXERCÍCIOS
-            const capsY = 1760;
-            const capsWidth = 360;
-            const capsHeight = 84;
+            const capsY = 1750;
+            const capsHeight = 74;
             
-            const leftX = canvasWidth / 2 - 220;
-            const rightX = canvasWidth / 2 + 220;
+            const leftX = canvasWidth / 2 - 210;
+            const rightX = canvasWidth / 2 + 210;
 
             const drawPill = (x, y, text) => {
+                ctx.font = '700 34px "Inter", sans-serif';
+                const metrics = ctx.measureText(text);
+                const capsWidth = Math.max(240, metrics.width + 80); // Ajusta a largura com base no texto
+                
                 ctx.fillStyle = 'rgba(15, 23, 42, 0.4)'; 
                 ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
                 ctx.lineWidth = 2;
@@ -172,8 +190,7 @@ export const ShareableWorkoutCard = forwardRef(({ session, isVisible = false, us
                 ctx.stroke();
 
                 applyGlow('#f8fafc', 'rgba(0,0,0,0.65)', { blur: 4, y: 2 });
-                ctx.font = '700 38px "Inter", sans-serif';
-                ctx.fillText(text.split('').join(String.fromCharCode(8201)), x, y);
+                ctx.fillText(text, x, y);
                 resetShadow();
             };
 
