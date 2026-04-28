@@ -221,7 +221,7 @@ export const ShareableQuoteCard = forwardRef(({ quote, isVisible = false, userNa
             // Texto do Rodapé
             applyGlow('#cbd5e1', 'rgba(0,0,0,0.8)', { blur: 10, y: 4 });
             ctx.font = '500 32px "Inter", sans-serif'; 
-            ctx.fillText(`Inspirando o treino de`, canvasWidth / 2, footerY - 40);
+            ctx.fillText(`Mindset de:`, canvasWidth / 2, footerY - 40);
             
             // Nome do atleta brilhando em ciano 
             applyGlow(cyanAccent, 'rgba(0,0,0,0.8)', { blur: 12, y: 4 });
