@@ -39,7 +39,7 @@ import { workoutService } from '../services/workoutService';
 const AchievementUnlockedModal = React.lazy(() => import('../components/achievements/AchievementUnlockedModal').then(module => ({ default: module.AchievementUnlockedModal })));
 const loadShareableWorkoutCard = () => import('../components/sharing/ShareableWorkoutCard').then(module => ({ default: module.ShareableWorkoutCard }));
 const ShareableWorkoutCard = React.lazy(loadShareableWorkoutCard);
-const shareCardBgSrc = '/bg-share-template.jpg';
+const shareCardBgSrc = '/bg-share-dumbbells.jpg';
 
 const preloadedImages = new Map();
 

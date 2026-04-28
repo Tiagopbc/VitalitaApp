@@ -1,6 +1,6 @@
 import React, { forwardRef, useEffect } from 'react';
 
-const shareCardBgSrc = '/bg-share-template.jpg';
+const shareCardBgSrc = '/bg-share-dumbbells.jpg';
 
 export const ShareableQuoteCard = forwardRef(({ quote, isVisible = false, userName = 'Atleta' }, ref) => {
     
@@ -116,7 +116,13 @@ export const ShareableQuoteCard = forwardRef(({ quote, isVisible = false, userNa
             ctx.fillText(labelText, canvasWidth / 2, labelY);
             resetShadow();
 
-            // 3. FRASE COM QUEBRA DE LINHA
+            // 3. ASPAS GIGANTES DE FUNDO
+            const quoteMarkY = 750;
+            ctx.font = '900 600px "Outfit", "Inter", sans-serif';
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.03)';
+            ctx.fillText('"', canvasWidth / 2, quoteMarkY);
+
+            // 4. FRASE COM QUEBRA DE LINHA
             const textY = 850;
             ctx.font = '800 68px "Outfit", "Inter", sans-serif'; 
             applyGlow('#ffffff', 'rgba(0,0,0,0.8)', { blur: 15, y: 6 });
@@ -153,7 +159,7 @@ export const ShareableQuoteCard = forwardRef(({ quote, isVisible = false, userNa
             const nextY = wrapText(ctx, text, canvasWidth / 2, textY, canvasWidth - 160, 95);
             resetShadow();
 
-            // 4. AUTOR
+            // 5. AUTOR
             if (author) {
                 applyGlow('#94a3b8', 'rgba(0,0,0,0.6)', { blur: 4, y: 2 });
                 ctx.font = '600 42px "Inter", sans-serif';
@@ -161,7 +167,7 @@ export const ShareableQuoteCard = forwardRef(({ quote, isVisible = false, userNa
                 resetShadow();
             }
 
-            // 5. NOME DO ATLETA NO RODAPÉ
+            // 6. NOME DO ATLETA NO RODAPÉ
             const footerY = 1750;
             applyGlow('#f8fafc', 'rgba(0,0,0,0.7)', { blur: 8, y: 4 });
             ctx.font = '700 36px "Inter", sans-serif'; 
