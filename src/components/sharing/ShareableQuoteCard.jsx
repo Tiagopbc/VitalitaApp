@@ -98,10 +98,10 @@ export const ShareableQuoteCard = forwardRef(({ quote, isVisible = false, userNa
 
             // Gradiente para escurecer as pontas do card
             const cardGradient = ctx.createLinearGradient(0, cardY, 0, cardY + cardH);
-            cardGradient.addColorStop(0, 'rgba(10, 15, 29, 0.85)');
-            cardGradient.addColorStop(0.3, 'rgba(10, 15, 29, 0.4)');
-            cardGradient.addColorStop(0.7, 'rgba(10, 15, 29, 0.4)');
-            cardGradient.addColorStop(1, 'rgba(10, 15, 29, 0.9)');
+            cardGradient.addColorStop(0, 'rgba(10, 15, 29, 0.9)');
+            cardGradient.addColorStop(0.3, 'rgba(10, 15, 29, 0.65)');
+            cardGradient.addColorStop(0.7, 'rgba(10, 15, 29, 0.65)');
+            cardGradient.addColorStop(1, 'rgba(10, 15, 29, 0.95)');
             ctx.fillStyle = cardGradient;
             ctx.fillRect(cardX, cardY, cardW, cardH);
             ctx.restore();
@@ -215,63 +215,18 @@ export const ShareableQuoteCard = forwardRef(({ quote, isVisible = false, userNa
             ctx.fillText(labelText, canvasWidth / 2, labelY + 2);
             resetShadow();
 
-            // 8. PLACA METÁLICA (Rodapé)
-            const plateW = cardW - 80;
-            const plateH = 130;
-            const plateX = (canvasWidth - plateW) / 2;
-            const plateY = cardY + cardH - 160;
+            // 8. RODAPÉ (Sem placa metálica)
+            const footerY = cardY + cardH - 120;
             
-            // Sombra pesada para destacar a placa
-            ctx.shadowColor = 'rgba(0,0,0,0.8)';
-            ctx.shadowBlur = 20;
-            ctx.shadowOffsetY = 10;
+            // Texto do Rodapé
+            applyGlow('#cbd5e1', 'rgba(0,0,0,0.8)', { blur: 10, y: 4 });
+            ctx.font = '500 32px "Inter", sans-serif'; 
+            ctx.fillText(`Inspirando o treino de`, canvasWidth / 2, footerY - 40);
             
-            // Gradiente Metálico (Prata/Aço)
-            const plateGrad = ctx.createLinearGradient(0, plateY, 0, plateY + plateH);
-            plateGrad.addColorStop(0, '#e2e8f0'); 
-            plateGrad.addColorStop(0.2, '#94a3b8');
-            plateGrad.addColorStop(0.5, '#64748b');
-            plateGrad.addColorStop(0.8, '#475569');
-            plateGrad.addColorStop(1, '#334155'); 
-            
-            ctx.fillStyle = plateGrad;
-            ctx.beginPath();
-            ctx.roundRect(plateX, plateY, plateW, plateH, 16);
-            ctx.fill();
-            resetShadow();
-
-            // Bevel interno da placa (Brilho suave)
-            ctx.strokeStyle = '#ffffff';
-            ctx.lineWidth = 2;
-            ctx.globalAlpha = 0.3;
-            ctx.stroke();
-            ctx.globalAlpha = 1.0;
-
-            // Parafusos nos 4 cantos
-            const drawScrew = (sx, sy) => {
-                ctx.fillStyle = '#1e293b';
-                ctx.beginPath();
-                ctx.arc(sx, sy, 6, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.fillStyle = '#cbd5e1';
-                ctx.beginPath();
-                ctx.arc(sx, sy, 3, 0, Math.PI * 2);
-                ctx.fill();
-            };
-            drawScrew(plateX + 25, plateY + 25);
-            drawScrew(plateX + plateW - 25, plateY + 25);
-            drawScrew(plateX + 25, plateY + plateH - 25);
-            drawScrew(plateX + plateW - 25, plateY + plateH - 25);
-
-            // Texto da Placa
-            ctx.font = '500 28px "Inter", sans-serif'; 
-            ctx.fillStyle = '#1e293b'; 
-            ctx.fillText(`Inspirando o treino de`, canvasWidth / 2, plateY + 40);
-            
-            // Nome do atleta brilhando em ciano na placa prateada
-            applyGlow(cyanAccent, 'rgba(0,0,0,0.6)', { blur: 6, y: 2 });
-            ctx.font = '800 40px "Outfit", "Inter", sans-serif';
-            ctx.fillText(displayName, canvasWidth / 2, plateY + 90);
+            // Nome do atleta brilhando em ciano 
+            applyGlow(cyanAccent, 'rgba(0,0,0,0.8)', { blur: 12, y: 4 });
+            ctx.font = '800 46px "Outfit", "Inter", sans-serif';
+            ctx.fillText(displayName, canvasWidth / 2, footerY + 10);
             resetShadow();
         };
 
