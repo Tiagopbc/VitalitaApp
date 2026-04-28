@@ -89,24 +89,32 @@ export const ShareableQuoteCard = forwardRef(({ quote, isVisible = false, userNa
             ctx.textBaseline = 'middle';
             ctx.textAlign = 'center';
 
-            // 1. LOGO DO APP (Mais sofisticado, menor, com brilho sutil)
-            const logoSize = 100;
-            const logoY = 200;
+            // 1. LOGO DO APP E NOME
+            const logoSize = 150;
+            const logoY = 150;
             if (logoImg.width > 0) {
                 ctx.save();
-                ctx.shadowColor = 'rgba(34, 211, 238, 0.3)';
-                ctx.shadowBlur = 20;
+                ctx.shadowColor = 'rgba(34, 211, 238, 0.4)';
+                ctx.shadowBlur = 30;
                 ctx.beginPath();
-                ctx.roundRect((canvasWidth / 2) - (logoSize / 2), logoY, logoSize, logoSize, 24);
+                ctx.roundRect((canvasWidth / 2) - (logoSize / 2), logoY, logoSize, logoSize, 35);
                 ctx.clip();
                 ctx.drawImage(logoImg, (canvasWidth / 2) - (logoSize / 2), logoY, logoSize, logoSize);
                 ctx.restore();
             }
 
-            // 2. PENSAMENTO DO DIA (Cápsula elegante)
-            const labelY = 360;
+            const appNameY = logoY + logoSize + 45;
+            applyGlow('#ffffff', 'rgba(0,0,0,0.8)', { blur: 15, y: 5 });
+            ctx.font = '900 48px "Outfit", "Inter", sans-serif';
+            if (ctx.letterSpacing !== undefined) ctx.letterSpacing = "12px";
+            ctx.fillText('VITALITA', (canvasWidth / 2) + 6, appNameY); // +6 compensa o espaçamento extra na última letra
+            if (ctx.letterSpacing !== undefined) ctx.letterSpacing = "0px";
+            resetShadow();
+
+            // 2. CÁPSULA DE MOTIVAÇÃO
+            const labelY = appNameY + 85;
             ctx.font = '800 24px "Inter", sans-serif';
-            const labelText = 'PENSAMENTO DO DIA';
+            const labelText = 'DOSE DE MOTIVAÇÃO';
             
             const labelMetrics = ctx.measureText(labelText);
             const labelWidth = labelMetrics.width + 60; 
@@ -128,14 +136,14 @@ export const ShareableQuoteCard = forwardRef(({ quote, isVisible = false, userNa
             resetShadow();
 
             // 3. ASPAS DE ABERTURA GIGANTE (Decorativa)
-            const quoteMarkY = 600;
+            const quoteMarkY = labelY + 220;
             ctx.font = '900 280px "Georgia", serif';
             applyGlow('rgba(34, 211, 238, 0.15)', 'rgba(34, 211, 238, 0.3)', { blur: 30, y: 0 });
             ctx.fillText('“', canvasWidth / 2, quoteMarkY);
             resetShadow();
 
             // 4. FRASE COM QUEBRA DE LINHA
-            const textY = 880;
+            const textY = labelY + 480;
             ctx.font = '700 62px "Outfit", "Inter", sans-serif'; 
             applyGlow('#ffffff', 'rgba(0,0,0,0.9)', { blur: 20, y: 8 });
             
