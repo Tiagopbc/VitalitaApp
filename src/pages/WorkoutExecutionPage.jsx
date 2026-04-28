@@ -248,6 +248,35 @@ export function WorkoutExecutionPage({ user }) {
         if (autoStartTimer) {
             setShowTimer(true);
         }
+
+        const [exerciseId, currentSetNum] = args;
+        const exerciseIndex = exercises.findIndex(ex => ex.id === exerciseId);
+        
+        if (exerciseIndex !== -1) {
+            const ex = exercises[exerciseIndex];
+            // Verifica se a série concluída é a última série deste exercício
+            if (currentSetNum === ex.sets.length) {
+                setTimeout(() => {
+                    if (focusMode) {
+                        // Modo Foco: avançar para o próximo exercício
+                        if (currentExerciseIndex < exercises.length - 1) {
+                            setCurrentExerciseIndex(prev => prev + 1);
+                        }
+                    } else {
+                        // Modo Normal: rolar até o próximo exercício
+                        if (exerciseIndex < exercises.length - 1) {
+                            const nextExerciseId = exercises[exerciseIndex + 1].id;
+                            const nextElement = document.getElementById(`exercise-${nextExerciseId}`);
+                            if (nextElement) {
+                                const yOffset = -100; // Ajuste para a barra superior fixa
+                                const y = nextElement.getBoundingClientRect().top + window.scrollY + yOffset;
+                                window.scrollTo({ top: y, behavior: 'smooth' });
+                            }
+                        }
+                    }
+                }, 400); // Pequeno delay para a animação da série concluída
+            }
+        }
     };
 
     // Rolar para o topo quando o Modo Foco é ativado
@@ -738,9 +767,9 @@ export function WorkoutExecutionPage({ user }) {
                             const activeSet = ex.sets[safeIdx];
 
                             return (
-                                <LinearCardCompactV2
-                                    key={ex.id}
-                                    exerciseId={ex.id}
+                                <div id={`exercise-${ex.id}`} key={ex.id}>
+                                    <LinearCardCompactV2
+                                        exerciseId={ex.id}
                                     setId={activeSet.id}
                                     exerciseName={ex.name}
                                     muscleGroup={ex.muscleFocus?.primary || ex.group || 'Geral'}
@@ -765,8 +794,9 @@ export function WorkoutExecutionPage({ user }) {
                                     onMethodClick={() => setSelectedMethod(ex.method)}
                                     onCompleteSet={handleCompleteSetWrapper}
                                     onUpdateNotes={updateNotes}
-                                    onToggleWeightMode={() => toggleExerciseWeightMode(ex.id)}
-                                />
+                                        onToggleWeightMode={() => toggleExerciseWeightMode(ex.id)}
+                                    />
+                                </div>
                             );
                         })
                     )}
