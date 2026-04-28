@@ -659,6 +659,7 @@ function HistoryPage({ user, isEmbedded = false }) {
                     <WorkoutDetailsModal
                         session={selectedSessionForDetails}
                         onClose={() => setSelectedSessionForDetails(null)}
+                        user={user}
                     />
                 </React.Suspense>
             )}

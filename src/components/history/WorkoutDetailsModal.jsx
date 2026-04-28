@@ -1,7 +1,10 @@
-import React from 'react';
-import { X, Calendar, Clock, Dumbbell, TrendingUp, Notebook } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { X, Calendar, Clock, Dumbbell, TrendingUp, Notebook, Share2 } from 'lucide-react';
+import { ShareableWorkoutCard } from '../sharing/ShareableWorkoutCard';
 
-export function WorkoutDetailsModal({ session, onClose }) {
+export function WorkoutDetailsModal({ session, onClose, user }) {
+    const shareCardRef = useRef(null);
+    const [sharing, setSharing] = useState(false);
     if (!session) return null;
 
     // Helper para formatar data
@@ -31,6 +34,111 @@ export function WorkoutDetailsModal({ session, onClose }) {
     };
 
     const exercises = getExercises();
+
+    const volumeLoad = exercises.reduce((acc, ex) => {
+        let exVolume = 0;
+        if (ex.sets && Array.isArray(ex.sets)) {
+            exVolume = ex.sets.reduce((sAcc, s) => {
+                if (!s.completed) return sAcc;
+                if (s.drops && s.drops.length > 0) {
+                    return sAcc + s.drops.reduce((dAcc, d) => {
+                        const dw = parseFloat((d.weight || '').toString().replace(',', '.')) || 0;
+                        const dr = parseFloat((d.reps || '').toString().replace(',', '.')) || 0;
+                        return dAcc + (dw * dr);
+                    }, 0);
+                }
+                const weightStr = (s.weight || '').toString().replace(',', '.');
+                const repsStr = (s.reps || '').toString().replace(',', '.');
+                const w = parseFloat(weightStr) || 0;
+                const r = parseFloat(repsStr) || 0;
+                return sAcc + (w * r);
+            }, 0);
+        } else if (ex.weight && ex.reps) {
+            const w = parseFloat((ex.weight || '').toString().replace(',', '.')) || 0;
+            const r = parseFloat((ex.reps || '').toString().replace(',', '.')) || 0;
+            exVolume = w * r;
+        }
+        return acc + exVolume;
+    }, 0);
+
+    const sessionData = {
+        templateName: session.templateName || session.workoutName || 'Treino Realizado',
+        duration: session.duration || '0min',
+        exercisesCount: exercises.length,
+        volumeLoad: volumeLoad
+    };
+
+    const handleShare = async () => {
+        if (sharing) return;
+        if (!shareCardRef.current) {
+            alert("Card de compartilhamento indisponível.");
+            return;
+        }
+
+        if (!window.isSecureContext) {
+            alert("O compartilhamento requer conexão segura (HTTPS).\n\nSe você está testando localmente via IP, use 'localhost' ou configure SSL.");
+            return;
+        }
+
+        setSharing(true);
+        try {
+            const waitWithTimeout = async (promise, timeoutMs = 2000) => {
+                try {
+                    await Promise.race([
+                        promise,
+                        new Promise(resolve => setTimeout(resolve, timeoutMs))
+                    ]);
+                } catch {
+                    // Ignora erros de fonte
+                }
+            };
+
+            await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+            if (document.fonts && document.fonts.ready) {
+                await waitWithTimeout(document.fonts.ready, 2000);
+            }
+
+            const canvas = shareCardRef.current;
+            if (!canvas || !canvas.toBlob) {
+                throw new Error('Canvas não disponível para exportação.');
+            }
+
+            const blob = await new Promise((resolve, reject) => {
+                canvas.toBlob((b) => {
+                    if (b) resolve(b);
+                    else reject(new Error('Falha gerar blob do canvas'));
+                }, 'image/jpeg', 0.88);
+            });
+
+            const file = new File([blob], 'treino_concluido.jpg', { type: 'image/jpeg' });
+
+            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                try {
+                    await navigator.share({
+                        title: 'Treino Concluído!',
+                        text: `Acabei de completar o treino ${sessionData.templateName}! 💪`,
+                        files: [file]
+                    });
+                    return;
+                } catch (err) {
+                    if (err?.name === 'AbortError') return;
+                    console.warn('Share failed, falling back to download:', err);
+                }
+            }
+
+            const blobUrl = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.download = `treino_${new Date().toISOString().slice(0, 10)}.jpg`;
+            link.href = blobUrl;
+            link.click();
+            URL.revokeObjectURL(blobUrl);
+        } catch (err) {
+            console.error("Error sharing:", err);
+            alert("Erro ao gerar imagem de compartilhamento.");
+        } finally {
+            setSharing(false);
+        }
+    };
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -153,7 +261,19 @@ export function WorkoutDetailsModal({ session, onClose }) {
                 </div>
 
                 {/* Rodapé */}
-                <div className="p-4 border-t border-slate-800 bg-slate-900/50 flex justify-end">
+                <div className="p-4 border-t border-slate-800 bg-slate-900/50 flex justify-between items-center">
+                    <button
+                        onClick={handleShare}
+                        disabled={sharing}
+                        className="px-4 py-2 rounded-xl bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 font-bold transition-colors flex items-center gap-2 text-sm border border-cyan-500/20"
+                    >
+                        {sharing ? (
+                            <div className="w-4 h-4 border-2 border-cyan-400/30 border-t-cyan-400 rounded-full animate-spin" />
+                        ) : (
+                            <Share2 size={16} />
+                        )}
+                        Compartilhar
+                    </button>
                     <button
                         onClick={onClose}
                         className="px-6 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold transition-colors text-sm"
@@ -162,6 +282,14 @@ export function WorkoutDetailsModal({ session, onClose }) {
                     </button>
                 </div>
             </div>
+
+            {/* Hidden Canvas for Sharing */}
+            <ShareableWorkoutCard
+                ref={shareCardRef}
+                session={sessionData}
+                userName={user?.displayName || 'Atleta'}
+                isVisible={false}
+            />
         </div>
     );
 }
