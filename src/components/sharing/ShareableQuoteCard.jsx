@@ -107,7 +107,7 @@ export const ShareableQuoteCard = forwardRef(({ quote, isVisible = false, userNa
             applyGlow('#ffffff', 'rgba(0,0,0,0.8)', { blur: 15, y: 5 });
             ctx.font = '900 48px "Outfit", "Inter", sans-serif';
             if (ctx.letterSpacing !== undefined) ctx.letterSpacing = "12px";
-            ctx.fillText('VITALITA', (canvasWidth / 2) + 6, appNameY); // +6 compensa o espaçamento extra na última letra
+            ctx.fillText('VITALITÀ', (canvasWidth / 2) + 6, appNameY); // +6 compensa o espaçamento extra na última letra
             if (ctx.letterSpacing !== undefined) ctx.letterSpacing = "0px";
             resetShadow();
 
@@ -135,16 +135,45 @@ export const ShareableQuoteCard = forwardRef(({ quote, isVisible = false, userNa
             ctx.fillText(labelText, canvasWidth / 2, labelY + 2);
             resetShadow();
 
-            // 3. ASPAS DE ABERTURA GIGANTE (Decorativa)
-            const quoteMarkY = labelY + 220;
-            ctx.font = '900 280px "Georgia", serif';
-            applyGlow('rgba(34, 211, 238, 0.15)', 'rgba(34, 211, 238, 0.3)', { blur: 30, y: 0 });
-            ctx.fillText('“', canvasWidth / 2, quoteMarkY);
+            // 3. PAINEL DE VIDRO (Glassmorphism)
+            const panelWidth = 920;
+            const panelHeight = 850;
+            const panelX = (canvasWidth - panelWidth) / 2;
+            const panelY = labelY + 80;
+
+            // Sombra do painel
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.6)';
+            ctx.shadowBlur = 40;
+            ctx.shadowOffsetY = 20;
+
+            ctx.beginPath();
+            ctx.roundRect(panelX, panelY, panelWidth, panelHeight, 40);
+            ctx.fillStyle = 'rgba(15, 23, 42, 0.6)'; // Fundo escuro semi-transparente
+            ctx.fill();
             resetShadow();
 
-            // 4. FRASE COM QUEBRA DE LINHA
-            const textY = labelY + 480;
-            ctx.font = '700 62px "Outfit", "Inter", sans-serif'; 
+            // Borda de vidro sutil
+            ctx.lineWidth = 1.5;
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
+            ctx.stroke();
+            
+            // Reflexo suave no topo do painel
+            const highlight = ctx.createLinearGradient(panelX, panelY, panelX, panelY + 150);
+            highlight.addColorStop(0, 'rgba(255, 255, 255, 0.05)');
+            highlight.addColorStop(1, 'rgba(255, 255, 255, 0)');
+            ctx.fillStyle = highlight;
+            ctx.fill();
+
+            // 4. ASPAS ELEGANTES (Pequenas, centralizadas no topo do painel)
+            const quoteIconY = panelY + 120;
+            ctx.font = '900 130px "Georgia", serif';
+            applyGlow(cyanAccent, 'rgba(34, 211, 238, 0.4)', { blur: 20, y: 0 });
+            ctx.fillText('“', canvasWidth / 2, quoteIconY);
+            resetShadow();
+
+            // 5. FRASE COM QUEBRA DE LINHA (Editorial)
+            const textY = panelY + 420; // Centro óptico do painel
+            ctx.font = 'italic 500 54px "Inter", sans-serif'; 
             applyGlow('#ffffff', 'rgba(0,0,0,0.9)', { blur: 20, y: 8 });
             
             const wrapText = (context, textToWrap, x, y, maxWidth, lineHeight) => {
@@ -176,29 +205,26 @@ export const ShareableQuoteCard = forwardRef(({ quote, isVisible = false, userNa
                 return currentY + 40; 
             };
 
-            const nextY = wrapText(ctx, text, canvasWidth / 2, textY, canvasWidth - 180, 88);
+            const nextY = wrapText(ctx, text, canvasWidth / 2, textY, canvasWidth - 220, 82);
             resetShadow();
 
-            // 5. LINHA DIVISÓRIA
-            const dividerY = nextY + 30;
-            const dividerWidth = 120;
+            // 6. LINHA DIVISÓRIA (Fina e sutil)
+            const dividerY = nextY + 40;
+            const dividerWidth = 80;
             ctx.beginPath();
             ctx.moveTo((canvasWidth / 2) - (dividerWidth / 2), dividerY);
             ctx.lineTo((canvasWidth / 2) + (dividerWidth / 2), dividerY);
-            ctx.strokeStyle = cyanAccent;
-            ctx.lineWidth = 4;
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+            ctx.lineWidth = 2;
             ctx.lineCap = 'round';
-            ctx.shadowColor = cyanAccent;
-            ctx.shadowBlur = 15;
             ctx.stroke();
-            resetShadow();
 
-            // 6. AUTOR
+            // 7. AUTOR
             if (author) {
                 const cleanAuthor = author.replace(/^—\s*/, ''); 
                 const authorY = dividerY + 70;
                 applyGlow('#94a3b8', 'rgba(0,0,0,0.8)', { blur: 10, y: 4 });
-                ctx.font = '600 38px "Inter", sans-serif';
+                ctx.font = '500 34px "Inter", sans-serif';
                 if (ctx.letterSpacing !== undefined) {
                     ctx.letterSpacing = "4px";
                 }
