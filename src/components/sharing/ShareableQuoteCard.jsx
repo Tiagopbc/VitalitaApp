@@ -126,22 +126,22 @@ export const ShareableQuoteCard = forwardRef(({ quote, isVisible = false, userNa
             ctx.textAlign = 'center';
 
             // 4. HEADER: LOGO E APP
-            const logoSize = 110;
-            const logoY = cardY + 50;
+            const logoSize = 160;
+            const logoY = cardY + 45;
             if (logoImg.width > 0) {
                 ctx.save();
                 ctx.shadowColor = 'rgba(34, 211, 238, 0.5)';
                 ctx.shadowBlur = 25;
                 ctx.beginPath();
-                ctx.roundRect((canvasWidth / 2) - (logoSize / 2), logoY, logoSize, logoSize, 26);
+                ctx.roundRect((canvasWidth / 2) - (logoSize / 2), logoY, logoSize, logoSize, 35);
                 ctx.clip();
                 ctx.drawImage(logoImg, (canvasWidth / 2) - (logoSize / 2), logoY, logoSize, logoSize);
                 ctx.restore();
             }
 
-            const appNameY = logoY + logoSize + 40;
+            const appNameY = logoY + logoSize + 50;
             applyGlow('#ffffff', 'rgba(0,0,0,0.8)', { blur: 10, y: 4 });
-            ctx.font = '900 36px "Outfit", "Inter", sans-serif';
+            ctx.font = '900 52px "Outfit", "Inter", sans-serif';
             if (ctx.letterSpacing !== undefined) ctx.letterSpacing = "6px";
             ctx.fillText('VITALITÀ', (canvasWidth / 2) + 3, appNameY);
             if (ctx.letterSpacing !== undefined) ctx.letterSpacing = "0px";
@@ -221,12 +221,12 @@ export const ShareableQuoteCard = forwardRef(({ quote, isVisible = false, userNa
             // Texto do Rodapé
             applyGlow('#cbd5e1', 'rgba(0,0,0,0.8)', { blur: 10, y: 4 });
             ctx.font = '500 32px "Inter", sans-serif'; 
-            ctx.fillText(`Mindset de:`, canvasWidth / 2, footerY - 40);
+            ctx.fillText(`Mindset de:`, canvasWidth / 2, footerY - 45);
             
-            // Nome do atleta brilhando em ciano 
-            applyGlow(cyanAccent, 'rgba(0,0,0,0.8)', { blur: 12, y: 4 });
-            ctx.font = '800 46px "Outfit", "Inter", sans-serif';
-            ctx.fillText(displayName, canvasWidth / 2, footerY + 10);
+            // Nome do atleta brilhando em branco e maior
+            applyGlow('#ffffff', 'rgba(0,0,0,0.9)', { blur: 15, y: 4 });
+            ctx.font = '800 56px "Outfit", "Inter", sans-serif';
+            ctx.fillText(displayName, canvasWidth / 2, footerY + 15);
             resetShadow();
         };
 
