@@ -63,8 +63,12 @@ export const ShareableQuoteCard = forwardRef(({ quote, isVisible = false, userNa
                 ctx.drawImage(img, dx, dy, img.width * scale, img.height * scale);
             }
 
-            // Escurecer um pouco mais para focar na frase
-            ctx.fillStyle = 'rgba(2, 6, 23, 0.45)';
+            // Escurecer imagem de fundo com um gradiente linear para dar profundidade e foco ao centro
+            const bgGradient = ctx.createLinearGradient(0, 0, 0, canvasHeight);
+            bgGradient.addColorStop(0, 'rgba(2, 6, 23, 0.7)');
+            bgGradient.addColorStop(0.5, 'rgba(2, 6, 23, 0.5)');
+            bgGradient.addColorStop(1, 'rgba(2, 6, 23, 0.85)');
+            ctx.fillStyle = bgGradient;
             ctx.fillRect(0, 0, canvasWidth, canvasHeight);
 
             // FUNÇÃO AUXILIAR PARA COR E SOMBRA
@@ -85,51 +89,60 @@ export const ShareableQuoteCard = forwardRef(({ quote, isVisible = false, userNa
             ctx.textBaseline = 'middle';
             ctx.textAlign = 'center';
 
-            // 1. LOGO DO APP
-            const logoSize = 130;
-            const logoY = 180;
+            // 1. LOGO DO APP (Mais sofisticado, menor, com brilho sutil)
+            const logoSize = 100;
+            const logoY = 200;
             if (logoImg.width > 0) {
                 ctx.save();
+                ctx.shadowColor = 'rgba(34, 211, 238, 0.3)';
+                ctx.shadowBlur = 20;
                 ctx.beginPath();
-                ctx.roundRect((canvasWidth / 2) - (logoSize / 2), logoY, logoSize, logoSize, 30);
+                ctx.roundRect((canvasWidth / 2) - (logoSize / 2), logoY, logoSize, logoSize, 24);
                 ctx.clip();
                 ctx.drawImage(logoImg, (canvasWidth / 2) - (logoSize / 2), logoY, logoSize, logoSize);
                 ctx.restore();
             }
 
-            // 2. PENSAMENTO DO DIA (Cápsula)
-            const labelY = 400;
-            ctx.font = '700 28px "Inter", sans-serif';
+            // 2. PENSAMENTO DO DIA (Cápsula elegante)
+            const labelY = 360;
+            ctx.font = '800 24px "Inter", sans-serif';
             const labelText = 'PENSAMENTO DO DIA';
             
             const labelMetrics = ctx.measureText(labelText);
-            const labelWidth = labelMetrics.width + 80; 
-            const labelHeight = 54;
+            const labelWidth = labelMetrics.width + 60; 
+            const labelHeight = 46;
 
-            ctx.strokeStyle = 'rgba(34, 211, 238, 0.4)'; // Borda cyan
-            ctx.lineWidth = 2;
+            // Fundo da cápsula
+            ctx.fillStyle = 'rgba(34, 211, 238, 0.1)';
             ctx.beginPath();
-            ctx.roundRect((canvasWidth / 2) - (labelWidth / 2), labelY - (labelHeight / 2), labelWidth, labelHeight, 27);
+            ctx.roundRect((canvasWidth / 2) - (labelWidth / 2), labelY - (labelHeight / 2), labelWidth, labelHeight, 23);
+            ctx.fill();
+
+            // Borda da cápsula
+            ctx.strokeStyle = 'rgba(34, 211, 238, 0.5)';
+            ctx.lineWidth = 1.5;
             ctx.stroke();
 
-            applyGlow(cyanAccent, 'rgba(0,0,0,0.5)', { blur: 4, y: 2 });
-            ctx.fillText(labelText, canvasWidth / 2, labelY);
+            applyGlow(cyanAccent, 'rgba(0,0,0,0)', { blur: 0, y: 0 });
+            ctx.fillText(labelText, canvasWidth / 2, labelY + 2);
             resetShadow();
 
-            // 3. ASPAS GIGANTES DE FUNDO
-            const quoteMarkY = 750;
-            ctx.font = '900 600px "Outfit", "Inter", sans-serif';
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.03)';
-            ctx.fillText('"', canvasWidth / 2, quoteMarkY);
+            // 3. ASPAS DE ABERTURA GIGANTE (Decorativa)
+            const quoteMarkY = 600;
+            ctx.font = '900 280px "Georgia", serif';
+            applyGlow('rgba(34, 211, 238, 0.15)', 'rgba(34, 211, 238, 0.3)', { blur: 30, y: 0 });
+            ctx.fillText('“', canvasWidth / 2, quoteMarkY);
+            resetShadow();
 
             // 4. FRASE COM QUEBRA DE LINHA
-            const textY = 850;
-            ctx.font = '800 68px "Outfit", "Inter", sans-serif'; 
-            applyGlow('#ffffff', 'rgba(0,0,0,0.8)', { blur: 15, y: 6 });
+            const textY = 880;
+            ctx.font = '700 62px "Outfit", "Inter", sans-serif'; 
+            applyGlow('#ffffff', 'rgba(0,0,0,0.9)', { blur: 20, y: 8 });
             
-            // Função para quebrar texto em múltiplas linhas
-            const wrapText = (context, text, x, y, maxWidth, lineHeight) => {
-                const words = text.split(' ');
+            const wrapText = (context, textToWrap, x, y, maxWidth, lineHeight) => {
+                // Remover as aspas da string original, pois o design agora cuida disso
+                const cleanText = textToWrap.replace(/^"|"$/g, '');
+                const words = cleanText.split(' ');
                 let line = '';
                 let lines = [];
                 for(let n = 0; n < words.length; n++) {
@@ -145,7 +158,6 @@ export const ShareableQuoteCard = forwardRef(({ quote, isVisible = false, userNa
                 }
                 lines.push(line);
                 
-                // Desenhar as linhas centralizadas verticalmente em torno de textY
                 const totalHeight = lines.length * lineHeight;
                 let currentY = y - (totalHeight / 2) + (lineHeight / 2);
                 
@@ -153,27 +165,60 @@ export const ShareableQuoteCard = forwardRef(({ quote, isVisible = false, userNa
                     context.fillText(lines[i], x, currentY);
                     currentY += lineHeight;
                 }
-                return currentY + 20; // Retorna Y onde termina para desenhar autor
+                return currentY + 40; 
             };
 
-            const nextY = wrapText(ctx, text, canvasWidth / 2, textY, canvasWidth - 160, 95);
+            const nextY = wrapText(ctx, text, canvasWidth / 2, textY, canvasWidth - 180, 88);
             resetShadow();
 
-            // 5. AUTOR
+            // 5. LINHA DIVISÓRIA
+            const dividerY = nextY + 30;
+            const dividerWidth = 120;
+            ctx.beginPath();
+            ctx.moveTo((canvasWidth / 2) - (dividerWidth / 2), dividerY);
+            ctx.lineTo((canvasWidth / 2) + (dividerWidth / 2), dividerY);
+            ctx.strokeStyle = cyanAccent;
+            ctx.lineWidth = 4;
+            ctx.lineCap = 'round';
+            ctx.shadowColor = cyanAccent;
+            ctx.shadowBlur = 15;
+            ctx.stroke();
+            resetShadow();
+
+            // 6. AUTOR
             if (author) {
-                applyGlow('#94a3b8', 'rgba(0,0,0,0.6)', { blur: 4, y: 2 });
-                ctx.font = '600 42px "Inter", sans-serif';
-                ctx.fillText(author, canvasWidth / 2, nextY);
+                const cleanAuthor = author.replace(/^—\s*/, ''); 
+                const authorY = dividerY + 70;
+                applyGlow('#94a3b8', 'rgba(0,0,0,0.8)', { blur: 10, y: 4 });
+                ctx.font = '600 38px "Inter", sans-serif';
+                if (ctx.letterSpacing !== undefined) {
+                    ctx.letterSpacing = "4px";
+                }
+                ctx.fillText(cleanAuthor.toUpperCase(), canvasWidth / 2, authorY);
+                if (ctx.letterSpacing !== undefined) {
+                    ctx.letterSpacing = "0px";
+                }
                 resetShadow();
             }
 
-            // 6. NOME DO ATLETA NO RODAPÉ
-            const footerY = 1750;
-            applyGlow('#f8fafc', 'rgba(0,0,0,0.7)', { blur: 8, y: 4 });
-            ctx.font = '700 36px "Inter", sans-serif'; 
-            ctx.fillText(`Compartilhado por ${displayName}`, canvasWidth / 2, footerY);
-            resetShadow();
+            // 7. RODAPÉ
+            const footerY = canvasHeight - 120;
+            
+            // Fundo escurecido suave para o rodapé
+            const footerGradient = ctx.createLinearGradient(0, canvasHeight - 250, 0, canvasHeight);
+            footerGradient.addColorStop(0, 'rgba(2, 6, 23, 0)');
+            footerGradient.addColorStop(1, 'rgba(2, 6, 23, 0.9)');
+            ctx.fillStyle = footerGradient;
+            ctx.fillRect(0, canvasHeight - 250, canvasWidth, 250);
 
+            applyGlow('#cbd5e1', 'rgba(0,0,0,0.8)', { blur: 10, y: 4 });
+            ctx.font = '500 32px "Inter", sans-serif'; 
+            ctx.fillText(`Inspirando o treino de`, canvasWidth / 2, footerY - 45);
+            
+            applyGlow(cyanAccent, 'rgba(0,0,0,0.8)', { blur: 10, y: 4 });
+            ctx.font = '800 46px "Outfit", "Inter", sans-serif';
+            ctx.fillText(displayName, canvasWidth / 2, footerY + 10);
+            resetShadow();
         };
 
     }, [quote, text, author, displayName, cyanAccent, ref]);
