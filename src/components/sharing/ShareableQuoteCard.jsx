@@ -55,20 +55,8 @@ export const ShareableQuoteCard = forwardRef(({ quote, isVisible = false, userNa
         logoImg.src = '/pwa-512x512.png'; 
 
         const drawCanvas = () => {
-            // Desenha a imagem cobrindo o canvas
-            const scale = Math.max(canvasWidth / img.width, canvasHeight / img.height);
-            const dx = (canvasWidth / 2) - (img.width / 2) * scale;
-            const dy = (canvasHeight / 2) - (img.height / 2) * scale;
-            if (img.width > 0) {
-                ctx.drawImage(img, dx, dy, img.width * scale, img.height * scale);
-            }
-
-            // Escurecer imagem de fundo com um gradiente linear para dar profundidade e foco ao centro
-            const bgGradient = ctx.createLinearGradient(0, 0, 0, canvasHeight);
-            bgGradient.addColorStop(0, 'rgba(2, 6, 23, 0.7)');
-            bgGradient.addColorStop(0.5, 'rgba(2, 6, 23, 0.5)');
-            bgGradient.addColorStop(1, 'rgba(2, 6, 23, 0.85)');
-            ctx.fillStyle = bgGradient;
+            // 1. FUNDO EXTERNO ESCURO
+            ctx.fillStyle = '#0a0f1d'; // Azul bem escuro
             ctx.fillRect(0, 0, canvasWidth, canvasHeight);
 
             // FUNÇÃO AUXILIAR PARA COR E SOMBRA
@@ -86,107 +74,94 @@ export const ShareableQuoteCard = forwardRef(({ quote, isVisible = false, userNa
                 ctx.shadowOffsetY = 0;
             };
 
+            // 2. O CARD FLUTUANTE CENTRAL
+            const cardX = 80;
+            const cardY = 120;
+            const cardW = canvasWidth - 160;
+            const cardH = canvasHeight - 240;
+            const cardRadius = 32;
+
+            // Mascarar a área do card para desenhar a imagem dentro dele
+            ctx.save();
+            ctx.beginPath();
+            ctx.roundRect(cardX, cardY, cardW, cardH, cardRadius);
+            ctx.clip();
+            
+            // Desenha a imagem dos halteres dentro do card
+            const scale = Math.max(canvasWidth / img.width, canvasHeight / img.height);
+            const dx = (canvasWidth / 2) - (img.width / 2) * scale;
+            const dy = (canvasHeight / 2) - (img.height / 2) * scale;
+            if (img.width > 0) {
+                // Clareia um pouco a imagem para o centro
+                ctx.drawImage(img, dx, dy, img.width * scale, img.height * scale);
+            }
+
+            // Gradiente para escurecer as pontas do card
+            const cardGradient = ctx.createLinearGradient(0, cardY, 0, cardY + cardH);
+            cardGradient.addColorStop(0, 'rgba(10, 15, 29, 0.85)');
+            cardGradient.addColorStop(0.3, 'rgba(10, 15, 29, 0.4)');
+            cardGradient.addColorStop(0.7, 'rgba(10, 15, 29, 0.4)');
+            cardGradient.addColorStop(1, 'rgba(10, 15, 29, 0.9)');
+            ctx.fillStyle = cardGradient;
+            ctx.fillRect(cardX, cardY, cardW, cardH);
+            ctx.restore();
+
+            // 3. BORDA NEON DO CARD
+            ctx.beginPath();
+            ctx.roundRect(cardX, cardY, cardW, cardH, cardRadius);
+            ctx.lineWidth = 4;
+            ctx.strokeStyle = cyanAccent;
+            ctx.shadowColor = cyanAccent;
+            ctx.shadowBlur = 30;
+            ctx.stroke();
+            // Traço interno branco para núcleo do neon
+            ctx.shadowBlur = 0;
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 1;
+            ctx.globalAlpha = 0.8;
+            ctx.stroke();
+            ctx.globalAlpha = 1.0;
+
             ctx.textBaseline = 'middle';
             ctx.textAlign = 'center';
 
-            // 1. LOGO DO APP E NOME
-            const logoSize = 150;
-            const logoY = 150;
+            // 4. HEADER: LOGO E APP
+            const logoSize = 110;
+            const logoY = cardY + 50;
             if (logoImg.width > 0) {
                 ctx.save();
-                ctx.shadowColor = 'rgba(34, 211, 238, 0.4)';
-                ctx.shadowBlur = 30;
+                ctx.shadowColor = 'rgba(34, 211, 238, 0.5)';
+                ctx.shadowBlur = 25;
                 ctx.beginPath();
-                ctx.roundRect((canvasWidth / 2) - (logoSize / 2), logoY, logoSize, logoSize, 35);
+                ctx.roundRect((canvasWidth / 2) - (logoSize / 2), logoY, logoSize, logoSize, 26);
                 ctx.clip();
                 ctx.drawImage(logoImg, (canvasWidth / 2) - (logoSize / 2), logoY, logoSize, logoSize);
                 ctx.restore();
             }
 
-            const appNameY = logoY + logoSize + 45;
-            applyGlow('#ffffff', 'rgba(0,0,0,0.8)', { blur: 15, y: 5 });
-            ctx.font = '900 48px "Outfit", "Inter", sans-serif';
-            if (ctx.letterSpacing !== undefined) ctx.letterSpacing = "12px";
-            ctx.fillText('VITALITÀ', (canvasWidth / 2) + 6, appNameY); // +6 compensa o espaçamento extra na última letra
+            const appNameY = logoY + logoSize + 40;
+            applyGlow('#ffffff', 'rgba(0,0,0,0.8)', { blur: 10, y: 4 });
+            ctx.font = '900 36px "Outfit", "Inter", sans-serif';
+            if (ctx.letterSpacing !== undefined) ctx.letterSpacing = "6px";
+            ctx.fillText('VITALITÀ', (canvasWidth / 2) + 3, appNameY);
             if (ctx.letterSpacing !== undefined) ctx.letterSpacing = "0px";
             resetShadow();
 
-            // 2. CÁPSULA DE MOTIVAÇÃO
-            const labelY = appNameY + 85;
-            ctx.font = '800 24px "Inter", sans-serif';
-            const labelText = 'DOSE DE MOTIVAÇÃO';
-            
-            const labelMetrics = ctx.measureText(labelText);
-            const labelWidth = labelMetrics.width + 60; 
-            const labelHeight = 46;
-
-            // Fundo da cápsula
-            ctx.fillStyle = 'rgba(34, 211, 238, 0.1)';
-            ctx.beginPath();
-            ctx.roundRect((canvasWidth / 2) - (labelWidth / 2), labelY - (labelHeight / 2), labelWidth, labelHeight, 23);
-            ctx.fill();
-
-            // Borda da cápsula
-            ctx.strokeStyle = 'rgba(34, 211, 238, 0.5)';
-            ctx.lineWidth = 1.5;
-            ctx.stroke();
-
-            applyGlow(cyanAccent, 'rgba(0,0,0,0)', { blur: 0, y: 0 });
-            ctx.fillText(labelText, canvasWidth / 2, labelY + 2);
-            resetShadow();
-
-            // 3. PAINEL DE VIDRO (Glassmorphism)
-            const panelWidth = 920;
-            const panelHeight = 850;
-            const panelX = (canvasWidth - panelWidth) / 2;
-            const panelY = labelY + 80;
-
-            // Sombra do painel
-            ctx.shadowColor = 'rgba(0, 0, 0, 0.6)';
-            ctx.shadowBlur = 40;
-            ctx.shadowOffsetY = 20;
-
-            ctx.beginPath();
-            ctx.roundRect(panelX, panelY, panelWidth, panelHeight, 40);
-            ctx.fillStyle = 'rgba(15, 23, 42, 0.6)'; // Fundo escuro semi-transparente
-            ctx.fill();
-            resetShadow();
-
-            // Borda de vidro sutil
-            ctx.lineWidth = 1.5;
-            ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
-            ctx.stroke();
-            
-            // Reflexo suave no topo do painel
-            const highlight = ctx.createLinearGradient(panelX, panelY, panelX, panelY + 150);
-            highlight.addColorStop(0, 'rgba(255, 255, 255, 0.05)');
-            highlight.addColorStop(1, 'rgba(255, 255, 255, 0)');
-            ctx.fillStyle = highlight;
-            ctx.fill();
-
-            // 4. ASPAS ELEGANTES (Pequenas, centralizadas no topo do painel)
-            const quoteIconY = panelY + 120;
-            ctx.font = '900 130px "Georgia", serif';
-            applyGlow(cyanAccent, 'rgba(34, 211, 238, 0.4)', { blur: 20, y: 0 });
-            ctx.fillText('“', canvasWidth / 2, quoteIconY);
-            resetShadow();
-
-            // 5. FRASE COM QUEBRA DE LINHA (Editorial)
-            const textY = panelY + 420; // Centro óptico do painel
-            ctx.font = 'italic 500 54px "Inter", sans-serif'; 
-            applyGlow('#ffffff', 'rgba(0,0,0,0.9)', { blur: 20, y: 8 });
+            // 5. FRASE
+            const textY = canvasHeight / 2 - 40;
+            ctx.font = 'italic 500 58px "Inter", sans-serif'; 
+            applyGlow('#ffffff', 'rgba(0,0,0,0.9)', { blur: 15, y: 4 });
             
             const wrapText = (context, textToWrap, x, y, maxWidth, lineHeight) => {
-                // Remover as aspas da string original, pois o design agora cuida disso
-                const cleanText = textToWrap.replace(/^"|"$/g, '');
-                const words = cleanText.split(' ');
+                const cleanText = textToWrap.replace(/^"|"$/g, '').replace(/^“|”$/g, '');
+                const formattedText = `“${cleanText}”`; 
+                const words = formattedText.split(' ');
                 let line = '';
                 let lines = [];
                 for(let n = 0; n < words.length; n++) {
                     const testLine = line + words[n] + ' ';
                     const metrics = context.measureText(testLine);
-                    const testWidth = metrics.width;
-                    if (testWidth > maxWidth && n > 0) {
+                    if (metrics.width > maxWidth && n > 0) {
                         lines.push(line);
                         line = words[n] + ' ';
                     } else {
@@ -202,56 +177,101 @@ export const ShareableQuoteCard = forwardRef(({ quote, isVisible = false, userNa
                     context.fillText(lines[i], x, currentY);
                     currentY += lineHeight;
                 }
-                return currentY + 40; 
+                return currentY + 30; 
             };
 
-            const nextY = wrapText(ctx, text, canvasWidth / 2, textY, canvasWidth - 220, 82);
+            const nextY = wrapText(ctx, text, canvasWidth / 2, textY, cardW - 140, 80);
             resetShadow();
 
-            // 6. LINHA DIVISÓRIA (Fina e sutil)
-            const dividerY = nextY + 40;
-            const dividerWidth = 80;
-            ctx.beginPath();
-            ctx.moveTo((canvasWidth / 2) - (dividerWidth / 2), dividerY);
-            ctx.lineTo((canvasWidth / 2) + (dividerWidth / 2), dividerY);
-            ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
-            ctx.lineWidth = 2;
-            ctx.lineCap = 'round';
-            ctx.stroke();
-
-            // 7. AUTOR
+            // 6. AUTOR
             if (author) {
                 const cleanAuthor = author.replace(/^—\s*/, ''); 
-                const authorY = dividerY + 70;
-                applyGlow('#94a3b8', 'rgba(0,0,0,0.8)', { blur: 10, y: 4 });
+                const authorY = nextY + 30;
+                applyGlow('#cbd5e1', 'rgba(0,0,0,0.9)', { blur: 10, y: 4 });
                 ctx.font = '500 34px "Inter", sans-serif';
-                if (ctx.letterSpacing !== undefined) {
-                    ctx.letterSpacing = "4px";
-                }
+                if (ctx.letterSpacing !== undefined) ctx.letterSpacing = "3px";
                 ctx.fillText(cleanAuthor.toUpperCase(), canvasWidth / 2, authorY);
-                if (ctx.letterSpacing !== undefined) {
-                    ctx.letterSpacing = "0px";
-                }
+                if (ctx.letterSpacing !== undefined) ctx.letterSpacing = "0px";
                 resetShadow();
             }
 
-            // 7. RODAPÉ
-            const footerY = canvasHeight - 120;
-            
-            // Fundo escurecido suave para o rodapé
-            const footerGradient = ctx.createLinearGradient(0, canvasHeight - 250, 0, canvasHeight);
-            footerGradient.addColorStop(0, 'rgba(2, 6, 23, 0)');
-            footerGradient.addColorStop(1, 'rgba(2, 6, 23, 0.9)');
-            ctx.fillStyle = footerGradient;
-            ctx.fillRect(0, canvasHeight - 250, canvasWidth, 250);
+            // 7. CÁPSULA "DOSE DE MOTIVAÇÃO" (Movidada para baixo)
+            const labelY = cardY + cardH - 240;
+            ctx.font = '600 24px "Inter", sans-serif';
+            const labelText = 'DOSE DE MOTIVAÇÃO';
+            const labelMetrics = ctx.measureText(labelText);
+            const labelWidth = labelMetrics.width + 60; 
+            const labelHeight = 44;
 
-            applyGlow('#cbd5e1', 'rgba(0,0,0,0.8)', { blur: 10, y: 4 });
-            ctx.font = '500 32px "Inter", sans-serif'; 
-            ctx.fillText(`Inspirando o treino de`, canvasWidth / 2, footerY - 45);
+            ctx.fillStyle = 'rgba(10, 15, 29, 0.7)';
+            ctx.beginPath();
+            ctx.roundRect((canvasWidth / 2) - (labelWidth / 2), labelY - (labelHeight / 2), labelWidth, labelHeight, 22);
+            ctx.fill();
+            ctx.strokeStyle = cyanAccent;
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+
+            applyGlow('#94a3b8', 'rgba(0,0,0,0)', { blur: 0, y: 0 });
+            ctx.fillText(labelText, canvasWidth / 2, labelY + 2);
+            resetShadow();
+
+            // 8. PLACA METÁLICA (Rodapé)
+            const plateW = cardW - 80;
+            const plateH = 130;
+            const plateX = (canvasWidth - plateW) / 2;
+            const plateY = cardY + cardH - 160;
             
-            applyGlow(cyanAccent, 'rgba(0,0,0,0.8)', { blur: 10, y: 4 });
-            ctx.font = '800 46px "Outfit", "Inter", sans-serif';
-            ctx.fillText(displayName, canvasWidth / 2, footerY + 10);
+            // Sombra pesada para destacar a placa
+            ctx.shadowColor = 'rgba(0,0,0,0.8)';
+            ctx.shadowBlur = 20;
+            ctx.shadowOffsetY = 10;
+            
+            // Gradiente Metálico (Prata/Aço)
+            const plateGrad = ctx.createLinearGradient(0, plateY, 0, plateY + plateH);
+            plateGrad.addColorStop(0, '#e2e8f0'); 
+            plateGrad.addColorStop(0.2, '#94a3b8');
+            plateGrad.addColorStop(0.5, '#64748b');
+            plateGrad.addColorStop(0.8, '#475569');
+            plateGrad.addColorStop(1, '#334155'); 
+            
+            ctx.fillStyle = plateGrad;
+            ctx.beginPath();
+            ctx.roundRect(plateX, plateY, plateW, plateH, 16);
+            ctx.fill();
+            resetShadow();
+
+            // Bevel interno da placa (Brilho suave)
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 2;
+            ctx.globalAlpha = 0.3;
+            ctx.stroke();
+            ctx.globalAlpha = 1.0;
+
+            // Parafusos nos 4 cantos
+            const drawScrew = (sx, sy) => {
+                ctx.fillStyle = '#1e293b';
+                ctx.beginPath();
+                ctx.arc(sx, sy, 6, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = '#cbd5e1';
+                ctx.beginPath();
+                ctx.arc(sx, sy, 3, 0, Math.PI * 2);
+                ctx.fill();
+            };
+            drawScrew(plateX + 25, plateY + 25);
+            drawScrew(plateX + plateW - 25, plateY + 25);
+            drawScrew(plateX + 25, plateY + plateH - 25);
+            drawScrew(plateX + plateW - 25, plateY + plateH - 25);
+
+            // Texto da Placa
+            ctx.font = '500 28px "Inter", sans-serif'; 
+            ctx.fillStyle = '#1e293b'; 
+            ctx.fillText(`Inspirando o treino de`, canvasWidth / 2, plateY + 40);
+            
+            // Nome do atleta brilhando em ciano na placa prateada
+            applyGlow(cyanAccent, 'rgba(0,0,0,0.6)', { blur: 6, y: 2 });
+            ctx.font = '800 40px "Outfit", "Inter", sans-serif';
+            ctx.fillText(displayName, canvasWidth / 2, plateY + 90);
             resetShadow();
         };
 
