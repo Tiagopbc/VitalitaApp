@@ -24,10 +24,12 @@ import {
     ArrowDown,
     Layers,
     Info,
-    Minus
+    Minus,
+    Share2
 } from 'lucide-react';
 import { StreakWeeklyGoalHybrid } from '../StreakWeeklyGoalHybrid';
 import { getFirestoreDeps } from '../firebaseDb';
+import { ShareableQuoteCard } from '../components/sharing/ShareableQuoteCard';
 import { calculateWeeklyStats } from '../utils/workoutStats';
 import { workoutService } from '../services/workoutService';
 import { achievementsCatalog } from '../data/achievementsCatalog';
@@ -220,6 +222,81 @@ export function HomeDashboard({
 
     const [loadingTemplates, setLoadingTemplates] = useState(true);
     const [loadingStats, setLoadingStats] = useState(true);
+
+    const shareQuoteRef = useRef(null);
+    const [sharingQuote, setSharingQuote] = useState(false);
+
+    const handleShareQuote = async () => {
+        if (sharingQuote) return;
+        if (!shareQuoteRef.current) {
+            alert("Card de compartilhamento indisponível.");
+            return;
+        }
+
+        if (!window.isSecureContext) {
+            alert("O compartilhamento requer conexão segura (HTTPS).\n\nSe você está testando localmente via IP, use 'localhost' ou configure SSL.");
+            return;
+        }
+
+        setSharingQuote(true);
+        try {
+            const waitWithTimeout = async (promise, timeoutMs = 2000) => {
+                try {
+                    await Promise.race([
+                        promise,
+                        new Promise(resolve => setTimeout(resolve, timeoutMs))
+                    ]);
+                } catch {
+                    // ignora erros
+                }
+            };
+
+            await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+            if (document.fonts && document.fonts.ready) {
+                await waitWithTimeout(document.fonts.ready, 2000);
+            }
+
+            const canvas = shareQuoteRef.current;
+            if (!canvas || !canvas.toBlob) {
+                throw new Error('Canvas não disponível para exportação.');
+            }
+
+            const blob = await new Promise((resolve, reject) => {
+                canvas.toBlob((b) => {
+                    if (b) resolve(b);
+                    else reject(new Error('Falha gerar blob do canvas'));
+                }, 'image/jpeg', 0.88);
+            });
+
+            const file = new File([blob], 'pensamento_do_dia.jpg', { type: 'image/jpeg' });
+
+            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                try {
+                    await navigator.share({
+                        title: 'Pensamento do Dia',
+                        text: dailyQuote,
+                        files: [file]
+                    });
+                    return;
+                } catch (err) {
+                    if (err?.name === 'AbortError') return;
+                    console.warn('Share failed, falling back to download:', err);
+                }
+            }
+
+            const blobUrl = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.download = `pensamento_${new Date().toISOString().slice(0, 10)}.jpg`;
+            link.href = blobUrl;
+            link.click();
+            URL.revokeObjectURL(blobUrl);
+        } catch (err) {
+            console.error("Error sharing:", err);
+            alert("Erro ao gerar imagem de compartilhamento.");
+        } finally {
+            setSharingQuote(false);
+        }
+    };
     const cacheHydratedRef = useRef(false);
     const cacheKey = user?.uid ? getHomeDashboardCacheKey(user.uid) : null;
 
@@ -504,12 +581,31 @@ export function HomeDashboard({
                 </div>
 
                 {/* 5. MOTIVACIONAL */}
-                <div className="mb-8 p-6 rounded-2xl text-center bg-gradient-to-br from-blue-500/5 to-cyan-500/5 border border-blue-500/10">
+                <div className="mb-8 p-6 rounded-2xl text-center bg-gradient-to-br from-blue-500/5 to-cyan-500/5 border border-blue-500/10 relative group">
                     <Star size={20} className="text-cyan-400 mx-auto mb-3" />
                     <p className="text-sm text-slate-300 italic font-medium">
                         &quot;{dailyQuote}&quot;
                     </p>
+                    <button
+                        onClick={handleShareQuote}
+                        disabled={sharingQuote}
+                        className="absolute top-3 right-3 p-2 rounded-full bg-slate-800/50 hover:bg-cyan-500/20 text-slate-400 hover:text-cyan-400 transition-colors"
+                        title="Compartilhar pensamento"
+                    >
+                        {sharingQuote ? (
+                            <div className="w-4 h-4 border-2 border-cyan-400/30 border-t-cyan-400 rounded-full animate-spin" />
+                        ) : (
+                            <Share2 size={16} />
+                        )}
+                    </button>
                 </div>
+
+                <ShareableQuoteCard
+                    ref={shareQuoteRef}
+                    quote={dailyQuote}
+                    userName={user?.displayName || 'Atleta'}
+                    isVisible={false}
+                />
 
                 {/* 4. GAMIFICAÇÃO - DESAFIO ATIVO (SMART) */}
                 <div className="mb-8">
