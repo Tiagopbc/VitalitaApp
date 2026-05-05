@@ -149,9 +149,16 @@ export function calculateWeeklyStats(sessions, currentWeeklyGoal = 4) {
         }
     }
 
-    // --- Cálculo de Streak por meta semanal (Dias Ativos) ---
+    // --- Cálculo de Streak Híbrido: Transição para "Dias Ativos" ---
+    // Histórico antigo preserva o Streak usando o Total de Sessões
+    // A partir da semana de 04/Maio/2026, exige-se estritamente Dias Ativos únicos
+    const weekCounts = new Map();
     const weekActiveDays = new Map();
     const weekStarts = new Map();
+    
+    // Data de corte da transição: Segunda-feira, 4 de Maio de 2026
+    const transitionDate = new Date(2026, 4, 4); 
+
     sessions.forEach(s => {
         const d = getSessionDate(s);
         if (!d || isNaN(d.getTime())) return;
@@ -159,17 +166,28 @@ export function calculateWeeklyStats(sessions, currentWeeklyGoal = 4) {
         const weekStr = getWeekString(weekStart);
         weekStarts.set(weekStr, weekStart);
         
+        // Count total sessions (Legacy)
+        weekCounts.set(weekStr, (weekCounts.get(weekStr) || 0) + 1);
+        
+        // Count active days (Strict)
         if (!weekActiveDays.has(weekStr)) {
             weekActiveDays.set(weekStr, new Set());
         }
         weekActiveDays.get(weekStr).add(`${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`);
     });
 
-    const weeksMeetingGoal = new Set(
-        Array.from(weekActiveDays.entries())
-            .filter(([, activeDaysSet]) => activeDaysSet.size >= currentWeeklyGoal)
-            .map(([weekStr]) => weekStr)
-    );
+    const weeksMeetingGoal = new Set();
+    
+    Array.from(weekStarts.entries()).forEach(([weekStr, weekStart]) => {
+        const isLegacyWeek = weekStart < transitionDate;
+        const metGoal = isLegacyWeek 
+            ? ((weekCounts.get(weekStr) || 0) >= currentWeeklyGoal)
+            : (weekActiveDays.get(weekStr).size >= currentWeeklyGoal);
+            
+        if (metGoal) {
+            weeksMeetingGoal.add(weekStr);
+        }
+    });
 
     let currentStreak = 0;
     let checkDate = getStartOfWeek(new Date());
