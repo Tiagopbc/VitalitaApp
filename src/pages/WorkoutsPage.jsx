@@ -24,6 +24,7 @@ import {
 
 import { RippleButton } from '../components/design-system/RippleButton';
 import { PremiumCard } from '../components/design-system/PremiumCard';
+import { AddCardioModal } from '../components/AddCardioModal';
 const ExerciseCard = React.lazy(() => import('../components/workout/ExerciseCard').then(module => ({ default: module.ExerciseCard })));
 const EditExerciseModal = React.lazy(() => import('../components/workout/EditExerciseModal').then(module => ({ default: module.EditExerciseModal })));
 
@@ -42,6 +43,8 @@ export default function WorkoutsPage({ onNavigateToCreate, onNavigateToWorkout, 
 
     // Menus
     const [activeCardMenu, setActiveCardMenu] = useState(null);
+    const [isAddCardioOpen, setIsAddCardioOpen] = useState(false);
+    
     useEffect(() => {
         async function fetchWorkouts() {
             try {
@@ -230,14 +233,24 @@ export default function WorkoutsPage({ onNavigateToCreate, onNavigateToWorkout, 
                             </p>
                         </div>
                         
-                        <RippleButton
-                            onClick={() => onNavigateToCreate(null, { targetUserId: user.uid })}
-                            className="bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold py-3 px-6 rounded-xl flex items-center gap-2 shadow-[0_0_20px_rgba(6,182,212,0.3)] transition-all"
-                        >
-                            <Plus size={20} strokeWidth={2.5} />
-                            <span className="hidden sm:inline">Novo Treino</span>
-                            <span className="sm:hidden">Novo</span>
-                        </RippleButton>
+                        <div className="flex gap-2">
+                            <RippleButton
+                                onClick={() => setIsAddCardioOpen(true)}
+                                className="bg-slate-800 hover:bg-slate-700 text-cyan-400 font-bold py-3 px-3 sm:px-4 rounded-xl flex items-center justify-center gap-2 border border-slate-700 transition-all"
+                            >
+                                <Activity size={20} />
+                                <span className="hidden sm:inline">Cardio</span>
+                            </RippleButton>
+                            
+                            <RippleButton
+                                onClick={() => onNavigateToCreate(null, { targetUserId: user.uid })}
+                                className="bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold py-3 px-4 sm:px-6 rounded-xl flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(6,182,212,0.3)] transition-all"
+                            >
+                                <Plus size={20} strokeWidth={2.5} />
+                                <span className="hidden sm:inline">Novo Treino</span>
+                                <span className="sm:hidden">Novo</span>
+                            </RippleButton>
+                        </div>
                     </div>
                 )}
 
@@ -457,6 +470,12 @@ export default function WorkoutsPage({ onNavigateToCreate, onNavigateToWorkout, 
                     </React.Suspense>
                 )}
             </AnimatePresence>
+
+            <AddCardioModal 
+                isOpen={isAddCardioOpen} 
+                onClose={() => setIsAddCardioOpen(false)} 
+                user={user} 
+            />
 
         </div>
     );

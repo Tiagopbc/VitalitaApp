@@ -149,8 +149,8 @@ export function calculateWeeklyStats(sessions, currentWeeklyGoal = 4) {
         }
     }
 
-    // --- Cálculo de Streak por meta semanal ---
-    const weekCounts = new Map();
+    // --- Cálculo de Streak por meta semanal (Dias Ativos) ---
+    const weekActiveDays = new Map();
     const weekStarts = new Map();
     sessions.forEach(s => {
         const d = getSessionDate(s);
@@ -158,12 +158,16 @@ export function calculateWeeklyStats(sessions, currentWeeklyGoal = 4) {
         const weekStart = getStartOfWeek(d);
         const weekStr = getWeekString(weekStart);
         weekStarts.set(weekStr, weekStart);
-        weekCounts.set(weekStr, (weekCounts.get(weekStr) || 0) + 1);
+        
+        if (!weekActiveDays.has(weekStr)) {
+            weekActiveDays.set(weekStr, new Set());
+        }
+        weekActiveDays.get(weekStr).add(`${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`);
     });
 
     const weeksMeetingGoal = new Set(
-        Array.from(weekCounts.entries())
-            .filter(([, count]) => count >= currentWeeklyGoal)
+        Array.from(weekActiveDays.entries())
+            .filter(([, activeDaysSet]) => activeDaysSet.size >= currentWeeklyGoal)
             .map(([weekStr]) => weekStr)
     );
 
@@ -204,7 +208,10 @@ export function calculateWeeklyStats(sessions, currentWeeklyGoal = 4) {
     return {
         currentStreak,
         bestStreak,
-        completedThisWeek: thisWeekSessions.length,
+        completedThisWeek: new Set(thisWeekSessions.map(s => {
+            const d = getSessionDate(s);
+            return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+        })).size,
         weeklyGoal: currentWeeklyGoal,
         weekDays: weekDaysData,
         monthDays: monthDaysData

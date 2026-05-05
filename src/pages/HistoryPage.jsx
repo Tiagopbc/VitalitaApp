@@ -209,6 +209,15 @@ function HistoryPage({ user, isEmbedded = false }) {
     }, [activeTab, hasLocallyHiddenSessions, revealMoreRenderedSessions]);
 
     const getSessionHighlight = (session) => {
+        if (session.isCardio) {
+            let details = [];
+            if (session.durationMin) details.push(`${session.durationMin} min`);
+            if (session.distanceKm) details.push(`${session.distanceKm} km`);
+            if (session.intensity) details.push(session.intensity);
+            const metrics = details.join(' • ');
+            return metrics ? `${metrics}` : 'Sessão de Cardio';
+        }
+
         let maxWeight = 0;
         let maxExName = '';
 

@@ -34,6 +34,7 @@ import { calculateWeeklyStats } from '../utils/workoutStats';
 import { workoutService } from '../services/workoutService';
 import { achievementsCatalog } from '../data/achievementsCatalog';
 import { evaluateAchievements, calculateStats } from '../utils/evaluateAchievements';
+import { AddCardioModal } from '../components/AddCardioModal';
 
 const HOME_DASHBOARD_CACHE_VERSION = 1;
 
@@ -215,6 +216,7 @@ export function HomeDashboard({
     // Inicializar com estrutura de estatísticas vazia (7 dias vazios) para prevenir calendário faltando
     const [stats, setStats] = useState(() => calculateWeeklyStats([], 4));
     const [nextAchievement, setNextAchievement] = useState(null);
+    const [isAddCardioOpen, setIsAddCardioOpen] = useState(false);
 
 
     const [templates, setTemplates] = useState([]);
@@ -578,6 +580,14 @@ export function HomeDashboard({
                             </button>
                         </div>
                     )}
+                    
+                    <button
+                        onClick={() => setIsAddCardioOpen(true)}
+                        className="mt-4 w-full p-4 rounded-2xl bg-slate-900 border border-slate-800 hover:border-slate-700 flex items-center justify-center gap-2 text-slate-300 hover:text-white transition-all group"
+                    >
+                        <Activity size={18} className="text-cyan-500 group-hover:scale-110 transition-transform" />
+                        <span className="font-semibold text-sm">Registrar Cardio Manual</span>
+                    </button>
                 </div>
 
                 {/* 5. MOTIVACIONAL */}
@@ -684,6 +694,12 @@ export function HomeDashboard({
 
 
             </div>
+            
+            <AddCardioModal 
+                isOpen={isAddCardioOpen} 
+                onClose={() => setIsAddCardioOpen(false)} 
+                user={user} 
+            />
         </div>
     );
 }

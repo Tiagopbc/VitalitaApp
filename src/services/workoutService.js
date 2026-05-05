@@ -332,5 +332,42 @@ export const workoutService = {
             await showToastError("Erro ao buscar exercícios. Verifique sua conexão.");
             return [];
         }
+    },
+
+    /**
+     * Salva uma sessão manual de Cardio no histórico do usuário.
+     * @param {string} userId
+     * @param {Object} cardioData
+     * @returns {Promise<string>} O ID do documento criado
+     */
+    async saveCardioSession(userId, cardioData) {
+        try {
+            const { db, collection, addDoc, serverTimestamp } = await getFirestoreDeps();
+            const sessionsRef = collection(db, SESSIONS_COLLECTION);
+            
+            const sessionDoc = {
+                userId,
+                isCardio: true,
+                workoutName: `Cardio: ${cardioData.activityType}`,
+                activityType: cardioData.activityType,
+                durationMin: Number(cardioData.durationMin) || 0,
+                distanceKm: Number(cardioData.distanceKm) || 0,
+                intensity: cardioData.intensity,
+                calories: Number(cardioData.calories) || 0,
+                notes: cardioData.notes || '',
+                completedAt: serverTimestamp(),
+                completedAtClient: new Date().toISOString(),
+                // Arrays vazios para garantir retrocompatibilidade com componentes que esperam treinos de força
+                exercises: [],
+                results: {} 
+            };
+
+            const docRef = await addDoc(sessionsRef, sessionDoc);
+            return docRef.id;
+        } catch (error) {
+            console.error("Error saving cardio session:", error);
+            await showToastError("Erro ao salvar sessão de cardio.");
+            throw error;
+        }
     }
 };

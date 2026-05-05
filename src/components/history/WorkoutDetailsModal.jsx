@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { X, Calendar, Clock, Dumbbell, TrendingUp, Notebook, Share2 } from 'lucide-react';
+import { X, Calendar, Clock, Dumbbell, TrendingUp, Notebook, Share2, Activity, Navigation, Flame } from 'lucide-react';
 import { ShareableWorkoutCard } from '../sharing/ShareableWorkoutCard';
 
 export function WorkoutDetailsModal({ session, onClose, user }) {
@@ -180,7 +180,56 @@ export function WorkoutDetailsModal({ session, onClose, user }) {
 
                 {/* Corpo - Rolável */}
                 <div className="overflow-y-auto p-6 space-y-6 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent">
-                    {exercises.length === 0 ? (
+                    {session.isCardio ? (
+                        <div className="bg-slate-900/30 rounded-xl border border-slate-800/50 p-6 space-y-6">
+                            <div className="flex items-center gap-4 border-b border-slate-800/50 pb-4">
+                                <div className="p-3 bg-cyan-950/30 rounded-xl border border-cyan-900/50">
+                                    <Activity size={24} className="text-cyan-500" />
+                                </div>
+                                <div>
+                                    <h3 className="font-bold text-white text-lg">{session.activityType || 'Cardio'}</h3>
+                                    <p className="text-sm text-slate-400">Atividade concluída</p>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                {session.durationMin > 0 && (
+                                    <div className="p-4 bg-slate-900/50 rounded-xl border border-slate-800/30">
+                                        <p className="text-xs text-slate-500 mb-1 flex items-center gap-1.5"><Clock size={12} className="text-blue-400"/> Duração</p>
+                                        <p className="text-lg font-bold text-white">{session.durationMin} min</p>
+                                    </div>
+                                )}
+                                {session.distanceKm > 0 && (
+                                    <div className="p-4 bg-slate-900/50 rounded-xl border border-slate-800/30">
+                                        <p className="text-xs text-slate-500 mb-1 flex items-center gap-1.5"><Navigation size={12} className="text-indigo-400"/> Distância</p>
+                                        <p className="text-lg font-bold text-white">{session.distanceKm} km</p>
+                                    </div>
+                                )}
+                                {session.intensity && (
+                                    <div className="p-4 bg-slate-900/50 rounded-xl border border-slate-800/30">
+                                        <p className="text-xs text-slate-500 mb-1 flex items-center gap-1.5"><Activity size={12} className="text-cyan-400"/> Intensidade</p>
+                                        <p className="text-lg font-bold text-white">{session.intensity}</p>
+                                    </div>
+                                )}
+                                {session.calories > 0 && (
+                                    <div className="p-4 bg-slate-900/50 rounded-xl border border-slate-800/30">
+                                        <p className="text-xs text-slate-500 mb-1 flex items-center gap-1.5"><Flame size={12} className="text-orange-400"/> Calorias</p>
+                                        <p className="text-lg font-bold text-white">{session.calories} kcal</p>
+                                    </div>
+                                )}
+                            </div>
+
+                            {session.notes && (
+                                <div className="px-4 py-3 border border-slate-800/50 rounded-xl bg-amber-500/5 flex items-start gap-3">
+                                    <Notebook size={16} className="text-amber-500/70 mt-0.5 shrink-0" />
+                                    <div>
+                                        <p className="text-xs font-bold text-amber-500/80 mb-1">Anotações</p>
+                                        <p className="text-sm text-amber-200/80 italic leading-relaxed">&quot;{session.notes}&quot;</p>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    ) : exercises.length === 0 ? (
                         <p className="text-center text-slate-500 py-8">Nenhum detalhe de exercício registrado.</p>
                     ) : (
                         exercises.map((ex, idx) => (
