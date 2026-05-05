@@ -41,6 +41,7 @@ export function AddCardioModal({ isOpen, onClose, user }) {
             toast.success('Cardio registrado com sucesso!');
             onClose();
         } catch (error) {
+            console.error('AddCardio error:', error);
             toast.error('Erro ao registrar cardio.');
         } finally {
             setIsSaving(false);

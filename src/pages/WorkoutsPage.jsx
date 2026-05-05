@@ -19,7 +19,8 @@ import {
     Copy,
     Trash2,
     Archive,
-    ArchiveRestore
+    ArchiveRestore,
+    Activity
 } from 'lucide-react';
 
 import { RippleButton } from '../components/design-system/RippleButton';

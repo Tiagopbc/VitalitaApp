@@ -25,7 +25,8 @@ import {
     Layers,
     Info,
     Minus,
-    Share2
+    Share2,
+    Activity
 } from 'lucide-react';
 import { StreakWeeklyGoalHybrid } from '../StreakWeeklyGoalHybrid';
 import { getFirestoreDeps } from '../firebaseDb';
