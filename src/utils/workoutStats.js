@@ -151,13 +151,13 @@ export function calculateWeeklyStats(sessions, currentWeeklyGoal = 4) {
 
     // --- Cálculo de Streak Híbrido: Transição para "Dias Ativos" ---
     // Histórico antigo preserva o Streak usando o Total de Sessões
-    // A partir da semana de 04/Maio/2026, exige-se estritamente Dias Ativos únicos
+    // A partir da semana de 11/Maio/2026, exige-se estritamente Dias Ativos únicos
     const weekCounts = new Map();
     const weekActiveDays = new Map();
     const weekStarts = new Map();
     
-    // Data de corte da transição: Segunda-feira, 4 de Maio de 2026
-    const transitionDate = new Date(2026, 4, 4); 
+    // Data de corte da transição: Segunda-feira, 11 de Maio de 2026 (ajustada)
+    const transitionDate = new Date(2026, 4, 11); 
 
     sessions.forEach(s => {
         const d = getSessionDate(s);
