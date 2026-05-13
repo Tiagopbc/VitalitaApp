@@ -528,7 +528,34 @@ export function HomeDashboard({
                     </div>
                 </div>
 
-                {/* 3. SEÇÃO HERO - PRÓXIMO TREINO */}
+                {/* 3. MOTIVACIONAL */}
+                <div className="mb-8 p-6 rounded-2xl text-center bg-gradient-to-br from-blue-500/5 to-cyan-500/5 border border-blue-500/10 relative group">
+                    <Star size={20} className="text-cyan-400 mx-auto mb-3" />
+                    <p className="text-sm text-slate-300 italic font-medium">
+                        &quot;{dailyQuote}&quot;
+                    </p>
+                    <button
+                        onClick={handleShareQuote}
+                        disabled={sharingQuote}
+                        className="absolute top-3 right-3 p-2 rounded-full bg-slate-800/50 hover:bg-cyan-500/20 text-slate-400 hover:text-cyan-400 transition-colors"
+                        title="Compartilhar pensamento"
+                    >
+                        {sharingQuote ? (
+                            <div className="w-4 h-4 border-2 border-cyan-400/30 border-t-cyan-400 rounded-full animate-spin" />
+                        ) : (
+                            <Share2 size={16} />
+                        )}
+                    </button>
+                </div>
+
+                <ShareableQuoteCard
+                    ref={shareQuoteRef}
+                    quote={dailyQuote}
+                    userName={user?.displayName || 'Atleta'}
+                    isVisible={false}
+                />
+
+                {/* 4. SEÇÃO HERO - PRÓXIMO TREINO */}
                 <div className="mb-8">
                     <div className="flex items-center gap-2 mb-3">
                         <Target size={18} className="text-cyan-400" />
@@ -591,34 +618,9 @@ export function HomeDashboard({
                     </button>
                 </div>
 
-                {/* 5. MOTIVACIONAL */}
-                <div className="mb-8 p-6 rounded-2xl text-center bg-gradient-to-br from-blue-500/5 to-cyan-500/5 border border-blue-500/10 relative group">
-                    <Star size={20} className="text-cyan-400 mx-auto mb-3" />
-                    <p className="text-sm text-slate-300 italic font-medium">
-                        &quot;{dailyQuote}&quot;
-                    </p>
-                    <button
-                        onClick={handleShareQuote}
-                        disabled={sharingQuote}
-                        className="absolute top-3 right-3 p-2 rounded-full bg-slate-800/50 hover:bg-cyan-500/20 text-slate-400 hover:text-cyan-400 transition-colors"
-                        title="Compartilhar pensamento"
-                    >
-                        {sharingQuote ? (
-                            <div className="w-4 h-4 border-2 border-cyan-400/30 border-t-cyan-400 rounded-full animate-spin" />
-                        ) : (
-                            <Share2 size={16} />
-                        )}
-                    </button>
-                </div>
 
-                <ShareableQuoteCard
-                    ref={shareQuoteRef}
-                    quote={dailyQuote}
-                    userName={user?.displayName || 'Atleta'}
-                    isVisible={false}
-                />
 
-                {/* 4. GAMIFICAÇÃO - DESAFIO ATIVO (SMART) */}
+                {/* 5. GAMIFICAÇÃO - DESAFIO ATIVO (SMART) */}
                 <div className="mb-8">
                     <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center gap-2">
