@@ -8,7 +8,7 @@ import { DesktopSidebar } from './DesktopSidebar';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { useAuth } from './AuthContext';
 import { WorkoutProvider, useWorkout } from './context/WorkoutContext';
-import { safeGetItem, safeSetItem, safeRemoveItem, safeGetJSON, safeSetJSON, hasStorage } from './utils/storage';
+import { safeGetItem, safeRemoveItem, safeGetJSON, safeSetJSON } from './utils/storage';
 
 // Carregamento Lazy de Páginas
 const loadHomeDashboard = () => import('./pages/HomeDashboard').then(module => ({ default: module.HomeDashboard }));

@@ -9,7 +9,7 @@ export function hasStorage() {
         window.localStorage.setItem(testKey, testKey);
         window.localStorage.removeItem(testKey);
         return true;
-    } catch (e) {
+    } catch {
         return typeof localStorage !== 'undefined'
             && typeof localStorage.getItem === 'function'
             && typeof localStorage.setItem === 'function';

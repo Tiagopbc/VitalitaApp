@@ -19,6 +19,7 @@ export function useWorkoutTimer(running = true, initialSeconds = 0) {
     // Sincronizar com initialSeconds se mudar essencialmente (e.g. carregado de persistência)
     useEffect(() => {
         if (initialSeconds !== elapsedRef.current) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setElapsedSeconds(initialSeconds);
             startTimeRef.current = Date.now() - (initialSeconds * 1000);
             elapsedRef.current = initialSeconds;
