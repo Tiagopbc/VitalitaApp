@@ -6,6 +6,21 @@ function generateId() {
     return Math.random().toString(36).substr(2, 9);
 }
 
+// Ajusta o tempo decorrido somando a diferença de tempo em que o app ficou suspenso/fechado
+function getAdjustedElapsed(elapsed, savedTimestamp) {
+    if (!savedTimestamp) return elapsed;
+    const ts = typeof savedTimestamp === 'string' ? Date.parse(savedTimestamp) : Number(savedTimestamp);
+    if (isNaN(ts) || ts <= 0) return elapsed;
+    
+    const now = Date.now();
+    const diff = Math.floor((now - ts) / 1000);
+    // Ajusta apenas se a diferença for positiva e menor que 12 horas (43200 segundos)
+    if (diff > 0 && diff < 43200) {
+        return elapsed + diff;
+    }
+    return elapsed;
+}
+
 export function useWorkoutSession(workoutId, user) {
     const [loading, setLoading] = useState(true);
     const [template, setTemplate] = useState(null);
@@ -76,10 +91,28 @@ export function useWorkoutSession(workoutId, user) {
                 }
 
                 // Resolver conflito entre Nuvem e Local
-                // Usar o maior elapsedSeconds se ambos existirem
+                // Usar o maior elapsedSeconds se ambos existirem (ajustados pelo tempo de background se aplicável)
                 if (activeData) {
-                    const cloudElapsed = activeData.elapsedSeconds || 0;
-                    const localElapsed = localBackupData ? (localBackupData.elapsedSeconds || 0) : 0;
+                    let cloudTimestampMs = 0;
+                    if (activeData.updatedAt) {
+                        if (typeof activeData.updatedAt.toMillis === 'function') {
+                            cloudTimestampMs = activeData.updatedAt.toMillis();
+                        } else if (typeof activeData.updatedAt.toDate === 'function') {
+                            cloudTimestampMs = activeData.updatedAt.toDate().getTime();
+                        } else if (typeof activeData.updatedAt === 'number') {
+                            cloudTimestampMs = activeData.updatedAt;
+                        } else if (activeData.updatedAt.seconds) {
+                            cloudTimestampMs = activeData.updatedAt.seconds * 1000;
+                        }
+                    }
+
+                    const cloudElapsedBase = activeData.elapsedSeconds || 0;
+                    const cloudElapsed = getAdjustedElapsed(cloudElapsedBase, cloudTimestampMs);
+
+                    const localElapsedBase = localBackupData ? (localBackupData.elapsedSeconds || 0) : 0;
+                    const localElapsed = localBackupData 
+                        ? getAdjustedElapsed(localElapsedBase, localBackupData.timestamp)
+                        : 0;
                     
                     const bestExercises = (localElapsed > cloudElapsed && localBackupData?.exercises) 
                         ? localBackupData.exercises 
@@ -101,8 +134,11 @@ export function useWorkoutSession(workoutId, user) {
                         return;
                     }
                 } else if (localBackupData) {
+                    const localElapsedBase = localBackupData.elapsedSeconds || 0;
+                    const localElapsed = getAdjustedElapsed(localElapsedBase, localBackupData.timestamp);
+
                     setExercises(localBackupData.exercises);
-                    setInitialElapsed(localBackupData.elapsedSeconds || 0);
+                    setInitialElapsed(localElapsed);
 
                     const templateDoc = await getDoc(doc(db, 'workout_templates', workoutId));
                     if (templateDoc.exists()) {

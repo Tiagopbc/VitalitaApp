@@ -117,7 +117,7 @@ describe('userService', () => {
 
         it('should throw ALREADY_LINKED if link exists', async () => {
             getDoc.mockResolvedValueOnce({ exists: () => true }); // Trainer check
-            getDocs.mockResolvedValueOnce({ empty: false }); // Link check
+            getDoc.mockResolvedValueOnce({ exists: () => true }); // Link check (direct lookup)
 
             await expect(userService.linkTrainer('studentId', 'trainerCode'))
                 .rejects.toThrow('ALREADY_LINKED');
@@ -125,11 +125,11 @@ describe('userService', () => {
 
         it('should create link if valid', async () => {
             getDoc.mockResolvedValueOnce({ exists: () => true }); // Trainer check
-            getDocs.mockResolvedValueOnce({ empty: true }); // Link check
+            getDoc.mockResolvedValueOnce({ exists: () => false }); // Link check (direct lookup)
 
             await userService.linkTrainer('studentId', 'trainerCode');
 
-            expect(addDoc).toHaveBeenCalled();
+            expect(setDoc).toHaveBeenCalled();
         });
     });
 
@@ -170,19 +170,10 @@ describe('userService', () => {
     });
 
     describe('unlinkTrainer', () => {
-        it('deletes all matching trainer-student links', async () => {
-            getDocs.mockResolvedValue({
-                docs: [
-                    { ref: 'ref-1' },
-                    { ref: 'ref-2' }
-                ]
-            });
-
+        it('deletes the trainer-student link', async () => {
             await userService.unlinkTrainer('student-1', 'trainer-1');
 
-            expect(deleteDoc).toHaveBeenCalledTimes(2);
-            expect(deleteDoc).toHaveBeenCalledWith('ref-1');
-            expect(deleteDoc).toHaveBeenCalledWith('ref-2');
+            expect(deleteDoc).toHaveBeenCalled();
         });
     });
 

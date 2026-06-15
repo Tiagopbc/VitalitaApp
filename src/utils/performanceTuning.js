@@ -1,31 +1,15 @@
+import { safeGetJSON, safeSetJSON } from './storage';
+
 const JOURNAL_RENDER_METRICS_KEY = 'vitalita_journal_render_metrics_v1';
 const MAX_JOURNAL_METRICS = 24;
 
-function hasBrowserStorage() {
-    return typeof localStorage !== 'undefined'
-        && typeof localStorage.getItem === 'function'
-        && typeof localStorage.setItem === 'function';
-}
-
 function safeReadArray(key) {
-    if (!hasBrowserStorage()) return [];
-    try {
-        const raw = localStorage.getItem(key);
-        if (!raw) return [];
-        const parsed = JSON.parse(raw);
-        return Array.isArray(parsed) ? parsed : [];
-    } catch {
-        return [];
-    }
+    const parsed = safeGetJSON(key);
+    return Array.isArray(parsed) ? parsed : [];
 }
 
 function safeWriteArray(key, value) {
-    if (!hasBrowserStorage()) return;
-    try {
-        localStorage.setItem(key, JSON.stringify(value));
-    } catch {
-        // Ignora falha de escrita de telemetria local.
-    }
+    safeSetJSON(key, value);
 }
 
 function getDeviceTier() {

@@ -10,20 +10,24 @@ export function useWorkoutTimer(running = true, initialSeconds = 0) {
     const intervalRef = useRef(null);
     const startTimeRef = useRef(null);
 
+    // Keep track of the latest elapsedSeconds value in a ref
+    const elapsedRef = useRef(elapsedSeconds);
+    useEffect(() => {
+        elapsedRef.current = elapsedSeconds;
+    }, [elapsedSeconds]);
+
     // Sincronizar com initialSeconds se mudar essencialmente (e.g. carregado de persistência)
-    // Mas cuidado para não sobrescrever timer rodando. 
-    // Geralmente initialSeconds é relevante apenas na montagem ou reset.
-    // Para este caso de uso, confiamos que o componente chame setElapsedSeconds se necessário externamente.
+    useEffect(() => {
+        if (initialSeconds !== elapsedRef.current) {
+            setElapsedSeconds(initialSeconds);
+            startTimeRef.current = Date.now() - (initialSeconds * 1000);
+            elapsedRef.current = initialSeconds;
+        }
+    }, [initialSeconds]);
 
     useEffect(() => {
         if (running) {
-            // Em vez de piscar +1 cegamente, calculamos a diferença real de tempo passado.
-            // Isso previne que o timer congele caso o Safari/Chrome no celular suspenda a aba.
-            // setElapsedSeconds "atual (prev)" já pode ter um valor (se pausou e voltou, ou se o DB carregou x tempo).
-            setElapsedSeconds(prev => {
-                startTimeRef.current = Date.now() - (prev * 1000);
-                return prev;
-            });
+            startTimeRef.current = Date.now() - (elapsedRef.current * 1000);
 
             intervalRef.current = setInterval(() => {
                 const now = Date.now();
@@ -45,10 +49,12 @@ export function useWorkoutTimer(running = true, initialSeconds = 0) {
             setElapsedSeconds(prev => {
                 const next = newVal(prev);
                 startTimeRef.current = Date.now() - (next * 1000);
+                elapsedRef.current = next;
                 return next;
             });
         } else {
             startTimeRef.current = Date.now() - (newVal * 1000);
+            elapsedRef.current = newVal;
             setElapsedSeconds(newVal);
         }
     };

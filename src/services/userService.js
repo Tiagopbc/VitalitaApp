@@ -47,7 +47,7 @@ export const userService = {
      * @returns {Promise<void>}
      */
     async linkTrainer(studentId, trainerCode) {
-        const { db, doc, getDoc, collection, query, where, getDocs, addDoc, serverTimestamp } = await getFirestoreDeps();
+        const { db, doc, getDoc, setDoc, serverTimestamp } = await getFirestoreDeps();
         // Verificar se treinador existe
         const trainerRef = doc(db, 'users', trainerCode);
         const trainerSnap = await getDoc(trainerRef);
@@ -56,19 +56,16 @@ export const userService = {
             throw new Error("PERSONAL_NOT_FOUND");
         }
 
-        // Verificar se vínculo já existe? (Validação opcional)
-        const q = query(
-            collection(db, 'trainer_students'),
-            where('studentId', '==', studentId),
-            where('trainerId', '==', trainerCode)
-        );
-        const existing = await getDocs(q);
-        if (!existing.empty) {
+        // Verificar se vínculo já existe (Otimizado com ID composto)
+        const linkId = `${studentId}_${trainerCode}`;
+        const linkRef = doc(db, 'trainer_students', linkId);
+        const linkSnap = await getDoc(linkRef);
+        if (linkSnap.exists()) {
             throw new Error("ALREADY_LINKED");
         }
 
         // Criar Vínculo
-        await addDoc(collection(db, 'trainer_students'), {
+        await setDoc(linkRef, {
             trainerId: trainerCode,
             studentId,
             status: 'active',
@@ -108,17 +105,9 @@ export const userService = {
      * @param {string} trainerId 
      */
     async unlinkTrainer(studentId, trainerId) {
-        const { db, collection, query, where, getDocs, deleteDoc } = await getFirestoreDeps();
-        const q = query(
-            collection(db, 'trainer_students'),
-            where('trainerId', '==', trainerId),
-            where('studentId', '==', studentId)
-        );
-        const snap = await getDocs(q);
-
-        // Deletar todos os links correspondentes (deve haver um)
-        const deletePromises = snap.docs.map(d => deleteDoc(d.ref));
-        await Promise.all(deletePromises);
+        const { db, doc, deleteDoc } = await getFirestoreDeps();
+        const linkId = `${studentId}_${trainerId}`;
+        await deleteDoc(doc(db, 'trainer_students', linkId));
     },
 
     /**

@@ -8,6 +8,7 @@ import { DesktopSidebar } from './DesktopSidebar';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { useAuth } from './AuthContext';
 import { WorkoutProvider, useWorkout } from './context/WorkoutContext';
+import { safeGetItem, safeSetItem, safeRemoveItem, safeGetJSON, safeSetJSON, hasStorage } from './utils/storage';
 
 // Carregamento Lazy de Páginas
 const loadHomeDashboard = () => import('./pages/HomeDashboard').then(module => ({ default: module.HomeDashboard }));
@@ -53,31 +54,13 @@ const fallbackTabPredictions = {
     default: ['home', 'workouts', 'history', 'profile']
 };
 
-function canUseNavStorage() {
-    return typeof localStorage !== 'undefined'
-        && typeof localStorage.getItem === 'function'
-        && typeof localStorage.setItem === 'function';
-}
-
 function readNavTransitions() {
-    if (!canUseNavStorage()) return {};
-    try {
-        const raw = localStorage.getItem(NAV_TRANSITIONS_STORAGE_KEY);
-        if (!raw) return {};
-        const parsed = JSON.parse(raw);
-        return parsed && typeof parsed === 'object' ? parsed : {};
-    } catch {
-        return {};
-    }
+    const parsed = safeGetJSON(NAV_TRANSITIONS_STORAGE_KEY);
+    return parsed && typeof parsed === 'object' ? parsed : {};
 }
 
 function writeNavTransitions(value) {
-    if (!canUseNavStorage()) return;
-    try {
-        localStorage.setItem(NAV_TRANSITIONS_STORAGE_KEY, JSON.stringify(value));
-    } catch {
-        // Ignora falha de persistência de telemetria local.
-    }
+    safeSetJSON(NAV_TRANSITIONS_STORAGE_KEY, value);
 }
 
 function trackTabTransition(fromTab, toTab) {
@@ -230,36 +213,31 @@ function AppAuthedContent() {
     const [welcomeOpen, setWelcomeOpen] = useState(false);
     const [welcomeCanceled, setWelcomeCanceled] = useState(false);
     const [welcomeSeconds, setWelcomeSeconds] = useState(10);
-    const canUseStorage = typeof localStorage !== 'undefined'
-        && typeof localStorage.getItem === 'function'
-        && typeof localStorage.removeItem === 'function';
 
     const welcomeFirstName = useMemo(() => {
-        const stored = canUseStorage ? (localStorage.getItem('welcomeFirstName') || '') : '';
+        const stored = safeGetItem('welcomeFirstName') || '';
         if (stored.trim()) return stored.trim();
         return getFirstNameFromDisplayName(user?.displayName || '');
-    }, [canUseStorage, user?.displayName]);
+    }, [user?.displayName]);
 
     const clearWelcomeFlags = useCallback(() => {
-        if (!canUseStorage) return;
-        localStorage.removeItem('welcomePending');
-        localStorage.removeItem('welcomeFirstName');
-    }, [canUseStorage]);
+        safeRemoveItem('welcomePending');
+        safeRemoveItem('welcomeFirstName');
+    }, []);
 
     useEffect(() => {
         if (!user) {
             if (welcomeOpen) setWelcomeOpen(false);
             return;
         }
-        if (!canUseStorage) return;
-        const pending = localStorage.getItem('welcomePending') === '1';
+        const pending = safeGetItem('welcomePending') === '1';
         if (pending) {
             setTimeout(() => {
                 setWelcomeOpen(true);
                 setWelcomeSeconds(10);
             }, 0);
         }
-    }, [canUseStorage, user, welcomeOpen]);
+    }, [user, welcomeOpen]);
 
     useEffect(() => {
         if (!welcomeOpen || welcomeCanceled) return;

@@ -33,6 +33,7 @@ import { getFirestoreDeps } from '../firebaseDb';
 import { ShareableQuoteCard } from '../components/sharing/ShareableQuoteCard';
 import { calculateWeeklyStats } from '../utils/workoutStats';
 import { workoutService } from '../services/workoutService';
+import { safeGetJSON, safeSetJSON, safeRemoveItem } from '../utils/storage';
 import { achievementsCatalog } from '../data/achievementsCatalog';
 import { evaluateAchievements, calculateStats } from '../utils/evaluateAchievements';
 import { AddCardioModal } from '../components/AddCardioModal';
@@ -83,13 +84,6 @@ const MOTIVATIONAL_QUOTES = [
 ];
 
 const HOME_DASHBOARD_CACHE_TTL_MS = 30 * 60 * 1000;
-
-function canUseHomeCacheStorage() {
-    return typeof localStorage !== 'undefined'
-        && typeof localStorage.getItem === 'function'
-        && typeof localStorage.setItem === 'function'
-        && typeof localStorage.removeItem === 'function';
-}
 
 function getHomeDashboardCacheKey(userId) {
     return `home_dashboard_snapshot_v${HOME_DASHBOARD_CACHE_VERSION}_${userId}`;
@@ -161,31 +155,21 @@ function deserializeLatestSessionFromCache(session) {
 }
 
 function loadHomeDashboardCache(cacheKey) {
-    if (!cacheKey || !canUseHomeCacheStorage()) return null;
-    try {
-        const raw = localStorage.getItem(cacheKey);
-        if (!raw) return null;
-        const parsed = JSON.parse(raw);
-        if (!parsed || typeof parsed !== 'object') return null;
+    if (!cacheKey) return null;
+    const parsed = safeGetJSON(cacheKey);
+    if (!parsed) return null;
 
-        const updatedAt = Number(parsed.updatedAt) || 0;
-        if (!updatedAt || (Date.now() - updatedAt > HOME_DASHBOARD_CACHE_TTL_MS)) {
-            localStorage.removeItem(cacheKey);
-            return null;
-        }
-        return parsed;
-    } catch {
+    const updatedAt = Number(parsed.updatedAt) || 0;
+    if (!updatedAt || (Date.now() - updatedAt > HOME_DASHBOARD_CACHE_TTL_MS)) {
+        safeRemoveItem(cacheKey);
         return null;
     }
+    return parsed;
 }
 
 function saveHomeDashboardCache(cacheKey, payload) {
-    if (!cacheKey || !canUseHomeCacheStorage()) return;
-    try {
-        localStorage.setItem(cacheKey, JSON.stringify(payload));
-    } catch {
-        // Falha de cache não deve interromper a UI.
-    }
+    if (!cacheKey) return;
+    safeSetJSON(cacheKey, payload);
 }
 
 export function HomeDashboard({

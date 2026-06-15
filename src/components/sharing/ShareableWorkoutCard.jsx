@@ -7,7 +7,25 @@ export const ShareableWorkoutCard = forwardRef(({ session, isVisible = false, us
 
     // Resolvendo Variáveis (mesmo sem session para evitar hooks quebrando)
     const volumeValue = session ? Number(session.volumeLoad || 0).toLocaleString('pt-BR') : '0';
-    const volumeFontSize = session ? Math.max(144, 198 - Math.max(0, volumeValue.length - 6) * 19) : 157;
+    let volumeFontSize = 220;
+    if (session) {
+        const len = volumeValue.length;
+        if (len <= 4) {
+            volumeFontSize = 280;
+        } else if (len === 5) {
+            volumeFontSize = 250;
+        } else if (len === 6) {
+            volumeFontSize = 220;
+        } else if (len === 7) {
+            volumeFontSize = 190;
+        } else if (len === 8) {
+            volumeFontSize = 160;
+        } else {
+            volumeFontSize = 130;
+        }
+    } else {
+        volumeFontSize = 220;
+    }
     const displayName = (userName || 'Atleta').toString().trim() || 'Atleta';
     const templateLabel = session ? (session.templateName || 'Treino Personalizado').toString() : '';
     const templateParts = templateLabel.split(/\s[-–—]\s/);
@@ -129,7 +147,7 @@ export const ShareableWorkoutCard = forwardRef(({ session, isVisible = false, us
             // 4. VOLUME GIGANTE
             const volumeY = 800;
             applyGlow('#ffffff', 'rgba(0,0,0,0.6)', { blur: 20, y: 8 });
-            ctx.font = `900 ${volumeFontSize * 2}px "Outfit", "Inter", sans-serif`;
+            ctx.font = `900 ${volumeFontSize}px "Outfit", "Inter", sans-serif`;
             ctx.fillText(volumeValue, canvasWidth / 2, volumeY);
             resetShadow();
 
