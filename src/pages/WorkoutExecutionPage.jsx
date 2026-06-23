@@ -615,7 +615,7 @@ export function WorkoutExecutionPage({ user }) {
                 </div>
             )}
             {error && <Toast message={error} type="error" onClose={() => setError(null)} />}
-            <div className="max-w-2xl mx-auto space-y-6">
+            <div className="max-w-2xl mx-auto flex flex-col">
 
                 <div
                     className="
@@ -711,12 +711,12 @@ export function WorkoutExecutionPage({ user }) {
                 )}
 
                 {!focusMode && (
-                    <div className="px-4 mb-2">
+                    <div className="px-4 mb-2 mt-2">
                         <ProgressCard completedCount={completedExercisesCount} totalCount={totalExercises} />
                     </div>
                 )}
 
-                <main className={`px-4 space-y-4`}>
+                <main className={`px-4 mt-2 space-y-4`}>
                     {focusMode ? (
                         exercises.length > 0 && (() => {
                             const ex = exercises[currentExerciseIndex];
