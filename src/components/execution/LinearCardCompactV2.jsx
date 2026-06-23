@@ -230,8 +230,8 @@ export const LinearCardCompactV2 = memo(function LinearCardCompactV2({
     }
 
     return (
-        <div className={`rounded-[24px] p-[22px] flex flex-col gap-[14px] transition-all duration-300 relative overflow-hidden ${containerClass}`}>
-            <div className="flex justify-between items-start mb-[10px] gap-3">
+        <div className={`rounded-[24px] p-4 flex flex-col gap-3 transition-all duration-300 relative overflow-hidden ${containerClass}`}>
+            <div className="flex justify-between items-start mb-2 gap-3">
                 <div className="flex-1 min-w-0">
                     <h3 className="text-[#e2e8f0] text-[20px] font-bold leading-tight uppercase relative" style={{ whiteSpace: 'normal', wordWrap: 'break-word', overflowWrap: 'break-word', display: 'block' }}>
                         {exerciseName}
@@ -334,7 +334,7 @@ export const LinearCardCompactV2 = memo(function LinearCardCompactV2({
                  </button>
             )}
 
-            <button onClick={handleCompleteSet} disabled={isCurrentSetCompleted} className={`w-auto min-w-[240px] px-8 self-center py-4 rounded-[20px] font-bold text-base tracking-wide shadow-lg transition-all duration-300 flex items-center justify-center gap-2 ${isCurrentSetCompleted ? 'bg-emerald-500/20 text-emerald-400 cursor-default border border-emerald-500/20' : 'bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white shadow-cyan-500/20 hover:shadow-cyan-500/40 active:scale-[0.98]'}`}>
+            <button onClick={handleCompleteSet} disabled={isCurrentSetCompleted} className={`w-auto min-w-[240px] px-8 self-center py-3 rounded-[20px] font-bold text-base tracking-wide shadow-lg transition-all duration-300 flex items-center justify-center gap-2 ${isCurrentSetCompleted ? 'bg-emerald-500/20 text-emerald-400 cursor-default border border-emerald-500/20' : 'bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white shadow-cyan-500/20 hover:shadow-cyan-500/40 active:scale-[0.98]'}`}>
                 {isCurrentSetCompleted ? <><CheckCircle2 size={24} strokeWidth={2.5} /> SÉRIE CONCLUÍDA</> : <>CONCLUIR SÉRIE {currentSet} {hasDrops ? '(COMPLETA)' : ''} <ArrowRight size={22} strokeWidth={2.5} /></>}
             </button>
 

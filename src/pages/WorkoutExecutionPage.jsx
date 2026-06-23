@@ -633,7 +633,7 @@ export function WorkoutExecutionPage({ user }) {
                 >
                     <div className="
                         relative mx-auto max-w-2xl
-                        px-4 py-3
+                        px-4 py-2
                         pointer-events-auto
                     ">
                         {/* Ambient glow effect (Full Height) */}
@@ -678,10 +678,10 @@ export function WorkoutExecutionPage({ user }) {
                     </div>
                 </div>
 
-                <div style={{ height: 'calc(85px + env(safe-area-inset-top))' }}></div>
+                <div style={{ height: 'calc(65px + env(safe-area-inset-top))' }}></div>
 
                 {focusMode && (
-                    <div className="px-4 mb-4 mt-2 flex items-center justify-between pointer-events-auto relative z-40">
+                    <div className="px-4 mb-2 mt-0 flex items-center justify-between pointer-events-auto relative z-40">
                         <Button
                             variant="outline-primary"
                             size="sm"
