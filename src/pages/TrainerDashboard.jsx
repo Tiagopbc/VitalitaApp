@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Users, UserPlus, Copy, Check, ChevronLeft, PlusCircle, Trash2, X } from 'lucide-react';
+import { Users, UserPlus, Copy, Check, ChevronLeft, PlusCircle, Trash2, X, RotateCw } from 'lucide-react';
 import { getFirestoreDeps } from '../firebaseDb';
 import { Button } from '../components/design-system/Button';
 import { PremiumCard } from '../components/design-system/PremiumCard';
@@ -9,7 +9,9 @@ import WorkoutsPage from './WorkoutsPage';
 
 export function TrainerDashboard({ user, onBack, onNavigateToCreateWorkout }) {
     const [students, setStudents] = useState([]);
+    const [invite, setInvite] = useState(null);
     const [inviteCode, setInviteCode] = useState('');
+    const [inviteLoading, setInviteLoading] = useState(false);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
 
@@ -53,7 +55,20 @@ export function TrainerDashboard({ user, onBack, onNavigateToCreateWorkout }) {
     }, [user]);
 
     const fetchInviteCode = React.useCallback(async () => {
-        if (user) setInviteCode(user.uid);
+        if (!user) return;
+        setInviteLoading(true);
+        try {
+            const { userService } = await import('../services/userService');
+            const activeInvite = await userService.ensureActiveTrainerInvite(user.uid);
+            setInvite(activeInvite);
+            setInviteCode(activeInvite?.code || '');
+        } catch (error) {
+            console.error("Error fetching trainer invite:", error);
+            setInvite(null);
+            setInviteCode('');
+        } finally {
+            setInviteLoading(false);
+        }
     }, [user]);
 
     useEffect(() => {
@@ -65,9 +80,27 @@ export function TrainerDashboard({ user, onBack, onNavigateToCreateWorkout }) {
 
 
     const copyToClipboard = () => {
+        if (!inviteCode) return;
         navigator.clipboard.writeText(inviteCode);
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
+    };
+
+    const handleGenerateInvite = async () => {
+        if (!user) return;
+        setInviteLoading(true);
+        setCopied(false);
+        try {
+            const { userService } = await import('../services/userService');
+            const newInvite = await userService.createTrainerInvite(user.uid);
+            setInvite(newInvite);
+            setInviteCode(newInvite?.code || '');
+        } catch (error) {
+            console.error("Error creating trainer invite:", error);
+            alert("Erro ao gerar convite.");
+        } finally {
+            setInviteLoading(false);
+        }
     };
 
     const handleUnlink = async (student) => {
@@ -372,10 +405,11 @@ export function TrainerDashboard({ user, onBack, onNavigateToCreateWorkout }) {
                         <div className="px-6 py-2">
                             <div className="bg-[#020617] border border-slate-800 rounded-xl p-1.5 flex items-center relative group">
                                 <div className="flex-1 text-center font-mono text-base font-bold text-cyan-400 tracking-widest px-2 py-3 break-all">
-                                    {inviteCode}
+                                    {inviteLoading ? 'GERANDO...' : inviteCode || 'SEM CODIGO'}
                                 </div>
                                 <button
                                     onClick={copyToClipboard}
+                                    disabled={!inviteCode || inviteLoading}
                                     className={`shrink-0 p-3 rounded-lg font-bold transition-all duration-300 border border-transparent ${copied
                                         ? 'bg-green-500/10 text-green-400 border-green-500/20'
                                         : 'bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white'
@@ -390,10 +424,24 @@ export function TrainerDashboard({ user, onBack, onNavigateToCreateWorkout }) {
                                     Código copiado!
                                 </p>
                             )}
+                            {invite?.expiresAt && (
+                                <p className="text-center text-[11px] text-slate-500 mt-2">
+                                    Expira em {invite.expiresAt.toLocaleDateString('pt-BR')} às {invite.expiresAt.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                                </p>
+                            )}
                         </div>
 
                         {/* Footer (Botão Fechar) - Usando estilo de botão sólido e largo */}
-                        <div className="p-6 mt-2">
+                        <div className="p-6 mt-2 space-y-3">
+                            <Button
+                                onClick={handleGenerateInvite}
+                                disabled={inviteLoading}
+                                variant="secondary"
+                                className="w-full h-11 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold rounded-xl border border-slate-700 tracking-wide uppercase text-xs"
+                                leftIcon={<RotateCw size={16} />}
+                            >
+                                {inviteLoading ? 'Gerando...' : 'Gerar novo código'}
+                            </Button>
                             <Button
                                 onClick={() => setShowInviteModal(false)}
                                 className="w-full h-12 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl shadow-lg shadow-blue-600/20 tracking-wide uppercase text-xs"

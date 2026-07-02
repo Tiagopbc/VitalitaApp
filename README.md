@@ -103,20 +103,20 @@ Este projeto está na vanguarda do desenvolvimento web moderno:
 Para rodar o Vitalità localmente:
 
 ### Pré-requisitos
-- Node.js (v18+)
+- Node.js (v20 recomendado; v18+ suportado)
 - Gerenciador de pacotes (npm, yarn ou pnpm)
 
 ### Passo a passo
 
 1. **Clone o repositório**
    ```bash
-   git clone https://github.com/Tiagopbc/Vitalita_ver3.git
-   cd Vitalita_ver3
+   git clone https://github.com/Tiagopbc/VitalitaApp.git
+   cd VitalitaApp
    ```
 
 2. **Instale as dependências**
    ```bash
-   npm install
+   npm ci
    ```
 
 3. **Configure as Variáveis de Ambiente**
@@ -131,7 +131,28 @@ Para rodar o Vitalità localmente:
    ```bash
    npm run dev
    ```
-   Acesse em `http://localhost:5173`.
+   Acesse em `http://localhost:5175`.
+
+---
+
+## 🧪 Qualidade e Segurança
+
+Antes de abrir um PR, rode:
+
+```bash
+npm run lint
+npm test -- --run
+npm run test:rules
+npm run build
+```
+
+As regras e índices do Firestore ficam versionados em:
+
+- `firestore.rules`
+- `firestore.indexes.json`
+- `firebase.json`
+
+A documentação técnica inicial está em `docs/`.
 
 ---
 

@@ -1,59 +1,308 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    
-    // Helper para verificar se o treinador tem vínculo com o estudante
-    function isTrainerOf(studentId) {
-      return request.auth != null && exists(/databases/$(database)/documents/trainer_students/$(studentId + '_' + request.auth.uid));
+
+    function signedIn() {
+      return request.auth != null;
     }
 
-    // 1. Coleção de Usuários
+    function isSelf(userId) {
+      return signedIn() && request.auth.uid == userId;
+    }
+
+    function isActiveTrainerOf(studentId) {
+      return signedIn()
+        && exists(/databases/$(database)/documents/trainer_students/$(studentId + '_' + request.auth.uid))
+        && get(/databases/$(database)/documents/trainer_students/$(studentId + '_' + request.auth.uid)).data.status == 'active';
+    }
+
+    function canReadUserData(userId) {
+      return isSelf(userId) || isActiveTrainerOf(userId);
+    }
+
+    function userCreateFields() {
+      return [
+        'fullName',
+        'displayName',
+        'email',
+        'createdAt',
+        'updatedAt',
+        'lastActiveAt',
+        'activeWorkoutId',
+        'weight',
+        'height',
+        'age',
+        'gender',
+        'goal',
+        'weeklyGoal',
+        'birthDate',
+        'heightCm',
+        'weightKg',
+        'defaultRestTime',
+        'autoStartTimer',
+        'achievements',
+        'privacyConsent',
+        'photoURL'
+      ];
+    }
+
+    function userMutableFields() {
+      return [
+        'fullName',
+        'displayName',
+        'email',
+        'updatedAt',
+        'lastActiveAt',
+        'activeWorkoutId',
+        'weight',
+        'height',
+        'age',
+        'gender',
+        'goal',
+        'weeklyGoal',
+        'birthDate',
+        'heightCm',
+        'weightKg',
+        'defaultRestTime',
+        'autoStartTimer',
+        'achievements',
+        'privacyConsent',
+        'photoURL'
+      ];
+    }
+
+    function templateCreateFields() {
+      return [
+        'userId',
+        'createdBy',
+        'name',
+        'exercises',
+        'assignedByTrainer',
+        'createdAt',
+        'updatedAt',
+        'category',
+        'estimatedDuration',
+        'muscleGroups',
+        'isFavorite',
+        'isArchived',
+        'lastPerformed',
+        'timesPerformed'
+      ];
+    }
+
+    function templateMutableFields() {
+      return [
+        'name',
+        'exercises',
+        'updatedAt',
+        'category',
+        'estimatedDuration',
+        'muscleGroups',
+        'isFavorite',
+        'isArchived',
+        'lastPerformed',
+        'timesPerformed'
+      ];
+    }
+
+    function validTemplateCreate() {
+      return request.resource.data.keys().hasOnly(templateCreateFields())
+        && request.resource.data.keys().hasAll(['userId', 'createdBy', 'name', 'exercises', 'createdAt'])
+        && request.resource.data.userId is string
+        && request.resource.data.createdBy is string
+        && request.resource.data.name is string
+        && request.resource.data.exercises is list
+        && request.resource.data.createdBy == request.auth.uid
+        && (
+          request.resource.data.userId == request.auth.uid
+          || isActiveTrainerOf(request.resource.data.userId)
+        );
+    }
+
+    function validTemplateUpdate() {
+      return request.resource.data.userId == resource.data.userId
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(templateMutableFields());
+    }
+
+    function sessionCreateFields() {
+      return [
+        'userId',
+        'templateId',
+        'templateName',
+        'workoutName',
+        'duration',
+        'elapsedSeconds',
+        'exercises',
+        'results',
+        'createdAt',
+        'completedAt',
+        'completedAtClient',
+        'isCardio',
+        'activityType',
+        'durationMin',
+        'distanceKm',
+        'intensity',
+        'calories',
+        'notes'
+      ];
+    }
+
+    function validSessionCreate() {
+      return request.resource.data.keys().hasOnly(sessionCreateFields())
+        && request.resource.data.keys().hasAll(['userId', 'completedAt'])
+        && request.resource.data.userId == request.auth.uid;
+    }
+
+    function activeWorkoutFields() {
+      return [
+        'userId',
+        'templateId',
+        'elapsedSeconds',
+        'exercises',
+        'updatedAt'
+      ];
+    }
+
+    function inviteCreateFields() {
+      return [
+        'trainerId',
+        'code',
+        'status',
+        'createdAt',
+        'expiresAt'
+      ];
+    }
+
+    function validInviteCreate() {
+      return request.resource.data.keys().hasOnly(inviteCreateFields())
+        && request.resource.data.keys().hasAll(['trainerId', 'code', 'status', 'createdAt', 'expiresAt'])
+        && request.resource.data.trainerId == request.auth.uid
+        && request.resource.data.code is string
+        && request.resource.data.status == 'active'
+        && request.resource.data.expiresAt is timestamp
+        && request.resource.data.expiresAt > request.time;
+    }
+
+    function validInviteRevoke() {
+      return request.auth.uid == resource.data.trainerId
+        && resource.data.status == 'active'
+        && request.resource.data.trainerId == resource.data.trainerId
+        && request.resource.data.code == resource.data.code
+        && request.resource.data.createdAt == resource.data.createdAt
+        && request.resource.data.expiresAt == resource.data.expiresAt
+        && request.resource.data.status == 'revoked'
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status']);
+    }
+
+    function validInviteAccept(inviteId) {
+      return resource.data.status == 'active'
+        && resource.data.expiresAt > request.time
+        && request.resource.data.trainerId == resource.data.trainerId
+        && request.resource.data.code == resource.data.code
+        && request.resource.data.createdAt == resource.data.createdAt
+        && request.resource.data.expiresAt == resource.data.expiresAt
+        && request.resource.data.status == 'expired'
+        && request.resource.data.usedBy == request.auth.uid
+        && request.resource.data.usedAt is timestamp
+        && getAfter(/databases/$(database)/documents/trainer_students/$(request.auth.uid + '_' + resource.data.trainerId)).data.inviteId == inviteId
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'usedBy', 'usedAt']);
+    }
+
     match /users/{userId} {
-      allow write: if request.auth != null && request.auth.uid == userId;
-      allow read: if request.auth != null && (
-        request.auth.uid == userId ||
-        isTrainerOf(userId)
-      );
+      allow read: if canReadUserData(userId);
+      allow create: if isSelf(userId)
+        && request.resource.data.keys().hasOnly(userCreateFields());
+      allow update: if isSelf(userId)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(userMutableFields());
+      allow delete: if false;
     }
 
-    // 2. Coleção de Histórico de Treino
-    match /workout_sessions/{sessionId} {
-      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
-      allow read, update, delete: if request.auth != null && (
-        resource.data.userId == request.auth.uid ||
-        isTrainerOf(resource.data.userId)
-      );
-    }
-    
-    // 3. Coleção de Templates de Treino
     match /workout_templates/{templateId} {
-      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
-      allow read, update, delete: if request.auth != null && (
-        resource.data.userId == request.auth.uid ||
-        isTrainerOf(resource.data.userId)
-      );
+      allow create: if signedIn() && validTemplateCreate();
+      allow read: if signedIn() && canReadUserData(resource.data.userId);
+      allow update: if signedIn()
+        && canReadUserData(resource.data.userId)
+        && validTemplateUpdate();
+      allow delete: if signedIn() && canReadUserData(resource.data.userId);
     }
 
-    // 4. Coleção de Vínculo Estudante-Treinador
+    match /workout_sessions/{sessionId} {
+      allow create: if signedIn() && validSessionCreate();
+      allow read: if signedIn() && canReadUserData(resource.data.userId);
+      allow update: if signedIn()
+        && isSelf(resource.data.userId)
+        && request.resource.data.userId == resource.data.userId
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['notes']);
+      allow delete: if false;
+    }
+
     match /trainer_students/{linkId} {
-      // O linkId deve ser composto: "studentId_trainerId"
-      allow read: if request.auth != null && (
+      allow read: if signedIn() && (
         request.auth.uid == resource.data.studentId ||
         request.auth.uid == resource.data.trainerId
       );
-      // Aluno pode criar vínculo consigo mesmo. Aluno ou Treinador podem deletar o vínculo.
-      allow create: if request.auth != null && request.resource.data.studentId == request.auth.uid;
-      allow delete: if request.auth != null && (
-        resource.data.studentId == request.auth.uid ||
-        resource.data.trainerId == request.auth.uid
-      );
-      // Impedir atualizações arbitrárias
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(['studentId', 'trainerId', 'status', 'linkedAt', 'inviteId'])
+        && request.resource.data.keys().hasAll(['studentId', 'trainerId', 'status', 'linkedAt', 'inviteId'])
+        && request.resource.data.studentId == request.auth.uid
+        && request.resource.data.trainerId is string
+        && request.resource.data.trainerId != request.auth.uid
+        && request.resource.data.status == 'active'
+        && linkId == request.resource.data.studentId + '_' + request.resource.data.trainerId
+        && exists(/databases/$(database)/documents/users/$(request.resource.data.trainerId))
+        && get(/databases/$(database)/documents/trainer_invites/$(request.resource.data.inviteId)).data.trainerId == request.resource.data.trainerId
+        && get(/databases/$(database)/documents/trainer_invites/$(request.resource.data.inviteId)).data.status == 'active'
+        && get(/databases/$(database)/documents/trainer_invites/$(request.resource.data.inviteId)).data.expiresAt > request.time
+        && getAfter(/databases/$(database)/documents/trainer_invites/$(request.resource.data.inviteId)).data.status == 'expired'
+        && getAfter(/databases/$(database)/documents/trainer_invites/$(request.resource.data.inviteId)).data.usedBy == request.auth.uid;
       allow update: if false;
+      allow delete: if signedIn() && (
+        request.auth.uid == resource.data.studentId ||
+        request.auth.uid == resource.data.trainerId
+      );
     }
 
-    // 5. Coleção de Sessão Ativa
     match /active_workouts/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read: if isSelf(userId);
+      allow create, update: if isSelf(userId)
+        && request.resource.data.keys().hasOnly(activeWorkoutFields())
+        && request.resource.data.userId == userId;
+      allow delete: if isSelf(userId);
+    }
+
+    match /exercises_catalog/{exerciseId} {
+      allow read: if signedIn();
+      allow write: if false;
+    }
+
+    match /trainer_invites/{inviteId} {
+      allow read: if signedIn() && (
+        request.auth.uid == resource.data.trainerId ||
+        (
+          resource.data.status == 'active' &&
+          resource.data.expiresAt > request.time
+        ) ||
+        request.auth.uid == resource.data.usedBy
+      );
+      allow create: if signedIn() && validInviteCreate();
+      allow update: if signedIn() && (
+        validInviteRevoke() ||
+        validInviteAccept(inviteId)
+      );
+      allow delete: if false;
+    }
+
+    match /user_stats/{userId} {
+      allow read: if canReadUserData(userId);
+      allow write: if false;
+    }
+
+    match /audit_logs/{logId} {
+      allow read, write: if false;
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
     }
   }
 }

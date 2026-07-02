@@ -4,15 +4,19 @@ import {
     getDoc,
     setDoc,
     addDoc,
+    updateDoc,
     deleteDoc,
     doc,
     collection,
     query,
     where,
+    limit,
 
     getCountFromServer,
     getDocs,
     serverTimestamp,
+    writeBatch,
+    Timestamp,
 
 } from 'firebase/firestore';
 
@@ -27,10 +31,14 @@ vi.mock('../firebaseDb', () => ({
         getDoc,
         setDoc,
         addDoc,
+        updateDoc,
         deleteDoc,
         serverTimestamp,
         getCountFromServer,
-        getDocs
+        getDocs,
+        limit,
+        writeBatch,
+        Timestamp
     })
 }));
 
@@ -40,18 +48,39 @@ vi.mock('firebase/firestore', () => ({
     query: vi.fn(),
     where: vi.fn(),
     serverTimestamp: vi.fn(),
+    Timestamp: {
+        now: vi.fn(),
+        fromDate: vi.fn()
+    },
     getDoc: vi.fn(),
     setDoc: vi.fn(),
     addDoc: vi.fn(),
+    updateDoc: vi.fn(),
     deleteDoc: vi.fn(),
     getCountFromServer: vi.fn(),
-    getDocs: vi.fn()
+    getDocs: vi.fn(),
+    limit: vi.fn(),
+    writeBatch: vi.fn()
 }));
 
 describe('userService', () => {
+    const mockBatch = {
+        set: vi.fn(),
+        update: vi.fn(),
+        commit: vi.fn()
+    };
+
     beforeEach(() => {
         vi.clearAllMocks();
         doc.mockReturnValue({ path: 'mock-doc' });
+        collection.mockReturnValue({ path: 'mock-collection' });
+        addDoc.mockResolvedValue({ id: 'invite-1' });
+        updateDoc.mockResolvedValue();
+        mockBatch.commit.mockResolvedValue();
+        writeBatch.mockReturnValue(mockBatch);
+        serverTimestamp.mockReturnValue('ts');
+        Timestamp.now.mockReturnValue('now-ts');
+        Timestamp.fromDate.mockImplementation(date => ({ toDate: () => date }));
     });
 
     describe('checkTrainerStatus', () => {
@@ -108,28 +137,140 @@ describe('userService', () => {
     });
 
     describe('linkTrainer', () => {
-        it('should throw PERSONAL_NOT_FOUND if trainer does not exist', async () => {
-            getDoc.mockResolvedValueOnce({ exists: () => false }); // Trainer check
+        it('should throw PERSONAL_NOT_FOUND if trainer code is empty', async () => {
+            await expect(userService.linkTrainer('studentId', '   '))
+                .rejects.toThrow('PERSONAL_NOT_FOUND');
+        });
 
-            await expect(userService.linkTrainer('studentId', 'invalidTrainerCode'))
+        it('should throw PERSONAL_NOT_FOUND if trainer code is the student id', async () => {
+            await expect(userService.linkTrainer('studentId', 'studentId'))
+                .rejects.toThrow('PERSONAL_NOT_FOUND');
+        });
+
+        it('should create link if valid', async () => {
+            const inviteDoc = {
+                id: 'invite-1',
+                ref: { path: 'trainer_invites/invite-1' },
+                data: () => ({ trainerId: 'trainerCode', code: 'ABC123', status: 'active' })
+            };
+            getDocs.mockResolvedValueOnce({ empty: false, docs: [inviteDoc] });
+            getDoc.mockResolvedValueOnce({ exists: () => false });
+
+            await userService.linkTrainer('studentId', ' abc123 ');
+
+            expect(doc).toHaveBeenCalledWith(expect.anything(), 'trainer_students', 'studentId_trainerCode');
+            expect(mockBatch.set).toHaveBeenCalledWith(expect.anything(), {
+                trainerId: 'trainerCode',
+                studentId: 'studentId',
+                status: 'active',
+                inviteId: 'invite-1',
+                linkedAt: 'ts'
+            });
+            expect(mockBatch.update).toHaveBeenCalledWith(inviteDoc.ref, {
+                status: 'expired',
+                usedBy: 'studentId',
+                usedAt: 'ts'
+            });
+            expect(mockBatch.commit).toHaveBeenCalled();
+        });
+
+        it('should throw PERSONAL_NOT_FOUND if invite does not exist', async () => {
+            getDocs.mockResolvedValueOnce({ empty: true, docs: [] });
+
+            await expect(userService.linkTrainer('studentId', 'ABC123'))
                 .rejects.toThrow('PERSONAL_NOT_FOUND');
         });
 
         it('should throw ALREADY_LINKED if link exists', async () => {
-            getDoc.mockResolvedValueOnce({ exists: () => true }); // Trainer check
-            getDoc.mockResolvedValueOnce({ exists: () => true }); // Link check (direct lookup)
+            getDocs.mockResolvedValueOnce({
+                empty: false,
+                docs: [{
+                    id: 'invite-1',
+                    ref: {},
+                    data: () => ({ trainerId: 'trainerCode', code: 'ABC123', status: 'active' })
+                }]
+            });
+            getDoc.mockResolvedValueOnce({ exists: () => true });
 
-            await expect(userService.linkTrainer('studentId', 'trainerCode'))
+            await expect(userService.linkTrainer('studentId', 'ABC123'))
                 .rejects.toThrow('ALREADY_LINKED');
         });
 
-        it('should create link if valid', async () => {
-            getDoc.mockResolvedValueOnce({ exists: () => true }); // Trainer check
-            getDoc.mockResolvedValueOnce({ exists: () => false }); // Link check (direct lookup)
+        it('maps Firestore failures to LINK_TRAINER_FAILED', async () => {
+            const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+            getDocs.mockResolvedValueOnce({
+                empty: false,
+                docs: [{
+                    id: 'invite-1',
+                    ref: {},
+                    data: () => ({ trainerId: 'trainerCode', code: 'ABC123', status: 'active' })
+                }]
+            });
+            getDoc.mockResolvedValueOnce({ exists: () => false });
+            mockBatch.commit.mockRejectedValueOnce(new Error('permission-denied'));
 
-            await userService.linkTrainer('studentId', 'trainerCode');
+            try {
+                await expect(userService.linkTrainer('studentId', 'trainerCode'))
+                    .rejects.toThrow('LINK_TRAINER_FAILED');
+            } finally {
+                consoleSpy.mockRestore();
+            }
+        });
+    });
 
-            expect(setDoc).toHaveBeenCalled();
+    describe('trainer invites', () => {
+        it('returns active invite when found', async () => {
+            getDocs.mockResolvedValueOnce({
+                empty: false,
+                docs: [{
+                    id: 'invite-1',
+                    data: () => ({
+                        code: 'ABC123',
+                        trainerId: 'trainer-1',
+                        expiresAt: { toDate: () => new Date('2026-01-01') }
+                    })
+                }]
+            });
+
+            const result = await userService.getActiveTrainerInvite('trainer-1');
+
+            expect(result).toMatchObject({ id: 'invite-1', code: 'ABC123', trainerId: 'trainer-1' });
+            expect(result.expiresAt).toBeInstanceOf(Date);
+        });
+
+        it('creates invite and revokes active previous invites', async () => {
+            const previousInviteRef = { path: 'trainer_invites/old' };
+            getDocs.mockResolvedValueOnce({
+                docs: [{ ref: previousInviteRef }]
+            });
+            getDoc.mockResolvedValueOnce({
+                exists: () => true,
+                id: 'invite-1',
+                data: () => ({
+                    code: 'NEWCODE1',
+                    trainerId: 'trainer-1',
+                    expiresAt: { toDate: () => new Date('2026-01-01') }
+                })
+            });
+
+            const result = await userService.createTrainerInvite('trainer-1');
+
+            expect(updateDoc).toHaveBeenCalledWith(previousInviteRef, { status: 'revoked' });
+            expect(addDoc).toHaveBeenCalledWith(
+                expect.anything(),
+                expect.objectContaining({
+                    trainerId: 'trainer-1',
+                    status: 'active',
+                    createdAt: 'ts'
+                })
+            );
+            expect(result.code).toBe('NEWCODE1');
+        });
+
+        it('revokes invite by id', async () => {
+            await userService.revokeTrainerInvite('invite-1');
+
+            expect(updateDoc).toHaveBeenCalledWith(expect.anything(), { status: 'revoked' });
         });
     });
 

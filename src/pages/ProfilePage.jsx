@@ -52,8 +52,9 @@ export default function ProfilePage({ user, onLogout, onNavigateToHistory, onNav
             setInviteCode('');
         } catch (err) {
             console.error(err);
-            if (err.message === "PERSONAL_NOT_FOUND") alert("Personal não encontrado com este ID.");
+            if (err.message === "PERSONAL_NOT_FOUND") alert("Convite inválido ou expirado.");
             else if (err.message === "ALREADY_LINKED") alert("Você já está vinculado a este personal.");
+            else if (err.message === "LINK_TRAINER_FAILED") alert("Não foi possível vincular. Verifique o código ou se o vínculo já existe.");
             else alert("Erro ao vincular.");
         } finally {
             setLinking(false);
@@ -825,15 +826,15 @@ export default function ProfilePage({ user, onLogout, onNavigateToHistory, onNav
                             <h2 className="text-lg font-bold text-white mb-4">Vincular Personal</h2>
                             <div className="space-y-4">
                                 <div>
-                                    <label className="text-xs text-slate-300 font-bold uppercase">Código do Personal (UID)</label>
+                                    <label className="text-xs text-slate-300 font-bold uppercase">Código de convite</label>
                                     <input
                                         type="text"
                                         className="w-full bg-slate-950 border border-slate-600 rounded-xl px-4 py-3 text-white mt-1 focus:border-cyan-500 outline-none font-mono text-sm placeholder:text-slate-500"
-                                        placeholder="Cole o ID completo..."
+                                        placeholder="Cole o código recebido..."
                                         value={inviteCode}
-                                        onChange={(e) => setInviteCode(e.target.value)}
+                                        onChange={(e) => setInviteCode(e.target.value.toUpperCase())}
                                     />
-                                    <p className="text-[10px] text-slate-400 mt-1">Peça o código para seu treinador.</p>
+                                    <p className="text-[10px] text-slate-400 mt-1">Peça um convite ativo para seu treinador.</p>
                                 </div>
                                 <Button
                                     onClick={handleLinkTrainer}
