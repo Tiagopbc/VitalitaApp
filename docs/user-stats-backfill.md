@@ -6,6 +6,11 @@ da Cloud Function ser deployada.
 O script fica em `functions/scripts/backfillUserStats.js` e usa o mesmo calculator
 server-side da Function.
 
+Para manter o projeto sem custo no plano Spark, não rode este script em produção
+como rotina automática. Ele é uma ferramenta administrativa opcional e manual.
+Enquanto `VITE_ENABLE_SERVER_USER_STATS` estiver diferente de `true`, o app ignora
+`user_stats` e usa o fallback de sessões recentes.
+
 ## Segurança Operacional
 
 - O modo padrão é dry-run.

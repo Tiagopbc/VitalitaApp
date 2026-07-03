@@ -5,10 +5,13 @@ Este documento descreve o rollout controlado da Function que atualiza
 
 ## Pré-requisitos
 
+- Migrar o projeto Firebase para Blaze. Cloud Functions nao deve ser deployada
+  no Spark.
 - Confirmar o Firebase project id de produção.
 - Garantir uma conta com permissões para deploy de Cloud Functions, Firestore e leitura de logs.
 - Autenticar o Firebase CLI local ou usar uma service account adequada.
 - Rodar validação local antes do deploy.
+- Ativar `VITE_ENABLE_SERVER_USER_STATS=true` somente depois do deploy e teste da Function.
 
 Como o repositório não versiona `.firebaserc`, use sempre `--project` no deploy
 até definirmos o alvo padrão.

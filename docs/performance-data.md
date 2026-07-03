@@ -32,6 +32,11 @@ Os limites ficam centralizados em `SESSION_LIMITS` no `workoutService`:
 `workout_sessions`. As regras bloqueiam escrita do cliente, então totais vitalícios,
 streaks e conquistas deixam de depender de cálculo confiável no navegador.
 
+No modo Spark/custo zero, `VITE_ENABLE_SERVER_USER_STATS` deve ficar `false`.
+Assim, HomeDashboard e ProfilePage ignoram o agregado server-side e usam o fallback
+de sessões recentes. A estrutura de `user_stats` permanece documentada como evolução
+profissional opcional para um futuro deploy em Blaze.
+
 Campos usados pelo app:
 
 - `totalWorkouts`

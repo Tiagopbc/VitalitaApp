@@ -1,6 +1,6 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { doc, getDoc, onSnapshot } from 'firebase/firestore';
-import { normalizeUserStats, userStatsService } from './userStatsService';
+import { isServerUserStatsEnabled, normalizeUserStats, userStatsService } from './userStatsService';
 
 vi.mock('firebase/firestore', async (importOriginal) => {
     const actual = await importOriginal();
@@ -24,6 +24,7 @@ vi.mock('../firebaseDb', () => ({
 describe('userStatsService', () => {
     beforeEach(() => {
         vi.clearAllMocks();
+        vi.unstubAllEnvs();
     });
 
     it('normalizes server aggregate fields for achievement evaluation', () => {
@@ -49,6 +50,7 @@ describe('userStatsService', () => {
     });
 
     it('reads user_stats by user id', async () => {
+        vi.stubEnv('VITE_ENABLE_SERVER_USER_STATS', 'true');
         doc.mockReturnValue('stats-ref');
         getDoc.mockResolvedValue({
             exists: () => true,
@@ -67,6 +69,7 @@ describe('userStatsService', () => {
     });
 
     it('subscribes to aggregate updates', async () => {
+        vi.stubEnv('VITE_ENABLE_SERVER_USER_STATS', 'true');
         const onUpdate = vi.fn();
         const unsubscribe = vi.fn();
         let callback;
@@ -85,5 +88,19 @@ describe('userStatsService', () => {
 
         expect(result).toBe(unsubscribe);
         expect(onUpdate).toHaveBeenCalledWith(expect.objectContaining({ totalWorkouts: 5 }));
+    });
+
+    it('keeps server aggregates disabled by default for Spark projects', async () => {
+        const onUpdate = vi.fn();
+
+        expect(isServerUserStatsEnabled()).toBe(false);
+        await expect(userStatsService.getUserStats('user-1')).resolves.toBeNull();
+
+        const unsubscribe = await userStatsService.subscribeToUserStats('user-1', onUpdate);
+        unsubscribe();
+
+        expect(getDoc).not.toHaveBeenCalled();
+        expect(onSnapshot).not.toHaveBeenCalled();
+        expect(onUpdate).toHaveBeenCalledWith(null);
     });
 });

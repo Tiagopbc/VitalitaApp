@@ -2,6 +2,10 @@ import { getFirestoreDeps } from '../firebaseDb';
 
 const USER_STATS_COLLECTION = 'user_stats';
 
+export function isServerUserStatsEnabled() {
+    return import.meta.env.VITE_ENABLE_SERVER_USER_STATS === 'true';
+}
+
 function normalizeTimestamp(value) {
     if (!value) return null;
     if (value instanceof Date) return value;
@@ -58,7 +62,7 @@ export function normalizeUserStats(data) {
 
 export const userStatsService = {
     async getUserStats(userId) {
-        if (!userId) return null;
+        if (!userId || !isServerUserStatsEnabled()) return null;
         const { db, doc, getDoc } = await getFirestoreDeps();
         const statsRef = doc(db, USER_STATS_COLLECTION, userId);
         const snap = await getDoc(statsRef);
@@ -66,7 +70,11 @@ export const userStatsService = {
     },
 
     async subscribeToUserStats(userId, onUpdate, onError) {
-        if (!userId) return () => {};
+        if (!userId || !isServerUserStatsEnabled()) {
+            if (onUpdate) onUpdate(null);
+            return () => {};
+        }
+
         const { db, doc, onSnapshot } = await getFirestoreDeps();
         const statsRef = doc(db, USER_STATS_COLLECTION, userId);
 
