@@ -33,6 +33,7 @@ import { getFirestoreDeps } from '../firebaseDb';
 import { ShareableQuoteCard } from '../components/sharing/ShareableQuoteCard';
 import { calculateWeeklyStats } from '../utils/workoutStats';
 import { SESSION_LIMITS, workoutService } from '../services/workoutService';
+import { userStatsService } from '../services/userStatsService';
 import { safeGetJSON, safeSetJSON, safeRemoveItem } from '../utils/storage';
 import { achievementsCatalog } from '../data/achievementsCatalog';
 import { evaluateAchievements, calculateStats } from '../utils/evaluateAchievements';
@@ -352,10 +353,47 @@ export function HomeDashboard({
     useEffect(() => {
         let unsubscribeTemplates = null;
         let unsubscribeSessions = null;
+        let unsubscribeUserStats = null;
 
         async function fetchData() {
             if (!user) return;
             let effectiveGoal = 4;
+            let serverStatsSnapshot = null;
+            let latestSessionsSnapshot = [];
+            let latestRecentStats = calculateWeeklyStats([], effectiveGoal);
+            let recentSessionCount = 0;
+
+            const publishStats = () => {
+                if (serverStatsSnapshot) {
+                    setStats({
+                        ...latestRecentStats,
+                        currentStreak: serverStatsSnapshot.currentWeeklyStreak,
+                        bestStreak: serverStatsSnapshot.longestWeeklyStreak,
+                        weeklyGoal: serverStatsSnapshot.weeklyGoal || latestRecentStats.weeklyGoal,
+                        completedThisWeek: serverStatsSnapshot.weeklyCompleted,
+                        totalSessions: serverStatsSnapshot.totalWorkouts,
+                        statsSource: 'user_stats',
+                        userStatsUpdatedAt: serverStatsSnapshot.updatedAt
+                    });
+                    return;
+                }
+
+                setStats({
+                    ...latestRecentStats,
+                    totalSessions: recentSessionCount,
+                    statsSource: 'recent_sessions'
+                });
+            };
+
+            const publishNextAchievement = () => {
+                const fullStats = serverStatsSnapshot?.achievementStats || calculateStats(latestSessionsSnapshot);
+                const unlockedMap = serverStatsSnapshot?.achievements || {};
+                const allAchievements = evaluateAchievements(achievementsCatalog, fullStats, unlockedMap);
+                const locked = allAchievements.filter(a => !a.isUnlocked);
+
+                locked.sort((a, b) => b.progressRatio - a.progressRatio);
+                setNextAchievement(locked[0] || null);
+            };
 
             // 0. Buscar Meta do Usuário (Single Fetch, não precisa ser real-time crítico)
             try {
@@ -375,7 +413,19 @@ export function HomeDashboard({
                 setLoadingTemplates(false);
             });
 
-            // B. Inscrever-se apenas no histórico recente para manter o dashboard leve.
+            // B. Agregado server-side: totais, streaks e conquistas sem leitura vitalícia no cliente.
+            try {
+                unsubscribeUserStats = await userStatsService.subscribeToUserStats(user.uid, (serverStats) => {
+                    serverStatsSnapshot = serverStats;
+                    publishStats();
+                    publishNextAchievement();
+                    if (serverStats) setLoadingStats(false);
+                });
+            } catch (err) {
+                console.error("User stats subscription error:", err);
+            }
+
+            // C. Inscrever-se apenas no histórico recente para manter o calendário leve.
             try {
                 unsubscribeSessions = await workoutService.subscribeToRecentSessions(user.uid, (data) => {
                     const sessions = data.map(d => {
@@ -402,23 +452,11 @@ export function HomeDashboard({
                     }
 
                     // Calcular Estatísticas Semanais
-                    const computedStats = calculateWeeklyStats(sessions, effectiveGoal);
-                    setStats({ ...computedStats, totalSessions: sessions.length });
-
-                    // Calcular Próxima Conquista (Smart Challenge)
-                    const fullStats = calculateStats(sessions);
-                    const allAchievements = evaluateAchievements(achievementsCatalog, fullStats, {}); // Map vazio pois queremos recalc isUnlocked on-the-fly
-                    const locked = allAchievements.filter(a => !a.isUnlocked);
-
-                    // Ordenar por maior progresso relativo
-                    locked.sort((a, b) => b.progressRatio - a.progressRatio);
-
-                    if (locked.length > 0) {
-                        setNextAchievement(locked[0]);
-                    } else {
-                        // Se zerou o jogo, podemos mostrar uma conquista "máxima" ou nulo
-                        setNextAchievement(null);
-                    }
+                    latestSessionsSnapshot = sessions;
+                    latestRecentStats = calculateWeeklyStats(sessions, effectiveGoal);
+                    recentSessionCount = sessions.length;
+                    publishStats();
+                    publishNextAchievement();
                     setLoadingStats(false);
                 }, SESSION_LIMITS.dashboardRecent);
             } catch (err) {
@@ -431,6 +469,7 @@ export function HomeDashboard({
         return () => {
             if (unsubscribeTemplates) unsubscribeTemplates();
             if (unsubscribeSessions) unsubscribeSessions();
+            if (unsubscribeUserStats) unsubscribeUserStats();
         };
     }, [user]);
 

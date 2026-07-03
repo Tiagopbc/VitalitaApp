@@ -21,10 +21,28 @@ Os limites ficam centralizados em `SESSION_LIMITS` no `workoutService`:
 ## Comportamento por tela
 
 - HomeDashboard: assina somente as sessões recentes, em vez de observar todo o histórico.
+- HomeDashboard: prefere `user_stats` para totais, streaks e próxima conquista quando o agregado existe.
 - HistoryPage/Diário: usa paginação com `getHistory`.
 - HistoryPage/Evolução global: carrega uma página recente e permite carregar mais histórico sob demanda.
-- ProfilePage: calcula estatísticas e conquistas com uma janela recente grande.
+- ProfilePage: prefere `user_stats` para estatísticas e conquistas; usa janela recente apenas como fallback.
+
+## Agregados `user_stats`
+
+`user_stats/{userId}` é escrito por Cloud Functions quando uma sessão é criada em
+`workout_sessions`. As regras bloqueiam escrita do cliente, então totais vitalícios,
+streaks e conquistas deixam de depender de cálculo confiável no navegador.
+
+Campos usados pelo app:
+
+- `totalWorkouts`
+- `totalTonnageKg` / `totalVolume`
+- `totalSets`, `totalReps`, `prsCount`, `distinctExercises`
+- `currentWeeklyStreak`, `longestWeeklyStreak`, `weeklyCompleted`, `weeklyGoal`
+- `currentDailyStreak`, `longestDailyStreak`
+- `achievementStats`
+- `achievements`
 
 ## Próxima evolução
 
-A próxima etapa profissional é criar `user_stats/{userId}` e atualizar esses agregados quando uma sessão é finalizada. Com isso, totais vitalícios, streaks e conquistas podem ser exibidos sem buscar centenas de documentos no cliente.
+- Criar job/backfill administrativo para gerar `user_stats` de usuários antigos antes do deploy completo.
+- Evoluir o rebuild para atualização incremental quando o volume por usuário justificar reduzir leituras server-side.

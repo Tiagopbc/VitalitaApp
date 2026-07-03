@@ -100,8 +100,6 @@ Escrita:
 
 - Apenas o próprio usuário.
 
-## Próximas Coleções Planejadas
-
 ## `trainer_invites/{inviteId}`
 
 Convites revogáveis, expiráveis e de uso único.
@@ -125,15 +123,39 @@ Regras principais:
 
 ## `user_stats/{userId}`
 
-Agregados para performance.
+Agregados server-side para performance, streaks e conquistas. O front end pode ler,
+mas nao pode escrever nesta coleção.
 
-Campos planejados:
+Campos principais:
 
+- `userId`
+- `schemaVersion`
+- `source`
 - `totalWorkouts`
+- `strengthWorkouts`
+- `cardioWorkouts`
 - `currentStreak`
 - `longestStreak`
+- `currentWeeklyStreak`
+- `longestWeeklyStreak`
+- `currentDailyStreak`
+- `longestDailyStreak`
 - `weeklyGoal`
 - `weeklyCompleted`
+- `totalVolume`
+- `totalTonnageKg`
 - `monthlyVolume`
+- `totalSets`
+- `totalReps`
+- `prsCount`
+- `distinctExercises`
+- `exerciseMaxes`
+- `achievementStats`
+- `achievements`
 - `lastWorkoutAt`
 - `updatedAt`
+
+Atualização:
+
+- Cloud Functions atualiza o documento quando uma sessão em `workout_sessions` é criada.
+- O cliente usa fallback temporário para uma janela recente se o agregado ainda não existir.

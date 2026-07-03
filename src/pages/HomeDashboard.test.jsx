@@ -3,6 +3,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { HomeDashboard } from './HomeDashboard';
 import { workoutService } from '../services/workoutService';
+import { userStatsService } from '../services/userStatsService';
 import { getDoc, doc } from 'firebase/firestore';
 
 vi.mock('../StreakWeeklyGoalHybrid', () => ({
@@ -16,6 +17,12 @@ vi.mock('../services/workoutService', () => ({
     workoutService: {
         subscribeToTemplates: vi.fn(),
         subscribeToRecentSessions: vi.fn()
+    }
+}));
+
+vi.mock('../services/userStatsService', () => ({
+    userStatsService: {
+        subscribeToUserStats: vi.fn()
     }
 }));
 
@@ -63,6 +70,10 @@ describe('HomeDashboard', () => {
                     templateName: 'Treino A'
                 }
             ]);
+            return vi.fn();
+        });
+        userStatsService.subscribeToUserStats.mockImplementation((_uid, cb) => {
+            cb(null);
             return vi.fn();
         });
     });
