@@ -26,6 +26,7 @@ import { evaluateAchievements, calculateStats, evaluateHistory } from '../utils/
 import { calculateWeeklyStats } from '../utils/workoutStats';
 import { Button } from '../components/design-system/Button';
 import { SESSION_LIMITS, workoutService } from '../services/workoutService';
+import { userStatsService } from '../services/userStatsService';
 const AchievementUnlockedModal = React.lazy(() => import('../components/achievements/AchievementUnlockedModal').then(module => ({ default: module.AchievementUnlockedModal })));
 
 
@@ -166,7 +167,27 @@ export default function ProfilePage({ user, onLogout, onNavigateToHistory, onNav
         async function loadAchievementsData() {
             setLoadingAchievements(true);
             try {
-                // 1. Buscar uma janela recente e limitada para evitar leituras completas do histórico.
+                const serverStats = await userStatsService.getUserStats(user.uid);
+                if (serverStats) {
+                    const achievementStats = serverStats.achievementStats || {};
+                    setStats({
+                        ...achievementStats,
+                        totalWorkouts: serverStats.totalWorkouts,
+                        totalTonnageKg: serverStats.totalTonnageKg,
+                        totalSets: serverStats.totalSets,
+                        totalReps: serverStats.totalReps,
+                        prsCount: serverStats.prsCount,
+                        distinctExercises: serverStats.distinctExercises,
+                        exerciseMaxes: achievementStats.exerciseMaxes || serverStats.exerciseMaxes || {},
+                        weeklyStreak: serverStats.currentWeeklyStreak,
+                        weeklyBestStreak: serverStats.longestWeeklyStreak,
+                        weeklyGoal: serverStats.weeklyGoal
+                    });
+                    setCalculatedHistoryMap(serverStats.achievements || {});
+                    return;
+                }
+
+                // 1. Fallback temporário enquanto a function ainda não criou user_stats.
                 const sessions = await workoutService.getRecentSessions(user.uid, SESSION_LIMITS.profileStats);
 
                 // 2. Calcular Estatísticas

@@ -188,6 +188,26 @@ describe('firestore.rules', () => {
         await assertFails(deleteDoc(doc(authedDb('trainer-1'), 'workout_sessions/session-1')));
     });
 
+    it('permite leitura de user_stats para dono e personal vinculado, mas bloqueia escrita do cliente', async () => {
+        await seedUser('student-1');
+        await seedUser('trainer-1');
+        await seedLink('student-1', 'trainer-1');
+        await seed('user_stats/student-1', {
+            userId: 'student-1',
+            totalWorkouts: 12,
+            currentStreak: 2,
+            updatedAt: Timestamp.now()
+        });
+
+        await assertSucceeds(getDoc(doc(authedDb('student-1'), 'user_stats/student-1')));
+        await assertSucceeds(getDoc(doc(authedDb('trainer-1'), 'user_stats/student-1')));
+        await assertFails(getDoc(doc(authedDb('stranger-1'), 'user_stats/student-1')));
+        await assertFails(setDoc(doc(authedDb('student-1'), 'user_stats/student-1'), {
+            userId: 'student-1',
+            totalWorkouts: 999
+        }));
+    });
+
     it('bloqueia criacao de vinculo sem convite consumido', async () => {
         await seedUser('student-1');
         await seedUser('trainer-1');
