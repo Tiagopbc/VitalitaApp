@@ -7,12 +7,26 @@ import {
     Activity
 } from 'lucide-react';
 import { PremiumCard } from '../components/design-system/PremiumCard';
-import { workoutService } from '../services/workoutService';
+import { SESSION_LIMITS, workoutService } from '../services/workoutService';
 import { getJournalWindowConfig, recordJournalRenderMetric } from '../utils/performanceTuning';
 
 import { Button } from '../components/design-system/Button';
 const HistoryAnalyticsSection = React.lazy(() => import('../components/history/HistoryAnalyticsSection').then(module => ({ default: module.HistoryAnalyticsSection })));
 const WorkoutDetailsModal = React.lazy(() => import('../components/history/WorkoutDetailsModal').then(module => ({ default: module.WorkoutDetailsModal })));
+const TEMPLATE_ANALYTICS_PAGE_SIZE = 100;
+
+function extractExerciseNamesFromSessions(docs) {
+    const uniqueNames = new Set();
+    docs.forEach(data => {
+        const results = data.results || data.exercises || [];
+        if (Array.isArray(results)) {
+            results.forEach(e => { if (e.name) uniqueNames.add(e.name); });
+        } else {
+            Object.keys(results).forEach(key => uniqueNames.add(key));
+        }
+    });
+    return Array.from(uniqueNames).sort();
+}
 
 function HistoryPage({ user, isEmbedded = false }) {
     const navigate = useNavigate();
@@ -52,6 +66,9 @@ function HistoryPage({ user, isEmbedded = false }) {
     const [selectedGlobalExercises, setSelectedGlobalExercises] = useState([]);
     const [allUserExercises, setAllUserExercises] = useState([]);
     const [globalSessionsCache, setGlobalSessionsCache] = useState(null);
+    const globalSessionsLastDocRef = useRef(null);
+    const [hasMoreGlobalSessions, setHasMoreGlobalSessions] = useState(false);
+    const [loadingMoreGlobalSessions, setLoadingMoreGlobalSessions] = useState(false);
 
     const toggleGlobalExercise = (exName) => {
         setSelectedGlobalExercises(prev => 
@@ -66,6 +83,39 @@ function HistoryPage({ user, isEmbedded = false }) {
     const [chartRange, setChartRange] = useState('3M');
 
     const hasAppliedInitialFilters = useRef(false);
+
+    const loadMoreGlobalSessions = React.useCallback(async () => {
+        if (!user || loadingMoreGlobalSessions || !hasMoreGlobalSessions) return;
+
+        setLoadingMoreGlobalSessions(true);
+        try {
+            const result = await workoutService.getHistory(
+                user.uid,
+                null,
+                globalSessionsLastDocRef.current,
+                SESSION_LIMITS.analyticsGlobalPage
+            );
+
+            globalSessionsLastDocRef.current = result.lastDoc;
+            setHasMoreGlobalSessions(result.hasMore);
+            setGlobalSessionsCache(prev => {
+                const merged = [...(prev || []), ...result.data];
+                setAllUserExercises(extractExerciseNamesFromSessions(merged));
+                return merged;
+            });
+        } catch (err) {
+            console.error("Error loading more global history:", err);
+        } finally {
+            setLoadingMoreGlobalSessions(false);
+        }
+    }, [hasMoreGlobalSessions, loadingMoreGlobalSessions, user]);
+
+    useEffect(() => {
+        setGlobalSessionsCache(null);
+        setAllUserExercises([]);
+        setHasMoreGlobalSessions(false);
+        globalSessionsLastDocRef.current = null;
+    }, [user?.uid]);
 
     // Layout de Filtro Inicial
     useEffect(() => {
@@ -315,10 +365,10 @@ function HistoryPage({ user, isEmbedded = false }) {
             }
 
             if (searchMode === 'global' && selectedGlobalExercises.length === 0 && (!globalSearchTerm || globalSearchTerm.length < 2)) {
-                // If nothing is selected and no search term, don't fetch chart data
-                // But we still need to fetch the session cache if it's empty so the search bar can work!
-                // Wait, if we return early, we never populate allUserExercises.
-                // We should only return early from drawing the chart, but we must populate the cache.
+                setHistoryRows([]);
+                setPrRows([]);
+                setChartData([]);
+                return;
             }
 
             setLoadingHistory(true);
@@ -329,22 +379,20 @@ function HistoryPage({ user, isEmbedded = false }) {
                     if (globalSessionsCache) {
                         docs = globalSessionsCache;
                     } else {
-                        docs = await workoutService.getAllSessions(user.uid);
+                        const result = await workoutService.getHistory(
+                            user.uid,
+                            null,
+                            null,
+                            SESSION_LIMITS.analyticsGlobalPage
+                        );
+                        docs = result.data;
                         setGlobalSessionsCache(docs);
-
-                        const uniqueNames = new Set();
-                        docs.forEach(data => {
-                            const results = data.results || data.exercises || [];
-                            if (Array.isArray(results)) {
-                                results.forEach(e => { if (e.name) uniqueNames.add(e.name); });
-                            } else {
-                                Object.keys(results).forEach(key => uniqueNames.add(key));
-                            }
-                        });
-                        setAllUserExercises(Array.from(uniqueNames).sort());
+                        setAllUserExercises(extractExerciseNamesFromSessions(docs));
+                        globalSessionsLastDocRef.current = result.lastDoc;
+                        setHasMoreGlobalSessions(result.hasMore);
                     }
                 } else {
-                    const result = await workoutService.getHistory(user.uid, selectedTemplate, null, 100);
+                    const result = await workoutService.getHistory(user.uid, selectedTemplate, null, TEMPLATE_ANALYTICS_PAGE_SIZE);
                     docs = result.data;
                 }
 
@@ -654,6 +702,10 @@ function HistoryPage({ user, isEmbedded = false }) {
                             allUserExercises={allUserExercises}
                             selectedGlobalExercises={selectedGlobalExercises}
                             toggleGlobalExercise={toggleGlobalExercise}
+                            globalHistorySessionCount={globalSessionsCache?.length || 0}
+                            hasMoreGlobalHistory={hasMoreGlobalSessions}
+                            loadingMoreGlobalHistory={loadingMoreGlobalSessions}
+                            onLoadMoreGlobalHistory={loadMoreGlobalSessions}
                         />
                     </React.Suspense>
                 )}

@@ -10,9 +10,12 @@ vi.mock('../StreakWeeklyGoalHybrid', () => ({
 }));
 
 vi.mock('../services/workoutService', () => ({
+    SESSION_LIMITS: {
+        dashboardRecent: 120
+    },
     workoutService: {
         subscribeToTemplates: vi.fn(),
-        subscribeToSessions: vi.fn()
+        subscribeToRecentSessions: vi.fn()
     }
 }));
 
@@ -51,7 +54,7 @@ describe('HomeDashboard', () => {
             cb([{ id: 't1', name: 'Treino A', exercises: [{ name: 'Supino' }] }]);
             return vi.fn();
         });
-        workoutService.subscribeToSessions.mockImplementation((_uid, cb) => {
+        workoutService.subscribeToRecentSessions.mockImplementation((_uid, cb) => {
             cb([
                 {
                     id: 's1',

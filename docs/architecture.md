@@ -25,3 +25,10 @@ O Vitalità é um PWA em React/Vite com Firebase Authentication e Cloud Firestor
 - Trocar leituras completas de histórico por agregados em `user_stats`.
 - Migrar convites e ações sensíveis para Cloud Functions.
 - Expandir observabilidade do Sentry com tags de rota, versão, PWA/offline e erros de Firestore.
+
+## Referências
+
+- `docs/firestore-model.md`
+- `docs/security-rules.md`
+- `docs/performance-data.md`
+- `docs/testing.md`

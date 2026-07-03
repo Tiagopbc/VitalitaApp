@@ -32,7 +32,7 @@ import { StreakWeeklyGoalHybrid } from '../StreakWeeklyGoalHybrid';
 import { getFirestoreDeps } from '../firebaseDb';
 import { ShareableQuoteCard } from '../components/sharing/ShareableQuoteCard';
 import { calculateWeeklyStats } from '../utils/workoutStats';
-import { workoutService } from '../services/workoutService';
+import { SESSION_LIMITS, workoutService } from '../services/workoutService';
 import { safeGetJSON, safeSetJSON, safeRemoveItem } from '../utils/storage';
 import { achievementsCatalog } from '../data/achievementsCatalog';
 import { evaluateAchievements, calculateStats } from '../utils/evaluateAchievements';
@@ -375,9 +375,9 @@ export function HomeDashboard({
                 setLoadingTemplates(false);
             });
 
-            // B. Inscrever-se no Histórico (Sessões)
+            // B. Inscrever-se apenas no histórico recente para manter o dashboard leve.
             try {
-                unsubscribeSessions = await workoutService.subscribeToSessions(user.uid, (data) => {
+                unsubscribeSessions = await workoutService.subscribeToRecentSessions(user.uid, (data) => {
                     const sessions = data.map(d => {
                         let dateObj = new Date();
                         // Lógica defensiva para parse de data
@@ -420,7 +420,7 @@ export function HomeDashboard({
                         setNextAchievement(null);
                     }
                     setLoadingStats(false);
-                });
+                }, SESSION_LIMITS.dashboardRecent);
             } catch (err) {
                 console.error("Subscription Error:", err);
             }

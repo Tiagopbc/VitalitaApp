@@ -10,7 +10,14 @@ vi.mock('../AuthContext');
 vi.mock('../services/userService');
 
 // Mock workoutService
-vi.mock('../services/workoutService');
+vi.mock('../services/workoutService', () => ({
+    SESSION_LIMITS: {
+        profileStats: 300
+    },
+    workoutService: {
+        getRecentSessions: vi.fn()
+    }
+}));
 
 // Mock react-router-dom
 const navigateMock = vi.fn();
@@ -71,7 +78,7 @@ describe('ProfilePage Integration', () => {
         userService.linkTrainer.mockResolvedValue({});
 
         // Mock workoutService sessions return
-        workoutService.getAllSessions.mockResolvedValue(mockSessions);
+        workoutService.getRecentSessions.mockResolvedValue(mockSessions);
     });
 
     afterEach(() => {
@@ -103,7 +110,7 @@ describe('ProfilePage Integration', () => {
             // However, '2' might be ambiguous (level, other nums). 
             // Let's look for "Treinos" label and nearby value if possible, or just the number if unique enough context.
             // Best is to assert that workoutService was called.
-            expect(workoutService.getAllSessions).toHaveBeenCalledWith('user123');
+            expect(workoutService.getRecentSessions).toHaveBeenCalledWith('user123', 300);
         });
 
         // Use visible text assertions for stats if possible, or data-testid in future.

@@ -243,4 +243,78 @@ describe('workoutService', () => {
             }
         });
     });
+
+    describe('getRecentSessions', () => {
+        it('fetches recent sessions ordered by completion date with an explicit limit', async () => {
+            const mockDate = { toDate: () => new Date('2024-01-02') };
+            getDocs.mockResolvedValue({
+                docs: [
+                    {
+                        id: 'session-1',
+                        data: () => ({
+                            userId: mockUserId,
+                            completedAt: mockDate,
+                            workoutName: 'Treino A'
+                        })
+                    }
+                ]
+            });
+
+            const result = await workoutService.getRecentSessions(mockUserId, 25);
+
+            expect(collection).toHaveBeenCalledWith(expect.anything(), 'workout_sessions');
+            expect(where).toHaveBeenCalledWith('userId', '==', mockUserId);
+            expect(orderBy).toHaveBeenCalledWith('completedAt', 'desc');
+            expect(limit).toHaveBeenCalledWith(25);
+            expect(result).toEqual([
+                {
+                    id: 'session-1',
+                    userId: mockUserId,
+                    completedAt: mockDate,
+                    workoutName: 'Treino A'
+                }
+            ]);
+        });
+
+        it('clamps very large recent session limits', async () => {
+            getDocs.mockResolvedValue({ docs: [] });
+
+            await workoutService.getRecentSessions(mockUserId, 5000);
+
+            expect(limit).toHaveBeenCalledWith(500);
+        });
+    });
+
+    describe('subscribeToRecentSessions', () => {
+        it('subscribes only to a bounded recent session window', async () => {
+            const onUpdate = vi.fn();
+            const unsubscribe = vi.fn();
+            let snapshotCallback;
+
+            onSnapshot.mockImplementation((_q, cb) => {
+                snapshotCallback = cb;
+                return unsubscribe;
+            });
+
+            const result = await workoutService.subscribeToRecentSessions(mockUserId, onUpdate, 30);
+
+            expect(result).toBe(unsubscribe);
+            expect(where).toHaveBeenCalledWith('userId', '==', mockUserId);
+            expect(orderBy).toHaveBeenCalledWith('completedAt', 'desc');
+            expect(limit).toHaveBeenCalledWith(30);
+
+            snapshotCallback({
+                docs: [
+                    {
+                        id: 'session-2',
+                        data: () => ({ userId: mockUserId, workoutName: 'Treino B' })
+                    }
+                ]
+            });
+
+            expect(onUpdate).toHaveBeenCalledWith([
+                { id: 'session-2', userId: mockUserId, workoutName: 'Treino B' }
+            ]);
+        });
+    });
 });

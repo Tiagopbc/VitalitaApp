@@ -23,7 +23,11 @@ export function HistoryAnalyticsSection({
     onGlobalSearchChange,
     allUserExercises = [],
     selectedGlobalExercises = [],
-    toggleGlobalExercise
+    toggleGlobalExercise,
+    globalHistorySessionCount = 0,
+    hasMoreGlobalHistory = false,
+    loadingMoreGlobalHistory = false,
+    onLoadMoreGlobalHistory
 }) {
     // Filtrar sugestões baseadas no termo digitado
     const suggestedExercises = React.useMemo(() => {
@@ -121,6 +125,12 @@ export function HistoryAnalyticsSection({
                                     <p className="text-[10px] text-slate-500 ml-1 mt-1">
                                         Digite para buscar. Selecione abaixo as variações que deseja agrupar no gráfico.
                                     </p>
+                                    {globalHistorySessionCount > 0 && (
+                                        <p className="text-[10px] text-slate-500 ml-1">
+                                            Analisando {globalHistorySessionCount} sessões recentes
+                                            {hasMoreGlobalHistory ? '. Carregue mais para ampliar a busca.' : '.'}
+                                        </p>
+                                    )}
                                 </div>
 
                                 {/* Chips de Seleção */}
@@ -210,7 +220,9 @@ export function HistoryAnalyticsSection({
 
                             {/* Lista Detalhada */}
                             <div className="space-y-2">
-                                <h3 className="font-bold text-slate-400 uppercase tracking-wide text-xs pl-1">Histórico Completo</h3>
+                                <h3 className="font-bold text-slate-400 uppercase tracking-wide text-xs pl-1">
+                                    {searchMode === 'global' ? 'Registros Encontrados' : 'Histórico Completo'}
+                                </h3>
                                 <div className="space-y-2">
                                     {historyRows.map(row => (
                                         <div key={row.id} className="flex items-center justify-between p-4 bg-slate-900/30 border border-slate-800 rounded-xl">
@@ -228,6 +240,18 @@ export function HistoryAnalyticsSection({
                                         </div>
                                     ))}
                                 </div>
+                                {searchMode === 'global' && hasMoreGlobalHistory && (
+                                    <div className="pt-3 text-center">
+                                        <button
+                                            type="button"
+                                            onClick={onLoadMoreGlobalHistory}
+                                            disabled={loadingMoreGlobalHistory}
+                                            className="px-4 py-2 rounded-xl border border-slate-700 bg-slate-900/70 text-xs font-bold uppercase tracking-wide text-slate-300 hover:border-cyan-500/60 hover:text-cyan-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                        >
+                                            {loadingMoreGlobalHistory ? 'Carregando...' : 'Carregar mais histórico'}
+                                        </button>
+                                    </div>
+                                )}
                             </div>
                         </>
                     ) : (
