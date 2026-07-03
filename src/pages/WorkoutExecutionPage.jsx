@@ -615,7 +615,7 @@ export function WorkoutExecutionPage({ user }) {
                 </div>
             )}
             {error && <Toast message={error} type="error" onClose={() => setError(null)} />}
-            <div className="max-w-2xl mx-auto space-y-6">
+            <div className="max-w-2xl mx-auto flex flex-col">
 
                 <div
                     className="
@@ -633,7 +633,7 @@ export function WorkoutExecutionPage({ user }) {
                 >
                     <div className="
                         relative mx-auto max-w-2xl
-                        px-4 py-3
+                        px-4 py-2
                         pointer-events-auto
                     ">
                         {/* Ambient glow effect (Full Height) */}
@@ -678,10 +678,10 @@ export function WorkoutExecutionPage({ user }) {
                     </div>
                 </div>
 
-                <div style={{ height: 'calc(85px + env(safe-area-inset-top))' }}></div>
+                <div style={{ height: 'calc(65px + env(safe-area-inset-top))' }}></div>
 
                 {focusMode && (
-                    <div className="px-4 mb-4 mt-2 flex items-center justify-between pointer-events-auto relative z-40">
+                    <div className="px-4 mb-2 mt-0 flex items-center justify-between pointer-events-auto relative z-40">
                         <Button
                             variant="outline-primary"
                             size="sm"
@@ -711,12 +711,12 @@ export function WorkoutExecutionPage({ user }) {
                 )}
 
                 {!focusMode && (
-                    <div className="px-4 mb-2">
+                    <div className="px-4 mb-2 mt-2">
                         <ProgressCard completedCount={completedExercisesCount} totalCount={totalExercises} />
                     </div>
                 )}
 
-                <main className={`px-4 space-y-4`}>
+                <main className={`px-4 mt-2 space-y-4`}>
                     {focusMode ? (
                         exercises.length > 0 && (() => {
                             const ex = exercises[currentExerciseIndex];
