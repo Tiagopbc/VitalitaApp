@@ -44,5 +44,5 @@ Campos usados pelo app:
 
 ## Próxima evolução
 
-- Criar job/backfill administrativo para gerar `user_stats` de usuários antigos antes do deploy completo.
+- Rodar backfill administrativo documentado em `docs/user-stats-backfill.md`.
 - Evoluir o rebuild para atualização incremental quando o volume por usuário justificar reduzir leituras server-side.
