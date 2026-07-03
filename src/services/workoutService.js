@@ -355,6 +355,7 @@ export const workoutService = {
                 intensity: cardioData.intensity,
                 calories: Number(cardioData.calories) || 0,
                 notes: cardioData.notes || '',
+                createdAt: serverTimestamp(),
                 completedAt: serverTimestamp(),
                 completedAtClient: new Date().toISOString(),
                 // Arrays vazios para garantir retrocompatibilidade com componentes que esperam treinos de força

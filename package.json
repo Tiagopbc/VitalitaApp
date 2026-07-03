@@ -9,6 +9,7 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest",
+    "test:rules": "firebase emulators:exec --only firestore --project demo-vitalita \"vitest run --config vitest.rules.config.js\"",
     "test:coverage": "vitest run --coverage",
     "test:ui": "vitest --ui"
   },
@@ -29,6 +30,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
+    "@firebase/rules-unit-testing": "^5.0.1",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.1",
     "@vitejs/plugin-react": "^5.1.0",
@@ -40,6 +42,7 @@
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.4.24",
+    "firebase-tools": "^15.22.4",
     "globals": "^16.5.0",
     "jsdom": "^27.4.0",
     "lighthouse": "^13.0.1",

@@ -212,7 +212,7 @@ export default function CreateWorkoutPage({ user }) {
                     ...workoutData,
                     createdBy: createdBy,
                     userId: targetUserId, // Associa o treino ao aluno (ou ao próprio usuário)
-                    assignedByTrainer: creationContext?.targetUserId ? true : false, // Flag opcional
+                    assignedByTrainer: targetUserId !== user.uid, // Flag opcional
                     createdAt: serverTimestamp(),
                 });
             }

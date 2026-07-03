@@ -28,7 +28,9 @@ vi.mock('../firebaseDb', () => ({
 
 vi.mock('../services/userService', () => ({
     userService: {
-        unlinkTrainer: vi.fn()
+        unlinkTrainer: vi.fn(),
+        ensureActiveTrainerInvite: vi.fn(),
+        createTrainerInvite: vi.fn()
     }
 }));
 
@@ -82,6 +84,16 @@ describe('TrainerDashboard', () => {
             data: () => ({ displayName: 'Aluno 1', email: 'a1@example.com' })
         });
         userService.unlinkTrainer.mockResolvedValue();
+        userService.ensureActiveTrainerInvite.mockResolvedValue({
+            id: 'invite-1',
+            code: 'ABC12345',
+            expiresAt: new Date('2026-01-08T12:00:00')
+        });
+        userService.createTrainerInvite.mockResolvedValue({
+            id: 'invite-2',
+            code: 'XYZ98765',
+            expiresAt: new Date('2026-01-09T12:00:00')
+        });
         navigator.clipboard = { writeText: vi.fn().mockResolvedValue() };
     });
 
@@ -132,11 +144,15 @@ describe('TrainerDashboard', () => {
         fireEvent.click(screen.getByRole('button', { name: 'Convidar Aluno' }));
         expect(screen.getByRole('heading', { name: 'Convidar Aluno' })).toBeInTheDocument();
 
+        await waitFor(() => {
+            expect(screen.getByText('ABC12345')).toBeInTheDocument();
+        });
+
         const copyButton = screen.getByTitle('Copiar código');
         fireEvent.click(copyButton);
 
         await waitFor(() => {
-            expect(navigator.clipboard.writeText).toHaveBeenCalledWith('trainer-1');
+            expect(navigator.clipboard.writeText).toHaveBeenCalledWith('ABC12345');
         });
     });
 

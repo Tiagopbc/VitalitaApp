@@ -12,12 +12,12 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       
-      - name: Use Node.js 20
-        uses: actions/setup-node@v3
+      - name: Use Node.js 22
+        uses: actions/setup-node@v6
         with:
-          node-version: 20
+          node-version: 22
           cache: 'npm'
           
       - name: Install Dependencies
@@ -27,7 +27,16 @@ jobs:
         run: npm run lint
 
       - name: Run Vitest
-        run: npm test
+        run: npm test -- --run
+
+      - name: Set up Java for Firebase Emulator
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Run Firestore Rules Tests
+        run: npm run test:rules
 
       - name: Run Build
         run: npm run build

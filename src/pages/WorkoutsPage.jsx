@@ -153,12 +153,17 @@ export default function WorkoutsPage({ onNavigateToCreate, onNavigateToWorkout, 
                 category: workout.category,
                 estimatedDuration: workout.duration,
                 userId: user.uid,
-                createdAt: new Date().toISOString()
+                createdBy: user.uid,
+                assignedByTrainer: false
             };
 
             try {
-                const { db, collection, addDoc } = await getFirestoreDeps();
-                const docRef = await addDoc(collection(db, 'workout_templates'), newWorkoutData);
+                const { db, collection, addDoc, serverTimestamp } = await getFirestoreDeps();
+                const docRef = await addDoc(collection(db, 'workout_templates'), {
+                    ...newWorkoutData,
+                    createdAt: serverTimestamp(),
+                    updatedAt: serverTimestamp()
+                });
                 
                 // Limpar cache após mutação
                 const { workoutService } = await import('../services/workoutService');
