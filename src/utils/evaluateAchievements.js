@@ -384,9 +384,11 @@ export async function checkNewAchievements(userId, currentSessionData, workoutSe
     if (!userId || !workoutServiceInstance) return [];
 
     try {
-        // 1. Get all history (including the one just saved, hopefully, or we assume consistent read)
-        // Note: Firestore might have latency. It's safer to fetch history and append current manually if missing.
-        const allSessions = await workoutServiceInstance.getAllSessions(userId);
+        // 1. Prefer a bounded recent window to keep post-workout evaluation fast.
+        // A future user_stats aggregate can make lifetime achievements exact without full reads.
+        const allSessions = typeof workoutServiceInstance.getRecentSessions === 'function'
+            ? await workoutServiceInstance.getRecentSessions(userId, 300)
+            : await workoutServiceInstance.getAllSessions(userId);
 
         // 2. Filter out the current session to get "Previous State"
         // We identify current session by ID or exact timestamp

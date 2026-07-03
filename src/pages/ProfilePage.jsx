@@ -25,6 +25,7 @@ import { achievementsCatalog } from '../data/achievementsCatalog';
 import { evaluateAchievements, calculateStats, evaluateHistory } from '../utils/evaluateAchievements';
 import { calculateWeeklyStats } from '../utils/workoutStats';
 import { Button } from '../components/design-system/Button';
+import { SESSION_LIMITS, workoutService } from '../services/workoutService';
 const AchievementUnlockedModal = React.lazy(() => import('../components/achievements/AchievementUnlockedModal').then(module => ({ default: module.AchievementUnlockedModal })));
 
 
@@ -165,9 +166,8 @@ export default function ProfilePage({ user, onLogout, onNavigateToHistory, onNav
         async function loadAchievementsData() {
             setLoadingAchievements(true);
             try {
-                // 1. Buscar todas as sessões de treino (Usando Serviço)
-                const { workoutService } = await import('../services/workoutService');
-                const sessions = await workoutService.getAllSessions(user.uid);
+                // 1. Buscar uma janela recente e limitada para evitar leituras completas do histórico.
+                const sessions = await workoutService.getRecentSessions(user.uid, SESSION_LIMITS.profileStats);
 
                 // 2. Calcular Estatísticas
                 const computedStats = calculateStats(sessions);

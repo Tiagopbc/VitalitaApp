@@ -2,6 +2,12 @@ import { getFirestoreDeps } from '../firebaseDb';
 
 const TEMPLATES_COLLECTION = 'workout_templates';
 const SESSIONS_COLLECTION = 'workout_sessions';
+export const SESSION_LIMITS = {
+    dashboardRecent: 120,
+    analyticsGlobalPage: 120,
+    profileStats: 300,
+    achievementCheck: 300
+};
 
 let sonnerPromise;
 async function showToastError(message) {
@@ -23,6 +29,10 @@ let templatesCache = {
     timestamp: 0
 };
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
+function mapSessionDoc(doc) {
+    return { id: doc.id, ...doc.data() };
+}
 
 export const workoutService = {
     /**
@@ -216,7 +226,7 @@ export const workoutService = {
             const q = query(sessionsRef, ...constraints);
             const snap = await getDocs(q);
 
-            const data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+            const data = snap.docs.map(mapSessionDoc);
             const newLastDoc = snap.docs[snap.docs.length - 1];
 
             return {
@@ -239,6 +249,28 @@ export const workoutService = {
     },
 
     /**
+     * Busca as sessões concluídas mais recentes com limite explícito.
+     * Use este método para dashboards, estatísticas recentes e telas que não precisam
+     * materializar todo o histórico do usuário.
+     * @param {string} userId
+     * @param {number} limitCount
+     * @returns {Promise<Array>}
+     */
+    async getRecentSessions(userId, limitCount = SESSION_LIMITS.dashboardRecent) {
+        const { db, collection, query, where, orderBy, limit, getDocs } = await getFirestoreDeps();
+        const safeLimit = Math.max(1, Math.min(Number(limitCount) || SESSION_LIMITS.dashboardRecent, 500));
+        const sessionsRef = collection(db, SESSIONS_COLLECTION);
+        const q = query(
+            sessionsRef,
+            where('userId', '==', userId),
+            orderBy('completedAt', 'desc'),
+            limit(safeLimit)
+        );
+        const snap = await getDocs(q);
+        return snap.docs.map(mapSessionDoc);
+    },
+
+    /**
      * Buscar todas as sessões para análise (sem paginação)
      * @param {string} userId 
      * @returns {Promise<Array>}
@@ -253,6 +285,32 @@ export const workoutService = {
         );
         const snap = await getDocs(q);
         return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    },
+
+    /**
+     * Inscrever-se nas sessões recentes do usuário.
+     * Mantém o dashboard em tempo real sem abrir stream sobre todo o histórico.
+     * @param {string} userId
+     * @param {function} callback
+     * @param {number} limitCount
+     * @returns {function} unsubscribe
+     */
+    async subscribeToRecentSessions(userId, callback, limitCount = SESSION_LIMITS.dashboardRecent) {
+        const { db, collection, query, where, orderBy, limit, onSnapshot } = await getFirestoreDeps();
+        const safeLimit = Math.max(1, Math.min(Number(limitCount) || SESSION_LIMITS.dashboardRecent, 500));
+        const sessionsRef = collection(db, SESSIONS_COLLECTION);
+        const q = query(
+            sessionsRef,
+            where('userId', '==', userId),
+            orderBy('completedAt', 'desc'),
+            limit(safeLimit)
+        );
+        return onSnapshot(q, (snapshot) => {
+            const sessions = snapshot.docs.map(mapSessionDoc);
+            callback(sessions);
+        }, (error) => {
+            console.error("Error subscribing to recent sessions:", error);
+        });
     },
 
     /**

@@ -11,6 +11,9 @@ vi.mock('react-router-dom', () => ({
 }));
 
 vi.mock('../services/workoutService', () => ({
+    SESSION_LIMITS: {
+        analyticsGlobalPage: 120
+    },
     workoutService: {
         getHistory: vi.fn(),
         getTemplates: vi.fn()
