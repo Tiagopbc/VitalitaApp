@@ -53,14 +53,25 @@ export default defineConfig(({ mode }) => {
     },
     rollupOptions: {
       output: {
-        manualChunks: {
-          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
-          'vendor-firebase-app': ['firebase/app'],
-          'vendor-firebase-auth': ['firebase/auth'],
-          'vendor-firebase-firestore': ['firebase/firestore'],
-          'vendor-charts': ['recharts'],
-          'vendor-lucide': ['lucide-react'],
-          'vendor-sonner': ['sonner'],
+        onlyExplicitManualChunks: true,
+        manualChunks(id) {
+          if (!id.includes('node_modules')) return undefined
+
+          const packageId = id.split('node_modules/').pop()
+
+          if (packageId.startsWith('react/') || packageId.startsWith('react-dom/') || packageId.startsWith('scheduler/')) {
+            return 'vendor-react'
+          }
+          if (packageId.startsWith('react-router/') || packageId.startsWith('react-router-dom/')) return 'vendor-router'
+          if (packageId.startsWith('firebase/app') || packageId.startsWith('@firebase/app')) return 'vendor-firebase-app'
+          if (packageId.startsWith('firebase/auth') || packageId.startsWith('@firebase/auth')) return 'vendor-firebase-auth'
+          if (packageId.startsWith('firebase/firestore') || packageId.startsWith('@firebase/firestore')) return 'vendor-firebase-firestore'
+          if (packageId.startsWith('recharts/')) return 'vendor-recharts'
+          if (packageId.startsWith('victory-vendor/') || packageId.startsWith('d3-')) return 'vendor-chart-vendor'
+          if (packageId.startsWith('lucide-react/')) return 'vendor-lucide'
+          if (packageId.startsWith('sonner/')) return 'vendor-sonner'
+
+          return undefined
         },
       },
     },

@@ -29,6 +29,7 @@ import MethodModal from '../MethodModal';
 import { LinearCardCompactV2 } from '../components/execution/LinearCardCompactV2';
 import { Toast } from '../components/design-system/Toast';
 import { Skeleton } from '../components/design-system/Skeleton';
+import { SyncStatusBadge } from '../components/design-system/SyncStatusBadge';
 
 // --- HOOKS PERSONALIZADOS ---
 import { useWorkoutTimer } from '../hooks/useWorkoutTimer';
@@ -145,6 +146,7 @@ export function WorkoutExecutionPage({ user }) {
         saving,
         error,
         setError,
+        syncState,
         template,
         exercises,
         initialElapsed,
@@ -343,12 +345,16 @@ export function WorkoutExecutionPage({ user }) {
 
     const confirmDiscard = async () => {
         setIsFinished(true); // Parar sincronização
-        await discardSession();
-        window.location.href = "/"; // Forçar navegação para home
+        const discarded = await discardSession();
+        if (discarded !== false) {
+            onFinish();
+            return;
+        }
+        setIsFinished(false);
+        setShowCancelModal(false);
     };
 
     const handleFinishWorkout = async () => {
-        console.log("DEBUG: handleFinishWorkout started");
         setIsFinishingSession(true);
 
         setFrozenSession({
@@ -358,7 +364,6 @@ export function WorkoutExecutionPage({ user }) {
 
         setIsFinished(true); // Parar sincronização imediatamente
         const success = await finishSession(elapsedSeconds);
-        console.log("DEBUG: finishSession result:", success);
         
         if (success) {
             const { default: confetti } = await import('canvas-confetti');
@@ -369,7 +374,6 @@ export function WorkoutExecutionPage({ user }) {
             });
 
             if (user) {
-                console.log("DEBUG: Checking achievements for user", user.uid);
                 const sessionPayload = {
                     id: 'temp_current',
                     completedAt: new Date(),
@@ -388,7 +392,7 @@ export function WorkoutExecutionPage({ user }) {
                         setShowFinishModal(true);
                     }
                 } catch (err) {
-                    console.error("DEBUG: checkNewAchievements error", err);
+                    console.error("checkNewAchievements error", err);
                     setIsFinishingSession(false);
                     setShowFinishModal(true);
                 }
@@ -397,7 +401,6 @@ export function WorkoutExecutionPage({ user }) {
                 setShowFinishModal(true);
             }
         } else {
-            console.error("DEBUG: finishSession returned false");
             setIsFinishingSession(false);
             setIsFinished(false); // Reativar se falhar
             setFrozenSession(null);
@@ -417,7 +420,7 @@ export function WorkoutExecutionPage({ user }) {
 
         // Verificação de Segurança: API Files requer Contexto Seguro (HTTPS ou localhost)
         if (!window.isSecureContext) {
-            alert("O compartilhamento requer conexão segura (HTTPS).\n\nSe você está testando localmente via IP, use 'localhost' ou configure SSL.");
+            setError("O compartilhamento requer conexão segura. Use HTTPS ou localhost.");
             return;
         }
 
@@ -680,6 +683,10 @@ export function WorkoutExecutionPage({ user }) {
 
                 <div style={{ height: 'calc(65px + env(safe-area-inset-top))' }}></div>
 
+                <div className="px-4 mt-2 mb-2 flex justify-end">
+                    <SyncStatusBadge status={syncState} />
+                </div>
+
                 {focusMode && (
                     <div className="px-4 mb-2 mt-0 flex items-center justify-between pointer-events-auto relative z-40">
                         <Button
@@ -755,6 +762,7 @@ export function WorkoutExecutionPage({ user }) {
                                     onCompleteSet={handleCompleteSetWrapper}
                                     onUpdateNotes={updateNotes}
                                     onToggleWeightMode={() => toggleExerciseWeightMode(ex.id)}
+                                    onValidationError={setError}
                                 />
                             );
                         })()
@@ -770,31 +778,32 @@ export function WorkoutExecutionPage({ user }) {
                                 <div id={`exercise-${ex.id}`} key={ex.id}>
                                     <LinearCardCompactV2
                                         exerciseId={ex.id}
-                                    setId={activeSet.id}
-                                    exerciseName={ex.name}
-                                    muscleGroup={ex.muscleFocus?.primary || ex.group || 'Geral'}
-                                    method={ex.method || "Convencional"}
-                                    repsGoal={ex.reps || (ex.target ? ex.target.replace(/^\d+\s*x\s*/i, '').trim() : "12")}
-                                    currentSet={safeIdx + 1}
-                                    totalSets={ex.sets.length}
-                                    completedSets={ex.sets.map(s => s.completed)}
-                                    weight={activeSet.weight}
-                                    actualReps={activeSet.reps}
-                                    observation={ex.notes}
-                                    suggestedWeight={activeSet.targetWeight || activeSet.weight}
-                                    suggestedReps={activeSet.targetReps || ex.reps || (ex.target ? ex.target.replace(/^\d+\s*x\s*/i, '').trim() : "12")}
-                                    lastWeight={activeSet.lastWeight}
-                                    lastReps={activeSet.lastReps}
-                                    weightMode={activeSet.weightMode || 'total'}
-                                    baseWeight={activeSet.baseWeight}
-                                    drops={activeSet.drops}
-                                    onUpdateSet={updateExerciseSet}
-                                    onUpdateSetMultiple={updateSetMultiple}
-                                    onSetChange={(setNum) => handleSetNavigation(ex.id, setNum - 1)}
-                                    onMethodClick={() => setSelectedMethod(ex.method)}
-                                    onCompleteSet={handleCompleteSetWrapper}
-                                    onUpdateNotes={updateNotes}
+                                        setId={activeSet.id}
+                                        exerciseName={ex.name}
+                                        muscleGroup={ex.muscleFocus?.primary || ex.group || 'Geral'}
+                                        method={ex.method || "Convencional"}
+                                        repsGoal={ex.reps || (ex.target ? ex.target.replace(/^\d+\s*x\s*/i, '').trim() : "12")}
+                                        currentSet={safeIdx + 1}
+                                        totalSets={ex.sets.length}
+                                        completedSets={ex.sets.map(s => s.completed)}
+                                        weight={activeSet.weight}
+                                        actualReps={activeSet.reps}
+                                        observation={ex.notes}
+                                        suggestedWeight={activeSet.targetWeight || activeSet.weight}
+                                        suggestedReps={activeSet.targetReps || ex.reps || (ex.target ? ex.target.replace(/^\d+\s*x\s*/i, '').trim() : "12")}
+                                        lastWeight={activeSet.lastWeight}
+                                        lastReps={activeSet.lastReps}
+                                        weightMode={activeSet.weightMode || 'total'}
+                                        baseWeight={activeSet.baseWeight}
+                                        drops={activeSet.drops}
+                                        onUpdateSet={updateExerciseSet}
+                                        onUpdateSetMultiple={updateSetMultiple}
+                                        onSetChange={(setNum) => handleSetNavigation(ex.id, setNum - 1)}
+                                        onMethodClick={() => setSelectedMethod(ex.method)}
+                                        onCompleteSet={handleCompleteSetWrapper}
+                                        onUpdateNotes={updateNotes}
                                         onToggleWeightMode={() => toggleExerciseWeightMode(ex.id)}
+                                        onValidationError={setError}
                                     />
                                 </div>
                             );

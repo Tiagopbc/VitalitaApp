@@ -1,24 +1,19 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { getFirestoreDeps } from '../firebaseDb';
+import { activeSessionService } from '../services/sessions/activeSessionService';
+import {
+    chooseSessionRecoverySource,
+    createSessionBackupKey,
+    createSessionFingerprint,
+    readSessionBackup,
+    removeSessionBackup,
+    SESSION_SYNC_STATES,
+    writeSessionBackup
+} from '../services/sessions/sessionRecoveryService';
 
 // Auxiliar para gerar IDs
 function generateId() {
     return Math.random().toString(36).substr(2, 9);
-}
-
-// Ajusta o tempo decorrido somando a diferença de tempo em que o app ficou suspenso/fechado
-function getAdjustedElapsed(elapsed, savedTimestamp) {
-    if (!savedTimestamp) return elapsed;
-    const ts = typeof savedTimestamp === 'string' ? Date.parse(savedTimestamp) : Number(savedTimestamp);
-    if (isNaN(ts) || ts <= 0) return elapsed;
-    
-    const now = Date.now();
-    const diff = Math.floor((now - ts) / 1000);
-    // Ajusta apenas se a diferença for positiva e menor que 12 horas (43200 segundos)
-    if (diff > 0 && diff < 43200) {
-        return elapsed + diff;
-    }
-    return elapsed;
 }
 
 export function useWorkoutSession(workoutId, user) {
@@ -29,13 +24,13 @@ export function useWorkoutSession(workoutId, user) {
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState(null);
     const [sessionVersion, setSessionVersion] = useState(0);
+    const [syncState, setSyncState] = useState(SESSION_SYNC_STATES.idle);
+    const [lastSavedAt, setLastSavedAt] = useState(null);
 
     const profileId = user?.uid;
     const lastSyncedRef = useRef('');
-    const backupKey = `workout_backup_${profileId}_${workoutId}`;
-
-    // --- BUSCA DE DADOS ---
-
+    const syncInFlightRef = useRef(false);
+    const backupKey = createSessionBackupKey(profileId, workoutId);
 
     // --- BUSCA DE DADOS ---
     useEffect(() => {
@@ -43,15 +38,14 @@ export function useWorkoutSession(workoutId, user) {
 
         async function fetchData() {
             setLoading(true);
+            setSyncState(SESSION_SYNC_STATES.loading);
             try {
                 const { db, doc, getDoc, getDocs, query, collection, where, limit, getDocFromServer } = await getFirestoreDeps();
                 let activeData = null;
 
-                // 1. Verificar Sessão Ativa (Remota) - Apenas se não descartada explicitamente (assumimos que sessionVersion > 0 significa que podemos querer dados frescos)
-                // Na verdade, verificar remotamente de forma consistente é bom, SE confiarmos que o delete funcionou.
+                // 1. Verificar sessão ativa remota.
                 try {
                     const activeRef = doc(db, 'active_workouts', profileId);
-                    // FORÇAR BUSCA NO SERVIDOR para evitar cache obsoleto após descarte
                     const activeSnap = await getDocFromServer(activeRef);
                     if (activeSnap.exists()) {
                         const data = activeSnap.data();
@@ -77,73 +71,24 @@ export function useWorkoutSession(workoutId, user) {
                 }
 
                 // 2. Verificar Backup Local
-                const savedBackup = localStorage.getItem(backupKey);
-                let localBackupData = null;
-                if (savedBackup) {
-                    try {
-                        const parsed = JSON.parse(savedBackup);
-                        if (parsed.exercises && Array.isArray(parsed.exercises)) {
-                            localBackupData = parsed;
-                        }
-                    } catch {
-                        localStorage.removeItem(backupKey);
-                    }
-                }
+                const localBackupData = readSessionBackup(backupKey);
+                const recovery = chooseSessionRecoverySource({ cloudData: activeData, localBackupData });
 
-                // Resolver conflito entre Nuvem e Local
-                // Usar o maior elapsedSeconds se ambos existirem (ajustados pelo tempo de background se aplicável)
-                if (activeData) {
-                    let cloudTimestampMs = 0;
-                    if (activeData.updatedAt) {
-                        if (typeof activeData.updatedAt.toMillis === 'function') {
-                            cloudTimestampMs = activeData.updatedAt.toMillis();
-                        } else if (typeof activeData.updatedAt.toDate === 'function') {
-                            cloudTimestampMs = activeData.updatedAt.toDate().getTime();
-                        } else if (typeof activeData.updatedAt === 'number') {
-                            cloudTimestampMs = activeData.updatedAt;
-                        } else if (activeData.updatedAt.seconds) {
-                            cloudTimestampMs = activeData.updatedAt.seconds * 1000;
-                        }
-                    }
-
-                    const cloudElapsedBase = activeData.elapsedSeconds || 0;
-                    const cloudElapsed = getAdjustedElapsed(cloudElapsedBase, cloudTimestampMs);
-
-                    const localElapsedBase = localBackupData ? (localBackupData.elapsedSeconds || 0) : 0;
-                    const localElapsed = localBackupData 
-                        ? getAdjustedElapsed(localElapsedBase, localBackupData.timestamp)
-                        : 0;
-                    
-                    const bestExercises = (localElapsed > cloudElapsed && localBackupData?.exercises) 
-                        ? localBackupData.exercises 
-                        : activeData.exercises;
-                    
-                    const bestElapsed = Math.max(cloudElapsed, localElapsed);
-
+                if (recovery) {
                     // Carregar dados do template (apenas metadados)
                     const templateDoc = await getDoc(doc(db, 'workout_templates', workoutId));
                     if (templateDoc.exists()) {
                         setTemplate({ id: templateDoc.id, ...templateDoc.data() });
                     }
 
-                    if (bestExercises) {
-                        setExercises(bestExercises);
-                        setInitialElapsed(bestElapsed);
-                        lastSyncedRef.current = JSON.stringify(bestExercises);
-                        setLoading(false);
-                        return;
-                    }
-                } else if (localBackupData) {
-                    const localElapsedBase = localBackupData.elapsedSeconds || 0;
-                    const localElapsed = getAdjustedElapsed(localElapsedBase, localBackupData.timestamp);
-
-                    setExercises(localBackupData.exercises);
-                    setInitialElapsed(localElapsed);
-
-                    const templateDoc = await getDoc(doc(db, 'workout_templates', workoutId));
-                    if (templateDoc.exists()) {
-                        setTemplate({ id: templateDoc.id, ...templateDoc.data() });
-                    }
+                    setExercises(recovery.exercises);
+                    setInitialElapsed(recovery.elapsedSeconds);
+                    lastSyncedRef.current = recovery.source === 'cloud'
+                        ? createSessionFingerprint(recovery.exercises, recovery.elapsedSeconds)
+                        : '';
+                    setSyncState(recovery.conflict
+                        ? SESSION_SYNC_STATES.conflict
+                        : SESSION_SYNC_STATES.active);
                     setLoading(false);
                     return;
                 }
@@ -163,8 +108,7 @@ export function useWorkoutSession(workoutId, user) {
                     const tmplData = templateDoc.data();
                     setTemplate({ id: templateDoc.id, ...tmplData });
 
-                    // ... (Lógica de Normalização e Histórico) ...
-                    // buscar Histórico
+                    // Buscar último histórico do treino para preencher sugestões de carga/reps.
                     let lastSessionExercises = [];
                     try {
                         const historyQuery = query(
@@ -233,13 +177,14 @@ export function useWorkoutSession(workoutId, user) {
                             };
                         });
                         setExercises(mapped);
-                        // Limpar tempo decorrido para nova sessão
                         setInitialElapsed(0);
+                        setSyncState(SESSION_SYNC_STATES.active);
                     }
                 }
             } catch (err) {
                 console.error(err);
                 setError("Falha ao carregar treino.");
+                setSyncState(SESSION_SYNC_STATES.error);
             } finally {
                 setLoading(false);
             }
@@ -248,30 +193,28 @@ export function useWorkoutSession(workoutId, user) {
         fetchData();
     }, [workoutId, profileId, backupKey, sessionVersion]);
 
-    // ... SYNC ...
+    useEffect(() => {
+        if (typeof window === 'undefined') return undefined;
 
-    // ... ACTIONS ...
+        const updateOnlineState = () => {
+            if (!navigator.onLine) {
+                setSyncState(SESSION_SYNC_STATES.offline);
+            } else {
+                setSyncState((current) => (
+                    current === SESSION_SYNC_STATES.offline ? SESSION_SYNC_STATES.saved : current
+                ));
+            }
+        };
 
+        window.addEventListener('online', updateOnlineState);
+        window.addEventListener('offline', updateOnlineState);
+        updateOnlineState();
 
-
-    // Re-declare other functions here to be safe or ensure they are present
-    // But since we are replacing a chunk, we just need to match correctly.
-
-    // The previous `useEffect` block in file was ~140 lines.
-    // The `discardSession` was at the end.
-    // We are replacing from start of `useEffect` to the end of `discardSession`?
-    // No, `useEffect` starts at line 24. `discardSession` ends at 312.
-    // That's too big of a chunk to replace safely without context.
-
-    // Let's replace smaller chunks.
-    // Chunk 1: Add sessionVersion state.
-    // Chunk 2: Update useEffect dependencies.
-    // Chunk 3: Update discardSession.
-
-    // This is safer.
-
-    // ABORTING THIS REPLACE to replace with smaller sequential edits.
-
+        return () => {
+            window.removeEventListener('online', updateOnlineState);
+            window.removeEventListener('offline', updateOnlineState);
+        };
+    }, []);
 
     // --- SINCRONIZAÇÃO ---
     const syncSession = useCallback((currentExercises, currentElapsed) => {
@@ -283,21 +226,40 @@ export function useWorkoutSession(workoutId, user) {
             elapsedSeconds: currentElapsed,
             exercises: currentExercises
         };
-        localStorage.setItem(backupKey, JSON.stringify(backupData));
+        writeSessionBackup(backupKey, backupData);
 
         // Sincronização na Nuvem
-        const currentString = JSON.stringify(currentExercises);
-        if (profileId && currentString !== lastSyncedRef.current) {
-            import('../services/userService')
-                .then(({ userService }) => userService.updateActiveSession(profileId, {
+        const currentFingerprint = createSessionFingerprint(currentExercises, currentElapsed);
+        if (!navigator.onLine) {
+            setSyncState(SESSION_SYNC_STATES.offline);
+            return;
+        }
+
+        if (
+            profileId &&
+            currentFingerprint !== lastSyncedRef.current &&
+            !syncInFlightRef.current
+        ) {
+            syncInFlightRef.current = true;
+            setSyncState(SESSION_SYNC_STATES.syncing);
+            activeSessionService
+                .update(profileId, {
                     templateId: workoutId,
                     elapsedSeconds: currentElapsed,
                     exercises: currentExercises
-                }))
-                .then(() => {
-                    lastSyncedRef.current = currentString;
                 })
-                .catch(console.error);
+                .then(() => {
+                    lastSyncedRef.current = currentFingerprint;
+                    setLastSavedAt(new Date());
+                    setSyncState(SESSION_SYNC_STATES.saved);
+                })
+                .catch((err) => {
+                    console.error(err);
+                    setSyncState(SESSION_SYNC_STATES.syncFailed);
+                })
+                .finally(() => {
+                    syncInFlightRef.current = false;
+                });
         }
     }, [backupKey, profileId, workoutId]);
 
@@ -405,6 +367,7 @@ export function useWorkoutSession(workoutId, user) {
 
     const finishSession = async (finalElapsed) => {
         setSaving(true);
+        setSyncState(SESSION_SYNC_STATES.finishing);
         try {
             const { db, collection, addDoc, serverTimestamp, doc, setDoc } = await getFirestoreDeps();
             const minutes = Math.floor(finalElapsed / 60);
@@ -438,20 +401,21 @@ export function useWorkoutSession(workoutId, user) {
             });
 
             // Limpeza
-            localStorage.removeItem(backupKey);
+            removeSessionBackup(backupKey);
             if (profileId) {
-                const { userService } = await import('../services/userService');
-                await userService.deleteActiveSession(profileId);
+                await activeSessionService.remove(profileId);
             }
 
             // Atualizar Metadados do Template
             const templateRef = doc(db, 'workout_templates', workoutId);
             await setDoc(templateRef, { lastPerformed: serverTimestamp() }, { merge: true });
 
+            setSyncState(SESSION_SYNC_STATES.finished);
             return true; // Sucesso
         } catch (e) {
             console.error(e);
             setError('Erro ao salvar treino.');
+            setSyncState(SESSION_SYNC_STATES.syncFailed);
             return false;
         } finally {
             setSaving(false);
@@ -460,12 +424,12 @@ export function useWorkoutSession(workoutId, user) {
 
     const discardSession = useCallback(async () => {
         setLoading(true);
+        setSyncState(SESSION_SYNC_STATES.discarding);
         try {
             // Limpeza
-            localStorage.removeItem(backupKey);
+            removeSessionBackup(backupKey);
             if (profileId) {
-                const { userService } = await import('../services/userService');
-                await userService.deleteActiveSession(profileId);
+                await activeSessionService.remove(profileId);
             }
 
             // Aguardar um pouco para garantir propagação
@@ -473,10 +437,15 @@ export function useWorkoutSession(workoutId, user) {
 
             // Acionar nova busca
             setSessionVersion(v => v + 1);
+            setSyncState(SESSION_SYNC_STATES.discarded);
+            return true;
         } catch (e) {
             console.error("Error discarding session:", e);
-            // Fallback
-            window.location.reload();
+            setError('Erro ao descartar treino. Seu backup local foi mantido.');
+            setSyncState(SESSION_SYNC_STATES.syncFailed);
+            return false;
+        } finally {
+            setLoading(false);
         }
     }, [backupKey, profileId]);
 
@@ -485,6 +454,8 @@ export function useWorkoutSession(workoutId, user) {
         saving,
         error,
         setError,
+        syncState,
+        lastSavedAt,
         template,
         exercises,
         initialElapsed,

@@ -13,7 +13,7 @@ Este documento registra as decisões atuais para reduzir leituras grandes no Fir
 
 Os limites ficam centralizados em `SESSION_LIMITS` no `workoutService`:
 
-- `dashboardRecent`: 120 sessões recentes.
+- `dashboardRecent`: 60 sessões recentes.
 - `analyticsGlobalPage`: 120 sessões por página na busca global de evolução.
 - `profileStats`: 300 sessões recentes para perfil/conquistas.
 - `achievementCheck`: 300 sessões recentes para avaliação pós-treino.

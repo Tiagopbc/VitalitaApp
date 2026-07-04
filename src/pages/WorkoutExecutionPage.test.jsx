@@ -14,8 +14,10 @@ vi.mock('../hooks/useWorkoutTimer', () => ({
     useWorkoutTimer: vi.fn()
 }));
 
+const mockFinishWorkout = vi.fn();
+
 vi.mock('../context/WorkoutContext', () => ({
-    useWorkout: () => ({ finishWorkout: vi.fn() })
+    useWorkout: () => ({ finishWorkout: mockFinishWorkout })
 }));
 
 vi.mock('../components/design-system/Button', () => ({
@@ -103,6 +105,7 @@ describe('WorkoutExecutionPage', () => {
     let baseReturn;
     beforeEach(() => {
         vi.clearAllMocks();
+        mockFinishWorkout.mockClear();
         useWorkoutTimer.mockReturnValue({
             elapsedSeconds: 0,
             setElapsedSeconds: vi.fn()
@@ -133,10 +136,6 @@ describe('WorkoutExecutionPage', () => {
     });
 
     it('opens cancel modal and confirms discard', async () => {
-        const originalLocation = window.location;
-        delete window.location;
-        window.location = { href: '' };
-
         render(<WorkoutExecutionPage user={{ uid: 'u1' }} />);
 
         fireEvent.click(screen.getByRole('button', { name: 'CANCELAR' }));
@@ -149,9 +148,7 @@ describe('WorkoutExecutionPage', () => {
         });
 
         expect(baseReturn.discardSession).toHaveBeenCalled();
-        expect(window.location.href).toBe('/');
-
-        window.location = originalLocation;
+        expect(mockFinishWorkout).toHaveBeenCalled();
     });
 
     it('finishes workout and shows finish modal', async () => {
