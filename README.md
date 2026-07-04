@@ -26,6 +26,14 @@ O **Vitalità** é um PWA de treino criado como projeto de estudo e portfolio de
 
 O projeto combina uma experiencia mobile-first com uma base tecnica progressivamente mais profissional: autenticacao, Firestore com regras versionadas, testes automatizados, paginacao de historico, PWA, controle de sessao ativa, modo personal trainer e documentacao de arquitetura.
 
+## Screenshots
+
+Capturas reais da demo publicada, usando somente telas publicas e dados ficticios no onboarding. Nenhuma conta foi criada durante a captura.
+
+| Login | Cadastro | Dados pessoais |
+| --- | --- | --- |
+| ![Tela de login do Vitalità](docs/assets/screenshots/vitalita-login.png) | ![Tela de cadastro do Vitalità](docs/assets/screenshots/vitalita-signup-account.png) | ![Tela de dados pessoais do cadastro do Vitalità](docs/assets/screenshots/vitalita-signup-profile.png) |
+
 ## Objetivos de Engenharia
 
 - Construir um produto realista, usavel e demonstravel em portfolio.
@@ -181,8 +189,8 @@ npm run dev
 ## Roadmap
 
 - Melhorar acabamento visual das principais telas.
-- Criar screenshots e fluxo de demonstracao para portfolio.
-- Refinar README com imagens reais do app.
+- Adicionar conta demo anonima para capturar dashboard, historico e execucao de treino.
+- Criar fluxo guiado de demonstracao para LinkedIn e portfolio.
 - Adicionar App Check em modo monitoramento, sem enforcement prematuro.
 - Evoluir observabilidade leve com Sentry em ambiente controlado.
 - Se o projeto sair do modo estudo, avaliar Blaze, Functions e agregados incrementais.
