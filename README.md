@@ -2,169 +2,191 @@
 
 <div align="center">
 
-![Vitalità Banner](https://img.shields.io/badge/Vitalità-Fitness_Tracking-blue?style=for-the-badge&logo=activity)
+![Vitalità Banner](https://img.shields.io/badge/Vitalita-Fitness_Tracking-blue?style=for-the-badge&logo=activity)
 
 <br />
 
-[![React](https://img.shields.io/badge/React-19-61DAFB?style=flat-square&logo=react&logoColor=black)](https://reactjs.org/)
-[![Vite](https://img.shields.io/badge/Vite-7.0-646CFF?style=flat-square&logo=vite&logoColor=white)](https://vitejs.dev/)
-[![Firebase](https://img.shields.io/badge/Firebase-12.0-FFCA28?style=flat-square&logo=firebase&logoColor=black)](https://firebase.google.com/)
-[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4.0-38B2AC?style=flat-square&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
+[![React](https://img.shields.io/badge/React-19-61DAFB?style=flat-square&logo=react&logoColor=black)](https://react.dev/)
+[![Vite](https://img.shields.io/badge/Vite-7-646CFF?style=flat-square&logo=vite&logoColor=white)](https://vitejs.dev/)
+[![Firebase](https://img.shields.io/badge/Firebase-12-FFCA28?style=flat-square&logo=firebase&logoColor=black)](https://firebase.google.com/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4-38B2AC?style=flat-square&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
 [![Vitest](https://img.shields.io/badge/Vitest-Tested-729B1B?style=flat-square&logo=vitest&logoColor=white)](https://vitest.dev/)
 
-**O seu diário inteligente de treinos, evolução e performance.**
+**Diario inteligente de treinos, evolucao e performance.**
+
+[Demo](https://vitalita.vercel.app) · [Documentacao Tecnica](docs/architecture.md) · [Case de Portfolio](docs/portfolio-case-study.md)
 
 </div>
 
 ---
 
-## 💡 A Motivação
+## Visao Geral
 
-O **Vitalità** nasceu de uma frustração pessoal e genuína. Ao procurar aplicativos de treino, o que se encontra no mercado geralmente se divide em dois extremos: ou são "blocos de notas" simples demais que não geram dados úteis, ou são plataformas inchadas, cheias de anúncios, redes sociais forçadas e funções irrelevantes que quebram o foco do treino.
+O **Vitalità** é um PWA de treino criado como projeto de estudo e portfolio de engenharia de software. A proposta é resolver uma dor simples: registrar treinos de musculacao com foco, consistencia e dados uteis, sem transformar a experiencia em uma rede social ou em um bloco de notas limitado.
 
-Eu queria algo diferente. Queria uma ferramenta que respeitasse o **"Deep Work"** do atleta na academia.
+O projeto combina uma experiencia mobile-first com uma base tecnica progressivamente mais profissional: autenticacao, Firestore com regras versionadas, testes automatizados, paginacao de historico, PWA, controle de sessao ativa, modo personal trainer e documentacao de arquitetura.
 
-*   Sem distrações.
-*   Foco total na execução (carga, repetições, descanso).
-*   Dados que realmente importam para progredir (Volume acumulado, carga máxima, consistência).
+## Objetivos de Engenharia
 
-O Vitalità é a resposta para essa busca: um ecossistema sério, estético e funcional para quem trata o treino como disciplina, e não apenas como passatempo.
+- Construir um produto realista, usavel e demonstravel em portfolio.
+- Manter o projeto em custo zero no Firebase Spark enquanto for estudo pessoal.
+- Aplicar boas praticas de seguranca e privacidade mesmo sem usuarios externos.
+- Documentar caminhos profissionais de evolucao, como Cloud Functions, backfill e agregados server-side.
+- Demonstrar qualidade com CI, testes, regras Firestore e decisoes tecnicas rastreaveis.
 
----
+## Funcionalidades
 
-## 🏗️ Bastidores & Arquitetura (V3)
+### Aluno
 
-Este projeto não é apenas uma interface bonita. Ele é um software vivo que amadureceu tecnicamente ao longo de várias iterações. Recentemente, passou por uma auditoria técnica rigorosa e refatoração arquitetural para garantir escalabilidade e segurança:
+- Criacao e execucao de treinos.
+- Registro de carga, repeticoes, series concluidas e descanso.
+- Historico paginado de sessoes.
+- Dashboard com progresso semanal, streaks e sugestao de proximo treino.
+- Conquistas, marcas pessoais e volume acumulado.
+- PWA instalavel para uso mobile.
 
-*   **Test-Driven Reliability**: Implementação de infraestrutura de testes com **Vitest** e **React Testing Library**, cobrindo lógica de negócios e componentes críticos.
-*   **Gestão de Sessão Segura**: Lógica de treino extraída para uma **Context API** dedicada (`WorkoutContext`), com sincronização em tempo real (Firebase) e proteção contra "ghost sessions" (divergência de estado entre dispositivos).
-*   **Performance First**: Code splitting, Lazy Loading de rotas pesadas e remoção de dependências ociosas (adeus, Axios!).
-*   **Design System Modular**: Componentes de UI desacoplados e reutilizáveis, seguindo princípios de Atomic Design.
+### Personal Trainer
 
----
+- Vinculo aluno-personal por convite.
+- Dashboard de alunos.
+- Prescricao de treinos para alunos vinculados.
+- Leitura de historico do aluno conforme regras de acesso.
 
-## 📖 Sobre o Projeto
+### Dados e Performance
 
-O **Vitalità** é uma aplicação web progressiva (PWA) de alta performance, desenvolvida para entusiastas e profissionais de musculação. Mais do que um simples registro, é um sistema que une o atleta ao seu progresso.
+- Historico com paginacao para evitar leituras grandes no Firestore.
+- Leituras recentes limitadas para dashboards e estatisticas.
+- Estrutura opcional de `user_stats` documentada para evolucao server-side.
+- Feature flag `VITE_ENABLE_SERVER_USER_STATS=false` para manter o modo Spark/custo zero.
 
-Com um design **"Dark Premium"** focado na usabilidade em ambientes de academia (modo noturno nativo, alto contraste e elementos glassmorphism), o app oferece uma experiência fluida e engajadora.
+## Arquitetura
 
-### ✨ Diferenciais
-- **Foco Absoluto na Execução**: Interface "Bubble" para contagem de séries e timer automático.
-- **Ecossistema Aluno-Treinador**: Funcionalidades para Personal Trainers gerenciarem alunos e prescreverem treinos.
-- **Gamificação Real**: Sistema de Streaks e níveis (Bronze a Diamante) para combater a evasão.
-- **PWA First**: Instale como aplicativo nativo no iOS e Android.
+```mermaid
+flowchart LR
+    User["Usuario PWA"] --> React["React/Vite App"]
+    React --> Auth["Firebase Auth"]
+    React --> Firestore["Cloud Firestore"]
+    React --> PWA["Service Worker/PWA"]
+    Firestore --> Rules["Firestore Security Rules"]
+    Firestore --> Indexes["Firestore Indexes"]
+    Functions["Cloud Functions opcionais"] -. "futuro/Blaze" .-> Firestore
+```
 
----
+### Camadas Principais
 
-## 🚀 Funcionalidades
+- `src/pages`: telas de produto, como dashboard, historico, perfil, treino e personal.
+- `src/services`: acesso a Firebase e regras de negocio compartilhadas.
+- `src/hooks`: logica de sessao de treino, sincronizacao e timer.
+- `src/utils`: estatisticas, storage seguro, conquistas e helpers puros.
+- `firestore.rules`: regras de seguranca versionadas.
+- `tests/security`: testes automatizados das regras Firestore.
+- `functions`: camada opcional de Functions/backfill para evolucao futura em Blaze.
+- `docs`: documentacao tecnica do projeto.
 
-### 👤 Para Alunos (Atletas)
+## Decisoes Tecnicas Relevantes
 
-#### 🏋️‍♂️ Execução e Registro
-- **Smart Tracking**: Registro de séries com ajuste rápido de carga e repetições.
-- **Timer Automático**: Cronômetro de descanso inteligente.
-- **Biblioteca de Métodos**: Guias para técnicas avançadas (Drop-set, Rest-pause, GVT).
-- **Histórico Detalhado**: Evolução de carga e volume por exercício.
+### Custo Zero Com Arquitetura Profissional
 
-#### 📊 Dashboard Pessoal
-- **Progressão Visual**: Gráficos de volume de carga.
-- **Streak Weekly Goal**: Widget híbrido para monitorar a frequência semanal.
-- **Sugestão Inteligente**: Rotação automática de treinos.
+O projeto roda no Firebase Spark para evitar custos. Cloud Functions e backfill existem como arquitetura opcional documentada, mas ficam desativados por padrao. O app segue funcional usando fallback de sessoes recentes.
 
----
+### Segurança Firestore
 
-### 🎓 Para Personal Trainers
+As regras protegem perfis, treinos, historico, convites e vinculos aluno-personal. O cliente nao pode escrever em `user_stats`, e o acesso do personal depende de vinculo ativo.
 
-#### 👥 Gestão de Alunos
-- **Painel do Treinador**: Visão geral de todos os alunos vinculados.
-- **Prescrição Remota**: Crie e edite fichas de treino para alunos.
-- **Monitoramento**: Acompanhe a frequência e desempenho em tempo real.
+### Performance
 
----
+O historico usa paginacao e as telas de resumo trabalham com janelas recentes limitadas. Isso reduz leituras desnecessarias, melhora previsibilidade de custo e evita dashboards dependentes de historico completo.
 
-## 🛠️ Tecnologias Utilizadas
+### Robustez Da Sessao
 
-Este projeto está na vanguarda do desenvolvimento web moderno:
+A execucao de treino foi tratada como fluxo critico: sessao ativa, persistencia, fallback local e sincronizacao foram separados para reduzir perda de dados durante o treino.
 
-- **Core**: [React 19](https://react.dev/)
-- **Build & Tooling**: [Vite 7](https://vitejs.dev/)
-- **Estilização**: [Tailwind CSS 4](https://tailwindcss.com/)
-- **Backend & Auth**: [Firebase](https://firebase.google.com/) (Firestore V3, Auth)
-- **Testes**: [Vitest](https://vitest.dev/) & [React Testing Library](https://testing-library.com/)
-- **Animações**: [Motion](https://motion.dev/)
-- **Visualização de Dados**: [Recharts](https://recharts.org/)
-- **Ícones**: [Lucide React](https://lucide.dev/)
+## Qualidade
 
----
-
-## ⚙️ Instalação e Configuração
-
-Para rodar o Vitalità localmente:
-
-### Pré-requisitos
-- Node.js (v20 recomendado; v18+ suportado)
-- Gerenciador de pacotes (npm, yarn ou pnpm)
-
-### Passo a passo
-
-1. **Clone o repositório**
-   ```bash
-   git clone https://github.com/Tiagopbc/VitalitaApp.git
-   cd VitalitaApp
-   ```
-
-2. **Instale as dependências**
-   ```bash
-   npm ci
-   ```
-
-3. **Configure as Variáveis de Ambiente**
-   Crie um `.env` na raiz com suas credenciais do Firebase.
-
-4. **Execute os Testes** (Opcional, mas recomendado)
-   ```bash
-   npm test
-   ```
-
-5. **Execute o servidor de desenvolvimento**
-   ```bash
-   npm run dev
-   ```
-   Acesse em `http://localhost:5175`.
-
----
-
-## 🧪 Qualidade e Segurança
-
-Antes de abrir um PR, rode:
+Comandos principais:
 
 ```bash
 npm run lint
 npm test -- --run
 npm run test:rules
 npm run build
+npm run test:coverage
 ```
 
-As regras e índices do Firestore ficam versionados em:
+O CI executa:
 
-- `firestore.rules`
-- `firestore.indexes.json`
-- `firebase.json`
+- instalacao com `npm ci`
+- lint
+- testes Vitest
+- testes das Functions opcionais
+- Firebase Emulator para rules
+- build de producao
+- coverage
 
-A documentação técnica inicial está em `docs/`.
+## Stack
 
----
+- **Frontend**: React 19, Vite 7, Tailwind CSS 4
+- **Backend**: Firebase Auth, Cloud Firestore
+- **PWA**: Vite PWA
+- **Testes**: Vitest, React Testing Library, Firebase Rules Unit Testing
+- **Charts/UI**: Recharts, Lucide React, Framer Motion
+- **Deploy Web**: Vercel
+- **Arquitetura opcional**: Firebase Cloud Functions para agregados/backfill
 
-## 📄 Licença
+## Rodando Localmente
 
-Este projeto é desenvolvido e mantido por **Tiago Cavalcanti**.
-Código aberto para fins de estudo e portfólio.
+### Pre-requisitos
 
----
+- Node.js 22 recomendado.
+- Projeto Firebase proprio ou variaveis de ambiente equivalentes.
 
-<div align="center">
+### Instalação
 
-Desenvolvido com 💪, 🧠 e muito ☕
+```bash
+git clone https://github.com/Tiagopbc/VitalitaApp.git
+cd VitalitaApp
+npm ci
+```
 
-</div>
+Crie um `.env` com base em `.env.example`:
+
+```bash
+VITE_FIREBASE_API_KEY=
+VITE_FIREBASE_AUTH_DOMAIN=
+VITE_FIREBASE_PROJECT_ID=
+VITE_FIREBASE_STORAGE_BUCKET=
+VITE_FIREBASE_MESSAGING_SENDER_ID=
+VITE_FIREBASE_APP_ID=
+VITE_ENABLE_SERVER_USER_STATS=false
+```
+
+Inicie o app:
+
+```bash
+npm run dev
+```
+
+## Documentacao
+
+- [Arquitetura](docs/architecture.md)
+- [Modelo Firestore](docs/firestore-model.md)
+- [Regras de Segurança](docs/security-rules.md)
+- [Performance e Dados](docs/performance-data.md)
+- [Testes](docs/testing.md)
+- [Deploy de Functions opcional](docs/functions-deploy.md)
+- [Backfill opcional de user_stats](docs/user-stats-backfill.md)
+- [Case de Portfolio](docs/portfolio-case-study.md)
+- [Rascunho para LinkedIn](docs/linkedin-post.md)
+
+## Roadmap
+
+- Melhorar acabamento visual das principais telas.
+- Criar screenshots e fluxo de demonstracao para portfolio.
+- Refinar README com imagens reais do app.
+- Adicionar App Check em modo monitoramento, sem enforcement prematuro.
+- Evoluir observabilidade leve com Sentry em ambiente controlado.
+- Se o projeto sair do modo estudo, avaliar Blaze, Functions e agregados incrementais.
+
+## Licença
+
+Projeto desenvolvido por **Tiago Cavalcanti** para estudo, portfolio e demonstracao tecnica.
