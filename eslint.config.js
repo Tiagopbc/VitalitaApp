@@ -38,4 +38,10 @@ export default defineConfig([
       'react/prop-types': 'off' // We are forgiving on prop types for now to avoid noise
     },
   },
+  {
+    files: ['functions/**/*.js'],
+    languageOptions: {
+      globals: globals.node,
+    },
+  },
 ])
