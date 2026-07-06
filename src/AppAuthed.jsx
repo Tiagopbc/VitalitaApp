@@ -21,6 +21,7 @@ const loadWorkoutExecutionPage = () => import('./pages/WorkoutExecutionPage').th
 const loadTrainerDashboard = () => import('./pages/TrainerDashboard').then(module => ({ default: module.TrainerDashboard }));
 const loadBottomNavEnhanced = () => import('./BottomNavEnhanced').then(module => ({ default: module.BottomNavEnhanced }));
 const loadSonnerToaster = () => import('sonner').then(module => ({ default: module.Toaster }));
+const loadPwaUpdatePrompt = () => import('./components/PwaUpdatePrompt').then(module => ({ default: module.PwaUpdatePrompt }));
 
 const HomeDashboard = React.lazy(loadHomeDashboard);
 const HistoryPage = React.lazy(loadHistoryPage);
@@ -32,6 +33,7 @@ const WorkoutExecutionPage = React.lazy(loadWorkoutExecutionPage);
 const TrainerDashboard = React.lazy(loadTrainerDashboard);
 const BottomNavEnhanced = React.lazy(loadBottomNavEnhanced);
 const SonnerToaster = React.lazy(loadSonnerToaster);
+const PwaUpdatePrompt = React.lazy(loadPwaUpdatePrompt);
 
 const NAV_TRANSITIONS_STORAGE_KEY = 'vitalita_nav_transitions_v1';
 
@@ -436,6 +438,12 @@ function AppAuthedContent() {
             {shouldRenderToaster && (
                 <Suspense fallback={null}>
                     <SonnerToaster richColors position="top-center" />
+                </Suspense>
+            )}
+
+            {user && (
+                <Suspense fallback={null}>
+                    <PwaUpdatePrompt />
                 </Suspense>
             )}
 

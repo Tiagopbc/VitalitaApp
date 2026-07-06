@@ -33,6 +33,7 @@ vi.mock('./pages/HomeDashboard', () => ({ HomeDashboard: () => <div>Mocked Home 
 vi.mock('./pages/LoginPage', () => ({ default: () => <div>Mocked Login Page</div> }));
 vi.mock('./DesktopSidebar', () => ({ DesktopSidebar: () => <div>Sidebar</div> }));
 vi.mock('./BottomNavEnhanced', () => ({ BottomNavEnhanced: () => <div>BottomNav</div> }));
+vi.mock('./components/PwaUpdatePrompt', () => ({ PwaUpdatePrompt: () => null }));
 
 describe('App Smoke Test', () => {
     beforeEach(() => {

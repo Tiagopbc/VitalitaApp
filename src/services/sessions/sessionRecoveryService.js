@@ -117,6 +117,29 @@ export function createSessionFingerprint(exercises, elapsedSeconds = 0) {
     return `${elapsedBucket}::${fingerprintExercises(exercises)}`;
 }
 
+function countCompletedSets(exercises) {
+    if (!Array.isArray(exercises)) return { completedSets: 0, totalSets: 0 };
+
+    return exercises.reduce((acc, exercise) => {
+        const sets = Array.isArray(exercise.sets) ? exercise.sets : [];
+        return {
+            completedSets: acc.completedSets + sets.filter(set => set.completed).length,
+            totalSets: acc.totalSets + sets.length
+        };
+    }, { completedSets: 0, totalSets: 0 });
+}
+
+function createRecoveryCandidate(source, exercises, elapsedSeconds, timestampMs) {
+    const setCounts = countCompletedSets(exercises);
+    return {
+        source,
+        exercises,
+        elapsedSeconds,
+        timestampMs,
+        ...setCounts
+    };
+}
+
 export function chooseSessionRecoverySource({ cloudData, localBackupData }) {
     const hasCloud = Boolean(cloudData?.exercises);
     const hasLocal = Boolean(localBackupData?.exercises);
@@ -126,17 +149,28 @@ export function chooseSessionRecoverySource({ cloudData, localBackupData }) {
     const localTimestampMs = getTimestampMs(localBackupData?.timestamp);
     const cloudElapsed = hasCloud ? getAdjustedElapsed(cloudData.elapsedSeconds || 0, cloudTimestampMs) : 0;
     const localElapsed = hasLocal ? getAdjustedElapsed(localBackupData.elapsedSeconds || 0, localTimestampMs) : 0;
+    const cloudCandidate = hasCloud
+        ? createRecoveryCandidate('cloud', cloudData.exercises, cloudElapsed, cloudTimestampMs)
+        : null;
+    const localCandidate = hasLocal
+        ? createRecoveryCandidate('local', localBackupData.exercises, localElapsed, localTimestampMs)
+        : null;
 
     if (hasCloud && hasLocal) {
         const localWinsByTime = localTimestampMs && cloudTimestampMs
             ? localTimestampMs > cloudTimestampMs
             : localElapsed > cloudElapsed;
         const source = localWinsByTime ? 'local' : 'cloud';
+        const selectedCandidate = source === 'local' ? localCandidate : cloudCandidate;
         return {
             source,
             conflict: true,
-            elapsedSeconds: source === 'local' ? localElapsed : cloudElapsed,
-            exercises: source === 'local' ? localBackupData.exercises : cloudData.exercises
+            elapsedSeconds: selectedCandidate.elapsedSeconds,
+            exercises: selectedCandidate.exercises,
+            candidates: {
+                cloud: cloudCandidate,
+                local: localCandidate
+            }
         };
     }
 
@@ -144,15 +178,21 @@ export function chooseSessionRecoverySource({ cloudData, localBackupData }) {
         return {
             source: 'local',
             conflict: false,
-            elapsedSeconds: localElapsed,
-            exercises: localBackupData.exercises
+            elapsedSeconds: localCandidate.elapsedSeconds,
+            exercises: localCandidate.exercises,
+            candidates: {
+                local: localCandidate
+            }
         };
     }
 
     return {
         source: 'cloud',
         conflict: false,
-        elapsedSeconds: cloudElapsed,
-        exercises: cloudData.exercises
+        elapsedSeconds: cloudCandidate.elapsedSeconds,
+        exercises: cloudCandidate.exercises,
+        candidates: {
+            cloud: cloudCandidate
+        }
     };
 }
