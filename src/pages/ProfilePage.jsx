@@ -25,6 +25,8 @@ import { achievementsCatalog } from '../data/achievementsCatalog';
 import { evaluateAchievements, calculateStats, evaluateHistory } from '../utils/evaluateAchievements';
 import { calculateWeeklyStats } from '../utils/workoutStats';
 import { Button } from '../components/design-system/Button';
+import { EmptyState } from '../components/design-system/EmptyState';
+import { SectionHeader } from '../components/design-system/SectionHeader';
 import { SESSION_LIMITS, workoutService } from '../services/workoutService';
 import { userStatsService } from '../services/userStatsService';
 const AchievementUnlockedModal = React.lazy(() => import('../components/achievements/AchievementUnlockedModal').then(module => ({ default: module.AchievementUnlockedModal })));
@@ -277,6 +279,8 @@ export default function ProfilePage({ user, onLogout, onNavigateToHistory, onNav
     const formattedJoinDate = user?.metadata?.creationTime
         ? new Date(user.metadata.creationTime).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })
         : '14/09/2025'; // Data de design como fallback se ausente
+    const unlockedAchievements = achievementsList.filter(a => a.isUnlocked);
+    const lockedAchievements = achievementsList.filter(a => !a.isUnlocked);
 
     if (loading) {
         return (
@@ -332,19 +336,23 @@ export default function ProfilePage({ user, onLogout, onNavigateToHistory, onNav
                         {/* Botões de Ação (Abaixo do info) */}
                         {/* Botões de Ação (Abaixo do info) */}
                         <div className="flex items-center gap-2">
-                            <button
+                            <Button
+                                variant="secondary"
+                                size="xs"
                                 onClick={() => setShowEditModal(true)}
-                                className="px-3 py-1.5 text-xs font-bold text-slate-300 bg-slate-800 rounded-lg border border-slate-700 hover:text-white hover:bg-slate-700 transition-colors"
+                                className="rounded-lg"
                             >
                                 Editar Perfil
-                            </button>
-                            <button
+                            </Button>
+                            <Button
+                                variant="outline-primary"
+                                size="xs"
                                 onClick={() => setShowLinkTrainer(true)}
-                                className="px-3 py-1.5 text-xs font-bold text-cyan-400 bg-cyan-950/30 rounded-lg border border-cyan-900 hover:text-cyan-300 hover:bg-cyan-950/50 transition-colors flex items-center gap-1.5"
+                                className="rounded-lg"
+                                leftIcon={<Users size={12} />}
                             >
-                                <Users size={12} />
                                 Personal
-                            </button>
+                            </Button>
                         </div>
                     </div>
                 </div>
@@ -373,23 +381,22 @@ export default function ProfilePage({ user, onLogout, onNavigateToHistory, onNav
             {/* --- ÁREA DO TREINADOR (Apenas Mobile - Faixa) --- */}
             {
                 isTrainer && (
-                    <button
+                    <Button
+                        variant="outline-primary"
+                        size="sm"
                         onClick={onNavigateToTrainer}
-                        className="w-full py-2 mb-6 bg-cyan-950/30 border-y border-cyan-900/50 flex items-center justify-center gap-2 text-xs font-bold text-cyan-400 uppercase tracking-widest hover:bg-cyan-950/50 transition-colors lg:hidden"
+                        className="mb-6 w-full rounded-xl lg:hidden"
+                        leftIcon={<Users size={14} />}
                     >
-                        <Users size={14} />
                         Área do Personal
-                    </button>
+                    </Button>
                 )
             }
 
             {/* --- DADOS CORPORAIS --- */}
             <div className="mb-6">
                 <div className="bg-slate-900/50 border border-slate-800 rounded-3xl p-5 relative overflow-hidden">
-                    <div className="flex items-center gap-2 mb-4">
-                        <Activity size={18} className="text-blue-500" />
-                        <h3 className="text-sm font-bold text-white">Dados Corporais</h3>
-                    </div>
+                    <SectionHeader icon={<Activity size={18} />} title="Dados Corporais" />
 
                     <div className="grid grid-cols-2 gap-x-6 gap-y-4 px-2">
                         {/* Weight */}
@@ -435,10 +442,7 @@ export default function ProfilePage({ user, onLogout, onNavigateToHistory, onNav
 
             {/* --- DESTAQUES BIG 3 (ATUALIZADO para TOP 4) --- */}
             <div className="bg-slate-900/50 border border-slate-800 rounded-3xl p-6 mt-6">
-                <div className="flex items-center gap-2 mb-4">
-                    <Trophy size={18} className="text-amber-500" />
-                    <h3 className="text-sm font-bold text-white uppercase tracking-wider">Melhores Marcas (Carga Máxima)</h3>
-                </div>
+                <SectionHeader icon={<Trophy size={18} className="text-amber-500" />} title="Melhores Marcas" />
 
                 <div className="grid grid-cols-2 gap-3">
                     {(() => {
@@ -540,11 +544,7 @@ export default function ProfilePage({ user, onLogout, onNavigateToHistory, onNav
 
             {/* --- SEÇÃO DE CONQUISTAS --- */}
             <div className="mb-24">
-                <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                        <Trophy className="text-yellow-500" size={20} /> Conquistas
-                    </h3>
-                </div>
+                <SectionHeader icon={<Trophy className="text-yellow-500" size={20} />} title="Conquistas" />
 
                 {loadingAchievements ? (
                     <div className="text-center py-8">
@@ -554,7 +554,14 @@ export default function ProfilePage({ user, onLogout, onNavigateToHistory, onNav
                     <>
                         {/* DESBLOQUEADAS */}
                         <div className="grid gap-3">
-                            {achievementsList.filter(a => a.isUnlocked).map(achievement => {
+                            {unlockedAchievements.length === 0 && (
+                                <EmptyState
+                                    icon={<Trophy size={26} />}
+                                    title="Nenhuma conquista desbloqueada"
+                                    description="Conclua treinos e mantenha consistência para desbloquear suas primeiras conquistas."
+                                />
+                            )}
+                            {unlockedAchievements.map(achievement => {
                                 // Lógica de Cor Dinâmica baseada na Categoria
                                 let theme = {
                                     text: 'text-amber-500',
@@ -657,17 +664,17 @@ export default function ProfilePage({ user, onLogout, onNavigateToHistory, onNav
                         </div>
 
                         {/* BLOQUEADAS - Estilo Minimalista */}
-                        {achievementsList.filter(a => !a.isUnlocked).length > 0 && (
+                        {lockedAchievements.length > 0 && (
                             <div className="mt-8 pt-8 border-t border-[#1e293b]">
                                 <div className="flex items-center gap-3 mb-6 opacity-60">
                                     <Lock size={16} className="text-[#64748b]" />
                                     <h4 className="text-xs font-black text-[#64748b] uppercase tracking-widest">
-                                        Bloqueadas ({achievementsList.filter(a => !a.isUnlocked).length})
+                                        Bloqueadas ({lockedAchievements.length})
                                     </h4>
                                 </div>
 
                                 <div className="grid gap-3 opacity-50 hover:opacity-100 transition-opacity duration-500">
-                                    {achievementsList.filter(a => !a.isUnlocked).slice(0, 3).map(achievement => (
+                                    {lockedAchievements.slice(0, 3).map(achievement => (
                                         <div
                                             key={achievement.id}
                                             className="flex items-center gap-4 p-4 rounded-2xl bg-[#0f172a] border border-[#1e293b] grayscale"
@@ -681,9 +688,9 @@ export default function ProfilePage({ user, onLogout, onNavigateToHistory, onNav
                                             </div>
                                         </div>
                                     ))}
-                                    {achievementsList.filter(a => !a.isUnlocked).length > 3 && (
+                                    {lockedAchievements.length > 3 && (
                                         <p className="text-center text-[10px] text-[#475569] font-medium uppercase tracking-widest mt-2">
-                                            + {achievementsList.filter(a => !a.isUnlocked).length - 3} conquistas ocultas
+                                            + {lockedAchievements.length - 3} conquistas ocultas
                                         </p>
                                     )}
                                 </div>
@@ -710,13 +717,14 @@ export default function ProfilePage({ user, onLogout, onNavigateToHistory, onNav
 
             {/* --- SAIR --- */}
             <div className="flex flex-col items-center gap-4 mt-8 pb-8">
-                <button
+                <Button
+                    variant="danger"
                     onClick={onLogout}
-                    className="w-auto px-8 py-3 md:py-4 flex items-center justify-center gap-2 text-red-400 bg-red-500/10 hover:bg-red-500/20 border border-red-500/10 hover:border-red-500/20 rounded-xl md:rounded-2xl transition-all duration-300 group text-base"
+                    className="rounded-2xl"
+                    leftIcon={<LogOut size={20} />}
                 >
-                    <LogOut size={20} className="group-hover:scale-110 transition-transform" />
-                    <span className="font-bold">Sair da Conta</span>
-                </button>
+                    Sair da Conta
+                </Button>
                 <p className="text-[10px] text-slate-600 font-mono">
                     Vitalità Pro v3.1.2
                 </p>

@@ -6,23 +6,9 @@
  * Valida a entrada do usuário para registro (força da senha, data de nascimento, dados físicos).
  */
 import React, { useMemo, useState } from 'react';
+import { ArrowLeft, ArrowRight, Eye, EyeOff, LogIn, Mail, UserPlus } from 'lucide-react';
+import { Button } from '../components/design-system/Button';
 import { authService } from '../services/authService';
-
-const EyeIcon = () => (
-    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="opacity-70">
-        <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
-        <circle cx="12" cy="12" r="3" />
-    </svg>
-);
-
-const EyeOffIcon = () => (
-    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="opacity-70">
-        <path d="M9.88 9.88a3 3 0 1 0 4.24 4.24" />
-        <path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68" />
-        <path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7c.84 0 1.68-.09 2.5-.26" />
-        <line x1="2" x2="22" y1="2" y2="22" />
-    </svg>
-);
 
 function GoogleIcon() {
     return (
@@ -71,34 +57,6 @@ export default function LoginPage() {
 
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
-
-    const buttonStyles = `
-        .vitalita-primary-btn {
-            background: radial-gradient(circle at top left, #3abff8 0%, #0ea5e9 42%, #1d4ed8 100%);
-            box-shadow: 0 8px 20px rgba(37, 99, 235, 0.4);
-            border: 1px solid rgba(56, 189, 248, 0.8);
-            border-radius: 999px;
-            transition: all 0.2s ease;
-        }
-        .vitalita-primary-btn:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 12px 30px rgba(37, 99, 235, 0.5);
-        }
-        .vitalita-primary-btn:active {
-            transform: translateY(0);
-            box-shadow: 0 10px 26px rgba(15, 23, 42, 0.95);
-            opacity: 0.95;
-        }
-        .vitalita-primary-btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            transform: none;
-            box-shadow: none;
-        }
-        .vitalita-pill {
-            border-radius: 999px !important;
-        }
-    `;
 
     // Entrar
     const [loginEmail, setLoginEmail] = useState('');
@@ -417,7 +375,6 @@ export default function LoginPage() {
                 background: 'radial-gradient(circle at top, #020617 0%, #000 55%)'
             }}
         >
-            <style>{buttonStyles}</style>
             <div className="w-full max-w-[1120px] flex flex-col items-center transform -translate-y-3">
                 <header className="text-center mb-8 flex flex-col items-center">
                     <h1 className="text-2xl font-bold tracking-widest uppercase text-white mb-1.5">VITALITÀ</h1>
@@ -470,7 +427,7 @@ export default function LoginPage() {
                                             onClick={() => setShowLoginPassword(!showLoginPassword)}
                                             aria-label={showLoginPassword ? "Ocultar senha" : "Mostrar senha"}
                                         >
-                                            {showLoginPassword ? <EyeOffIcon /> : <EyeIcon />}
+                                            {showLoginPassword ? <EyeOff size={20} className="opacity-70" /> : <Eye size={20} className="opacity-70" />}
                                         </button>
                                     </div>
                                 </div>
@@ -493,13 +450,15 @@ export default function LoginPage() {
 
                                 {error && <p className="text-[0.8rem] text-red-300 text-center mt-2">{error}</p>}
 
-                                <button
+                                <Button
                                     type="submit"
-                                    className="vitalita-primary-btn w-full py-3 mt-2 inline-flex items-center justify-center gap-1.5 rounded-pill text-white text-[0.78rem] font-semibold tracking-[0.16em] uppercase cursor-pointer"
+                                    fullWidth
+                                    className="mt-2 rounded-full"
+                                    leftIcon={<LogIn size={16} />}
                                     disabled={!canLogin}
                                 >
                                     {loading ? 'Enviando...' : 'Entrar'}
-                                </button>
+                                </Button>
                             </form>
 
                             <div className="flex items-center justify-center gap-3 text-center my-4 mb-2 before:flex-1 before:h-px before:bg-slate-400/25 after:flex-1 after:h-px after:bg-slate-400/25">
@@ -509,7 +468,7 @@ export default function LoginPage() {
                             <div className="flex flex-col gap-2 items-center">
                                 <button
                                     type="button"
-                                    className="vitalita-pill w-full inline-flex items-center justify-center gap-3 px-6 py-[10px] bg-white border border-[#747775] font-medium text-sm text-[#1f1f1f] cursor-pointer transition-all hover:bg-[#f7f8f8] hover:shadow-google-hover hover:-translate-y-px disabled:opacity-70"
+                                    className="w-full rounded-full inline-flex items-center justify-center gap-3 px-6 py-[10px] bg-white border border-[#747775] font-medium text-sm text-[#1f1f1f] cursor-pointer transition-all hover:bg-[#f7f8f8] hover:shadow-google-hover hover:-translate-y-px disabled:opacity-70"
                                     onClick={handleGoogleSignIn}
                                     disabled={loading}
                                 >
@@ -517,14 +476,18 @@ export default function LoginPage() {
                                     <span className="whitespace-nowrap block">Continue with Google</span>
                                 </button>
 
-                                <button
+                                <Button
                                     type="button"
-                                    className="vitalita-pill w-full px-4 py-2 mt-1 border border-white/20 bg-white/5 text-white text-[13px] opacity-85 cursor-pointer transition-all hover:opacity-100 hover:bg-white/10 hover:border-white/30 disabled:opacity-60"
+                                    variant="secondary"
+                                    size="sm"
+                                    fullWidth
+                                    className="mt-1 rounded-full"
                                     onClick={goSignup}
                                     disabled={loading}
+                                    leftIcon={<UserPlus size={15} />}
                                 >
                                     Criar uma conta com e-mail
-                                </button>
+                                </Button>
                             </div>
                         </>
                     ) : view === 'forgot_password' ? (
@@ -550,22 +513,27 @@ export default function LoginPage() {
                                 {error && <p className="text-[0.8rem] text-red-300 text-center mt-2">{error}</p>}
                                 {resetSuccess && <p className="text-[0.8rem] text-green-400 text-center mt-2">{resetSuccess}</p>}
 
-                                <button
+                                <Button
                                     type="submit"
-                                    className="vitalita-primary-btn w-full py-3 mt-4 inline-flex items-center justify-center gap-1.5 rounded-pill text-white text-[0.78rem] font-semibold tracking-[0.16em] uppercase cursor-pointer"
+                                    fullWidth
+                                    className="mt-4 rounded-full"
                                     disabled={loading || !resetEmail.trim()}
+                                    leftIcon={<Mail size={16} />}
                                 >
                                     {loading ? 'Enviando...' : 'Enviar link'}
-                                </button>
+                                </Button>
 
-                                <button
+                                <Button
                                     type="button"
-                                    className="vitalita-pill w-full mt-2 py-3 border border-slate-400/20 bg-[#02061740] shadow-sm text-slate-200/70 text-[0.78rem] font-bold tracking-[0.22em] uppercase cursor-pointer transition-all hover:bg-[#02061754] hover:border-slate-400/35 hover:-translate-y-px active:translate-y-0 focus:outline-none focus:shadow-[0_0_0_3px_rgba(56,189,248,0.1)] disabled:opacity-60 disabled:cursor-default"
+                                    variant="secondary"
+                                    fullWidth
+                                    className="mt-2 rounded-full"
                                     onClick={backToLogin}
                                     disabled={loading}
+                                    leftIcon={<ArrowLeft size={16} />}
                                 >
                                     Voltar
-                                </button>
+                                </Button>
                             </form>
                         </>
                     ) : (
@@ -631,7 +599,7 @@ export default function LoginPage() {
                                                     onClick={() => setShowSignupPassword(!showSignupPassword)}
                                                     aria-label={showSignupPassword ? "Ocultar senha" : "Mostrar senha"}
                                                 >
-                                                    {showSignupPassword ? <EyeOffIcon /> : <EyeIcon />}
+                                                    {showSignupPassword ? <EyeOff size={20} className="opacity-70" /> : <Eye size={20} className="opacity-70" />}
                                                 </button>
                                             </div>
                                         </label>
@@ -677,7 +645,7 @@ export default function LoginPage() {
                                                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                                                     aria-label={showConfirmPassword ? "Ocultar senha" : "Mostrar senha"}
                                                 >
-                                                    {showConfirmPassword ? <EyeOffIcon /> : <EyeIcon />}
+                                                    {showConfirmPassword ? <EyeOff size={20} className="opacity-70" /> : <Eye size={20} className="opacity-70" />}
                                                 </button>
                                             </div>
                                         </label>
@@ -815,38 +783,47 @@ export default function LoginPage() {
                                 ) : null}
 
                                 <div className="flex flex-col gap-3.5 mt-6">
-                                    <button
+                                    <Button
                                         type="submit"
-                                        className="vitalita-primary-btn w-full min-h-[52px] px-6 py-3 flex items-center justify-center gap-2 rounded-pill text-white uppercase text-[0.78rem] font-semibold tracking-[0.16em]"
+                                        size="lg"
+                                        fullWidth
+                                        className="rounded-full"
                                         disabled={step === 1 ? !canGoStep1 : !canCreateAccount}
+                                        rightIcon={step === 1 ? <ArrowRight size={16} /> : <UserPlus size={16} />}
                                     >
                                         {loading ? 'Enviando...' : step === 1 ? 'Próximo' : 'Criar conta'}
-                                    </button>
+                                    </Button>
 
                                     {step === 1 ? (
-                                        <button
+                                        <Button
                                             type="button"
-                                            className="vitalita-pill w-full min-h-[52px] px-6 py-3 border border-slate-400/20 bg-[#02061740] shadow-sm text-slate-200/70 text-[0.78rem] font-bold tracking-[0.22em] uppercase cursor-pointer transition-all hover:bg-[#02061754] hover:border-slate-400/35 hover:-translate-y-px active:translate-y-0 focus:outline-none focus:shadow-[0_0_0_3px_rgba(56,189,248,0.1)] disabled:opacity-60 disabled:cursor-default"
-                                            style={{ width: '100%' }}
+                                            variant="secondary"
+                                            size="lg"
+                                            fullWidth
+                                            className="rounded-full"
                                             onClick={backToLogin}
                                             disabled={loading}
+                                            leftIcon={<ArrowLeft size={16} />}
                                         >
                                             Voltar ao login
-                                        </button>
+                                        </Button>
                                     ) : (
-                                        <button
+                                        <Button
                                             type="button"
-                                            className="vitalita-pill w-full min-h-[52px] px-6 py-3 border border-slate-400/20 bg-[#02061740] shadow-sm text-slate-200/70 text-[0.78rem] font-bold tracking-[0.22em] uppercase cursor-pointer transition-all hover:bg-[#02061754] hover:border-slate-400/35 hover:-translate-y-px active:translate-y-0 focus:outline-none focus:shadow-[0_0_0_3px_rgba(56,189,248,0.1)] disabled:opacity-60 disabled:cursor-default"
-                                            style={{ width: '100%' }}
+                                            variant="secondary"
+                                            size="lg"
+                                            fullWidth
+                                            className="rounded-full"
                                             onClick={() => {
                                                 if (loading) return;
                                                 setError('');
                                                 setStep(1);
                                             }}
                                             disabled={loading}
+                                            leftIcon={<ArrowLeft size={16} />}
                                         >
                                             Voltar
-                                        </button>
+                                        </Button>
                                     )}
                                 </div>
                             </form>
