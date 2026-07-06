@@ -35,7 +35,7 @@ import { SyncStatusBadge } from '../components/design-system/SyncStatusBadge';
 import { useWorkoutTimer } from '../hooks/useWorkoutTimer';
 import { useWorkoutSession } from '../hooks/useWorkoutSession';
 import { checkNewAchievements } from '../utils/evaluateAchievements';
-import { userService } from '../services/userService';
+import { userPreferencesService } from '../services/userPreferencesService';
 import { workoutService } from '../services/workoutService';
 const AchievementUnlockedModal = React.lazy(() => import('../components/achievements/AchievementUnlockedModal').then(module => ({ default: module.AchievementUnlockedModal })));
 const loadShareableWorkoutCard = () => import('../components/sharing/ShareableWorkoutCard').then(module => ({ default: module.ShareableWorkoutCard }));
@@ -212,7 +212,7 @@ export function WorkoutExecutionPage({ user }) {
     // --- CARREGAR PREFERÊNCIAS DO USUÁRIO ---
     useEffect(() => {
         if (user?.uid) {
-            userService.getUserProfile(user.uid)
+            userPreferencesService.getWorkoutPreferences(user.uid)
                 .then(profile => {
                     if (profile?.defaultRestTime) {
                         setRestDuration(profile.defaultRestTime);
@@ -230,8 +230,8 @@ export function WorkoutExecutionPage({ user }) {
         setRestDuration(newDuration);
         if (user?.uid) {
             // Atualização "fire and forget"
-            userService
-                .updateUserProfile(user.uid, { defaultRestTime: newDuration })
+            userPreferencesService
+                .updateWorkoutPreferences(user.uid, { defaultRestTime: newDuration })
                 .catch(err => console.error("Failed to save rest preference:", err));
         }
     };
@@ -239,8 +239,8 @@ export function WorkoutExecutionPage({ user }) {
     const handleAutoStartChange = (newVal) => {
         setAutoStartTimer(newVal);
         if (user?.uid) {
-            userService
-                .updateUserProfile(user.uid, { autoStartTimer: newVal })
+            userPreferencesService
+                .updateWorkoutPreferences(user.uid, { autoStartTimer: newVal })
                 .catch(err => console.error("Failed to save auto start preference:", err));
         }
     };

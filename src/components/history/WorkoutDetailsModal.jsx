@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { X, Calendar, Clock, Dumbbell, TrendingUp, Notebook, Share2, Activity, Navigation, Flame } from 'lucide-react';
 import { ShareableWorkoutCard } from '../sharing/ShareableWorkoutCard';
+import { toast } from 'sonner';
 
 export function WorkoutDetailsModal({ session, onClose, user }) {
     const shareCardRef = useRef(null);
@@ -71,12 +72,12 @@ export function WorkoutDetailsModal({ session, onClose, user }) {
     const handleShare = async () => {
         if (sharing) return;
         if (!shareCardRef.current) {
-            alert("Card de compartilhamento indisponível.");
+            toast.error("Card de compartilhamento indisponível.");
             return;
         }
 
         if (!window.isSecureContext) {
-            alert("O compartilhamento requer conexão segura (HTTPS).\n\nSe você está testando localmente via IP, use 'localhost' ou configure SSL.");
+            toast.error("O compartilhamento requer conexão segura. Use HTTPS ou localhost.");
             return;
         }
 
@@ -134,7 +135,7 @@ export function WorkoutDetailsModal({ session, onClose, user }) {
             URL.revokeObjectURL(blobUrl);
         } catch (err) {
             console.error("Error sharing:", err);
-            alert("Erro ao gerar imagem de compartilhamento.");
+            toast.error("Erro ao gerar imagem de compartilhamento.");
         } finally {
             setSharing(false);
         }
