@@ -11,10 +11,8 @@ import {
     Plus,
     Dumbbell,
     Crown,
-    Calendar,
     MoreVertical,
     Play,
-    Flame,
     Edit2,
     Copy,
     Trash2,
@@ -24,6 +22,9 @@ import {
 } from 'lucide-react';
 
 import { RippleButton } from '../components/design-system/RippleButton';
+import { Button } from '../components/design-system/Button';
+import { EmptyState } from '../components/design-system/EmptyState';
+import { PageHeader } from '../components/design-system/PageHeader';
 import { PremiumCard } from '../components/design-system/PremiumCard';
 import { AddCardioModal } from '../components/AddCardioModal';
 import { ConfirmDialog } from '../components/design-system/ConfirmDialog';
@@ -245,35 +246,35 @@ export default function WorkoutsPage({ onNavigateToCreate, onNavigateToWorkout, 
             <div className="space-y-8 pt-6 mb-8">
                 {/* Top Bar - Hide if Trainer Mode */}
                 {!isTrainerMode && (
-                    <div className="flex items-center justify-between gap-4">
-                        <div>
-                            <h1 className="text-3xl lg:text-4xl font-bold text-white mb-2">
-                                Meus Treinos
-                            </h1>
-                            <p className="text-slate-400 text-base">
-                                Gerencie suas fichas de treino
-                            </p>
-                        </div>
-                        
-                        <div className="flex gap-2">
-                            <RippleButton
-                                onClick={() => setIsAddCardioOpen(true)}
-                                className="bg-slate-800 hover:bg-slate-700 text-cyan-400 font-bold py-3 px-3 sm:px-4 rounded-xl flex items-center justify-center gap-2 border border-slate-700 transition-all"
-                            >
-                                <Activity size={20} />
-                                <span className="hidden sm:inline">Cardio</span>
-                            </RippleButton>
-                            
-                            <RippleButton
-                                onClick={() => onNavigateToCreate(null, { targetUserId: user.uid })}
-                                className="bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold py-3 px-4 sm:px-6 rounded-xl flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(6,182,212,0.3)] transition-all"
-                            >
-                                <Plus size={20} strokeWidth={2.5} />
-                                <span className="hidden sm:inline">Novo Treino</span>
-                                <span className="sm:hidden">Novo</span>
-                            </RippleButton>
-                        </div>
-                    </div>
+                    <PageHeader
+                        title="Meus Treinos"
+                        description="Gerencie suas fichas, modelos do personal e treinos arquivados."
+                        icon={<Dumbbell size={22} />}
+                        action={(
+                            <div className="flex gap-2">
+                                <Button
+                                    variant="secondary"
+                                    size="sm"
+                                    onClick={() => setIsAddCardioOpen(true)}
+                                    className="rounded-xl"
+                                    leftIcon={<Activity size={16} />}
+                                >
+                                    <span className="hidden sm:inline">Cardio</span>
+                                    <span className="sm:hidden">Cardio</span>
+                                </Button>
+                                <Button
+                                    size="sm"
+                                    onClick={() => onNavigateToCreate(null, { targetUserId: user.uid })}
+                                    className="rounded-xl"
+                                    leftIcon={<Plus size={16} />}
+                                >
+                                    <span className="hidden sm:inline">Novo Treino</span>
+                                    <span className="sm:hidden">Novo</span>
+                                </Button>
+                            </div>
+                        )}
+                        className="mb-0"
+                    />
                 )}
 
 
@@ -461,13 +462,24 @@ export default function WorkoutsPage({ onNavigateToCreate, onNavigateToWorkout, 
                         </PremiumCard>
                     ))
                 ) : (
-                    <div className="col-span-full py-20 text-center opacity-50">
-                        <div className="w-16 h-16 bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <Search size={32} className="text-slate-500" />
-                        </div>
-                        <h3 className="text-xl font-bold text-white mb-2">Nenhum treino encontrado</h3>
-                        <p className="text-slate-500">Tente outra busca.</p>
-                    </div>
+                    <EmptyState
+                        className="col-span-full"
+                        icon={<Search size={28} />}
+                        title="Nenhum treino encontrado"
+                        description={searchQuery
+                            ? 'Tente ajustar a busca ou revisar os filtros selecionados.'
+                            : 'Crie sua primeira ficha para começar a organizar os treinos.'
+                        }
+                        action={!searchQuery && !isTrainerMode ? (
+                            <Button
+                                size="sm"
+                                onClick={() => onNavigateToCreate(null, { targetUserId: user.uid })}
+                                leftIcon={<Plus size={16} />}
+                            >
+                                Criar Treino
+                            </Button>
+                        ) : null}
+                    />
                 )}
             </div>
 

@@ -3,7 +3,10 @@ import { Users, UserPlus, Copy, Check, ChevronLeft, PlusCircle, Trash2, X, Rotat
 import { getFirestoreDeps } from '../firebaseDb';
 import { Button } from '../components/design-system/Button';
 import { ConfirmDialog } from '../components/design-system/ConfirmDialog';
+import { EmptyState } from '../components/design-system/EmptyState';
+import { PageHeader } from '../components/design-system/PageHeader';
 import { PremiumCard } from '../components/design-system/PremiumCard';
+import { SectionHeader } from '../components/design-system/SectionHeader';
 import { toast } from 'sonner';
 
 import HistoryPage from './HistoryPage';
@@ -219,18 +222,21 @@ export function TrainerDashboard({ user, onBack, onNavigateToCreateWorkout }) {
                 <div className="p-4 max-w-5xl mx-auto space-y-6">
                     {activeTab === 'workouts' ? (
                         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-                            <div className="flex justify-between items-center mb-6">
-                                <h2 className="text-xl font-bold text-white">Treinos Atribuídos</h2>
-                                <Button
-                                    variant="primary"
-                                    size="sm"
-                                    onClick={() => handleNavigateToCreate(null)}
-                                    leftIcon={<PlusCircle size={18} />}
-                                    className="bg-cyan-500 text-black hover:bg-cyan-400 shadow-lg shadow-cyan-500/20 font-bold"
-                                >
-                                    Prescrever Treino
-                                </Button>
-                            </div>
+                            <SectionHeader
+                                title="Treinos Atribuídos"
+                                icon={<PlusCircle size={18} />}
+                                action={(
+                                    <Button
+                                        variant="primary"
+                                        size="sm"
+                                        onClick={() => handleNavigateToCreate(null)}
+                                        leftIcon={<PlusCircle size={18} />}
+                                        className="rounded-xl"
+                                    >
+                                        Prescrever Treino
+                                    </Button>
+                                )}
+                            />
                             <WorkoutsPage
                                 user={selectedStudent}
                                 isTrainerMode={true}
@@ -265,35 +271,22 @@ export function TrainerDashboard({ user, onBack, onNavigateToCreateWorkout }) {
     return (
         <div className="min-h-screen bg-[#020617] pb-24 lg:pt-0 pt-4 px-4 lg:px-8 max-w-5xl mx-auto">
 
-            {/* 1. Cabeçalho & Ações */}
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
-                <div>
-                    {/* Mostrar Botão Voltar principalmente no Mobile */}
-                    <div className="lg:hidden mb-2">
-                        <Button
-                            variant="outline-primary"
-                            size="sm"
-                            onClick={onBack}
-                            className="pl-2 pr-4 backdrop-blur-md shadow-lg font-bold tracking-wider uppercase mb-4"
-                            leftIcon={<ChevronLeft size={18} />}
-                        >
-                            VOLTAR
-                        </Button>
-                    </div>
-                    <h1 className="text-3xl font-bold text-white mb-1">Área do Personal</h1>
-                    <p className="text-slate-400">Gerencie o progresso dos seus alunos</p>
-                </div>
-
-                <div className="flex items-center gap-3">
+            <PageHeader
+                title="Área do Personal"
+                description="Gerencie vínculos, prescrições e evolução dos seus alunos."
+                icon={<Users size={22} />}
+                onBack={onBack}
+                action={(
                     <Button
                         onClick={() => setShowInviteModal(true)}
-                        className="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-bold shadow-lg shadow-cyan-500/20 border-0 h-11 px-6 rounded-xl"
+                        size="sm"
+                        className="rounded-xl"
+                        leftIcon={<UserPlus size={18} />}
                     >
-                        <UserPlus size={18} className="mr-2" />
                         Convidar Aluno
                     </Button>
-                </div>
-            </div>
+                )}
+            />
 
             {/* 2. Grade de Estatísticas (Opcional, mas bom para UX) */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
@@ -375,23 +368,25 @@ export function TrainerDashboard({ user, onBack, onNavigateToCreateWorkout }) {
                         </PremiumCard>
                     ))
                 ) : (
-                    <div className="col-span-full py-16 flex flex-col items-center justify-center border-2 border-dashed border-slate-800 rounded-2xl bg-slate-900/20 text-center">
-                        <div className="w-16 h-16 bg-slate-800/50 rounded-full flex items-center justify-center mb-4">
-                            <Users size={32} className="text-slate-600" />
-                        </div>
-                        <h3 className="text-lg font-bold text-white mb-1">Nenhum aluno encontrado</h3>
-                        <p className="text-slate-500 max-w-xs mx-auto mb-6">
-                            {searchTerm
-                                ? `Não encontramos ninguém com "${searchTerm}".`
-                                : "Você ainda não tem alunos vinculados."
-                            }
-                        </p>
-                        {!searchTerm && (
-                            <Button onClick={() => setShowInviteModal(true)} variant="secondary" size="sm">
+                    <EmptyState
+                        className="col-span-full"
+                        icon={<Users size={30} />}
+                        title="Nenhum aluno encontrado"
+                        description={searchTerm
+                            ? `Não encontramos ninguém com "${searchTerm}".`
+                            : 'Você ainda não tem alunos vinculados.'
+                        }
+                        action={!searchTerm ? (
+                            <Button
+                                onClick={() => setShowInviteModal(true)}
+                                variant="secondary"
+                                size="sm"
+                                leftIcon={<UserPlus size={16} />}
+                            >
                                 Convidar o primeiro
                             </Button>
-                        )}
-                    </div>
+                        ) : null}
+                    />
                 )}
             </div>
 
