@@ -8,7 +8,6 @@
 import React, { useMemo, useState } from 'react';
 import { ArrowLeft, ArrowRight, Eye, EyeOff, LogIn, Mail, UserPlus } from 'lucide-react';
 import { Button } from '../components/design-system/Button';
-import { authService } from '../services/authService';
 
 function GoogleIcon() {
     return (
@@ -49,6 +48,16 @@ function getFirstName(fullName) {
 function daysInMonth(year, month) {
     if (!Number.isFinite(year) || !Number.isFinite(month)) return 31;
     return new Date(year, month, 0).getDate();
+}
+
+function getAuthErrorMessage(err, fallback) {
+    if (err?.code === 'auth/invalid-api-key') {
+        return 'Configuração local do Firebase ausente ou inválida. Confira o arquivo .env.local.';
+    }
+    if (err?.code === 'auth/network-request-failed') {
+        return 'Erro de conexão/rede. Verifique sua internet.';
+    }
+    return fallback;
 }
 
 export default function LoginPage() {
@@ -242,12 +251,13 @@ export default function LoginPage() {
         setLoading(true);
 
         try {
+            const { authService } = await import('../services/authService');
             await authService.resetPassword(resetEmail.trim());
             setResetSuccess('E-mail de redefinição enviado com sucesso! Verifique sua caixa de entrada.');
             setResetEmail('');
         } catch (err) {
             console.error(err);
-            let msg = 'Não foi possível enviar o e-mail. Tente novamente.';
+            let msg = getAuthErrorMessage(err, 'Não foi possível enviar o e-mail. Tente novamente.');
             if (err.code === 'auth/user-not-found') {
                 msg = 'E-mail não cadastrado.';
             } else if (err.code === 'auth/invalid-email') {
@@ -267,10 +277,11 @@ export default function LoginPage() {
         setLoading(true);
 
         try {
+            const { authService } = await import('../services/authService');
             await authService.login(loginEmail.trim(), loginPassword);
         } catch (err) {
             console.error(err);
-            let msg = 'Não foi possível autenticar. Verifique os dados e tente novamente.';
+            let msg = getAuthErrorMessage(err, 'Não foi possível autenticar. Verifique os dados e tente novamente.');
 
             if (err.code === 'auth/invalid-credential' || err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password') {
                 msg = 'E-mail ou senha incorretos.';
@@ -278,8 +289,6 @@ export default function LoginPage() {
                 msg = 'O formato do e-mail é inválido.';
             } else if (err.code === 'auth/too-many-requests') {
                 msg = 'Muitas tentativas falhas. Tente novamente mais tarde.';
-            } else if (err.code === 'auth/network-request-failed') {
-                msg = 'Erro de conexão/rede. Verifique sua internet.';
             }
 
             setError(msg);
@@ -295,11 +304,11 @@ export default function LoginPage() {
         setLoading(true);
 
         try {
+            const { authService } = await import('../services/authService');
             await authService.loginWithGoogle();
         } catch (err) {
             console.error(err);
-
-            setError(`Erro ao entrar com Google: ${err.code} - ${err.message}`);
+            setError(getAuthErrorMessage(err, 'Erro ao entrar com Google. Tente novamente.'));
         } finally {
             setLoading(false);
         }
@@ -343,6 +352,7 @@ export default function LoginPage() {
                 weightKg: Number(weightKg),
             };
 
+            const { authService } = await import('../services/authService');
             await authService.register(email, signupPassword, name, additionalData);
 
             // Sinaliza para o App exibir o pop up de boas-vindas após o cadastro
@@ -352,7 +362,7 @@ export default function LoginPage() {
 
         } catch (err) {
             console.error(err);
-            setError('Não foi possível criar sua conta. Verifique os dados e tente novamente.');
+            setError(getAuthErrorMessage(err, 'Não foi possível criar sua conta. Verifique os dados e tente novamente.'));
             // Em caso de erro, remove o sinal para não abrir pop up indevidamente
             localStorage.removeItem('welcomePending');
             localStorage.removeItem('welcomeFirstName');
