@@ -84,10 +84,10 @@ vi.mock('../utils/evaluateAchievements', () => ({
     checkNewAchievements: vi.fn()
 }));
 
-vi.mock('../services/userService', () => ({
-    userService: {
-        getUserProfile: vi.fn().mockResolvedValue({}),
-        updateUserProfile: vi.fn().mockResolvedValue()
+vi.mock('../services/userPreferencesService', () => ({
+    userPreferencesService: {
+        getWorkoutPreferences: vi.fn().mockResolvedValue({}),
+        updateWorkoutPreferences: vi.fn().mockResolvedValue()
     }
 }));
 

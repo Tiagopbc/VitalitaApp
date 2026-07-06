@@ -172,8 +172,10 @@ describe('TrainerDashboard', () => {
         fireEvent.click(screen.getByText('Aluno 1'));
         expect(screen.getByText('Treinos Atribuídos')).toBeInTheDocument();
 
-        vi.spyOn(window, 'confirm').mockReturnValue(true);
         fireEvent.click(screen.getByRole('button', { name: 'Desvincular' }));
+        expect(screen.getByText('Desvincular aluno?')).toBeInTheDocument();
+
+        fireEvent.click(screen.getAllByRole('button', { name: 'Desvincular' })[1]);
 
         await waitFor(() => {
             expect(userService.unlinkTrainer).toHaveBeenCalledWith('student-1', 'trainer-1');

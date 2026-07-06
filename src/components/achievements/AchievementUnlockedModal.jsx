@@ -1,7 +1,8 @@
 import React, { useRef, useState } from 'react';
 import { VitalitaGlassCard } from './VitalitaGlassCard';
-import { Share2, X, Trophy, Download } from 'lucide-react';
+import { Share2 } from 'lucide-react';
 import { Button } from '../design-system/Button';
+import { toast } from 'sonner';
 
 // Lazy load for performance
 
@@ -48,7 +49,8 @@ export function AchievementUnlockedModal({ achievements, onClose }) {
             }
         } catch (err) {
             console.error(err);
-            alert("Erro ao gerar card: " + err.message);
+            toast.error(`Erro ao gerar card: ${err.message}`);
+        } finally {
             setSharing(false);
         }
     };

@@ -109,7 +109,9 @@ describe('WorkoutContext', () => {
         });
 
         expect(screen.getByTestId('active-id')).toHaveTextContent('workout-123');
-        expect(mockSetActiveWorkout).toHaveBeenCalledWith('user123', 'workout-123');
+        await waitFor(() => {
+            expect(mockSetActiveWorkout).toHaveBeenCalledWith('user123', 'workout-123');
+        });
         expect(mockNavigate).toHaveBeenCalledWith('/execute/workout-123');
         expect(localStorage.getItem('activeWorkoutId')).toBe('workout-123');
     });

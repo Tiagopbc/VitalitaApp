@@ -26,6 +26,8 @@ import {
 import { RippleButton } from '../components/design-system/RippleButton';
 import { PremiumCard } from '../components/design-system/PremiumCard';
 import { AddCardioModal } from '../components/AddCardioModal';
+import { ConfirmDialog } from '../components/design-system/ConfirmDialog';
+import { toast } from 'sonner';
 const ExerciseCard = React.lazy(() => import('../components/workout/ExerciseCard').then(module => ({ default: module.ExerciseCard })));
 const EditExerciseModal = React.lazy(() => import('../components/workout/EditExerciseModal').then(module => ({ default: module.EditExerciseModal })));
 
@@ -45,6 +47,8 @@ export default function WorkoutsPage({ onNavigateToCreate, onNavigateToWorkout, 
     // Menus
     const [activeCardMenu, setActiveCardMenu] = useState(null);
     const [isAddCardioOpen, setIsAddCardioOpen] = useState(false);
+    const [workoutPendingDelete, setWorkoutPendingDelete] = useState(null);
+    const [deletingWorkout, setDeletingWorkout] = useState(false);
     
     useEffect(() => {
         async function fetchWorkouts() {
@@ -134,18 +138,7 @@ export default function WorkoutsPage({ onNavigateToCreate, onNavigateToWorkout, 
         setActiveCardMenu(null);
 
         if (action === 'delete') {
-            if (window.confirm(`Tem certeza que deseja excluir "${workout.name}"?`)) {
-                try {
-                    const { db, doc, deleteDoc } = await getFirestoreDeps();
-                    await deleteDoc(doc(db, 'workout_templates', workout.id));
-                    
-                    // Limpar cache após mutação
-                    const { workoutService } = await import('../services/workoutService');
-                    workoutService.clearCache();
-
-                    setWorkouts(prev => prev.filter(w => w.id !== workout.id));
-                } catch (err) { alert(err.message); }
-            }
+            setWorkoutPendingDelete(workout);
         } else if (action === 'duplicate') {
             const newWorkoutData = {
                 name: `${workout.name} (Cópia)`,
@@ -189,8 +182,9 @@ export default function WorkoutsPage({ onNavigateToCreate, onNavigateToWorkout, 
                     },
                     ...prev
                 ]));
+                toast.success("Treino duplicado.");
             } catch (err) {
-                alert(err.message);
+                toast.error(err.message || "Erro ao duplicar treino.");
             }
         } else if (action === 'edit') {
             onNavigateToCreate(workout);
@@ -205,7 +199,8 @@ export default function WorkoutsPage({ onNavigateToCreate, onNavigateToWorkout, 
                 workoutService.clearCache();
 
                 setWorkouts(prev => prev.map(w => w.id === workout.id ? { ...w, isArchived: true } : w));
-            } catch (err) { alert(err.message); }
+                toast.success("Treino arquivado.");
+            } catch (err) { toast.error(err.message || "Erro ao arquivar treino."); }
         } else if (action === 'unarchive') {
             try {
                 const { db, doc, updateDoc } = await getFirestoreDeps();
@@ -217,7 +212,28 @@ export default function WorkoutsPage({ onNavigateToCreate, onNavigateToWorkout, 
                 workoutService.clearCache();
 
                 setWorkouts(prev => prev.map(w => w.id === workout.id ? { ...w, isArchived: false } : w));
-            } catch (err) { alert(err.message); }
+                toast.success("Treino desarquivado.");
+            } catch (err) { toast.error(err.message || "Erro ao desarquivar treino."); }
+        }
+    };
+
+    const confirmDeleteWorkout = async () => {
+        if (!workoutPendingDelete) return;
+        setDeletingWorkout(true);
+        try {
+            const { db, doc, deleteDoc } = await getFirestoreDeps();
+            await deleteDoc(doc(db, 'workout_templates', workoutPendingDelete.id));
+
+            const { workoutService } = await import('../services/workoutService');
+            workoutService.clearCache();
+
+            setWorkouts(prev => prev.filter(w => w.id !== workoutPendingDelete.id));
+            toast.success("Treino excluído.");
+            setWorkoutPendingDelete(null);
+        } catch (err) {
+            toast.error(err.message || "Erro ao excluir treino.");
+        } finally {
+            setDeletingWorkout(false);
         }
     };
 
@@ -481,6 +497,16 @@ export default function WorkoutsPage({ onNavigateToCreate, onNavigateToWorkout, 
                 isOpen={isAddCardioOpen} 
                 onClose={() => setIsAddCardioOpen(false)} 
                 user={user} 
+            />
+
+            <ConfirmDialog
+                isOpen={Boolean(workoutPendingDelete)}
+                title="Excluir treino?"
+                description={`"${workoutPendingDelete?.name || 'Este treino'}" será removido das suas fichas. Essa ação não altera sessões já concluídas.`}
+                confirmLabel="Excluir"
+                loading={deletingWorkout}
+                onConfirm={confirmDeleteWorkout}
+                onCancel={() => setWorkoutPendingDelete(null)}
             />
 
         </div>

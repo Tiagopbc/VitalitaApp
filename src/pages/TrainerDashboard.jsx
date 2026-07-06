@@ -2,7 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { Users, UserPlus, Copy, Check, ChevronLeft, PlusCircle, Trash2, X, RotateCw } from 'lucide-react';
 import { getFirestoreDeps } from '../firebaseDb';
 import { Button } from '../components/design-system/Button';
+import { ConfirmDialog } from '../components/design-system/ConfirmDialog';
 import { PremiumCard } from '../components/design-system/PremiumCard';
+import { toast } from 'sonner';
 
 import HistoryPage from './HistoryPage';
 import WorkoutsPage from './WorkoutsPage';
@@ -18,6 +20,8 @@ export function TrainerDashboard({ user, onBack, onNavigateToCreateWorkout }) {
     // Estados de UI
     const [showInviteModal, setShowInviteModal] = useState(false);
     const [copied, setCopied] = useState(false);
+    const [studentPendingUnlink, setStudentPendingUnlink] = useState(null);
+    const [unlinking, setUnlinking] = useState(false);
 
     // Estado de Seleção
     const [selectedStudent, setSelectedStudent] = useState(null);
@@ -97,22 +101,27 @@ export function TrainerDashboard({ user, onBack, onNavigateToCreateWorkout }) {
             setInviteCode(newInvite?.code || '');
         } catch (error) {
             console.error("Error creating trainer invite:", error);
-            alert("Erro ao gerar convite.");
+            toast.error("Erro ao gerar convite.");
         } finally {
             setInviteLoading(false);
         }
     };
 
-    const handleUnlink = async (student) => {
-        if (!window.confirm(`Tem certeza que deseja desvincular ${student.displayName}?`)) return;
+    const confirmUnlink = async () => {
+        if (!studentPendingUnlink) return;
+        setUnlinking(true);
         try {
             const { userService } = await import('../services/userService');
-            await userService.unlinkTrainer(student.id, user.uid);
+            await userService.unlinkTrainer(studentPendingUnlink.id, user.uid);
             await fetchStudents();
+            toast.success("Aluno desvinculado.");
             setSelectedStudent(null);
+            setStudentPendingUnlink(null);
         } catch (error) {
             console.error(error);
-            alert("Erro ao desvincular aluno.");
+            toast.error("Erro ao desvincular aluno.");
+        } finally {
+            setUnlinking(false);
         }
     };
 
@@ -150,7 +159,7 @@ export function TrainerDashboard({ user, onBack, onNavigateToCreateWorkout }) {
                             <Button
                                 variant="danger"
                                 size="sm"
-                                onClick={() => handleUnlink(selectedStudent)}
+                                onClick={() => setStudentPendingUnlink(selectedStudent)}
                                 leftIcon={<Trash2 size={16} />}
                                 className="bg-red-500/10 text-red-400 hover:bg-red-500/20 border-red-500/20"
                             >
@@ -226,7 +235,7 @@ export function TrainerDashboard({ user, onBack, onNavigateToCreateWorkout }) {
                                 user={selectedStudent}
                                 isTrainerMode={true}
                                 onNavigateToCreate={handleNavigateToCreate}
-                                onNavigateToWorkout={() => alert("Modo visualização de Personal: Execução desabilitada.")}
+                                onNavigateToWorkout={() => toast.info("Modo visualização de Personal: execução desabilitada.")}
                             />
                         </div>
                     ) : (
@@ -239,6 +248,15 @@ export function TrainerDashboard({ user, onBack, onNavigateToCreateWorkout }) {
                         </div>
                     )}
                 </div>
+                <ConfirmDialog
+                    isOpen={Boolean(studentPendingUnlink)}
+                    title="Desvincular aluno?"
+                    description={`Você vai remover o vínculo com ${studentPendingUnlink?.displayName || 'este aluno'}. O histórico do aluno será preservado.`}
+                    confirmLabel="Desvincular"
+                    loading={unlinking}
+                    onConfirm={confirmUnlink}
+                    onCancel={() => setStudentPendingUnlink(null)}
+                />
             </div>
         );
     }
