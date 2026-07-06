@@ -27,6 +27,7 @@ import { RippleButton } from '../components/design-system/RippleButton';
 import { Button } from '../components/design-system/Button';
 import MethodModal from '../MethodModal';
 import { LinearCardCompactV2 } from '../components/execution/LinearCardCompactV2';
+import { SessionConflictDialog } from '../components/execution/SessionConflictDialog';
 import { Toast } from '../components/design-system/Toast';
 import { Skeleton } from '../components/design-system/Skeleton';
 import { SyncStatusBadge } from '../components/design-system/SyncStatusBadge';
@@ -149,6 +150,7 @@ export function WorkoutExecutionPage({ user }) {
         syncState,
         template,
         exercises,
+        sessionConflict,
         initialElapsed,
         updateExerciseSet,
         updateNotes,
@@ -156,6 +158,7 @@ export function WorkoutExecutionPage({ user }) {
         finishSession,
         syncSession,
         discardSession,
+        resolveSessionConflict,
         updateSetMultiple,
         toggleExerciseWeightMode
     } = useWorkoutSession(workoutId, user);
@@ -299,6 +302,13 @@ export function WorkoutExecutionPage({ user }) {
         setElapsedSeconds,
         // formatTime // Não utilizado atualmente, mas disponível
     } = useWorkoutTimer(!loading && !saving && !isFinished, initialElapsed); // Parar timer ao finalizar
+
+    const handleResolveSessionConflict = (source) => {
+        const candidate = resolveSessionConflict(source);
+        if (candidate) {
+            setElapsedSeconds(candidate.elapsedSeconds);
+        }
+    };
 
     // Sincronizar tempo decorrido do hook quando carregado
     useEffect(() => {
@@ -618,6 +628,11 @@ export function WorkoutExecutionPage({ user }) {
                 </div>
             )}
             {error && <Toast message={error} type="error" onClose={() => setError(null)} />}
+            <SessionConflictDialog
+                conflict={sessionConflict}
+                onChoose={handleResolveSessionConflict}
+                onKeepRecommended={() => handleResolveSessionConflict(sessionConflict?.source)}
+            />
             <div className="max-w-2xl mx-auto flex flex-col">
 
                 <div

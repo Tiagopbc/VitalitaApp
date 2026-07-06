@@ -133,10 +133,10 @@ describe('HomeDashboard', () => {
         );
 
         await waitFor(() => {
-            expect(screen.getByText('Você ainda não tem treinos criados.')).toBeInTheDocument();
+            expect(screen.getByText('Nenhum treino criado')).toBeInTheDocument();
         });
 
-        fireEvent.click(screen.getByText('Criar Primeiro Treino'));
+        fireEvent.click(screen.getByText('Criar Treino'));
         expect(onNavigateToCreateWorkout).toHaveBeenCalled();
     });
 

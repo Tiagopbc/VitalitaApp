@@ -2,11 +2,12 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
     TrendingUp,
-    ChevronLeft,
     History,
     Activity
 } from 'lucide-react';
 import { PremiumCard } from '../components/design-system/PremiumCard';
+import { EmptyState } from '../components/design-system/EmptyState';
+import { PageHeader } from '../components/design-system/PageHeader';
 import { SESSION_LIMITS, workoutService } from '../services/workoutService';
 import { getJournalWindowConfig, recordJournalRenderMetric } from '../utils/performanceTuning';
 
@@ -528,19 +529,13 @@ function HistoryPage({ user, isEmbedded = false }) {
             <div className="sticky top-0 z-40 bg-[#020617]/95 backdrop-blur-md pt-[calc(1.5rem+env(safe-area-inset-top))] pb-4">
                 <div className="w-full max-w-5xl mx-auto px-4 space-y-4">
                     {!isEmbedded && (
-                        <div className="relative flex items-center justify-center mb-6 pt-0">
-                            <Button
-                                variant="outline-primary"
-                                size="sm"
-                                onClick={onBack}
-                                className="absolute left-0 uppercase font-bold tracking-wider rounded-full px-4 h-9"
-                                leftIcon={<ChevronLeft size={16} />}
-                            >
-                                VOLTAR
-                            </Button>
-
-                            <h2 className="text-xl font-bold text-white tracking-wide">Histórico</h2>
-                        </div>
+                        <PageHeader
+                            title="Histórico"
+                            description="Revise treinos concluídos e acompanhe evolução de carga."
+                            icon={<History size={20} />}
+                            onBack={onBack}
+                            className="mb-5"
+                        />
                     )}
 
                     {/* ABAS */}
@@ -580,10 +575,12 @@ function HistoryPage({ user, isEmbedded = false }) {
                                 <p className="text-slate-500 text-sm">Carregando diário...</p>
                             </div>
                         ) : sessions.length === 0 ? (
-                            <div className="py-20 text-center opacity-50">
-                                <History size={48} className="mx-auto mb-4 text-slate-600" />
-                                <p className="text-slate-400 font-medium">Nenhum treino registrado ainda.</p>
-                            </div>
+                            <EmptyState
+                                icon={<History size={28} />}
+                                title="Nenhum treino registrado"
+                                description="Quando você finalizar um treino, ele aparecerá aqui com detalhes e evolução."
+                                className="my-8"
+                            />
                         ) : (
                             <div className="space-y-6">
                                 {Object.entries(groupedSessions).map(([month, monthSessions]) => (

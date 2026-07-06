@@ -81,7 +81,7 @@ describe('HistoryPage', () => {
         });
 
         await waitFor(() => {
-            expect(screen.getByText('Nenhum treino registrado ainda.')).toBeInTheDocument();
+            expect(screen.getByText('Nenhum treino registrado')).toBeInTheDocument();
         });
     });
 

@@ -6,8 +6,10 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { getFirestoreDeps } from '../firebaseDb';
-import { Trash2, Plus, ChevronLeft, GripVertical, X } from 'lucide-react';
+import { Dumbbell, Trash2, Plus, GripVertical, X } from 'lucide-react';
 import { Button } from '../components/design-system/Button';
+import { EmptyState } from '../components/design-system/EmptyState';
+import { PageHeader } from '../components/design-system/PageHeader';
 import { toast } from 'sonner';
 
 const muscleGroups = [
@@ -229,19 +231,12 @@ export default function CreateWorkoutPage({ user }) {
 
     return (
         <div className="w-full max-w-3xl mx-auto px-4 pt-[calc(1.5rem+env(safe-area-inset-top))] pb-32">
-            {/* Cabeçalho */}
-            <div className="mb-6">
-                <Button
-                    variant="outline-primary"
-                    size="sm"
-                    onClick={onBack}
-                    className="mb-6 uppercase font-bold tracking-wider"
-                    leftIcon={<ChevronLeft size={16} />}
-                >
-                    VOLTAR
-                </Button>
-                <h2 className="text-2xl font-bold text-white">{initialData ? 'Editar Treino' : 'Criar Novo Treino'}</h2>
-            </div>
+            <PageHeader
+                title={initialData ? 'Editar Treino' : 'Criar Novo Treino'}
+                description="Monte a ficha com exercícios, séries, repetições e método de execução."
+                icon={<Dumbbell size={20} />}
+                onBack={onBack}
+            />
 
             {/* Entrada do Nome do Treino */}
             <div className="mb-8">
@@ -264,9 +259,12 @@ export default function CreateWorkoutPage({ user }) {
                 </h3>
 
                 {exercises.length === 0 && !showAddExercise ? (
-                    <div className="text-center py-8 px-4 rounded-[14px] border border-dashed border-slate-400/30 bg-[#0f172a]/50 text-slate-500 text-sm">
-                        Nenhum exercício adicionado ainda
-                    </div>
+                    <EmptyState
+                        icon={<Dumbbell size={24} />}
+                        title="Nenhum exercício adicionado"
+                        description="Adicione o primeiro exercício para habilitar o salvamento da ficha."
+                        className="py-8"
+                    />
                 ) : (
                     exercises.map((ex, index) => (
                         <div

@@ -79,6 +79,7 @@ export function useSessionLoader({
     setInitialElapsed,
     setError,
     setSyncState,
+    setSessionConflict,
     lastSyncedRef
 }) {
     const [loading, setLoading] = useState(true);
@@ -93,6 +94,7 @@ export function useSessionLoader({
             setSyncState(SESSION_SYNC_STATES.loading);
 
             try {
+                setSessionConflict(null);
                 const deps = await getFirestoreDeps();
                 const activeData = await getActiveSession(deps, profileId, workoutId);
                 const localBackupData = readSessionBackup(backupKey);
@@ -116,6 +118,9 @@ export function useSessionLoader({
                     setSyncState(recovery.conflict
                         ? SESSION_SYNC_STATES.conflict
                         : SESSION_SYNC_STATES.active);
+                    if (recovery.conflict) {
+                        setSessionConflict(recovery);
+                    }
                     return;
                 }
 
@@ -157,6 +162,7 @@ export function useSessionLoader({
         setInitialElapsed,
         setError,
         setSyncState,
+        setSessionConflict,
         lastSyncedRef
     ]);
 

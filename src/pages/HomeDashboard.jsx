@@ -34,6 +34,9 @@ import { ShareableQuoteCard } from '../components/sharing/ShareableQuoteCard';
 import { calculateWeeklyStats } from '../utils/workoutStats';
 import { SESSION_LIMITS, workoutService } from '../services/workoutService';
 import { userStatsService } from '../services/userStatsService';
+import { Button } from '../components/design-system/Button';
+import { EmptyState } from '../components/design-system/EmptyState';
+import { SectionHeader } from '../components/design-system/SectionHeader';
 import { safeGetJSON, safeSetJSON, safeRemoveItem } from '../utils/storage';
 import { achievementsCatalog } from '../data/achievementsCatalog';
 import { evaluateAchievements, calculateStats } from '../utils/evaluateAchievements';
@@ -547,10 +550,10 @@ export function HomeDashboard({
 
                 {/* 2. PROGRESSO */}
                 <div className="mb-8">
-                    <div className="flex items-center gap-2 mb-4">
-                        <Flame size={18} className="text-orange-400" />
-                        <h3 className="text-base font-semibold text-white">Seu Progresso</h3>
-                    </div>
+                    <SectionHeader
+                        icon={<Flame size={18} className="text-orange-400" />}
+                        title="Seu Progresso"
+                    />
 
                     <div
                         onClick={onNavigateToHistory}
@@ -601,10 +604,10 @@ export function HomeDashboard({
 
                 {/* 4. SEÇÃO HERO - PRÓXIMO TREINO */}
                 <div className="mb-8">
-                    <div className="flex items-center gap-2 mb-3">
-                        <Target size={18} className="text-cyan-400" />
-                        <h3 className="text-base font-bold text-white">Próximo Treino Sugerido</h3>
-                    </div>
+                    <SectionHeader
+                        icon={<Target size={18} />}
+                        title="Próximo Treino Sugerido"
+                    />
 
                     {loadingTemplates ? (
                         <div className="w-full h-40 bg-slate-900/50 rounded-3xl animate-pulse border border-slate-800" />
@@ -642,15 +645,21 @@ export function HomeDashboard({
                             <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-blue-600/5 rounded-full blur-3xl group-hover:bg-blue-600/10 transition-colors"></div>
                         </button>
                     ) : (
-                        <div className="p-8 rounded-3xl bg-slate-900/50 border border-slate-800 text-center">
-                            <p className="text-slate-400 mb-4">Você ainda não tem treinos criados.</p>
-                            <button
-                                onClick={onNavigateToCreateWorkout}
-                                className="px-6 py-2 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold rounded-xl transition-colors"
-                            >
-                                Criar Primeiro Treino
-                            </button>
-                        </div>
+                        <EmptyState
+                            icon={<Dumbbell size={26} />}
+                            title="Nenhum treino criado"
+                            description="Crie sua primeira ficha para começar a treinar com acompanhamento."
+                            action={
+                                <Button
+                                    onClick={onNavigateToCreateWorkout}
+                                    size="sm"
+                                    className="rounded-xl"
+                                    leftIcon={<Plus size={16} />}
+                                >
+                                    Criar Treino
+                                </Button>
+                            }
+                        />
                     )}
                     
                     <button
@@ -666,18 +675,18 @@ export function HomeDashboard({
 
                 {/* 5. GAMIFICAÇÃO - DESAFIO ATIVO (SMART) */}
                 <div className="mb-8">
-                    <div className="flex items-center justify-between mb-4">
-                        <div className="flex items-center gap-2">
-                            <Trophy size={18} className="text-amber-400" />
-                            <h3 className="text-base font-semibold text-white">Próxima Conquista</h3>
-                        </div>
-                        <button
-                            onClick={onNavigateToAchievements}
-                            className="text-xs text-cyan-400 hover:text-cyan-300 flex items-center gap-1 transition-colors"
-                        >
-                            Ver todas <ChevronRight size={14} />
-                        </button>
-                    </div>
+                    <SectionHeader
+                        icon={<Trophy size={18} className="text-amber-400" />}
+                        title="Próxima Conquista"
+                        action={
+                            <button
+                                onClick={onNavigateToAchievements}
+                                className="text-xs text-cyan-400 hover:text-cyan-300 flex items-center gap-1 transition-colors"
+                            >
+                                Ver todas <ChevronRight size={14} />
+                            </button>
+                        }
+                    />
 
                     {loadingStats ? (
                         <div className="w-full h-24 bg-slate-900/50 rounded-3xl animate-pulse border border-slate-800" />

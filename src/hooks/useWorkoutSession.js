@@ -1,5 +1,10 @@
-import { useRef, useState } from 'react';
-import { createSessionBackupKey, SESSION_SYNC_STATES } from '../services/sessions/sessionRecoveryService';
+import { useCallback, useRef, useState } from 'react';
+import {
+    createSessionBackupKey,
+    createSessionFingerprint,
+    removeSessionBackup,
+    SESSION_SYNC_STATES
+} from '../services/sessions/sessionRecoveryService';
 import { useSessionExerciseActions } from './workout-session/useSessionExerciseActions';
 import { useSessionFinish } from './workout-session/useSessionFinish';
 import { useSessionLoader } from './workout-session/useSessionLoader';
@@ -13,6 +18,7 @@ export function useWorkoutSession(workoutId, user) {
     const [sessionVersion, setSessionVersion] = useState(0);
     const [syncState, setSyncState] = useState(SESSION_SYNC_STATES.idle);
     const [lastSavedAt, setLastSavedAt] = useState(null);
+    const [sessionConflict, setSessionConflict] = useState(null);
 
     const profileId = user?.uid;
     const lastSyncedRef = useRef('');
@@ -29,6 +35,7 @@ export function useWorkoutSession(workoutId, user) {
         setInitialElapsed,
         setError,
         setSyncState,
+        setSessionConflict,
         lastSyncedRef
     });
 
@@ -69,6 +76,23 @@ export function useWorkoutSession(workoutId, user) {
         setSyncState
     });
 
+    const resolveSessionConflict = useCallback((source) => {
+        const candidate = sessionConflict?.candidates?.[source];
+        if (!candidate) return null;
+
+        setExercises(candidate.exercises);
+        setInitialElapsed(candidate.elapsedSeconds);
+        lastSyncedRef.current = source === 'cloud'
+            ? createSessionFingerprint(candidate.exercises, candidate.elapsedSeconds)
+            : '';
+        if (source === 'cloud') {
+            removeSessionBackup(backupKey);
+        }
+        setSessionConflict(null);
+        setSyncState(SESSION_SYNC_STATES.active);
+        return candidate;
+    }, [backupKey, sessionConflict]);
+
     return {
         loading,
         saving,
@@ -76,6 +100,7 @@ export function useWorkoutSession(workoutId, user) {
         setError,
         syncState,
         lastSavedAt,
+        sessionConflict,
         template,
         exercises,
         initialElapsed,
@@ -86,6 +111,7 @@ export function useWorkoutSession(workoutId, user) {
         finishSession,
         syncSession,
         discardSession,
+        resolveSessionConflict,
         updateSetMultiple,
         toggleExerciseWeightMode
     };
