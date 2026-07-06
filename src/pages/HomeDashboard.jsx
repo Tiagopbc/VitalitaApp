@@ -86,6 +86,19 @@ const MOTIVATIONAL_QUOTES = [
 
 const HOME_DASHBOARD_CACHE_TTL_MS = 30 * 60 * 1000;
 
+let toastPromise;
+async function showToastError(message) {
+    try {
+        if (!toastPromise) {
+            toastPromise = import('sonner');
+        }
+        const { toast } = await toastPromise;
+        toast.error(message);
+    } catch {
+        // Evita que falhas de UI escondam o erro original.
+    }
+}
+
 function getHomeDashboardCacheKey(userId) {
     return `home_dashboard_snapshot_v${HOME_DASHBOARD_CACHE_VERSION}_${userId}`;
 }
@@ -217,12 +230,12 @@ export function HomeDashboard({
     const handleShareQuote = async () => {
         if (sharingQuote) return;
         if (!shareQuoteRef.current) {
-            alert("Card de compartilhamento indisponível.");
+            await showToastError("Card de compartilhamento indisponível.");
             return;
         }
 
         if (!window.isSecureContext) {
-            alert("O compartilhamento requer conexão segura (HTTPS).\n\nSe você está testando localmente via IP, use 'localhost' ou configure SSL.");
+            await showToastError("O compartilhamento requer conexão segura. Use HTTPS ou localhost.");
             return;
         }
 
@@ -280,7 +293,7 @@ export function HomeDashboard({
             URL.revokeObjectURL(blobUrl);
         } catch (err) {
             console.error("Error sharing:", err);
-            alert("Erro ao gerar imagem de compartilhamento.");
+            await showToastError("Erro ao gerar imagem de compartilhamento.");
         } finally {
             setSharingQuote(false);
         }
@@ -408,10 +421,15 @@ export function HomeDashboard({
             }
 
             // A. Inscrever-se em Treinos (Templates)
-            unsubscribeTemplates = await workoutService.subscribeToTemplates(user.uid, (data) => {
-                setTemplates(data || []);
+            try {
+                unsubscribeTemplates = await workoutService.subscribeToTemplates(user.uid, (data) => {
+                    setTemplates(data || []);
+                    setLoadingTemplates(false);
+                });
+            } catch (err) {
+                console.error("Template subscription error:", err);
                 setLoadingTemplates(false);
-            });
+            }
 
             // B. Agregado server-side: totais, streaks e conquistas sem leitura vitalícia no cliente.
             try {
@@ -461,6 +479,9 @@ export function HomeDashboard({
                 }, SESSION_LIMITS.dashboardRecent);
             } catch (err) {
                 console.error("Subscription Error:", err);
+                publishStats();
+                publishNextAchievement();
+                setLoadingStats(false);
             }
         }
 

@@ -49,15 +49,15 @@ export default function ProfilePage({ user, onLogout, onNavigateToHistory, onNav
         try {
             const { userService } = await import('../services/userService');
             await userService.linkTrainer(user.uid, inviteCode);
-            alert("Personal vinculado com sucesso!");
+            toast.success("Personal vinculado com sucesso!");
             setShowLinkTrainer(false);
             setInviteCode('');
         } catch (err) {
             console.error(err);
-            if (err.message === "PERSONAL_NOT_FOUND") alert("Convite inválido ou expirado.");
-            else if (err.message === "ALREADY_LINKED") alert("Você já está vinculado a este personal.");
-            else if (err.message === "LINK_TRAINER_FAILED") alert("Não foi possível vincular. Verifique o código ou se o vínculo já existe.");
-            else alert("Erro ao vincular.");
+            if (err.message === "PERSONAL_NOT_FOUND") toast.error("Convite inválido ou expirado.");
+            else if (err.message === "ALREADY_LINKED") toast.error("Você já está vinculado a este personal.");
+            else if (err.message === "LINK_TRAINER_FAILED") toast.error("Não foi possível vincular. Verifique o código ou se o vínculo já existe.");
+            else toast.error("Erro ao vincular.");
         } finally {
             setLinking(false);
         }
@@ -236,7 +236,7 @@ export default function ProfilePage({ user, onLogout, onNavigateToHistory, onNav
         // Validação de Email
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(profile.email)) {
-            alert("Por favor, insira um email válido.");
+            toast.error("Por favor, insira um email válido.");
             return;
         }
 
@@ -248,9 +248,10 @@ export default function ProfilePage({ user, onLogout, onNavigateToHistory, onNav
                 updatedAt: new Date().toISOString()
             });
             setShowEditModal(false);
+            toast.success("Perfil atualizado.");
         } catch (err) {
             console.error("Error saving profile:", err);
-            alert("Erro ao salvar perfil.");
+            toast.error("Erro ao salvar perfil.");
         } finally {
             setSaving(false);
         }

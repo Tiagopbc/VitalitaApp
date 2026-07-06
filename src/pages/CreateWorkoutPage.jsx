@@ -8,6 +8,7 @@ import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { getFirestoreDeps } from '../firebaseDb';
 import { Trash2, Plus, ChevronLeft, GripVertical, X } from 'lucide-react';
 import { Button } from '../components/design-system/Button';
+import { toast } from 'sonner';
 
 const muscleGroups = [
     'Peito', 'Costas', 'Ombros', 'Bíceps', 'Tríceps',
@@ -185,6 +186,7 @@ export default function CreateWorkoutPage({ user }) {
 
     async function handleSave() {
         if (!workoutName || exercises.length === 0) {
+            toast.error("Informe um nome e adicione pelo menos um exercício.");
             return;
         }
 
@@ -219,7 +221,7 @@ export default function CreateWorkoutPage({ user }) {
             onBack();
         } catch (err) {
             console.error(err);
-            alert("Erro ao salvar treino.");
+            toast.error("Erro ao salvar treino.");
         } finally {
             setLoading(false);
         }

@@ -12,7 +12,7 @@ vi.mock('../StreakWeeklyGoalHybrid', () => ({
 
 vi.mock('../services/workoutService', () => ({
     SESSION_LIMITS: {
-        dashboardRecent: 120
+        dashboardRecent: 60
     },
     workoutService: {
         subscribeToTemplates: vi.fn(),

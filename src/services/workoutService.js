@@ -3,7 +3,7 @@ import { getFirestoreDeps } from '../firebaseDb';
 const TEMPLATES_COLLECTION = 'workout_templates';
 const SESSIONS_COLLECTION = 'workout_sessions';
 export const SESSION_LIMITS = {
-    dashboardRecent: 120,
+    dashboardRecent: 60,
     analyticsGlobalPage: 120,
     profileStats: 300,
     achievementCheck: 300

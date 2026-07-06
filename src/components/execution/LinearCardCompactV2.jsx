@@ -27,7 +27,8 @@ export const LinearCardCompactV2 = memo(function LinearCardCompactV2({
     weightMode = 'total',
     baseWeight,
     onUpdateSetMultiple,
-    onToggleWeightMode
+    onToggleWeightMode,
+    onValidationError
 }) {
     const completedCount = completedSets.filter(Boolean).length;
     const isExerciseFullyCompleted = completedCount === totalSets && totalSets > 0;
@@ -196,15 +197,21 @@ export const LinearCardCompactV2 = memo(function LinearCardCompactV2({
             // Validar tds os drops
             const invalid = drops.some(d => !d.weight || parseFloat(d.weight) <= 0 || !d.reps || d.reps.trim() === '');
             if (invalid) {
-                alert('Preencha os valores de peso e repetição em todas as sub-séries (drops)!');
+                onValidationError?.('Preencha peso e repetições em todas as sub-séries.');
                 return;
             }
             onCompleteSet(exerciseId, currentSet, drops[0].weight, drops[0].reps, drops[0].weightMode, drops[0].baseWeight, drops);
         } else {
             const w = (weight && parseFloat(weight) > 0) ? weight : suggestedWeight;
             const r = (actualReps && actualReps.trim() !== '') ? actualReps : suggestedReps;
-            if (!w || parseFloat(w) <= 0) { alert('Informe o peso utilizado!'); return; }
-            if (!r || r.toString().trim() === '') { alert('Informe as repetições alcançadas!'); return; }
+            if (!w || parseFloat(w) <= 0) {
+                onValidationError?.('Informe o peso utilizado.');
+                return;
+            }
+            if (!r || r.toString().trim() === '') {
+                onValidationError?.('Informe as repetições alcançadas.');
+                return;
+            }
             onCompleteSet(exerciseId, currentSet, w.toString(), r.toString(), weightMode, baseWeight);
         }
     };
