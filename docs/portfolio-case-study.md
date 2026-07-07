@@ -31,6 +31,14 @@ O app combina:
 - Firebase Auth e Firestore;
 - regras de seguranca testadas.
 
+## Screenshots
+
+As capturas abaixo foram geradas a partir da demo publicada em producao. O fluxo de cadastro usa dados ficticios e foi interrompido antes da criacao de conta, para evitar escrita desnecessaria em producao.
+
+| Login | Cadastro | Dados pessoais |
+| --- | --- | --- |
+| ![Tela de login do Vitalità](assets/screenshots/vitalita-login.png) | ![Tela de cadastro do Vitalità](assets/screenshots/vitalita-signup-account.png) | ![Tela de dados pessoais do cadastro do Vitalità](assets/screenshots/vitalita-signup-profile.png) |
+
 ## Destaques Tecnicos
 
 ### Segurança
@@ -93,7 +101,7 @@ produto profissional:
 
 ## Proximas Melhorias
 
-- Capturar screenshots das principais telas.
+- Criar conta demo anonima para capturar telas internas com dados ficticios.
 - Melhorar acabamento visual das telas mais usadas.
 - Criar uma demo guiada para LinkedIn.
 - Adicionar observabilidade leve.
