@@ -453,7 +453,7 @@ export function HomeDashboard({
                         let dateObj = new Date();
                         // Lógica defensiva para parse de data
                         try {
-                            const raw = d.completedAtClient || d.completedAt || d.timestamp;
+                            const raw = d.completedAtClient || d.completedAt || d.date || d.createdAt || d.timestamp;
                             const parsedDate = parseToDate(raw);
                             if (parsedDate) dateObj = parsedDate;
                         } catch (e) { console.warn("Date parsing error", d.id, e); }
