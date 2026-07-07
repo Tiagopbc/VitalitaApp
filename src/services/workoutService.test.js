@@ -283,6 +283,73 @@ describe('workoutService', () => {
 
             expect(limit).toHaveBeenCalledWith(500);
         });
+
+        it('falls back to a bounded legacy query when ordered sessions are empty', async () => {
+            getDocs
+                .mockResolvedValueOnce({ docs: [] })
+                .mockResolvedValueOnce({
+                    docs: [
+                        {
+                            id: 'legacy-old',
+                            data: () => ({
+                                userId: mockUserId,
+                                date: '2024-01-01T12:00:00.000Z',
+                                workoutName: 'Treino Antigo'
+                            })
+                        },
+                        {
+                            id: 'legacy-new',
+                            data: () => ({
+                                userId: mockUserId,
+                                completedAtClient: '2024-01-03T12:00:00.000Z',
+                                workoutName: 'Treino Novo'
+                            })
+                        }
+                    ]
+                });
+
+            const result = await workoutService.getRecentSessions(mockUserId, 25);
+
+            expect(getDocs).toHaveBeenCalledTimes(2);
+            expect(result.map(session => session.id)).toEqual(['legacy-new', 'legacy-old']);
+        });
+
+        it('falls back to legacy sessions when ordered recent query fails', async () => {
+            const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+            getDocs
+                .mockRejectedValueOnce(new Error('missing index'))
+                .mockResolvedValueOnce({
+                    docs: [
+                        {
+                            id: 'legacy-session',
+                            data: () => ({
+                                userId: mockUserId,
+                                createdAt: { seconds: 1704283200 },
+                                workoutName: 'Treino Legado'
+                            })
+                        }
+                    ]
+                });
+
+            try {
+                const result = await workoutService.getRecentSessions(mockUserId, 25);
+
+                expect(result).toEqual([
+                    {
+                        id: 'legacy-session',
+                        userId: mockUserId,
+                        createdAt: { seconds: 1704283200 },
+                        workoutName: 'Treino Legado'
+                    }
+                ]);
+                expect(consoleSpy).toHaveBeenCalledWith(
+                    'Falling back to legacy recent sessions query.',
+                    expect.any(Error)
+                );
+            } finally {
+                consoleSpy.mockRestore();
+            }
+        });
     });
 
     describe('subscribeToRecentSessions', () => {

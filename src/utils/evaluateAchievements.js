@@ -44,6 +44,17 @@ function format(a, value) {
     return `${Math.min(value, a.target)} / ${a.target}`;
 }
 
+function getSessionDate(session) {
+    const raw = session?.completedAt || session?.completedAtClient || session?.date || session?.createdAt || session?.timestamp;
+    if (!raw) return new Date(0);
+    if (typeof raw.toDate === 'function') return raw.toDate();
+    if (raw instanceof Date) return raw;
+    if (typeof raw === 'object' && typeof raw.seconds === 'number') return new Date(raw.seconds * 1000);
+
+    const parsed = new Date(raw);
+    return Number.isNaN(parsed.getTime()) ? new Date(0) : parsed;
+}
+
 /**
  * Calcula estatísticas do usuário a partir do histórico de sessões.
  * @param {Array} sessions - Array de sessões de treino ordenadas por data (qualquer ordem, será ordenado internamente se necessário).
@@ -66,8 +77,8 @@ export function calculateStats(sessions) {
 
     // Ordenar por data ascendente para cálculo de PR e Streak
     const sortedSessions = [...sessions].sort((a, b) => {
-        const dateA = a.completedAt?.toDate ? a.completedAt.toDate() : new Date(a.completedAt || 0);
-        const dateB = b.completedAt?.toDate ? b.completedAt.toDate() : new Date(b.completedAt || 0);
+        const dateA = getSessionDate(a);
+        const dateB = getSessionDate(b);
         return dateA - dateB;
     });
 
@@ -97,7 +108,7 @@ export function calculateStats(sessions) {
         // Basic Counts
         totalWorkouts++;
 
-        const date = session.completedAt?.toDate ? session.completedAt.toDate() : new Date(session.completedAt || 0);
+        const date = getSessionDate(session);
 
         if (date >= oneWeekAgo) workoutsLast7Days++;
         if (date >= startOfYear) workoutsCurrentYear++;
@@ -224,8 +235,8 @@ export function evaluateHistory(sessions, catalog) {
 
     // 1. Sort sessions
     const sortedSessions = [...sessions].sort((a, b) => {
-        const dateA = a.completedAt?.toDate ? a.completedAt.toDate() : new Date(a.completedAt || 0);
-        const dateB = b.completedAt?.toDate ? b.completedAt.toDate() : new Date(b.completedAt || 0);
+        const dateA = getSessionDate(a);
+        const dateB = getSessionDate(b);
         return dateA - dateB;
     });
 
@@ -252,7 +263,7 @@ export function evaluateHistory(sessions, catalog) {
     let workoutsInYear = 0;
 
     sortedSessions.forEach(session => {
-        const dateObj = session.completedAt?.toDate ? session.completedAt.toDate() : new Date(session.completedAt || 0);
+        const dateObj = getSessionDate(session);
         const timestamp = dateObj.getTime();
         const isoDate = dateObj.toISOString();
 
@@ -393,14 +404,14 @@ export async function checkNewAchievements(userId, currentSessionData, workoutSe
         // 2. Filter out the current session to get "Previous State"
         // We identify current session by ID or exact timestamp
         const currentId = currentSessionData.id;
-        const currentTime = currentSessionData.completedAt?.toDate ? currentSessionData.completedAt.toDate().getTime() : new Date(currentSessionData.completedAt).getTime();
+        const currentTime = getSessionDate(currentSessionData).getTime();
 
         const previousSessions = allSessions.filter(s => {
             // Check ID if available
             if (s.id && currentId && s.id === currentId) return false;
 
             // Check Timestamp (if within 1s, assume same)
-            const t = s.completedAt?.toDate ? s.completedAt.toDate().getTime() : new Date(s.completedAt || 0).getTime();
+            const t = getSessionDate(s).getTime();
             if (Math.abs(t - currentTime) < 1000) return false;
 
             return true;

@@ -34,6 +34,33 @@ function mapSessionDoc(doc) {
     return { id: doc.id, ...doc.data() };
 }
 
+function getSessionTimestampMs(session) {
+    const raw = session?.completedAt || session?.completedAtClient || session?.date || session?.createdAt || session?.timestamp;
+    if (!raw) return 0;
+    if (typeof raw.toDate === 'function') return raw.toDate().getTime();
+    if (raw instanceof Date) return raw.getTime();
+    if (typeof raw === 'object' && typeof raw.seconds === 'number') return raw.seconds * 1000;
+
+    const parsed = new Date(raw).getTime();
+    return Number.isNaN(parsed) ? 0 : parsed;
+}
+
+function sortSessionsByMostRecent(sessions) {
+    return [...sessions].sort((a, b) => getSessionTimestampMs(b) - getSessionTimestampMs(a));
+}
+
+async function getLegacyRecentSessions(deps, userId, safeLimit) {
+    const { db, collection, query, where, limit, getDocs } = deps;
+    const sessionsRef = collection(db, SESSIONS_COLLECTION);
+    const fallbackQuery = query(
+        sessionsRef,
+        where('userId', '==', userId),
+        limit(safeLimit)
+    );
+    const snap = await getDocs(fallbackQuery);
+    return sortSessionsByMostRecent(snap.docs.map(mapSessionDoc));
+}
+
 export const workoutService = {
     /**
      * Busca templates de treino para um usuário específico.
@@ -257,7 +284,8 @@ export const workoutService = {
      * @returns {Promise<Array>}
      */
     async getRecentSessions(userId, limitCount = SESSION_LIMITS.dashboardRecent) {
-        const { db, collection, query, where, orderBy, limit, getDocs } = await getFirestoreDeps();
+        const deps = await getFirestoreDeps();
+        const { db, collection, query, where, orderBy, limit, getDocs } = deps;
         const safeLimit = Math.max(1, Math.min(Number(limitCount) || SESSION_LIMITS.dashboardRecent, 500));
         const sessionsRef = collection(db, SESSIONS_COLLECTION);
         const q = query(
@@ -266,8 +294,16 @@ export const workoutService = {
             orderBy('completedAt', 'desc'),
             limit(safeLimit)
         );
-        const snap = await getDocs(q);
-        return snap.docs.map(mapSessionDoc);
+
+        try {
+            const snap = await getDocs(q);
+            const sessions = snap.docs.map(mapSessionDoc);
+            if (sessions.length > 0) return sessions;
+        } catch (error) {
+            console.warn('Falling back to legacy recent sessions query.', error);
+        }
+
+        return getLegacyRecentSessions(deps, userId, safeLimit);
     },
 
     /**
