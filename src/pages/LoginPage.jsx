@@ -8,6 +8,7 @@
 import React, { useMemo, useState } from 'react';
 import { ArrowLeft, ArrowRight, Eye, EyeOff, LogIn, Mail, UserPlus } from 'lucide-react';
 import { Button } from '../components/design-system/Button';
+import { PRIVACY_POLICY_VERSION, TERMS_OF_USE_VERSION } from '../constants/legal';
 
 function GoogleIcon() {
     return (
@@ -87,6 +88,7 @@ export default function LoginPage() {
     const [birthYear, setBirthYear] = useState('');
     const [heightCm, setHeightCm] = useState('');
     const [weightKg, setWeightKg] = useState('');
+    const [acceptedLegal, setAcceptedLegal] = useState(false);
 
     // Esqueci a Senha
     const [resetEmail, setResetEmail] = useState('');
@@ -208,9 +210,10 @@ export default function LoginPage() {
             birthValidation.validDate &&
             okHeight &&
             okWeight &&
+            acceptedLegal &&
             !loading
         );
-    }, [gender, birthValidation.validDate, heightCm, weightKg, loading]);
+    }, [gender, birthValidation.validDate, heightCm, weightKg, acceptedLegal, loading]);
 
     function resetSignup() {
         setStep(1);
@@ -224,6 +227,7 @@ export default function LoginPage() {
         setBirthYear('');
         setHeightCm('');
         setWeightKg('');
+        setAcceptedLegal(false);
     }
 
     function goSignup() {
@@ -330,7 +334,7 @@ export default function LoginPage() {
         e.preventDefault();
 
         if (!canCreateAccount) {
-            setError('Revise gênero, data de nascimento, altura e peso para concluir.');
+            setError('Revise gênero, data de nascimento, altura, peso e aceite dos termos para concluir.');
             return;
         }
 
@@ -783,6 +787,29 @@ export default function LoginPage() {
                                                 />
                                             </label>
                                         </div>
+
+                                        <label className="mt-2 flex items-start gap-3 rounded-2xl border border-cyan-400/15 bg-cyan-400/5 p-3 text-[0.78rem] leading-relaxed text-slate-300" htmlFor="accepted-legal">
+                                            <input
+                                                id="accepted-legal"
+                                                type="checkbox"
+                                                className="mt-1 h-4 w-4 shrink-0 rounded border-slate-500 bg-slate-950 accent-cyan-400"
+                                                checked={acceptedLegal}
+                                                onChange={(e) => setAcceptedLegal(e.target.checked)}
+                                                disabled={loading}
+                                                required
+                                            />
+                                            <span>
+                                                Li e aceito a{' '}
+                                                <a className="text-cyan-300 underline-offset-4 hover:underline" href="/privacy">
+                                                    Política de Privacidade
+                                                </a>{' '}
+                                                v{PRIVACY_POLICY_VERSION} e os{' '}
+                                                <a className="text-cyan-300 underline-offset-4 hover:underline" href="/terms">
+                                                    Termos de Uso
+                                                </a>{' '}
+                                                v{TERMS_OF_USE_VERSION}.
+                                            </span>
+                                        </label>
                                     </>
                                 )}
 
@@ -840,6 +867,16 @@ export default function LoginPage() {
                         </>
                     )}
                 </div>
+
+                <nav className="mt-5 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-[0.75rem] text-slate-500">
+                    <a className="transition-colors hover:text-cyan-300" href="/privacy">
+                        Política de Privacidade
+                    </a>
+                    <span aria-hidden="true">•</span>
+                    <a className="transition-colors hover:text-cyan-300" href="/terms">
+                        Termos de Uso
+                    </a>
+                </nav>
             </div>
         </div >
     );

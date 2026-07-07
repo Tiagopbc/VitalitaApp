@@ -12,6 +12,8 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import './style.css';
 
 const LoginPage = React.lazy(() => import('./pages/LoginPage'));
+const PrivacyPolicyPage = React.lazy(() => import('./pages/PrivacyPolicyPage'));
+const TermsOfUsePage = React.lazy(() => import('./pages/TermsOfUsePage'));
 const AppAuthed = React.lazy(() => import('./AppAuthed'));
 
 function App() {
@@ -45,6 +47,8 @@ function AppContentRoot() {
             }>
                 <Routes>
                     <Route path="/login" element={<LoginPage />} />
+                    <Route path="/privacy" element={<PrivacyPolicyPage />} />
+                    <Route path="/terms" element={<TermsOfUsePage />} />
                     <Route path="*" element={<Navigate to="/login" replace />} />
                 </Routes>
             </Suspense>
