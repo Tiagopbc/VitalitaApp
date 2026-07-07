@@ -10,7 +10,7 @@ export function EmptyState({
     return (
         <div className={`rounded-3xl border border-dashed border-slate-700/70 bg-slate-900/35 px-5 py-8 text-center ${className}`}>
             {icon && (
-                <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-950/70 text-slate-400 ring-1 ring-white/10">
+                <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-cyan-500/10 text-cyan-300 ring-1 ring-cyan-400/20">
                     {icon}
                 </div>
             )}

@@ -257,8 +257,14 @@ export function HistoryAnalyticsSection({
                     ) : (
                         ((searchMode === 'template' && selectedTemplate && selectedExercise) || 
                          (searchMode === 'global' && selectedGlobalExercises.length > 0)) && (
-                            <div className="py-12 text-center border border-dashed border-slate-800 rounded-2xl">
-                                <p className="text-slate-500">Nenhum registro encontrado.</p>
+                            <div className="rounded-2xl border border-dashed border-slate-800 bg-slate-900/20 px-5 py-12 text-center">
+                                <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-cyan-500/10 text-cyan-300 ring-1 ring-cyan-400/20">
+                                    <TrendingUp size={24} />
+                                </div>
+                                <p className="text-sm font-bold text-slate-200">Nenhum registro encontrado</p>
+                                <p className="mx-auto mt-1 max-w-sm text-xs leading-relaxed text-slate-500">
+                                    Ajuste os filtros ou finalize novas sessões para alimentar esta análise.
+                                </p>
                             </div>
                         )
                     )}

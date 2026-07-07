@@ -1,5 +1,6 @@
 
 import React from 'react';
+import { LineChart } from 'lucide-react';
 
 let rechartsPromise;
 const loadRecharts = () => {
@@ -43,8 +44,14 @@ export function EvolutionChart({ data }) {
 
     if (!data || data.length === 0) {
         return (
-            <div className="h-64 flex items-center justify-center border border-dashed border-slate-800 rounded-2xl bg-slate-900/20">
-                <p className="text-slate-500 text-sm">Sem dados suficientes neste período</p>
+            <div className="h-64 flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-800 bg-slate-900/20 px-6 text-center">
+                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-cyan-500/10 text-cyan-300 ring-1 ring-cyan-400/20">
+                    <LineChart size={24} />
+                </div>
+                <p className="text-sm font-bold text-slate-200">Sem evolução neste período</p>
+                <p className="mt-1 max-w-xs text-xs leading-relaxed text-slate-500">
+                    Finalize treinos com carga e repetições para montar o gráfico automaticamente.
+                </p>
             </div>
         );
     }

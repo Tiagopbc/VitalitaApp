@@ -906,7 +906,7 @@ export function WorkoutExecutionPage({ user }) {
 
                 {/* Footer Fim de Treino - Apenas mostra se o modal de finalização NÃO estiver visível */}
                 {!showFinishModal && (
-                    <div className="w-full mt-8 pb-[calc(2rem+env(safe-area-inset-bottom))]">
+                    <div className="w-full mt-8 pb-[calc(6rem+env(safe-area-inset-bottom))] lg:pb-[calc(2rem+env(safe-area-inset-bottom))]">
                         <div className="max-w-2xl mx-auto flex justify-center">
                             <div className="space-y-4 w-full flex flex-col items-center px-4">
                                 <Button
