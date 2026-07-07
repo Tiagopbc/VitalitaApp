@@ -326,7 +326,7 @@ function AppAuthedContent() {
                         user={user}
                         isTrainer={isTrainer}
                     />
-                    <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 pointer-events-none pb-[env(safe-area-inset-bottom)] flex justify-center">
+                    <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 pointer-events-none pb-[calc(0.75rem+env(safe-area-inset-bottom))] flex justify-center">
                         <Suspense fallback={
                             <div className="h-16 w-full max-w-md rounded-2xl bg-slate-900/50 border border-slate-800/50" />
                         }>
@@ -341,13 +341,13 @@ function AppAuthedContent() {
             )}
 
             <div className={`w-full min-h-screen transition-all duration-300 relative flex flex-col ${user && !location.pathname.startsWith('/execute') && location.pathname !== '/login'
-                ? 'pt-[calc(2rem+env(safe-area-inset-top))] pb-32 lg:pb-8 lg:pt-8 lg:pl-64'
+                ? 'pt-[calc(1rem+env(safe-area-inset-top))] pb-44 lg:pb-8 lg:pt-8 lg:pl-64'
                 : ''
                 }`}>
                 <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex-1">
                     {showHeader && (
-                        <header className="app-header mb-8">
-                            <h1 className="app-logo-name text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">Vitalità</h1>
+                        <header className="sr-only">
+                            <h1>Vitalità</h1>
                         </header>
                     )}
 

@@ -240,10 +240,10 @@ export default function WorkoutsPage({ onNavigateToCreate, onNavigateToWorkout, 
 
     // --- RENDER ---
     return (
-        <div className="min-h-screen pb-32 pt-[calc(1.5rem+env(safe-area-inset-top))] px-4 lg:px-8 w-full max-w-5xl mx-auto">
+        <div className="min-h-screen pb-48 pt-2 px-4 lg:px-8 w-full max-w-5xl mx-auto lg:pt-[calc(1.5rem+env(safe-area-inset-top))] lg:pb-32">
 
             {/* 1. HEADER & SEARCH */}
-            <div className="space-y-8 pt-6 mb-8">
+            <div className="space-y-6 pt-2 mb-8 lg:space-y-8 lg:pt-6">
                 {/* Top Bar - Hide if Trainer Mode */}
                 {!isTrainerMode && (
                     <PageHeader
@@ -251,12 +251,12 @@ export default function WorkoutsPage({ onNavigateToCreate, onNavigateToWorkout, 
                         description="Gerencie suas fichas, modelos do personal e treinos arquivados."
                         icon={<Dumbbell size={22} />}
                         action={(
-                            <div className="flex gap-2">
+                            <div className="flex w-full gap-2 sm:w-auto">
                                 <Button
                                     variant="secondary"
                                     size="sm"
                                     onClick={() => setIsAddCardioOpen(true)}
-                                    className="rounded-xl"
+                                    className="flex-1 rounded-xl sm:flex-none"
                                     leftIcon={<Activity size={16} />}
                                 >
                                     <span className="hidden sm:inline">Cardio</span>
@@ -265,7 +265,7 @@ export default function WorkoutsPage({ onNavigateToCreate, onNavigateToWorkout, 
                                 <Button
                                     size="sm"
                                     onClick={() => onNavigateToCreate(null, { targetUserId: user.uid })}
-                                    className="rounded-xl"
+                                    className="flex-1 rounded-xl sm:flex-none"
                                     leftIcon={<Plus size={16} />}
                                 >
                                     <span className="hidden sm:inline">Novo Treino</span>

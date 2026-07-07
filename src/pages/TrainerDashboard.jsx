@@ -269,7 +269,7 @@ export function TrainerDashboard({ user, onBack, onNavigateToCreateWorkout }) {
 
     // --- VISÃO PRINCIPAL DO DASHBOARD ---
     return (
-        <div className="min-h-screen bg-[#020617] pb-24 lg:pt-0 pt-4 px-4 lg:px-8 max-w-5xl mx-auto">
+        <div className="min-h-screen bg-[#020617] pb-48 pt-2 px-4 lg:px-8 max-w-5xl mx-auto lg:pb-24 lg:pt-0">
 
             <PageHeader
                 title="Área do Personal"
@@ -280,7 +280,7 @@ export function TrainerDashboard({ user, onBack, onNavigateToCreateWorkout }) {
                     <Button
                         onClick={() => setShowInviteModal(true)}
                         size="sm"
-                        className="rounded-xl"
+                        className="w-full rounded-xl sm:w-auto"
                         leftIcon={<UserPlus size={18} />}
                     >
                         Convidar Aluno

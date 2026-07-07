@@ -292,7 +292,7 @@ export default function ProfilePage({ user, onLogout, onNavigateToHistory, onNav
     }
 
     return (
-        <div className="min-h-screen bg-slate-950 pb-32 px-4 pt-6 w-full max-w-3xl mx-auto">
+        <div className="min-h-screen bg-slate-950 pb-48 px-4 pt-2 w-full max-w-3xl mx-auto lg:pb-32 lg:pt-6">
 
             {/* --- CARTÃO DE CABEÇALHO DO PERFIL --- */}
             <div className="bg-slate-900/50 rounded-3xl p-6 mb-6 border border-slate-800 relative overflow-hidden">

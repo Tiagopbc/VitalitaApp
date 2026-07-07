@@ -230,7 +230,7 @@ export default function CreateWorkoutPage({ user }) {
     }
 
     return (
-        <div className="w-full max-w-3xl mx-auto px-4 pt-[calc(1.5rem+env(safe-area-inset-top))] pb-32">
+        <div className="w-full max-w-3xl mx-auto px-4 pt-2 pb-48 lg:pt-[calc(1.5rem+env(safe-area-inset-top))] lg:pb-32">
             <PageHeader
                 title={initialData ? 'Editar Treino' : 'Criar Novo Treino'}
                 description="Monte a ficha com exercícios, séries, repetições e método de execução."
@@ -263,6 +263,28 @@ export default function CreateWorkoutPage({ user }) {
                         icon={<Dumbbell size={24} />}
                         title="Nenhum exercício adicionado"
                         description="Adicione o primeiro exercício para habilitar o salvamento da ficha."
+                        action={
+                            <Button
+                                onClick={() => {
+                                    setEditingExerciseId(null);
+                                    setNewExercise({
+                                        muscleGroup: '',
+                                        name: '',
+                                        sets: '3',
+                                        reps: '12',
+                                        method: 'Convencional',
+                                        rest: '',
+                                        notes: ''
+                                    });
+                                    setShowAddExercise(true);
+                                }}
+                                variant="secondary"
+                                size="sm"
+                                leftIcon={<Plus size={16} />}
+                            >
+                                Adicionar Exercício
+                            </Button>
+                        }
                         className="py-8"
                     />
                 ) : (
@@ -482,7 +504,7 @@ export default function CreateWorkoutPage({ user }) {
                 </div>
             )}
 
-            {!showAddExercise && (
+            {!showAddExercise && exercises.length > 0 && (
                 <Button
                     onClick={() => {
                         setEditingExerciseId(null);
@@ -513,10 +535,15 @@ export default function CreateWorkoutPage({ user }) {
                 variant="primary"
                 size="lg"
                 fullWidth
-                className="shadow-xl"
+                className="shadow-xl disabled:border-slate-700 disabled:bg-slate-900/60 disabled:bg-none disabled:text-slate-500 disabled:shadow-none disabled:opacity-100"
             >
                 {loading ? 'Salvando...' : 'Salvar Treino'}
             </Button>
+            {(exercises.length === 0 || !workoutName) && !loading && (
+                <p className="mt-3 text-center text-xs text-slate-500">
+                    Informe o nome e adicione pelo menos um exercício para salvar.
+                </p>
+            )}
 
         </div>
     );

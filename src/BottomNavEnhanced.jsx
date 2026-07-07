@@ -53,14 +53,14 @@ export function BottomNavEnhanced({ activeTab, onTabChange }) {
 
     return (
         <nav
-            className="pointer-events-auto mb-6 mx-4"
+            className="pointer-events-auto mx-3"
             style={{
                 position: 'relative',
                 zIndex: 100,
             }}
         >
             <div
-                className="flex items-center gap-1 p-1.5 rounded-[32px] border border-white/10 relative overflow-hidden backdrop-blur-3xl"
+                className="flex items-center gap-1 p-1.5 rounded-[28px] border border-white/10 relative overflow-hidden backdrop-blur-3xl"
                 style={{
                     background: 'rgba(12, 12, 14, 0.45)', // Base dark glass
                     boxShadow: '0 20px 40px -10px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.05) inset',
@@ -91,8 +91,8 @@ export function BottomNavEnhanced({ activeTab, onTabChange }) {
                                 onTouchEnd={() => setPressedTab(null)}
                                 className="relative group mx-1 flex shrink-0 items-center justify-center p-0 border-0 bg-transparent appearance-none"
                                 style={{
-                                    width: '56px',
-                                    height: '56px',
+                                    width: '50px',
+                                    height: '50px',
                                     transform: 'translateY(-2px)',
                                     WebkitTapHighlightColor: 'transparent',
                                     outline: 'none'
@@ -112,9 +112,9 @@ export function BottomNavEnhanced({ activeTab, onTabChange }) {
                                     }}
                                     transition={{ type: "spring", stiffness: 400, damping: 17 }}
                                     style={{
-                                        width: '48px',
-                                        height: '48px',
-                                        borderRadius: '24px',
+                                        width: '44px',
+                                        height: '44px',
+                                        borderRadius: '22px',
                                         background: 'rgba(6, 182, 212, 0.15)', // Glassy cyan tint
                                         backdropFilter: 'blur(12px)',
                                         border: '1px solid rgba(255, 255, 255, 0.15)',
@@ -134,18 +134,18 @@ export function BottomNavEnhanced({ activeTab, onTabChange }) {
                             onClick={() => handlePress(tab.id)}
                             onTouchStart={() => setPressedTab(tab.id)}
                             onTouchEnd={() => setPressedTab(null)}
-                            className="relative flex flex-col items-center justify-center px-4 py-2"
+                            className="relative flex flex-col items-center justify-center px-3 py-1.5"
                             style={{
                                 WebkitTapHighlightColor: 'transparent',
                                 outline: 'none',
-                                minWidth: '64px'
+                                minWidth: '56px'
                             }}
                         >
                             {/* Sliding Active Indicator */}
                             {isActive && (
                                 <motion.div
                                     layoutId="activeTabIndicator"
-                                    className="absolute inset-0 rounded-[20px] z-0"
+                                    className="absolute inset-0 rounded-[18px] z-0"
                                     initial={false}
                                     transition={{ type: "spring", stiffness: 300, damping: 30 }}
                                     style={{
@@ -156,7 +156,7 @@ export function BottomNavEnhanced({ activeTab, onTabChange }) {
                                 />
                             )}
 
-                            <div className="relative z-10 flex flex-col items-center gap-1">
+                            <div className="relative z-10 flex flex-col items-center gap-0.5">
                                 <motion.div
                                     initial={false}
                                     animate={{
@@ -166,13 +166,13 @@ export function BottomNavEnhanced({ activeTab, onTabChange }) {
                                     transition={{ type: "spring", stiffness: 500, damping: 25 }}
                                 >
                                     <Icon
-                                        size={22}
+                                        size={21}
                                         strokeWidth={isActive ? 2.5 : 2}
                                         className={`transition-colors duration-300 ${isActive ? 'text-cyan-400' : 'text-slate-400'}`}
                                     />
                                 </motion.div>
 
-                                <span className={`text-[10px] font-medium transition-colors duration-300 ${isActive ? 'text-cyan-400' : 'text-slate-500'}`}>
+                                <span className={`text-[9px] font-medium transition-colors duration-300 ${isActive ? 'text-cyan-400' : 'text-slate-500'}`}>
                                     {tab.label}
                                 </span>
                             </div>

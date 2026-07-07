@@ -533,11 +533,11 @@ export function HomeDashboard({
 
 
     return (
-        <div className="pb-24 lg:pb-8 max-w-3xl mx-auto w-full">
+        <div className="pb-44 lg:pb-8 max-w-3xl mx-auto w-full">
             <div className="w-full px-4 lg:px-8 flex flex-col">
 
                 {/* 1. SAUDAÇÃO */}
-                <div className="pt-6 pb-6">
+                <div className="pt-2 pb-5 lg:pt-6 lg:pb-6">
                     <h1 className="text-2xl lg:text-3xl mb-1 text-white font-heading font-bold">
                         {greeting}, <span className="bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">{firstName}</span>
                     </h1>
@@ -576,7 +576,7 @@ export function HomeDashboard({
                 </div>
 
                 {/* 3. MOTIVACIONAL */}
-                <div className="mb-8 p-6 rounded-2xl text-center bg-gradient-to-br from-blue-500/5 to-cyan-500/5 border border-blue-500/10 relative group">
+                <div className="mb-6 p-5 lg:mb-8 lg:p-6 rounded-2xl text-center bg-gradient-to-br from-blue-500/5 to-cyan-500/5 border border-blue-500/10 relative group">
                     <Star size={20} className="text-cyan-400 mx-auto mb-3" />
                     <p className="text-sm text-slate-300 italic font-medium">
                         &quot;{dailyQuote}&quot;
@@ -603,7 +603,7 @@ export function HomeDashboard({
                 />
 
                 {/* 4. SEÇÃO HERO - PRÓXIMO TREINO */}
-                <div className="mb-8">
+                <div className="mb-6 lg:mb-8">
                     <SectionHeader
                         icon={<Target size={18} />}
                         title="Próximo Treino Sugerido"

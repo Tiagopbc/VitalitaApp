@@ -524,9 +524,9 @@ function HistoryPage({ user, isEmbedded = false }) {
     }, [selectedTemplate, selectedExercise, user, activeTab, chartRange, searchMode, globalSearchTerm, selectedGlobalExercises, globalSessionsCache]);
 
     return (
-        <div className="min-h-screen bg-[#020617] pb-32">
+        <div className="min-h-screen bg-[#020617] pb-48 lg:pb-32">
             {/* --- CABEÇALHO --- */}
-            <div className="sticky top-0 z-40 bg-[#020617]/95 backdrop-blur-md pt-[calc(1.5rem+env(safe-area-inset-top))] pb-4">
+            <div className="sticky top-0 z-40 bg-[#020617]/95 backdrop-blur-md pt-2 pb-4 lg:pt-[calc(1.5rem+env(safe-area-inset-top))]">
                 <div className="w-full max-w-5xl mx-auto px-4 space-y-4">
                     {!isEmbedded && (
                         <PageHeader
