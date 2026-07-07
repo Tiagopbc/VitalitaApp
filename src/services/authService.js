@@ -8,6 +8,7 @@ import {
     sendPasswordResetEmail
 } from 'firebase/auth';
 import { auth, googleProvider } from '../firebaseAuth';
+import { PRIVACY_POLICY_VERSION, TERMS_OF_USE_VERSION } from '../constants/legal';
 
 export const authService = {
     /**
@@ -58,6 +59,12 @@ export const authService = {
                 fullName,
                 email, // Garantir que o email seja salvo
                 ...additionalData,
+                privacyConsent: {
+                    acceptedAt: serverTimestamp(),
+                    privacyVersion: PRIVACY_POLICY_VERSION,
+                    termsVersion: TERMS_OF_USE_VERSION,
+                    source: 'email_signup'
+                },
                 createdAt: serverTimestamp(),
             });
         } catch (error) {

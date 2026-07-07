@@ -15,6 +15,15 @@ Campos comuns:
 - `birthDate`, `heightCm`, `weightKg`
 - `defaultRestTime`, `autoStartTimer`
 - `achievements`
+- `privacyConsent`
+
+`privacyConsent` registra a versão legal aceita no cadastro sem IP, user agent
+ou hashes extras:
+
+- `acceptedAt`
+- `privacyVersion`
+- `termsVersion`
+- `source`
 
 Leitura:
 

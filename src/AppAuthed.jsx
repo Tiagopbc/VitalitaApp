@@ -19,6 +19,8 @@ const loadProfilePage = () => import('./pages/ProfilePage');
 const loadWorkoutsPage = () => import('./pages/WorkoutsPage');
 const loadWorkoutExecutionPage = () => import('./pages/WorkoutExecutionPage').then(module => ({ default: module.WorkoutExecutionPage }));
 const loadTrainerDashboard = () => import('./pages/TrainerDashboard').then(module => ({ default: module.TrainerDashboard }));
+const loadPrivacyPolicyPage = () => import('./pages/PrivacyPolicyPage');
+const loadTermsOfUsePage = () => import('./pages/TermsOfUsePage');
 const loadBottomNavEnhanced = () => import('./BottomNavEnhanced').then(module => ({ default: module.BottomNavEnhanced }));
 const loadSonnerToaster = () => import('sonner').then(module => ({ default: module.Toaster }));
 const loadPwaUpdatePrompt = () => import('./components/PwaUpdatePrompt').then(module => ({ default: module.PwaUpdatePrompt }));
@@ -31,6 +33,8 @@ const ProfilePage = React.lazy(loadProfilePage);
 const WorkoutsPage = React.lazy(loadWorkoutsPage);
 const WorkoutExecutionPage = React.lazy(loadWorkoutExecutionPage);
 const TrainerDashboard = React.lazy(loadTrainerDashboard);
+const PrivacyPolicyPage = React.lazy(loadPrivacyPolicyPage);
+const TermsOfUsePage = React.lazy(loadTermsOfUsePage);
 const BottomNavEnhanced = React.lazy(loadBottomNavEnhanced);
 const SonnerToaster = React.lazy(loadSonnerToaster);
 const PwaUpdatePrompt = React.lazy(loadPwaUpdatePrompt);
@@ -358,6 +362,8 @@ function AppAuthedContent() {
                     }>
                         <Routes>
                             <Route path="/login" element={!user ? <Navigate to="/login" /> : <Navigate to="/" />} />
+                            <Route path="/privacy" element={<PrivacyPolicyPage />} />
+                            <Route path="/terms" element={<TermsOfUsePage />} />
 
                             <Route path="/" element={
                                 <ProtectedRoute>
