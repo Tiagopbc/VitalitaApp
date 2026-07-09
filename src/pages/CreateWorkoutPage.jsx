@@ -31,16 +31,18 @@ function ReorderableExerciseItem({ ex, index, handleEditExercise, removeExercise
 
     return (
         <Reorder.Item
+            key={ex.id}
+            id={ex.id}
             value={ex}
             dragListener={false}
             dragControls={dragControls}
-            className="p-4 rounded-[14px] border border-slate-400/35 bg-[#0f172a]/80 flex items-center gap-3 cursor-pointer hover:border-cyan-500/50 transition-all select-none touch-none"
+            className="p-4 rounded-[14px] border border-slate-400/35 bg-[#0f172a]/80 flex items-center gap-3 cursor-pointer hover:border-cyan-500/50 transition-colors select-none"
             onClick={() => handleEditExercise(ex)}
         >
             <div
-                className="text-slate-500 cursor-grab active:cursor-grabbing p-2 -ml-2"
+                className="text-slate-500 cursor-grab active:cursor-grabbing p-2 -ml-2 touch-none"
                 onPointerDown={(e) => {
-                    e.preventDefault();
+                    e.stopPropagation();
                     dragControls.start(e);
                 }}
             >
