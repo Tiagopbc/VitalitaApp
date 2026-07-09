@@ -19,12 +19,14 @@ uma base profissional para evolução do produto.
 Novos cadastros por e-mail salvam no perfil:
 
 ```js
-privacyConsent: {
-  acceptedAt: serverTimestamp(),
-  privacyVersion: '2026-07-07',
-  termsVersion: '2026-07-07',
-  source: 'email_signup'
-}
+const userProfile = {
+  privacyConsent: {
+    acceptedAt: serverTimestamp(),
+    privacyVersion: '2026-07-07',
+    termsVersion: '2026-07-07',
+    source: 'email_signup'
+  }
+};
 ```
 
 Contas antigas podem não ter esse campo. A interface deve tratar esse caso sem
