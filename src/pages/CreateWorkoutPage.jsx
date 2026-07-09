@@ -45,6 +45,10 @@ function ReorderableExerciseItem({ ex, index, handleEditExercise, removeExercise
                     e.stopPropagation();
                     dragControls.start(e);
                 }}
+                onClick={(e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                }}
             >
                 <GripVertical size={18} />
             </div>
