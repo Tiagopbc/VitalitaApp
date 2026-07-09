@@ -9,7 +9,6 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './AuthContext';
 import { ErrorBoundary } from './components/ErrorBoundary';
 
-import './style.css';
 
 const LoginPage = React.lazy(() => import('./pages/LoginPage'));
 const PrivacyPolicyPage = React.lazy(() => import('./pages/PrivacyPolicyPage'));
