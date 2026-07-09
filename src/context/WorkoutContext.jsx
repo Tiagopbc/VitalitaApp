@@ -118,11 +118,12 @@ export function WorkoutProvider({ children }) {
         };
     }, [user, navigate]);
 
-    async function startWorkout(id) {
+    function startWorkout(id) {
         setLocalActiveWorkout(id);
         if (user) {
-            const userService = await loadUserService();
-            await userService.setActiveWorkout(user.uid, id);
+            loadUserService()
+                .then(userService => userService.setActiveWorkout(user.uid, id))
+                .catch(err => console.error("Failed to set active workout remotely", err));
         }
         navigate(`/execute/${id}`);
     }
