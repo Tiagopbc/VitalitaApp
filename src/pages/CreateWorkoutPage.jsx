@@ -11,6 +11,7 @@ import { Button } from '../components/design-system/Button';
 import { EmptyState } from '../components/design-system/EmptyState';
 import { PageHeader } from '../components/design-system/PageHeader';
 import { toast } from 'sonner';
+import { Reorder, useDragControls } from 'framer-motion';
 
 const muscleGroups = [
     'Peito', 'Costas', 'Ombros', 'Bíceps', 'Tríceps',
@@ -24,6 +25,60 @@ const methods = [
 ];
 
 import { workoutService } from '../services/workoutService';
+
+function ReorderableExerciseItem({ ex, index, handleEditExercise, removeExercise }) {
+    const dragControls = useDragControls();
+
+    return (
+        <Reorder.Item
+            value={ex}
+            dragListener={false}
+            dragControls={dragControls}
+            className="p-4 rounded-[14px] border border-slate-400/35 bg-[#0f172a]/80 flex items-center gap-3 cursor-pointer hover:border-cyan-500/50 transition-all select-none touch-none"
+            onClick={() => handleEditExercise(ex)}
+        >
+            <div
+                className="text-slate-500 cursor-grab active:cursor-grabbing p-2 -ml-2"
+                onPointerDown={(e) => {
+                    e.preventDefault();
+                    dragControls.start(e);
+                }}
+            >
+                <GripVertical size={18} />
+            </div>
+            <div className="flex-1 min-w-0">
+                <div className="text-[0.7rem] text-cyan-400 uppercase tracking-widest font-bold mb-1">
+                    {ex.muscleGroup || ex.group || ex.muscleFocus?.primary || 'Geral'}
+                </div>
+                <div className="text-[0.95rem] font-semibold text-gray-200 mb-1 uppercase truncate">
+                    {index + 1}. {ex.name}
+                </div>
+                <div className="text-[0.8rem] text-slate-400 font-medium truncate">
+                    {ex.sets || '?'} sets × {ex.reps || '?'} reps • {ex.method || 'Convencional'}
+                    {ex.rest && <span className="text-slate-500 ml-1">• ⏱ {ex.rest}</span>}
+                </div>
+                {ex.notes && (
+                    <div className="text-[0.75rem] text-slate-500 italic mt-0.5 truncate">
+                        Obs: {ex.notes}
+                    </div>
+                )}
+            </div>
+            <div className="flex-shrink-0">
+                <Button
+                    variant="danger"
+                    size="xs"
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        removeExercise(ex.id);
+                    }}
+                    className="w-8 h-8 p-0 rounded-lg bg-red-500/10 border-red-500/20 text-red-400 hover:bg-red-500/20"
+                >
+                    <Trash2 size={16} />
+                </Button>
+            </div>
+        </Reorder.Item>
+    );
+}
 
 export default function CreateWorkoutPage({ user }) {
     const navigate = useNavigate();
@@ -288,47 +343,22 @@ export default function CreateWorkoutPage({ user }) {
                         className="py-8"
                     />
                 ) : (
-                    exercises.map((ex, index) => (
-                        <div
-                            key={ex.id}
-                            onClick={() => handleEditExercise(ex)}
-                            className="p-4 rounded-[14px] border border-slate-400/35 bg-[#0f172a]/80 flex items-center gap-3 cursor-pointer hover:border-cyan-500/50 transition-all"
-                        >
-                            <div className="text-slate-500">
-                                <GripVertical size={18} />
-                            </div>
-                            <div className="flex-1">
-                                <div className="text-[0.7rem] text-cyan-400 uppercase tracking-widest font-bold mb-1">
-                                    {ex.muscleGroup || ex.group || ex.muscleFocus?.primary || 'Geral'}
-                                </div>
-                                <div className="text-[0.95rem] font-semibold text-gray-200 mb-1 uppercase">
-                                    {index + 1}. {ex.name}
-                                </div>
-                                <div className="text-[0.8rem] text-slate-400 font-medium">
-                                    {ex.sets || '?'} sets × {ex.reps || '?'} reps • {ex.method || 'Convencional'}
-                                    {ex.rest && <span className="text-slate-500 ml-1">• ⏱ {ex.rest}</span>}
-                                </div>
-                                {ex.notes && (
-                                    <div className="text-[0.75rem] text-slate-500 italic mt-0.5 truncate">
-                                        Obs: {ex.notes}
-                                    </div>
-                                )}
-                            </div>
-                            <div className="flex-shrink-0">
-                                <Button
-                                    variant="danger"
-                                    size="xs"
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        removeExercise(ex.id)
-                                    }}
-                                    className="w-8 h-8 p-0 rounded-lg bg-red-500/10 border-red-500/20 text-red-400 hover:bg-red-500/20"
-                                >
-                                    <Trash2 size={16} />
-                                </Button>
-                            </div>
-                        </div>
-                    ))
+                    <Reorder.Group
+                        axis="y"
+                        values={exercises}
+                        onReorder={setExercises}
+                        className="space-y-3"
+                    >
+                        {exercises.map((ex, index) => (
+                            <ReorderableExerciseItem
+                                key={ex.id}
+                                ex={ex}
+                                index={index}
+                                handleEditExercise={handleEditExercise}
+                                removeExercise={removeExercise}
+                            />
+                        ))}
+                    </Reorder.Group>
                 )}
             </div>
 
