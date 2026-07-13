@@ -19,13 +19,14 @@ O Vitalità é um PWA em React/Vite com Firebase Authentication e Cloud Firestor
 - Cloud Functions atualiza `user_stats/{userId}` a partir de sessões concluídas.
 - Firestore offline persistence fica em `src/firebaseDb.js`.
 - Regras e índices são versionados na raiz do projeto.
+- Observabilidade opcional fica em `src/services/observabilityService.js`, com Sentry carregado sob demanda e sanitização em `src/utils/observability.js`.
 
 ## Pontos de Evolução
 
 - Separar `useWorkoutSession.js` em serviços menores para sessão ativa, recuperação e sincronização.
 - Criar backfill e atualização incremental para agregados em `user_stats`.
 - Migrar convites e ações sensíveis para Cloud Functions.
-- Expandir observabilidade do Sentry com tags de rota, versão, PWA/offline e erros de Firestore.
+- Expandir a classificação de erros do Firestore e alertas operacionais do Sentry.
 
 ## Referências
 
@@ -35,3 +36,4 @@ O Vitalità é um PWA em React/Vite com Firebase Authentication e Cloud Firestor
 - `docs/performance-data.md`
 - `docs/user-stats-backfill.md`
 - `docs/testing.md`
+- `docs/observability.md`

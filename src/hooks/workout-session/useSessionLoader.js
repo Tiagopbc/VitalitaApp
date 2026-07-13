@@ -7,6 +7,7 @@ import {
     SESSION_SYNC_STATES
 } from '../../services/sessions/sessionRecoveryService';
 import { mapTemplateExercises } from './normalizeSets';
+import { captureTechnicalError } from '../../services/observabilityService';
 
 async function getActiveSession({ db, doc, getDoc, getDocFromServer }, profileId, workoutId) {
     const activeRef = doc(db, 'active_workouts', profileId);
@@ -140,6 +141,10 @@ export function useSessionLoader({
             } catch (err) {
                 if (cancelled) return;
                 console.error(err);
+                captureTechnicalError(err, {
+                    operation: 'workout_load_failed',
+                    source: 'workout_session'
+                });
                 setError('Falha ao carregar treino.');
                 setSyncState(SESSION_SYNC_STATES.error);
             } finally {

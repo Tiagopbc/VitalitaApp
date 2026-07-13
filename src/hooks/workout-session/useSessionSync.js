@@ -5,6 +5,7 @@ import {
     SESSION_SYNC_STATES,
     writeSessionBackup
 } from '../../services/sessions/sessionRecoveryService';
+import { captureTechnicalError } from '../../services/observabilityService';
 
 export function useSessionConnectivity(setSyncState) {
     useEffect(() => {
@@ -74,6 +75,10 @@ export function useSessionSync({
                 })
                 .catch(err => {
                     console.error(err);
+                    captureTechnicalError(err, {
+                        operation: 'session_sync_failed',
+                        source: 'active_workout'
+                    });
                     setSyncState(SESSION_SYNC_STATES.syncFailed);
                 })
                 .finally(() => {
