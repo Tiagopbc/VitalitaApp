@@ -166,7 +166,8 @@ Escrita:
 
 ## Exportação de Dados
 
-Primeira versão sugerida: exportação JSON gerada no cliente para o próprio usuário.
+Primeira versão implementada: exportação JSON gerada no cliente para o próprio usuário
+a partir da tela de Perfil.
 
 Escopo mínimo:
 
@@ -180,7 +181,9 @@ Escopo mínimo:
 
 Observações:
 
-- A exportação pode ser paginada para histórico grande.
+- A exportação lê apenas documentos que as regras permitem ao usuário autenticado.
+- A exportação pode consumir leituras proporcionais ao volume de histórico do usuário.
+- Para histórico grande, uma próxima versão pode paginar ou dividir o arquivo.
 - O JSON deve incluir `exportedAt` e `schemaVersion`.
 - CSV pode ser adicionado depois para histórico e evolução por exercício.
 

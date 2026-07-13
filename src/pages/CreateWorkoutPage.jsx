@@ -45,6 +45,10 @@ function ReorderableExerciseItem({ ex, index, handleEditExercise, removeExercise
                     e.stopPropagation();
                     dragControls.start(e);
                 }}
+                onClick={(e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                }}
             >
                 <GripVertical size={18} />
             </div>
@@ -257,9 +261,13 @@ export default function CreateWorkoutPage({ user }) {
             // Determinar Criado Por (Sempre o usuário logado)
             const createdBy = user.uid;
 
+            // Sanitizar o array de exercícios para remover propriedades undefined,
+            // Proxies ou referências circulares que o framer-motion possa ter injetado
+            const sanitizedExercises = JSON.parse(JSON.stringify(exercises));
+
             const workoutData = {
                 name: workoutName,
-                exercises: exercises,
+                exercises: sanitizedExercises,
                 updatedAt: serverTimestamp()
             };
 

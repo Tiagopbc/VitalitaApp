@@ -47,49 +47,49 @@ export function PwaUpdatePrompt() {
     };
 
     return (
-        <div className="fixed inset-x-4 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] z-[240] mx-auto max-w-md lg:bottom-6">
-            <div className={`rounded-3xl border p-4 shadow-2xl backdrop-blur-xl ${hasActiveWorkout
-                ? 'border-amber-400/35 bg-amber-950/80'
-                : 'border-cyan-400/35 bg-slate-950/90'
+        <div className="fixed inset-0 z-[240] flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm animate-in fade-in duration-200">
+            <div className={`w-full max-w-sm rounded-3xl border p-6 shadow-2xl animate-in zoom-in-95 duration-200 ${hasActiveWorkout
+                ? 'border-amber-400/35 bg-amber-950/95'
+                : 'border-cyan-400/35 bg-[#0f172a]'
             }`}>
-                <div className="mb-3 flex items-start gap-3">
-                    <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl ${hasActiveWorkout
-                        ? 'bg-amber-400/10 text-amber-200'
-                        : 'bg-cyan-400/10 text-cyan-200'
+                <div className="mb-5 flex flex-col items-center text-center">
+                    <div className={`mb-4 flex h-14 w-14 shrink-0 items-center justify-center rounded-full ${hasActiveWorkout
+                        ? 'bg-amber-400/10 text-amber-300'
+                        : 'bg-cyan-400/10 text-cyan-400'
                     }`}>
-                        {hasActiveWorkout ? <ShieldCheck size={20} /> : <RefreshCw size={20} />}
+                        {hasActiveWorkout ? <ShieldCheck size={28} /> : <RefreshCw size={28} />}
                     </div>
                     <div>
-                        <p className="text-sm font-bold text-white">
-                            {hasActiveWorkout ? 'Atualização aguardando' : 'Nova versão disponível'}
-                        </p>
-                        <p className="mt-1 text-xs leading-relaxed text-slate-300">
+                        <h3 className="text-lg font-bold text-white mb-2">
+                            {hasActiveWorkout ? 'Atualização Aguardando' : 'Nova Versão Disponível'}
+                        </h3>
+                        <p className="text-sm leading-relaxed text-slate-300">
                             {hasActiveWorkout
-                                ? 'Você está em treino ativo. A atualização fica bloqueada para evitar perda de dados.'
-                                : 'Atualize agora para carregar a versão mais recente do Vitalità.'
+                                ? 'Você está em um treino ativo. A atualização ficará bloqueada para evitar a perda dos seus dados atuais.'
+                                : 'Atualize agora para carregar a versão mais recente e com novas melhorias do Vitalità.'
                             }
                         </p>
                     </div>
                 </div>
 
-                <div className="flex gap-2">
+                <div className="flex flex-col gap-3">
                     <Button
                         variant={hasActiveWorkout ? 'secondary' : 'primary'}
-                        size="sm"
+                        size="md"
                         onClick={handleUpdate}
                         disabled={hasActiveWorkout}
-                        className="flex-1 rounded-xl"
-                        leftIcon={hasActiveWorkout ? <Wifi size={15} /> : <RefreshCw size={15} />}
+                        className="w-full rounded-xl"
+                        leftIcon={hasActiveWorkout ? <Wifi size={18} /> : <RefreshCw size={18} />}
                     >
-                        {hasActiveWorkout ? 'Após o treino' : 'Atualizar'}
+                        {hasActiveWorkout ? 'Atualizar Após o Treino' : 'Atualizar Agora'}
                     </Button>
                     <Button
                         variant="ghost"
-                        size="sm"
+                        size="md"
                         onClick={handleDismiss}
-                        className="rounded-xl text-slate-400"
+                        className="w-full rounded-xl text-slate-400 hover:text-white"
                     >
-                        Depois
+                        Lembrar Mais Tarde
                     </Button>
                 </div>
             </div>

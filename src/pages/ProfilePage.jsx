@@ -21,7 +21,8 @@ import {
     Zap,
     Crown,
     FileText,
-    ShieldCheck
+    ShieldCheck,
+    FileDown
 } from 'lucide-react';
 import { achievementsCatalog } from '../data/achievementsCatalog';
 import { evaluateAchievements, calculateStats, evaluateHistory } from '../utils/evaluateAchievements';
@@ -42,6 +43,7 @@ export default function ProfilePage({ user, onLogout, onNavigateToHistory, onNav
 
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
+    const [exportingData, setExportingData] = useState(false);
 
     // --- VINCULAÇÃO DE PERSONAL TRAINER ---
     const [showLinkTrainer, setShowLinkTrainer] = useState(false);
@@ -259,6 +261,23 @@ export default function ProfilePage({ user, onLogout, onNavigateToHistory, onNav
             toast.error("Erro ao salvar perfil.");
         } finally {
             setSaving(false);
+        }
+    };
+
+    const handleExportData = async () => {
+        if (!user?.uid || exportingData) return;
+
+        setExportingData(true);
+        try {
+            const { privacyExportService } = await import('../services/privacyExportService');
+            const exportPayload = await privacyExportService.buildUserDataExport(user);
+            const fileName = privacyExportService.downloadJson(exportPayload);
+            toast.success(`Exportação criada: ${fileName}`);
+        } catch (err) {
+            console.error('Error exporting user data:', err);
+            toast.error('Não foi possível exportar seus dados agora.');
+        } finally {
+            setExportingData(false);
         }
     };
 
@@ -713,7 +732,7 @@ export default function ProfilePage({ user, onLogout, onNavigateToHistory, onNav
                         ? `Consentimento registrado: Política v${privacyConsent.privacyVersion || PRIVACY_POLICY_VERSION} e Termos v${privacyConsent.termsVersion || TERMS_OF_USE_VERSION}.`
                         : `Esta conta é anterior ao registro de versão. Novos cadastros salvam Política v${PRIVACY_POLICY_VERSION} e Termos v${TERMS_OF_USE_VERSION}.`}
                 </p>
-                <div className="grid gap-3 sm:grid-cols-2">
+                <div className="grid gap-3 sm:grid-cols-3">
                     <a
                         href="/privacy"
                         className="inline-flex items-center justify-center gap-2 rounded-2xl border border-cyan-400/20 bg-cyan-400/5 px-4 py-3 text-xs font-bold uppercase tracking-widest text-cyan-300 transition-colors hover:border-cyan-300/50 hover:bg-cyan-400/10"
@@ -728,6 +747,16 @@ export default function ProfilePage({ user, onLogout, onNavigateToHistory, onNav
                         <FileText size={16} />
                         Termos
                     </a>
+                    <Button
+                        variant="outline-primary"
+                        size="sm"
+                        onClick={handleExportData}
+                        loading={exportingData}
+                        className="h-auto rounded-2xl px-4 py-3 text-xs"
+                        leftIcon={<FileDown size={16} />}
+                    >
+                        Exportar dados
+                    </Button>
                 </div>
             </div>
 
