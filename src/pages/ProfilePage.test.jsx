@@ -135,6 +135,18 @@ describe('ProfilePage Integration', () => {
         expect(screen.getByDisplayValue('Test User')).toBeInTheDocument();
     });
 
+    it('keeps the primary profile actions readable in a two-column row', async () => {
+        await renderProfile();
+
+        const actions = screen.getByTestId('profile-primary-actions');
+        const editButton = screen.getByRole('button', { name: /editar perfil/i });
+        const personalButton = screen.getByRole('button', { name: /^personal$/i });
+
+        expect(actions).toHaveClass('grid-cols-2');
+        expect(editButton).toHaveClass('w-full', 'whitespace-nowrap');
+        expect(personalButton).toHaveClass('w-full', 'whitespace-nowrap');
+    });
+
     it('updates profile data when form is submitted', async () => {
         await renderProfile();
         fireEvent.click(screen.getByRole('button', { name: /editar perfil/i }));

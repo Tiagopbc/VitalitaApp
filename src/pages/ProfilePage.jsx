@@ -20,6 +20,7 @@ import {
     Share2,
     Zap,
     Crown,
+    PencilLine,
     FileText,
     ShieldCheck,
     FileDown
@@ -319,16 +320,16 @@ export default function ProfilePage({ user, onLogout, onNavigateToHistory, onNav
         <div className="min-h-screen bg-slate-950 pb-48 px-4 pt-2 w-full max-w-3xl mx-auto lg:pb-32 lg:pt-6">
 
             {/* --- CARTÃO DE CABEÇALHO DO PERFIL --- */}
-            <div className="bg-slate-900/50 rounded-3xl p-6 mb-6 border border-slate-800 relative overflow-hidden">
+            <div className="bg-slate-900/50 rounded-3xl p-5 sm:p-6 mb-6 border border-slate-800 relative overflow-hidden">
                 {/* Brilho de Fundo */}
                 <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
 
 
 
-                <div className="flex gap-6 items-center relative z-10">
+                <div className="flex gap-4 sm:gap-6 items-center relative z-10">
                     {/* Grupo de Avatar (Esquerda) */}
                     <div className="relative shrink-0">
-                        <div className="w-24 h-24 rounded-full bg-linear-to-br from-[#2998FF] to-[#1E6BFF] flex items-center justify-center text-3xl shadow-xl shadow-blue-500/20 ring-4 ring-slate-900 z-10 relative">
+                        <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-linear-to-br from-[#2998FF] to-[#1E6BFF] flex items-center justify-center text-2xl sm:text-3xl shadow-xl shadow-blue-500/20 ring-4 ring-slate-900 z-10 relative">
                             {profile.displayName && profile.displayName.length > 0
                                 ? <span className="font-bold text-white">{profile.displayName.substring(0, 2).toUpperCase()}</span>
                                 : <User size={32} className="text-white" />
@@ -346,39 +347,41 @@ export default function ProfilePage({ user, onLogout, onNavigateToHistory, onNav
                     <div className="flex-1 min-w-0">
                         {/* Linha de Nome */}
                         <div className="flex items-center gap-3 mb-1">
-                            <h1 className="text-2xl font-bold text-white tracking-tight break-words leading-tight">{profile.displayName || 'Atleta'}</h1>
+                            <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight break-words leading-tight">{profile.displayName || 'Atleta'}</h1>
                         </div>
 
 
 
                         {/* Join Date */}
-                        <div className="flex items-center gap-2 text-slate-500 mb-4">
+                        <div className="flex items-center gap-2 text-slate-500">
                             <CalendarDays size={14} strokeWidth={2.5} />
                             <span className="text-xs">Membro desde {formattedJoinDate}</span>
                         </div>
-
-                        {/* Botões de Ação (Abaixo do info) */}
-                        {/* Botões de Ação (Abaixo do info) */}
-                        <div className="flex items-center gap-2">
-                            <Button
-                                variant="secondary"
-                                size="xs"
-                                onClick={() => setShowEditModal(true)}
-                                className="rounded-lg"
-                            >
-                                Editar Perfil
-                            </Button>
-                            <Button
-                                variant="outline-primary"
-                                size="xs"
-                                onClick={() => setShowLinkTrainer(true)}
-                                className="rounded-lg"
-                                leftIcon={<Users size={12} />}
-                            >
-                                Personal
-                            </Button>
-                        </div>
                     </div>
+                </div>
+
+                <div
+                    data-testid="profile-primary-actions"
+                    className="relative z-10 mt-5 grid grid-cols-2 gap-2"
+                >
+                    <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => setShowEditModal(true)}
+                        className="w-full rounded-xl px-3 text-[0.68rem] tracking-normal whitespace-nowrap"
+                        leftIcon={<PencilLine size={14} />}
+                    >
+                        Editar perfil
+                    </Button>
+                    <Button
+                        variant="outline-primary"
+                        size="sm"
+                        onClick={() => setShowLinkTrainer(true)}
+                        className="w-full rounded-xl px-3 text-[0.68rem] tracking-normal whitespace-nowrap"
+                        leftIcon={<Users size={14} />}
+                    >
+                        Personal
+                    </Button>
                 </div>
 
                 {/* Experience Bar */}

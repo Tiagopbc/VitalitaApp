@@ -554,7 +554,14 @@ export function WorkoutExecutionPage({ user }) {
     };
 
     return (
-        <div className={`min-h-screen bg-[#020617] text-slate-100 p-4 pb-40 font-sans selection:bg-cyan-500/30`}>
+        <div
+            data-testid="workout-execution-page"
+            data-focus-mode={focusMode ? 'true' : 'false'}
+            className={`min-h-screen bg-[#020617] text-slate-100 p-4 font-sans selection:bg-cyan-500/30 ${focusMode
+                ? 'pb-[calc(1rem+env(safe-area-inset-bottom))]'
+                : 'pb-40'
+                }`}
+        >
             {/* LOADER DE FINALIZAÇÃO DA SESSÃO */}
             {isFinishingSession && (
                 <div className="fixed inset-0 z-[300] flex flex-col items-center justify-center p-4 bg-[#020617]/95 backdrop-blur-xl animate-in fade-in duration-300 text-white">
@@ -906,7 +913,13 @@ export function WorkoutExecutionPage({ user }) {
 
                 {/* Footer Fim de Treino - Apenas mostra se o modal de finalização NÃO estiver visível */}
                 {!showFinishModal && (
-                    <div className="w-full mt-8 pb-[calc(6rem+env(safe-area-inset-bottom))] lg:pb-[calc(2rem+env(safe-area-inset-bottom))]">
+                    <div
+                        data-testid="workout-finish-footer"
+                        className={`w-full ${focusMode
+                            ? 'mt-5 pb-[calc(1rem+env(safe-area-inset-bottom))]'
+                            : 'mt-8 pb-[calc(6rem+env(safe-area-inset-bottom))] lg:pb-[calc(2rem+env(safe-area-inset-bottom))]'
+                            }`}
+                    >
                         <div className="max-w-2xl mx-auto flex justify-center">
                             <div className="space-y-4 w-full flex flex-col items-center px-4">
                                 <Button
