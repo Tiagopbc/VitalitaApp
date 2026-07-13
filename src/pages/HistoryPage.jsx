@@ -10,6 +10,7 @@ import { EmptyState } from '../components/design-system/EmptyState';
 import { PageHeader } from '../components/design-system/PageHeader';
 import { SESSION_LIMITS, workoutService } from '../services/workoutService';
 import { getJournalWindowConfig, recordJournalRenderMetric } from '../utils/performanceTuning';
+import { sortWorkoutTemplates } from '../utils/workoutTemplateOrder';
 
 import { Button } from '../components/design-system/Button';
 const HistoryAnalyticsSection = React.lazy(() => import('../components/history/HistoryAnalyticsSection').then(module => ({ default: module.HistoryAnalyticsSection })));
@@ -307,11 +308,12 @@ function HistoryPage({ user, isEmbedded = false }) {
 
             setLoadingTemplates(true);
             try {
-                const list = await workoutService.getTemplates(user.uid);
+                const list = sortWorkoutTemplates(await workoutService.getTemplates(user.uid));
                 setTemplates(list);
 
                 if (list.length > 0 && !selectedTemplate) {
-                    let defaultTemplateName = list[0].name;
+                    const firstActiveTemplate = list.find(template => !template.isArchived);
+                    let defaultTemplateName = firstActiveTemplate?.name || list[0].name;
                     if (initialTemplate) {
                         const found = list.find((t) => t.name === initialTemplate);
                         if (found) defaultTemplateName = found.name;

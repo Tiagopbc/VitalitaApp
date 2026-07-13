@@ -6,7 +6,8 @@ import { workoutService } from '../services/workoutService';
 
 vi.mock('../services/workoutService', () => ({
     workoutService: {
-        getTemplates: vi.fn()
+        getTemplates: vi.fn(),
+        saveTemplateOrder: vi.fn()
     }
 }));
 
@@ -51,7 +52,8 @@ describe('WorkoutsPage', () => {
             muscleGroups: ['Peito'],
             lastPerformed: { toDate: () => new Date('2024-01-02') },
             createdBy: 'user123',
-            assignedByTrainer: false
+            assignedByTrainer: false,
+            displayOrder: 0
         },
         {
             id: 'w2',
@@ -60,7 +62,8 @@ describe('WorkoutsPage', () => {
             muscleGroups: ['Costas'],
             lastPerformed: { toDate: () => new Date('2024-01-01') },
             createdBy: 'trainer-1',
-            assignedByTrainer: true
+            assignedByTrainer: true,
+            displayOrder: 1
         }
     ];
 
@@ -127,7 +130,22 @@ describe('WorkoutsPage', () => {
     it('calls onNavigateToCreate when clicking Novo Treino', async () => {
         const { onNavigateToCreate } = await renderPage();
 
-        fireEvent.click(screen.getByText('Novo Treino'));
+        fireEvent.click(screen.getByText('Novo'));
         expect(onNavigateToCreate).toHaveBeenCalledWith(null, { targetUserId: 'user123' });
+    });
+
+    it('lets the user move an active workout and persists the new order', async () => {
+        workoutService.saveTemplateOrder.mockResolvedValue(undefined);
+        await renderPage();
+
+        fireEvent.click(screen.getByRole('button', { name: 'Ordem' }));
+        fireEvent.click(screen.getByRole('button', { name: 'Mover Treino Peito para baixo' }));
+
+        await waitFor(() => {
+            expect(workoutService.saveTemplateOrder).toHaveBeenCalledWith([
+                expect.objectContaining({ id: 'w2', displayOrder: 0 }),
+                expect.objectContaining({ id: 'w1', displayOrder: 1 })
+            ]);
+        });
     });
 });

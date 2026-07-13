@@ -18,7 +18,11 @@ import {
     Trash2,
     Archive,
     ArchiveRestore,
-    Activity
+    Activity,
+    ArrowDown,
+    ArrowUp,
+    Check,
+    ListOrdered
 } from 'lucide-react';
 
 import { RippleButton } from '../components/design-system/RippleButton';
@@ -28,6 +32,7 @@ import { PageHeader } from '../components/design-system/PageHeader';
 import { PremiumCard } from '../components/design-system/PremiumCard';
 import { AddCardioModal } from '../components/AddCardioModal';
 import { ConfirmDialog } from '../components/design-system/ConfirmDialog';
+import { normalizeActiveWorkoutOrder, sortWorkoutTemplates } from '../utils/workoutTemplateOrder';
 import { toast } from 'sonner';
 const ExerciseCard = React.lazy(() => import('../components/workout/ExerciseCard').then(module => ({ default: module.ExerciseCard })));
 const EditExerciseModal = React.lazy(() => import('../components/workout/EditExerciseModal').then(module => ({ default: module.EditExerciseModal })));
@@ -50,6 +55,8 @@ export default function WorkoutsPage({ onNavigateToCreate, onNavigateToWorkout, 
     const [isAddCardioOpen, setIsAddCardioOpen] = useState(false);
     const [workoutPendingDelete, setWorkoutPendingDelete] = useState(null);
     const [deletingWorkout, setDeletingWorkout] = useState(false);
+    const [isOrganizing, setIsOrganizing] = useState(false);
+    const [savingOrder, setSavingOrder] = useState(false);
     
     useEffect(() => {
         async function fetchWorkouts() {
@@ -74,7 +81,8 @@ export default function WorkoutsPage({ onNavigateToCreate, onNavigateToWorkout, 
                     createdBy: data.createdBy,
                     assignedByTrainer: data.assignedByTrainer,
                     completedToday: false,
-                    isArchived: !!data.isArchived
+                    isArchived: !!data.isArchived,
+                    displayOrder: Number.isInteger(data.displayOrder) ? data.displayOrder : null
                 }));
 
                 setWorkouts(formattedWorkouts);
@@ -99,7 +107,7 @@ export default function WorkoutsPage({ onNavigateToCreate, onNavigateToWorkout, 
 
 
     // --- FILTER LOGIC ---
-    const filteredWorkouts = workouts.filter(workout => {
+    const filteredWorkouts = sortWorkoutTemplates(workouts.filter(workout => {
         // 1. Search
         const matchesSearch = workout.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
             (workout.muscleGroups && workout.muscleGroups.some(g => g.toLowerCase().includes(searchQuery.toLowerCase())));
@@ -122,16 +130,67 @@ export default function WorkoutsPage({ onNavigateToCreate, onNavigateToWorkout, 
         }
 
         return matchesSearch && matchesSource;
-    }).sort((a, b) => {
-        // Default sort by recent
-        if (!a.lastPerformedDate) return 1;
-        if (!b.lastPerformedDate) return -1;
-        return new Date(b.lastPerformedDate) - new Date(a.lastPerformedDate);
-    });
+    }));
 
     // --- ACTIONS ---
     const handleCardClick = (id, name) => {
+        if (isOrganizing) return;
         onNavigateToWorkout(id, name);
+    };
+
+    const toggleOrganizing = () => {
+        setIsOrganizing(current => {
+            const next = !current;
+            if (next) {
+                setSourceFilter('all');
+                setSearchQuery('');
+                setSelectedWorkout(null);
+                setActiveCardMenu(null);
+            }
+            return next;
+        });
+    };
+
+    const moveWorkout = async (workoutId, direction) => {
+        if (savingOrder) return;
+
+        const activeWorkouts = normalizeActiveWorkoutOrder(workouts);
+        const currentIndex = activeWorkouts.findIndex(workout => workout.id === workoutId);
+        const targetIndex = currentIndex + direction;
+        if (currentIndex < 0 || targetIndex < 0 || targetIndex >= activeWorkouts.length) return;
+
+        const reordered = [...activeWorkouts];
+        const [movedWorkout] = reordered.splice(currentIndex, 1);
+        reordered.splice(targetIndex, 0, movedWorkout);
+        const normalized = reordered.map((workout, displayOrder) => ({ ...workout, displayOrder }));
+        const orderById = new Map(normalized.map(workout => [workout.id, workout]));
+
+        setWorkouts(current => current.map(workout => orderById.get(workout.id) || workout));
+        setSavingOrder(true);
+
+        try {
+            const { workoutService } = await import('../services/workoutService');
+            await workoutService.saveTemplateOrder(normalized);
+        } catch (error) {
+            console.error('Erro ao salvar ordem dos treinos:', error);
+            toast.error('Não foi possível salvar a nova ordem.');
+
+            try {
+                const { workoutService } = await import('../services/workoutService');
+                const freshWorkouts = await workoutService.getTemplates(user.uid, true);
+                const freshById = new Map(freshWorkouts.map(workout => [workout.id, workout]));
+                setWorkouts(current => current.map(workout => {
+                    const fresh = freshById.get(workout.id);
+                    return fresh
+                        ? { ...workout, displayOrder: Number.isInteger(fresh.displayOrder) ? fresh.displayOrder : null }
+                        : workout;
+                }));
+            } catch (refreshError) {
+                console.error('Erro ao restaurar ordem dos treinos:', refreshError);
+            }
+        } finally {
+            setSavingOrder(false);
+        }
     };
 
     const handleMenuAction = async (e, action, workout) => {
@@ -148,7 +207,8 @@ export default function WorkoutsPage({ onNavigateToCreate, onNavigateToWorkout, 
                 estimatedDuration: workout.duration,
                 userId: user.uid,
                 createdBy: user.uid,
-                assignedByTrainer: false
+                assignedByTrainer: false,
+                displayOrder: workouts.filter(workout => !workout.isArchived).length
             };
 
             try {
@@ -179,7 +239,9 @@ export default function WorkoutsPage({ onNavigateToCreate, onNavigateToWorkout, 
                         category: newWorkoutData.category || 'fullbody',
                         createdBy: user.uid,
                         assignedByTrainer: false,
-                        completedToday: false
+                        completedToday: false,
+                        isArchived: false,
+                        displayOrder: newWorkoutData.displayOrder
                     },
                     ...prev
                 ]));
@@ -250,26 +312,43 @@ export default function WorkoutsPage({ onNavigateToCreate, onNavigateToWorkout, 
                         title="Meus Treinos"
                         description="Gerencie suas fichas, modelos do personal e treinos arquivados."
                         icon={<Dumbbell size={22} />}
-                        action={(
+                        action={isOrganizing ? (
+                            <Button
+                                size="sm"
+                                onClick={toggleOrganizing}
+                                disabled={savingOrder}
+                                className="w-full rounded-xl sm:w-auto"
+                                leftIcon={<Check size={16} />}
+                            >
+                                Concluir
+                            </Button>
+                        ) : (
                             <div className="flex w-full gap-2 sm:w-auto">
                                 <Button
                                     variant="secondary"
                                     size="sm"
                                     onClick={() => setIsAddCardioOpen(true)}
-                                    className="flex-1 rounded-xl sm:flex-none"
+                                    className="flex-1 rounded-xl px-2 sm:flex-none sm:px-4"
                                     leftIcon={<Activity size={16} />}
                                 >
-                                    <span className="hidden sm:inline">Cardio</span>
-                                    <span className="sm:hidden">Cardio</span>
+                                    Cardio
+                                </Button>
+                                <Button
+                                    variant="secondary"
+                                    size="sm"
+                                    onClick={toggleOrganizing}
+                                    className="flex-1 rounded-xl px-2 sm:flex-none sm:px-4"
+                                    leftIcon={<ListOrdered size={16} />}
+                                >
+                                    Ordem
                                 </Button>
                                 <Button
                                     size="sm"
                                     onClick={() => onNavigateToCreate(null, { targetUserId: user.uid })}
-                                    className="flex-1 rounded-xl sm:flex-none"
+                                    className="flex-1 rounded-xl px-2 sm:flex-none sm:px-4"
                                     leftIcon={<Plus size={16} />}
                                 >
-                                    <span className="hidden sm:inline">Novo Treino</span>
-                                    <span className="sm:hidden">Novo</span>
+                                    Novo
                                 </Button>
                             </div>
                         )}
@@ -280,13 +359,13 @@ export default function WorkoutsPage({ onNavigateToCreate, onNavigateToWorkout, 
 
 
                 {/* New: Source Tabs - Hide if Trainer Mode (since trainer sees all relevant) */}
-                {!isTrainerMode && (
-                    <div className="flex p-1 bg-slate-900/50 rounded-xl mb-6 border border-slate-800 backdrop-blur-sm overflow-x-auto no-scrollbar">
+                {!isTrainerMode && !isOrganizing && (
+                    <div className="grid grid-cols-2 gap-1 p-1 bg-slate-900/50 rounded-xl mb-6 border border-slate-800 backdrop-blur-sm sm:grid-cols-4">
                         {['all', 'meus', 'personal', 'arquivados'].map((filter) => (
                             <button
                                 key={filter}
                                 onClick={() => setSourceFilter(filter)}
-                                className={`flex-1 py-2 px-4 rounded-lg text-sm font-semibold transition-all duration-300 whitespace-nowrap ${sourceFilter === filter
+                                className={`min-w-0 py-2 px-2 rounded-lg text-sm font-semibold transition-colors duration-200 whitespace-nowrap ${sourceFilter === filter
                                     ? 'bg-cyan-500 text-black shadow-lg shadow-cyan-500/20'
                                     : 'text-slate-400 hover:text-white hover:bg-slate-800'
                                     }`}
@@ -297,19 +376,30 @@ export default function WorkoutsPage({ onNavigateToCreate, onNavigateToWorkout, 
                     </div>
                 )}
 
-                {/* Search Bar */}
-                <PremiumCard className="p-0">
-                    <div className="relative">
-                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={20} />
-                        <input
-                            type="text"
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            placeholder="Buscar por nome ou músculo..."
-                            className="w-full pl-12 pr-4 py-4 bg-transparent border-none text-white placeholder:text-slate-500 focus:ring-1 focus:ring-cyan-500 rounded-xl transition-all"
-                        />
+                {isOrganizing ? (
+                    <div className="flex min-h-14 items-center justify-between gap-3 rounded-xl border border-cyan-500/25 bg-cyan-500/5 px-4 py-3">
+                        <div className="flex min-w-0 items-center gap-3 text-cyan-300">
+                            <ListOrdered size={20} className="shrink-0" />
+                            <span className="truncate text-sm font-semibold">Ordem dos treinos ativos</span>
+                        </div>
+                        <span className="shrink-0 text-xs font-medium text-slate-500">
+                            {savingOrder ? 'Salvando...' : `${filteredWorkouts.length} treinos`}
+                        </span>
                     </div>
-                </PremiumCard>
+                ) : (
+                    <PremiumCard className="p-0">
+                        <div className="relative">
+                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={20} />
+                            <input
+                                type="text"
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                placeholder="Buscar por nome ou músculo..."
+                                className="w-full pl-12 pr-4 py-4 bg-transparent border-none text-white placeholder:text-slate-500 focus:ring-1 focus:ring-cyan-500 rounded-xl transition-colors"
+                            />
+                        </div>
+                    </PremiumCard>
+                )}
             </div>
 
 
@@ -352,43 +442,73 @@ export default function WorkoutsPage({ onNavigateToCreate, onNavigateToWorkout, 
                                     </div>
                                 </div>
 
-                                {/* Menu */}
-                                <div className="relative">
-                                    <RippleButton
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            setActiveCardMenu(activeCardMenu === workout.id ? null : workout.id);
-                                        }}
-                                        className="p-2 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition-colors card-menu-btn"
-                                    >
-                                        <MoreVertical size={20} />
-                                    </RippleButton>
+                                {/* Menu / order controls */}
+                                {isOrganizing ? (
+                                    <div className="flex shrink-0 flex-col gap-1">
+                                        <RippleButton
+                                            aria-label={`Mover ${workout.name} para cima`}
+                                            title="Mover para cima"
+                                            disabled={idx === 0 || savingOrder}
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                void moveWorkout(workout.id, -1);
+                                            }}
+                                            className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-700 bg-slate-800/70 text-slate-300 disabled:cursor-not-allowed disabled:opacity-25"
+                                        >
+                                            <ArrowUp size={18} />
+                                        </RippleButton>
+                                        <RippleButton
+                                            aria-label={`Mover ${workout.name} para baixo`}
+                                            title="Mover para baixo"
+                                            disabled={idx === filteredWorkouts.length - 1 || savingOrder}
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                void moveWorkout(workout.id, 1);
+                                            }}
+                                            className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-700 bg-slate-800/70 text-slate-300 disabled:cursor-not-allowed disabled:opacity-25"
+                                        >
+                                            <ArrowDown size={18} />
+                                        </RippleButton>
+                                    </div>
+                                ) : (
+                                    <div className="relative">
+                                        <RippleButton
+                                            aria-label={`Abrir opções de ${workout.name}`}
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setActiveCardMenu(activeCardMenu === workout.id ? null : workout.id);
+                                            }}
+                                            className="p-2 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition-colors card-menu-btn"
+                                        >
+                                            <MoreVertical size={20} />
+                                        </RippleButton>
 
-                                    {/* Dropdown */}
-                                    {activeCardMenu === workout.id && (
-                                        <>
-                                            <div className="fixed inset-0 z-10" onClick={(e) => { e.stopPropagation(); setActiveCardMenu(null); }} />
-                                            <div 
-                                                className="absolute right-0 top-full mt-2 w-48 bg-slate-900/95 backdrop-blur-xl border border-slate-700 rounded-xl shadow-2xl z-20 overflow-hidden card-menu-dropdown" 
-                                                onClick={(e) => e.stopPropagation()}
-                                                onMouseDown={(e) => e.stopPropagation()}
-                                                onTouchStart={(e) => e.stopPropagation()}
-                                            >
-                                                <button onClick={(e) => handleMenuAction(e, 'edit', workout)} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-slate-300 hover:bg-slate-800 hover:text-cyan-400"><Edit2 size={16} /> Editar</button>
-                                                <button onClick={(e) => handleMenuAction(e, 'duplicate', workout)} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-slate-300 hover:bg-slate-800 hover:text-white"><Copy size={16} /> Duplicar</button>
-                                                
-                                                {workout.isArchived ? (
-                                                    <button onClick={(e) => handleMenuAction(e, 'unarchive', workout)} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-slate-300 hover:bg-slate-800 hover:text-white"><ArchiveRestore size={16} /> Desarquivar</button>
-                                                ) : (
-                                                    <button onClick={(e) => handleMenuAction(e, 'archive', workout)} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-slate-300 hover:bg-slate-800 hover:text-white"><Archive size={16} /> Arquivar</button>
-                                                )}
+                                        {/* Dropdown */}
+                                        {activeCardMenu === workout.id && (
+                                            <>
+                                                <div className="fixed inset-0 z-10" onClick={(e) => { e.stopPropagation(); setActiveCardMenu(null); }} />
+                                                <div
+                                                    className="absolute right-0 top-full mt-2 w-48 bg-slate-900/95 backdrop-blur-xl border border-slate-700 rounded-xl shadow-2xl z-20 overflow-hidden card-menu-dropdown"
+                                                    onClick={(e) => e.stopPropagation()}
+                                                    onMouseDown={(e) => e.stopPropagation()}
+                                                    onTouchStart={(e) => e.stopPropagation()}
+                                                >
+                                                    <button onClick={(e) => handleMenuAction(e, 'edit', workout)} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-slate-300 hover:bg-slate-800 hover:text-cyan-400"><Edit2 size={16} /> Editar</button>
+                                                    <button onClick={(e) => handleMenuAction(e, 'duplicate', workout)} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-slate-300 hover:bg-slate-800 hover:text-white"><Copy size={16} /> Duplicar</button>
 
-                                                <div className="h-px bg-slate-800" />
-                                                <button onClick={(e) => handleMenuAction(e, 'delete', workout)} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-400 hover:bg-red-500/10"><Trash2 size={16} /> Excluir</button>
-                                            </div>
-                                        </>
-                                    )}
-                                </div>
+                                                    {workout.isArchived ? (
+                                                        <button onClick={(e) => handleMenuAction(e, 'unarchive', workout)} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-slate-300 hover:bg-slate-800 hover:text-white"><ArchiveRestore size={16} /> Desarquivar</button>
+                                                    ) : (
+                                                        <button onClick={(e) => handleMenuAction(e, 'archive', workout)} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-slate-300 hover:bg-slate-800 hover:text-white"><Archive size={16} /> Arquivar</button>
+                                                    )}
+
+                                                    <div className="h-px bg-slate-800" />
+                                                    <button onClick={(e) => handleMenuAction(e, 'delete', workout)} className="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-400 hover:bg-red-500/10"><Trash2 size={16} /> Excluir</button>
+                                                </div>
+                                            </>
+                                        )}
+                                    </div>
+                                )}
                             </div>
 
                             {/* --- Stats Line --- */}
@@ -401,28 +521,35 @@ export default function WorkoutsPage({ onNavigateToCreate, onNavigateToWorkout, 
                             </div>
 
                             {/* --- Actions --- */}
-                            <div className="flex gap-3">
-                                <RippleButton
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        setSelectedWorkout(selectedWorkout === workout.id ? null : workout.id);
-                                    }}
-                                    className="flex-1 py-3 bg-slate-800 hover:bg-slate-700 rounded-xl text-white text-xs font-bold transition-colors"
-                                >
-                                    {selectedWorkout === workout.id ? 'Ocultar' : 'Ver Exercícios'}
-                                </RippleButton>
+                            {isOrganizing ? (
+                                <div className="flex items-center justify-between rounded-xl border border-slate-800 bg-slate-950/45 px-4 py-3">
+                                    <span className="text-xs font-bold uppercase tracking-widest text-slate-500">Posição</span>
+                                    <span className="text-sm font-bold text-cyan-300">{idx + 1}</span>
+                                </div>
+                            ) : (
+                                <div className="flex gap-3">
+                                    <RippleButton
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setSelectedWorkout(selectedWorkout === workout.id ? null : workout.id);
+                                        }}
+                                        className="flex-1 py-3 bg-slate-800 hover:bg-slate-700 rounded-xl text-white text-xs font-bold transition-colors"
+                                    >
+                                        {selectedWorkout === workout.id ? 'Ocultar' : 'Ver Exercícios'}
+                                    </RippleButton>
 
-                                <RippleButton
-                                    onClick={() => handleCardClick(workout.id, workout.name)}
-                                    className="flex-1 py-3 bg-linear-to-r from-cyan-500 to-blue-600 hover:to-blue-500 rounded-xl text-white text-xs font-bold shadow-lg shadow-cyan-500/20 flex items-center justify-center gap-2"
-                                >
-                                    <Play size={14} fill="currentColor" /> INICIAR
-                                </RippleButton>
-                            </div>
+                                    <RippleButton
+                                        onClick={() => handleCardClick(workout.id, workout.name)}
+                                        className="flex-1 py-3 bg-linear-to-r from-cyan-500 to-blue-600 hover:to-blue-500 rounded-xl text-white text-xs font-bold shadow-lg shadow-cyan-500/20 flex items-center justify-center gap-2"
+                                    >
+                                        <Play size={14} fill="currentColor" /> INICIAR
+                                    </RippleButton>
+                                </div>
+                            )}
 
                             {/* --- Expandable List (Accordion) --- */}
                             <AnimatePresence>
-                                {selectedWorkout === workout.id && (
+                                {!isOrganizing && selectedWorkout === workout.id && (
                                     <motion.div
                                         initial={{ height: 0, opacity: 0 }}
                                         animate={{ height: 'auto', opacity: 1 }}

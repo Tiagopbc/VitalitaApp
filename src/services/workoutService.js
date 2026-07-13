@@ -1,4 +1,5 @@
 import { getFirestoreDeps } from '../firebaseDb';
+import { sortWorkoutTemplates } from '../utils/workoutTemplateOrder';
 
 const TEMPLATES_COLLECTION = 'workout_templates';
 const SESSIONS_COLLECTION = 'workout_sessions';
@@ -94,17 +95,16 @@ export const workoutService = {
                 ...doc.data()
             }));
 
-            // Client-side sort
-            list.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+            const sorted = sortWorkoutTemplates(list);
 
             // Atualizar Cache
             templatesCache = {
                 userId,
-                data: list,
+                data: sorted,
                 timestamp: now
             };
 
-            return list;
+            return sorted;
         } catch (error) {
             console.error("Error fetching templates:", error);
             await showToastError("Erro ao carregar treinos. Verifique sua conexão.");
@@ -148,7 +148,7 @@ export const workoutService = {
                 ...doc.data()
             }));
 
-            const sorted = list.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+            const sorted = sortWorkoutTemplates(list);
 
             // Também atualizar cache silenciosamente para mantê-lo fresco
             templatesCache = {
@@ -167,6 +167,21 @@ export const workoutService = {
      * Limpar Cache de Templates (ex: após criar novo treino)
      */
     clearCache() {
+        templatesCache = { userId: null, data: null, timestamp: 0 };
+    },
+
+    async saveTemplateOrder(templates) {
+        const orderedTemplates = templates.filter(template => template?.id);
+        if (orderedTemplates.length === 0) return;
+
+        const { db, doc, writeBatch } = await getFirestoreDeps();
+        const batch = writeBatch(db);
+
+        orderedTemplates.forEach((template, displayOrder) => {
+            batch.update(doc(db, TEMPLATES_COLLECTION, template.id), { displayOrder });
+        });
+
+        await batch.commit();
         templatesCache = { userId: null, data: null, timestamp: 0 };
     },
 

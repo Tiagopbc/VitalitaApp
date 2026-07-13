@@ -85,6 +85,7 @@ service cloud.firestore {
         'muscleGroups',
         'isFavorite',
         'isArchived',
+        'displayOrder',
         'lastPerformed',
         'timesPerformed'
       ];
@@ -100,6 +101,7 @@ service cloud.firestore {
         'muscleGroups',
         'isFavorite',
         'isArchived',
+        'displayOrder',
         'lastPerformed',
         'timesPerformed'
       ];
@@ -112,6 +114,8 @@ service cloud.firestore {
         && request.resource.data.createdBy is string
         && request.resource.data.name is string
         && request.resource.data.exercises is list
+        && (!request.resource.data.keys().hasAny(['displayOrder'])
+          || (request.resource.data.displayOrder is int && request.resource.data.displayOrder >= 0))
         && request.resource.data.createdBy == request.auth.uid
         && (
           request.resource.data.userId == request.auth.uid
@@ -121,6 +125,8 @@ service cloud.firestore {
 
     function validTemplateUpdate() {
       return request.resource.data.userId == resource.data.userId
+        && (!request.resource.data.keys().hasAny(['displayOrder'])
+          || (request.resource.data.displayOrder is int && request.resource.data.displayOrder >= 0))
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(templateMutableFields());
     }
 
