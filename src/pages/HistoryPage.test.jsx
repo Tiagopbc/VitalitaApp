@@ -71,6 +71,38 @@ describe('HistoryPage', () => {
         expect(screen.getByText('Evolução')).toBeInTheDocument();
     });
 
+    it('contains long mobile filters without expanding the page width', async () => {
+        workoutService.getTemplates.mockResolvedValue([
+            {
+                id: 'long-template',
+                name: 'Treino A (Costas, Bíceps e Abdômen)',
+                exercises: [{ name: 'Puxada pela frente pronada + puxada pegada supinada (Bi-set)' }]
+            }
+        ]);
+
+        render(<HistoryPage user={mockUser} />);
+
+        await waitFor(() => {
+            expect(screen.getAllByRole('combobox')).toHaveLength(2);
+        });
+
+        expect(screen.getByTestId('history-page')).toHaveClass(
+            'w-full',
+            'min-w-0',
+            'max-w-full',
+            'overflow-x-clip'
+        );
+        expect(screen.getByTestId('history-analytics-section')).toHaveClass(
+            'min-w-0',
+            'max-w-full',
+            'overflow-x-clip'
+        );
+
+        screen.getAllByRole('combobox').forEach((select) => {
+            expect(select).toHaveClass('w-full', 'min-w-0', 'max-w-full', 'overflow-hidden');
+        });
+    });
+
     it('selects the first ordered active workout instead of an archived workout', async () => {
         workoutService.getTemplates.mockResolvedValue([
             { id: 'archived', name: 'Treino 1 Antigo', isArchived: true, displayOrder: 0, exercises: [] },

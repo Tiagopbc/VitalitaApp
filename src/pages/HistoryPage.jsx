@@ -526,7 +526,10 @@ function HistoryPage({ user, isEmbedded = false }) {
     }, [selectedTemplate, selectedExercise, user, activeTab, chartRange, searchMode, globalSearchTerm, selectedGlobalExercises, globalSessionsCache]);
 
     return (
-        <div className="min-h-screen bg-[#020617] pb-48 lg:pb-32">
+        <div
+            data-testid="history-page"
+            className="min-h-screen w-full min-w-0 max-w-full overflow-x-clip bg-[#020617] pb-48 lg:pb-32"
+        >
             {/* --- CABEÇALHO --- */}
             <div className="sticky top-0 z-40 bg-[#020617]/95 backdrop-blur-md pt-2 pb-4 lg:pt-[calc(1.5rem+env(safe-area-inset-top))]">
                 <div className="w-full max-w-5xl mx-auto px-4 space-y-4">
@@ -565,7 +568,7 @@ function HistoryPage({ user, isEmbedded = false }) {
                 </div>
             </div>
 
-            <div className="px-4 py-6 w-full max-w-5xl mx-auto">
+            <div className="mx-auto w-full min-w-0 max-w-5xl px-4 py-6">
                 {/* === VISÃO DE DIÁRIO === */}
                 {activeTab === 'journal' && (
                     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">

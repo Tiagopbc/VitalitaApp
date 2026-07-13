@@ -37,7 +37,10 @@ export function HistoryAnalyticsSection({
     }, [allUserExercises, globalSearchTerm]);
 
     return (
-        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <div
+            data-testid="history-analytics-section"
+            className="w-full min-w-0 max-w-full space-y-6 overflow-x-clip animate-in fade-in slide-in-from-bottom-4 duration-500"
+        >
             {loadingTemplates ? (
                 <div className="py-20 text-center">
                     <Activity className="animate-spin w-8 h-8 text-cyan-500 mx-auto mb-4" />
@@ -46,7 +49,7 @@ export function HistoryAnalyticsSection({
             ) : (
                 <>
                     {/* Filtros */}
-                    <div className="space-y-4 bg-slate-900/50 p-4 rounded-2xl border border-slate-800/50">
+                    <div className="w-full min-w-0 max-w-full space-y-4 overflow-hidden rounded-2xl border border-slate-800/50 bg-slate-900/50 p-4">
                         {/* Toggle de Modo de Busca */}
                         <div className="flex bg-slate-950 rounded-xl p-1 border border-slate-800/80">
                             <button
@@ -72,43 +75,47 @@ export function HistoryAnalyticsSection({
                         </div>
 
                         {searchMode === 'template' ? (
-                            <div className="space-y-3 animate-in fade-in zoom-in-95 duration-300">
+                            <div className="min-w-0 max-w-full space-y-3 animate-in fade-in zoom-in-95 duration-300">
                                 <div className="flex flex-col gap-1.5">
                                     <label className="text-xs font-bold text-slate-400 uppercase ml-1">Rotina</label>
-                                    <select
-                                        value={selectedTemplate}
-                                        onChange={(e) => onTemplateChange(e.target.value)}
-                                        className="w-full bg-slate-950 text-white border border-slate-800 rounded-xl px-4 py-3 appearance-none focus:border-cyan-500 outline-none transition-colors"
-                                    >
-                                        <option value="" disabled>Selecione um treino...</option>
-                                        <optgroup label="Treinos Ativos">
-                                            {templates.filter(t => !t.isArchived).map(t => (
-                                                <option key={t.id} value={t.name}>{t.name}</option>
-                                            ))}
-                                        </optgroup>
-                                        {templates.some(t => t.isArchived) && (
-                                            <optgroup label="Treinos Arquivados">
-                                                {templates.filter(t => t.isArchived).map(t => (
+                                    <div className="min-w-0 max-w-full overflow-hidden rounded-xl [contain:inline-size]">
+                                        <select
+                                            value={selectedTemplate}
+                                            onChange={(e) => onTemplateChange(e.target.value)}
+                                            className="block w-full min-w-0 max-w-full truncate overflow-hidden rounded-xl border border-slate-800 bg-slate-950 px-4 py-3 text-base text-white outline-none transition-colors focus:border-cyan-500"
+                                        >
+                                            <option value="" disabled>Selecione um treino...</option>
+                                            <optgroup label="Treinos Ativos">
+                                                {templates.filter(t => !t.isArchived).map(t => (
                                                     <option key={t.id} value={t.name}>{t.name}</option>
                                                 ))}
                                             </optgroup>
-                                        )}
-                                    </select>
+                                            {templates.some(t => t.isArchived) && (
+                                                <optgroup label="Treinos Arquivados">
+                                                    {templates.filter(t => t.isArchived).map(t => (
+                                                        <option key={t.id} value={t.name}>{t.name}</option>
+                                                    ))}
+                                                </optgroup>
+                                            )}
+                                        </select>
+                                    </div>
                                 </div>
 
                                 <div className="flex flex-col gap-1.5">
                                     <label className="text-xs font-bold text-slate-400 uppercase ml-1">Exercício</label>
-                                    <select
-                                        value={selectedExercise}
-                                        onChange={(e) => onExerciseChange(e.target.value)}
-                                        disabled={!selectedTemplate}
-                                        className="w-full bg-slate-950 text-white border border-slate-800 rounded-xl px-4 py-3 appearance-none focus:border-cyan-500 outline-none transition-colors disabled:opacity-50"
-                                    >
-                                        <option value="" disabled>Selecione...</option>
-                                        {exerciseOptions.map(opt => (
-                                            <option key={opt} value={opt}>{opt}</option>
-                                        ))}
-                                    </select>
+                                    <div className="min-w-0 max-w-full overflow-hidden rounded-xl [contain:inline-size]">
+                                        <select
+                                            value={selectedExercise}
+                                            onChange={(e) => onExerciseChange(e.target.value)}
+                                            disabled={!selectedTemplate}
+                                            className="block w-full min-w-0 max-w-full truncate overflow-hidden rounded-xl border border-slate-800 bg-slate-950 px-4 py-3 text-base text-white outline-none transition-colors focus:border-cyan-500 disabled:opacity-50"
+                                        >
+                                            <option value="" disabled>Selecione...</option>
+                                            {exerciseOptions.map(opt => (
+                                                <option key={opt} value={opt}>{opt}</option>
+                                            ))}
+                                        </select>
+                                    </div>
                                 </div>
                             </div>
                         ) : (
@@ -168,9 +175,9 @@ export function HistoryAnalyticsSection({
                     {((searchMode === 'template' && selectedTemplate && selectedExercise) || 
                       (searchMode === 'global' && selectedGlobalExercises.length > 0)) && (
                         <div className="space-y-3">
-                            <div className="flex justify-between items-center px-1">
+                            <div className="flex min-w-0 flex-wrap items-center justify-between gap-2 px-1">
                                 <h3 className="font-bold text-slate-400 uppercase tracking-wide text-xs">Evolução de Carga</h3>
-                                <div className="flex gap-1 bg-slate-900/50 p-1 rounded-lg border border-slate-800">
+                                <div className="flex max-w-full shrink-0 gap-1 rounded-lg border border-slate-800 bg-slate-900/50 p-1">
                                     {['1M', '3M', '6M', '1Y', 'ALL'].map(range => (
                                         <button
                                             key={range}
