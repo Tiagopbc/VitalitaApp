@@ -164,6 +164,14 @@ describe('firestore.rules', () => {
             updatedAt: Timestamp.now()
         }));
 
+        await assertSucceeds(updateDoc(doc(authedDb('student-1'), 'workout_templates/template-1'), {
+            displayOrder: 0
+        }));
+
+        await assertFails(updateDoc(doc(authedDb('student-1'), 'workout_templates/template-1'), {
+            displayOrder: -1
+        }));
+
         await assertFails(updateDoc(doc(authedDb('student-1'), 'workout_templates/template-1'), {
             userId: 'other-user'
         }));

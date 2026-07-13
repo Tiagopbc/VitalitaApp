@@ -71,6 +71,20 @@ describe('HistoryPage', () => {
         expect(screen.getByText('Evolução')).toBeInTheDocument();
     });
 
+    it('selects the first ordered active workout instead of an archived workout', async () => {
+        workoutService.getTemplates.mockResolvedValue([
+            { id: 'archived', name: 'Treino 1 Antigo', isArchived: true, displayOrder: 0, exercises: [] },
+            { id: 'b', name: 'Treino B', displayOrder: 1, exercises: [{ name: 'Remada' }] },
+            { id: 'a', name: 'Treino A', displayOrder: 0, exercises: [{ name: 'Supino' }] }
+        ]);
+
+        render(<HistoryPage user={mockUser} />);
+
+        await waitFor(() => {
+            expect(screen.getAllByRole('combobox')[0]).toHaveValue('Treino A');
+        });
+    });
+
     it('switches to journal tab and loads history', async () => {
         render(<HistoryPage user={mockUser} />);
 

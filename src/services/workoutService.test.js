@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { workoutService } from './workoutService';
-import { collection, getDocs, onSnapshot, query, where, startAfter, orderBy, limit, doc, getDoc } from 'firebase/firestore';
+import { collection, getDocs, onSnapshot, query, where, startAfter, orderBy, limit, doc, getDoc, writeBatch } from 'firebase/firestore';
 import { toast } from 'sonner';
 
 vi.mock('sonner', () => ({
@@ -22,6 +22,9 @@ vi.mock('firebase/firestore', async (importOriginal) => {
         limit: vi.fn(),
         getDocs: vi.fn(),
         onSnapshot: vi.fn(),
+        doc: vi.fn(),
+        getDoc: vi.fn(),
+        writeBatch: vi.fn(),
     };
 });
 
@@ -39,6 +42,7 @@ vi.mock('../firebaseDb', () => ({
         onSnapshot,
         doc,
         getDoc,
+        writeBatch,
     })
 }));
 
@@ -82,6 +86,19 @@ describe('workoutService', () => {
             expect(result[0].name).toBe('A Workout');
             expect(result[1].name).toBe('Z Workout');
             expect(result.length).toBe(2);
+        });
+
+        it('prioritizes persisted display order over workout name', async () => {
+            getDocs.mockResolvedValue({
+                docs: [
+                    { id: 'a', data: () => ({ name: 'Treino A', displayOrder: 1 }) },
+                    { id: 'b', data: () => ({ name: 'Treino B', displayOrder: 0 }) }
+                ]
+            });
+
+            const result = await workoutService.getTemplates(mockUserId);
+
+            expect(result.map(template => template.id)).toEqual(['b', 'a']);
         });
 
         it('should return cached data on subsequent calls within duration', async () => {
@@ -128,6 +145,24 @@ describe('workoutService', () => {
             } finally {
                 consoleSpy.mockRestore();
             }
+        });
+    });
+
+    describe('saveTemplateOrder', () => {
+        it('persists contiguous positions in a single batch', async () => {
+            const update = vi.fn();
+            const commit = vi.fn().mockResolvedValue(undefined);
+            doc.mockImplementation((_db, collectionName, documentId) => ({ collectionName, documentId }));
+            writeBatch.mockReturnValue({ update, commit });
+
+            await workoutService.saveTemplateOrder([
+                { id: 'workout-b' },
+                { id: 'workout-a' }
+            ]);
+
+            expect(update).toHaveBeenNthCalledWith(1, expect.anything(), { displayOrder: 0 });
+            expect(update).toHaveBeenNthCalledWith(2, expect.anything(), { displayOrder: 1 });
+            expect(commit).toHaveBeenCalledTimes(1);
         });
     });
 
