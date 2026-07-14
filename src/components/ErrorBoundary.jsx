@@ -1,13 +1,5 @@
 import React from 'react';
-const captureWithSentry = (error, errorInfo) => {
-    import('@sentry/react')
-        .then((Sentry) => {
-            Sentry.captureException(error, { extra: errorInfo });
-        })
-        .catch(() => {
-            // Falha ao carregar Sentry não deve quebrar o app
-        });
-};
+import { captureTechnicalError } from '../services/observabilityService';
 
 export class ErrorBoundary extends React.Component {
     constructor(props) {
@@ -39,7 +31,11 @@ export class ErrorBoundary extends React.Component {
         // Clear flag if it's another error or if we already reloaded
         sessionStorage.removeItem('retry-lazy-chunk');
 
-        captureWithSentry(error, errorInfo);
+        captureTechnicalError(error, {
+            operation: 'react_render_failed',
+            source: 'error_boundary',
+            componentStack: errorInfo?.componentStack
+        });
 
         this.setState({ error, errorInfo });
         console.error("Uncaught error:", error, errorInfo);

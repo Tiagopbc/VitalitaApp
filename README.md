@@ -166,6 +166,9 @@ VITE_FIREBASE_STORAGE_BUCKET=
 VITE_FIREBASE_MESSAGING_SENDER_ID=
 VITE_FIREBASE_APP_ID=
 VITE_ENABLE_SERVER_USER_STATS=false
+VITE_SENTRY_DSN=
+VITE_SENTRY_TRACING=false
+VITE_APP_VERSION=
 ```
 
 Inicie o app:
@@ -181,6 +184,7 @@ npm run dev
 - [Regras de Segurança](docs/security-rules.md)
 - [Performance e Dados](docs/performance-data.md)
 - [Testes](docs/testing.md)
+- [Observabilidade](docs/observability.md)
 - [Deploy de Functions opcional](docs/functions-deploy.md)
 - [Backfill opcional de user_stats](docs/user-stats-backfill.md)
 - [Case de Portfolio](docs/portfolio-case-study.md)
@@ -192,7 +196,7 @@ npm run dev
 - Adicionar conta demo anonima para capturar dashboard, historico e execucao de treino.
 - Criar fluxo guiado de demonstracao para LinkedIn e portfolio.
 - Adicionar App Check em modo monitoramento, sem enforcement prematuro.
-- Evoluir observabilidade leve com Sentry em ambiente controlado.
+- Expandir eventos e alertas da observabilidade leve em ambiente controlado.
 - Se o projeto sair do modo estudo, avaliar Blaze, Functions e agregados incrementais.
 
 ## Licença
