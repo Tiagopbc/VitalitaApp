@@ -20,6 +20,7 @@ O Vitalità é um PWA em React/Vite com Firebase Authentication e Cloud Firestor
 - Firestore offline persistence fica em `src/firebaseDb.js`.
 - Regras e índices são versionados na raiz do projeto.
 - Observabilidade opcional fica em `src/services/observabilityService.js`, com Sentry carregado sob demanda e sanitização em `src/utils/observability.js`.
+- App Check opcional inicia antes de a arvore React disparar requisicoes em `src/services/appCheckService.js` e permanece sem enforcement durante a fase de monitoramento.
 
 ## Pontos de Evolução
 
@@ -37,3 +38,4 @@ O Vitalità é um PWA em React/Vite com Firebase Authentication e Cloud Firestor
 - `docs/user-stats-backfill.md`
 - `docs/testing.md`
 - `docs/observability.md`
+- `docs/app-check.md`
