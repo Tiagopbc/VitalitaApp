@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+    getObservabilityBuildMetadata,
     getRuntimeObservabilityTags,
     normalizeRoutePath,
     sanitizeObservabilityContext,
@@ -9,6 +10,33 @@ import {
 } from './observability';
 
 describe('observability privacy helpers', () => {
+    it('uses Vercel Preview metadata and shortens the commit SHA', () => {
+        expect(getObservabilityBuildMetadata({
+            VITE_APP_ENV: 'preview',
+            VITE_APP_VERSION: '5cbd22cf0b97c868ceb9a868f7fbe6f5ad0c8ff5'
+        })).toEqual({
+            environment: 'preview',
+            appVersion: '5cbd22c'
+        });
+    });
+
+    it('keeps manually configured release names', () => {
+        expect(getObservabilityBuildMetadata({
+            VITE_APP_ENV: 'staging',
+            VITE_APP_VERSION: 'portfolio-2026.07'
+        })).toEqual({
+            environment: 'staging',
+            appVersion: 'portfolio-2026.07'
+        });
+    });
+
+    it('falls back to local development metadata', () => {
+        expect(getObservabilityBuildMetadata()).toEqual({
+            environment: 'development',
+            appVersion: 'local'
+        });
+    });
+
     it('normalizes entity identifiers in routes', () => {
         expect(normalizeRoutePath('/execute/6vH7CU517m4YBGvoSK56?tab=sets'))
             .toBe('/execute/:workoutId');

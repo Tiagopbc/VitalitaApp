@@ -33,6 +33,16 @@ export function sanitizeUrl(value) {
     }
 }
 
+export function getObservabilityBuildMetadata(env = {}) {
+    const environment = env.VITE_APP_ENV || env.VITE_VERCEL_ENV || env.MODE || 'development';
+    const configuredVersion = env.VITE_APP_VERSION || env.VITE_VERCEL_GIT_COMMIT_SHA || 'local';
+    const appVersion = /^[a-f\d]{8,40}$/i.test(configuredVersion)
+        ? configuredVersion.slice(0, 7)
+        : configuredVersion;
+
+    return { environment, appVersion };
+}
+
 export function sanitizeObservabilityContext(context = {}) {
     return Object.entries(context).reduce((safeContext, [key, value]) => {
         if (!CONTEXT_KEYS.has(key) || value === undefined || value === null) {
