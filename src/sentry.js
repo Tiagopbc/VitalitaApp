@@ -7,6 +7,7 @@ import {
 } from 'react-router-dom';
 import * as Sentry from '@sentry/react';
 import {
+    getObservabilityBuildMetadata,
     getRuntimeObservabilityTags,
     normalizeRoutePath,
     sanitizeObservabilityContext,
@@ -16,7 +17,7 @@ import {
 
 const dsn = import.meta.env.VITE_SENTRY_DSN;
 const enableTracing = import.meta.env.VITE_SENTRY_TRACING === 'true';
-const appVersion = import.meta.env.VITE_APP_VERSION || 'local';
+const { environment, appVersion } = getObservabilityBuildMetadata(import.meta.env);
 
 let initialized = false;
 
@@ -37,7 +38,7 @@ export function initializeSentry() {
 
     Sentry.init({
         dsn,
-        environment: import.meta.env.MODE,
+        environment,
         release: appVersion === 'local' ? undefined : `vitalita@${appVersion}`,
         integrations,
         tracesSampleRate: enableTracing ? 0.1 : 0,

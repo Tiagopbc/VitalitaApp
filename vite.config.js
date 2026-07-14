@@ -7,9 +7,16 @@ import { fileURLToPath } from 'node:url'
 export default defineConfig(({ mode }) => {
   const rootDir = fileURLToPath(new URL('.', import.meta.url))
   const env = loadEnv(mode, rootDir, '')
+  const systemEnv = globalThis.process?.env || {}
   const pwaWorkboxMode = env.VITE_PWA_MODE || (mode === 'development' ? 'development' : 'production')
+  const appEnvironment = env.VITE_APP_ENV || systemEnv.VERCEL_ENV || mode
+  const appVersion = env.VITE_APP_VERSION || systemEnv.VERCEL_GIT_COMMIT_SHA || 'local'
 
   return ({
+  define: {
+    'import.meta.env.VITE_APP_ENV': JSON.stringify(appEnvironment),
+    'import.meta.env.VITE_APP_VERSION': JSON.stringify(appVersion)
+  },
   plugins: [
     react(),
     VitePWA({

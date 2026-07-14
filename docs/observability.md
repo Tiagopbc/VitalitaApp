@@ -16,12 +16,15 @@ Variaveis opcionais:
 ```bash
 VITE_SENTRY_DSN=
 VITE_SENTRY_TRACING=false
+VITE_APP_ENV=
 VITE_APP_VERSION=
 ```
 
-Na Vercel, adicione essas variaveis em **Project Settings > Environment Variables**. Para o primeiro teste, configure apenas o DSN em Preview. Depois de validar os eventos, replique em Production.
+Na Vercel, adicione `VITE_SENTRY_DSN` em **Project Settings > Environment Variables**. Para o primeiro teste, configure o DSN apenas em Preview. Depois de validar os eventos, replique em Production. Mantenha `VITE_SENTRY_TRACING=false` ou deixe a variavel ausente.
 
-`VITE_APP_VERSION` pode receber uma versao curta ou o hash do commit publicado. O tracing deve continuar `false` enquanto o objetivo for apenas diagnostico de erros.
+Na Vercel, o build converte automaticamente `VERCEL_ENV` em `VITE_APP_ENV` e `VERCEL_GIT_COMMIT_SHA` em `VITE_APP_VERSION`. Assim, eventos de Preview recebem `environment=preview` e a versao usa os sete primeiros caracteres do commit publicado. Nao e necessario cadastrar essas duas variaveis manualmente na Vercel.
+
+`VITE_APP_ENV` e `VITE_APP_VERSION` continuam disponiveis como overrides para desenvolvimento local ou outro provedor de deploy. O tracing deve continuar `false` enquanto o objetivo for apenas diagnostico de erros.
 
 No painel do Sentry, ative tambem **Security & Privacy > Prevent Storing of IP Addresses**, mantenha o data scrubber padrao ligado e escolha a menor retencao disponivel para o projeto.
 

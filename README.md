@@ -168,8 +168,11 @@ VITE_FIREBASE_APP_ID=
 VITE_ENABLE_SERVER_USER_STATS=false
 VITE_SENTRY_DSN=
 VITE_SENTRY_TRACING=false
+VITE_APP_ENV=
 VITE_APP_VERSION=
 ```
+
+Na Vercel, o ambiente e a versao da observabilidade sao derivados automaticamente de `VERCEL_ENV` e `VERCEL_GIT_COMMIT_SHA`. As variaveis `VITE_APP_ENV` e `VITE_APP_VERSION` servem apenas como override local ou para outro provedor de deploy.
 
 Inicie o app:
 
