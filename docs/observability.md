@@ -2,10 +2,30 @@
 
 O Vitalita usa uma integracao opcional com Sentry para diagnosticar falhas tecnicas sem tornar o servico obrigatorio para desenvolvimento ou uso pessoal.
 
+## Decisao Arquitetural: Sentry Somente em Preview
+
+**Status:** aceita em 14/07/2026.
+
+O Sentry fica habilitado exclusivamente nos deploys de Preview da Vercel. O ambiente Production nao deve possuir `VITE_SENTRY_DSN`.
+
+Motivos:
+
+- manter a producao pessoal sem dependencia operacional externa;
+- limitar coleta de telemetria e exposicao acidental de dados;
+- validar erros, metadados e sanitizacao em um ambiente controlado;
+- preservar o objetivo de estudo e portfolio sem criar custo recorrente.
+
+Consequencias:
+
+- erros de Production nao sao enviados automaticamente ao Sentry;
+- erros reproduzidos em Preview possuem stack trace e contexto tecnico sanitizado;
+- remover ou deixar vazio o DSN desativa a integracao sem afetar o app;
+- ativar o Sentry em Production exige uma nova decisao explicita e revisao deste documento.
+
 ## Estado Padrao
 
 - A observabilidade fica desligada quando `VITE_SENTRY_DSN` esta vazio.
-- O pacote do Sentry so e carregado quando o app de producao possui um DSN configurado.
+- O pacote do Sentry so e carregado em builds publicados que possuem um DSN configurado.
 - Tracing fica desligado por padrao para reduzir trafego, custo e impacto no carregamento.
 - Nenhuma identidade de usuario e enviada pelo codigo da aplicacao.
 
@@ -20,7 +40,7 @@ VITE_APP_ENV=
 VITE_APP_VERSION=
 ```
 
-Na Vercel, adicione `VITE_SENTRY_DSN` em **Project Settings > Environment Variables**. Para o primeiro teste, configure o DSN apenas em Preview. Depois de validar os eventos, replique em Production. Mantenha `VITE_SENTRY_TRACING=false` ou deixe a variavel ausente.
+Na Vercel, adicione `VITE_SENTRY_DSN` somente em **Project Settings > Environment Variables > Preview**. Nao selecione Production. `VITE_SENTRY_TRACING` deve permanecer `false`.
 
 Na Vercel, o build converte automaticamente `VERCEL_ENV` em `VITE_APP_ENV` e `VERCEL_GIT_COMMIT_SHA` em `VITE_APP_VERSION`. Assim, eventos de Preview recebem `environment=preview` e a versao usa os sete primeiros caracteres do commit publicado. Nao e necessario cadastrar essas duas variaveis manualmente na Vercel.
 
@@ -64,7 +84,17 @@ Essa protecao reduz exposicao acidental, mas nao substitui a revisao do painel e
 3. Abra rotas principais e alterne entre online e offline.
 4. Gere um erro controlado somente em ambiente de teste.
 5. Confirme que o evento nao contem usuario, e-mail, token, query string ou ID de treino.
-6. Ative em Production somente depois dessa verificacao.
+6. Confirme as tags `environment=preview`, `appVersion`, `route`, `deviceType`, `isOffline` e `isPwa`.
+7. Resolva ou arquive o erro controlado no Sentry apos a verificacao.
+
+## Checklist Operacional
+
+- `VITE_SENTRY_DSN` existe apenas em Preview.
+- `VITE_SENTRY_TRACING=false` em Preview.
+- Production permanece sem DSN.
+- **Prevent Storing of IP Addresses** esta ativado.
+- **Require Data Scrubber** e **Require Using Default Scrubbers** estao ativados.
+- Session Replay, Logging e tracing permanecem desativados.
 
 ## Proxima Evolucao
 

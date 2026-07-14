@@ -12,15 +12,38 @@ import { AuthProvider } from './AuthContext';
 import './index.css';
 import { SpeedInsightsLoader } from './components/SpeedInsightsLoader';
 import { ObservabilityTracker } from './components/ObservabilityTracker';
+import {
+    initializeAppCheckMonitoring,
+    isAppCheckMonitoringEnabled
+} from './services/appCheckService';
 
-ReactDOM.createRoot(document.getElementById('root')).render(
-    <React.StrictMode>
-        <AuthProvider>
-            <BrowserRouter>
-                <ObservabilityTracker />
-                <App />
-                <SpeedInsightsLoader />
-            </BrowserRouter>
-        </AuthProvider>
-    </React.StrictMode>
-);
+function renderApplication() {
+    ReactDOM.createRoot(document.getElementById('root')).render(
+        <React.StrictMode>
+            <AuthProvider>
+                <BrowserRouter>
+                    <ObservabilityTracker />
+                    <App />
+                    <SpeedInsightsLoader />
+                </BrowserRouter>
+            </AuthProvider>
+        </React.StrictMode>
+    );
+}
+
+async function bootstrapApplication() {
+    if (!isAppCheckMonitoringEnabled()) {
+        renderApplication();
+        return;
+    }
+
+    try {
+        await initializeAppCheckMonitoring();
+    } catch {
+        // App Check is optional and must never block application startup.
+    } finally {
+        renderApplication();
+    }
+}
+
+bootstrapApplication();
