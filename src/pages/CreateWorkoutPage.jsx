@@ -350,7 +350,7 @@ export default function CreateWorkoutPage({ user }) {
     }
 
     return (
-        <div className="w-full max-w-3xl mx-auto px-4 pt-2 pb-48 lg:pt-[calc(1.5rem+env(safe-area-inset-top))] lg:pb-32">
+        <div className="w-full max-w-3xl mx-auto px-4 pt-2 pb-8 lg:pt-[calc(1.5rem+env(safe-area-inset-top))] lg:pb-12">
             <PageHeader
                 title={initialData ? 'Editar Treino' : 'Criar Novo Treino'}
                 description="Monte a ficha com exercícios, séries, repetições e método de execução."

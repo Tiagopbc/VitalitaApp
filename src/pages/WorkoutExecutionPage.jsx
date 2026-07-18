@@ -77,16 +77,17 @@ function preloadImage(src) {
     return preloadPromise;
 }
 
-const TopBarButton = ({ icon, label, variant = 'default', onClick, active, isBack = false, prominence = 'compact' }) => {
-    // Estilos base: "Voltar" recebe tamanho padrão; ações podem ser compactas ou destacadas.
-    const sizeStyles = isBack
-        ? "px-3 py-2 text-xs"
+const TopBarButton = ({ icon, label, variant = 'default', onClick, active, iconOnly = false, prominence = 'compact' }) => {
+    // Ações principais mantêm rótulo; ações de navegação/destrutivas podem ser
+    // icon-only (rótulo vai para aria-label) para a barra caber sem rolagem.
+    const sizeStyles = iconOnly
+        ? "p-2.5 min-w-10 min-h-10 justify-center"
         : prominence === 'large'
             ? "px-3.5 py-2 text-[11px] tracking-wide min-h-9"
-            : "px-2 py-1.5 text-[9px] tracking-tight";
+            : "px-2.5 py-2 text-[10px] tracking-tight min-h-9";
 
     const baseStyles = `flex items-center gap-1 rounded-lg font-bold uppercase transition-all duration-300 border backdrop-blur-md whitespace-nowrap ${sizeStyles}`;
-    const iconSize = isBack ? 16 : prominence === 'large' ? 15 : 13;
+    const iconSize = iconOnly ? 18 : prominence === 'large' ? 15 : 14;
 
     const variants = {
         primary: "bg-cyan-500/10 text-cyan-400 border-cyan-500/50 hover:bg-cyan-500/20",
@@ -99,10 +100,12 @@ const TopBarButton = ({ icon, label, variant = 'default', onClick, active, isBac
     return (
         <button
             onClick={onClick}
+            aria-label={label}
+            title={iconOnly ? label : undefined}
             className={`${baseStyles} ${variants[variant]}`}
         >
             {React.cloneElement(icon, { size: iconSize, strokeWidth: 2.5 })}
-            <span>{label}</span>
+            {!iconOnly && <span>{label}</span>}
         </button>
     );
 };
@@ -110,7 +113,7 @@ const TopBarButton = ({ icon, label, variant = 'default', onClick, active, isBac
 // --- SUBCOMPONENTE: Card de Progresso (Mantido inline por simplicidade ou mover para arquivo separado depois) ---
 function ProgressCard({ completedCount, totalCount }) {
     return (
-        <div className="bg-slate-900/40 backdrop-blur-md rounded-3xl p-5 border border-slate-700/50 mb-6 shadow-xl shadow-black/20">
+        <div className="bg-slate-900/40 backdrop-blur-md rounded-3xl p-4 border border-slate-700/50 mb-4 shadow-xl shadow-black/20">
             <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
                     <div className="w-4 h-4 rounded-full border border-cyan-500/50 flex items-center justify-center bg-cyan-500/10">
@@ -589,7 +592,7 @@ export function WorkoutExecutionPage({ user }) {
             data-focus-mode={focusMode ? 'true' : 'false'}
             className={`min-h-screen bg-[#020617] text-slate-100 p-4 font-sans selection:bg-cyan-500/30 ${focusMode
                 ? 'pb-[calc(1rem+env(safe-area-inset-bottom))]'
-                : 'pb-40'
+                : 'pb-4'
                 }`}
         >
             {/* LOADER DE FINALIZAÇÃO DA SESSÃO */}
@@ -698,25 +701,27 @@ export function WorkoutExecutionPage({ user }) {
                             {/* Left side - Back button */}
                             <TopBarButton
                                 icon={<ArrowLeft />}
-                                label="VOLTAR"
+                                label="Voltar"
                                 variant="primary"
                                 onClick={() => onFinish()}
-                                isBack={true}
+                                iconOnly
                             />
 
                             {/* Right side - Action buttons */}
-                            <div className="flex items-center gap-1 overflow-x-auto no-scrollbar py-1 mask-linear-fade flex-1 justify-end min-w-0 pl-2">
+                            <div className="flex items-center gap-1.5 py-1 flex-1 justify-end min-w-0 pl-2">
                                 <TopBarButton
                                     icon={<Trash2 />}
-                                    label="CANCELAR"
+                                    label="Cancelar treino"
                                     variant="danger"
                                     onClick={handleDiscard}
+                                    iconOnly
                                 />
 
                                 <TopBarButton
                                     icon={<Calculator />}
                                     label="CALC"
                                     active={showGymTools}
+                                    prominence="large"
                                     onClick={() => setShowGymTools(true)}
                                 />
 
@@ -891,10 +896,10 @@ export function WorkoutExecutionPage({ user }) {
                                     className="rounded-[28px] border border-cyan-500/25 bg-cyan-500/[0.04] p-2 pt-3 space-y-4"
                                 >
                                     <div className="flex items-center gap-2 px-3">
-                                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-cyan-500/15 border border-cyan-500/40 text-cyan-300 text-[10px] font-bold uppercase tracking-widest">
+                                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-cyan-500/15 border border-cyan-500/40 text-cyan-300 text-[10px] font-bold uppercase tracking-widest whitespace-nowrap shrink-0">
                                             <Link2 size={11} /> {groupLabel(segment.indices.length)}
                                         </span>
-                                        <span className="text-[11px] text-slate-500 font-medium">
+                                        <span className="text-[11px] text-slate-500 font-medium leading-tight">
                                             Alterne as séries • descanso ao fim da volta
                                         </span>
                                     </div>
@@ -998,7 +1003,7 @@ export function WorkoutExecutionPage({ user }) {
                         data-testid="workout-finish-footer"
                         className={`w-full ${focusMode
                             ? 'mt-5 pb-[calc(1rem+env(safe-area-inset-bottom))]'
-                            : 'mt-8 pb-[calc(6rem+env(safe-area-inset-bottom))] lg:pb-[calc(2rem+env(safe-area-inset-bottom))]'
+                            : 'mt-6 pb-[calc(1.25rem+env(safe-area-inset-bottom))]'
                             }`}
                     >
                         <div className="max-w-2xl mx-auto flex justify-center">

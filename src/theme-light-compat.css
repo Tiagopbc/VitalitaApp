@@ -1,0 +1,194 @@
+/**
+ * theme-light-compat.css
+ * GERADO para o tema claro: classes slate com modificador de opacidade
+ * compilam para hex literal (não var()), então precisam de override explícito.
+ * Regenerar se novas classes slate-*/opacidade forem adicionadas ao código.
+ */
+
+:root[data-theme="light"] [class~="bg-slate-400/20"] {
+    background-color: color-mix(in srgb, #475569 20%, transparent);
+}
+
+:root[data-theme="light"] [class~="bg-slate-400/25"] {
+    background-color: color-mix(in srgb, #475569 25%, transparent);
+}
+
+:root[data-theme="light"] [class~="bg-slate-700/10"] {
+    background-color: color-mix(in srgb, #cbd5e1 10%, transparent);
+}
+
+:root[data-theme="light"] [class~="bg-slate-800/20"] {
+    background-color: color-mix(in srgb, #e2e8f0 20%, transparent);
+}
+
+:root[data-theme="light"] [class~="bg-slate-800/40"] {
+    background-color: color-mix(in srgb, #e2e8f0 40%, transparent);
+}
+
+:root[data-theme="light"] [class~="bg-slate-800/50"] {
+    background-color: color-mix(in srgb, #e2e8f0 50%, transparent);
+}
+
+:root[data-theme="light"] [class~="bg-slate-800/60"] {
+    background-color: color-mix(in srgb, #e2e8f0 60%, transparent);
+}
+
+:root[data-theme="light"] [class~="bg-slate-800/70"] {
+    background-color: color-mix(in srgb, #e2e8f0 70%, transparent);
+}
+
+:root[data-theme="light"] [class~="bg-slate-800/80"] {
+    background-color: color-mix(in srgb, #e2e8f0 80%, transparent);
+}
+
+:root[data-theme="light"] [class~="bg-slate-800/90"] {
+    background-color: color-mix(in srgb, #e2e8f0 90%, transparent);
+}
+
+:root[data-theme="light"] [class~="bg-slate-900/20"] {
+    background-color: color-mix(in srgb, #ffffff 20%, transparent);
+}
+
+:root[data-theme="light"] [class~="bg-slate-900/30"] {
+    background-color: color-mix(in srgb, #ffffff 30%, transparent);
+}
+
+:root[data-theme="light"] [class~="bg-slate-900/35"] {
+    background-color: color-mix(in srgb, #ffffff 35%, transparent);
+}
+
+:root[data-theme="light"] [class~="bg-slate-900/40"] {
+    background-color: color-mix(in srgb, #ffffff 40%, transparent);
+}
+
+:root[data-theme="light"] [class~="bg-slate-900/50"] {
+    background-color: color-mix(in srgb, #ffffff 50%, transparent);
+}
+
+:root[data-theme="light"] [class~="bg-slate-900/55"] {
+    background-color: color-mix(in srgb, #ffffff 55%, transparent);
+}
+
+:root[data-theme="light"] [class~="bg-slate-900/60"] {
+    background-color: color-mix(in srgb, #ffffff 60%, transparent);
+}
+
+:root[data-theme="light"] [class~="bg-slate-900/70"] {
+    background-color: color-mix(in srgb, #ffffff 70%, transparent);
+}
+
+:root[data-theme="light"] [class~="bg-slate-900/80"] {
+    background-color: color-mix(in srgb, #ffffff 80%, transparent);
+}
+
+:root[data-theme="light"] [class~="bg-slate-900/95"] {
+    background-color: color-mix(in srgb, #ffffff 95%, transparent);
+}
+
+:root[data-theme="light"] [class~="bg-slate-950/40"] {
+    background-color: color-mix(in srgb, #f8fafc 40%, transparent);
+}
+
+:root[data-theme="light"] [class~="bg-slate-950/45"] {
+    background-color: color-mix(in srgb, #f8fafc 45%, transparent);
+}
+
+:root[data-theme="light"] [class~="bg-slate-950/50"] {
+    background-color: color-mix(in srgb, #f8fafc 50%, transparent);
+}
+
+:root[data-theme="light"] [class~="bg-slate-950/60"] {
+    background-color: color-mix(in srgb, #f8fafc 60%, transparent);
+}
+
+:root[data-theme="light"] [class~="bg-slate-950/80"] {
+    background-color: color-mix(in srgb, #f8fafc 80%, transparent);
+}
+
+:root[data-theme="light"] [class~="border-slate-400/20"] {
+    border-color: color-mix(in srgb, #475569 20%, transparent);
+}
+
+:root[data-theme="light"] [class~="border-slate-400/30"] {
+    border-color: color-mix(in srgb, #475569 30%, transparent);
+}
+
+:root[data-theme="light"] [class~="border-slate-400/35"] {
+    border-color: color-mix(in srgb, #475569 35%, transparent);
+}
+
+:root[data-theme="light"] [class~="border-slate-400/45"] {
+    border-color: color-mix(in srgb, #475569 45%, transparent);
+}
+
+:root[data-theme="light"] [class~="border-slate-400/70"] {
+    border-color: color-mix(in srgb, #475569 70%, transparent);
+}
+
+:root[data-theme="light"] [class~="border-slate-600/40"] {
+    border-color: color-mix(in srgb, #94a3b8 40%, transparent);
+}
+
+:root[data-theme="light"] [class~="border-slate-600/50"] {
+    border-color: color-mix(in srgb, #94a3b8 50%, transparent);
+}
+
+:root[data-theme="light"] [class~="border-slate-700/50"] {
+    border-color: color-mix(in srgb, #cbd5e1 50%, transparent);
+}
+
+:root[data-theme="light"] [class~="border-slate-700/60"] {
+    border-color: color-mix(in srgb, #cbd5e1 60%, transparent);
+}
+
+:root[data-theme="light"] [class~="border-slate-700/70"] {
+    border-color: color-mix(in srgb, #cbd5e1 70%, transparent);
+}
+
+:root[data-theme="light"] [class~="border-slate-800/30"] {
+    border-color: color-mix(in srgb, #e2e8f0 30%, transparent);
+}
+
+:root[data-theme="light"] [class~="border-slate-800/50"] {
+    border-color: color-mix(in srgb, #e2e8f0 50%, transparent);
+}
+
+:root[data-theme="light"] [class~="border-slate-800/60"] {
+    border-color: color-mix(in srgb, #e2e8f0 60%, transparent);
+}
+
+:root[data-theme="light"] [class~="border-slate-800/80"] {
+    border-color: color-mix(in srgb, #e2e8f0 80%, transparent);
+}
+
+:root[data-theme="light"] [class~="border-slate-900/90"] {
+    border-color: color-mix(in srgb, #ffffff 90%, transparent);
+}
+
+:root[data-theme="light"] [class~="from-slate-900/90"] {
+    --tw-gradient-from: color-mix(in srgb, #ffffff 90%, transparent);
+}
+
+:root[data-theme="light"] [class~="text-slate-200/40"] {
+    color: color-mix(in srgb, #1e293b 40%, transparent);
+}
+
+:root[data-theme="light"] [class~="text-slate-200/75"] {
+    color: color-mix(in srgb, #1e293b 75%, transparent);
+}
+
+:root[data-theme="light"] [class~="text-slate-200/80"] {
+    color: color-mix(in srgb, #1e293b 80%, transparent);
+}
+
+:root[data-theme="light"] [class~="text-slate-200/95"] {
+    color: color-mix(in srgb, #1e293b 95%, transparent);
+}
+
+:root[data-theme="light"] [class~="text-slate-400/70"] {
+    color: color-mix(in srgb, #475569 70%, transparent);
+}
+
+:root[data-theme="light"] [class~="to-slate-950/95"] {
+    --tw-gradient-to: color-mix(in srgb, #f8fafc 95%, transparent);
+}
