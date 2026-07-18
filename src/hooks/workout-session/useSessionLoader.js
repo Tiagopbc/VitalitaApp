@@ -7,6 +7,7 @@ import {
     SESSION_SYNC_STATES
 } from '../../services/sessions/sessionRecoveryService';
 import { mapTemplateExercises } from './normalizeSets';
+import { buildProgressionMap } from '../../utils/progressionSuggestions';
 import { captureTechnicalError } from '../../services/observabilityService';
 
 async function getActiveSession({ db, doc, getDoc, getDocFromServer }, profileId, workoutId) {
@@ -44,7 +45,7 @@ async function getTemplate(deps, workoutId) {
     }
 }
 
-async function getLastSessionExercises(deps, profileId, workoutId) {
+async function getRecentSessions(deps, profileId, workoutId, count = 3) {
     const { db, getDocs, query, collection, where, limit } = deps;
     try {
         const historyQuery = query(
@@ -63,7 +64,7 @@ async function getLastSessionExercises(deps, profileId, workoutId) {
             return dateB - dateA;
         });
 
-        return sortedDocs[0].data().exercises || [];
+        return sortedDocs.slice(0, count).map(docSnap => docSnap.data());
     } catch (err) {
         console.error('Error fetching history:', err);
         return [];
@@ -81,6 +82,7 @@ export function useSessionLoader({
     setError,
     setSyncState,
     setSessionConflict,
+    setProgression,
     lastSyncedRef
 }) {
     const [loading, setLoading] = useState(true);
@@ -131,10 +133,14 @@ export function useSessionLoader({
                 if (templateDoc.exists()) {
                     const tmplData = templateDoc.data();
                     setTemplate({ id: templateDoc.id, ...tmplData });
-                    const lastSessionExercises = await getLastSessionExercises(deps, profileId, workoutId);
+                    const recentSessions = await getRecentSessions(deps, profileId, workoutId);
                     if (cancelled) return;
 
-                    setExercises(mapTemplateExercises(tmplData, lastSessionExercises));
+                    const mappedExercises = mapTemplateExercises(tmplData, recentSessions[0]?.exercises || []);
+                    setExercises(mappedExercises);
+                    if (setProgression) {
+                        setProgression(buildProgressionMap(recentSessions, mappedExercises));
+                    }
                     setInitialElapsed(0);
                     setSyncState(SESSION_SYNC_STATES.active);
                 }
@@ -168,6 +174,7 @@ export function useSessionLoader({
         setError,
         setSyncState,
         setSessionConflict,
+        setProgression,
         lastSyncedRef
     ]);
 

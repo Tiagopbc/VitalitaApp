@@ -18,13 +18,6 @@ vi.mock('framer-motion', () => ({
     }
 }));
 
-vi.mock('../components/design-system/RippleButton', () => ({
-    RippleButton: ({ children, onClick, ...props }) => (
-        <button onClick={onClick} {...props}>
-            {children}
-        </button>
-    )
-}));
 
 vi.mock('../components/design-system/PremiumCard', () => ({
     PremiumCard: ({ children, onClick, ...props }) => (

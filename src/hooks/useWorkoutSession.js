@@ -19,6 +19,8 @@ export function useWorkoutSession(workoutId, user) {
     const [syncState, setSyncState] = useState(SESSION_SYNC_STATES.idle);
     const [lastSavedAt, setLastSavedAt] = useState(null);
     const [sessionConflict, setSessionConflict] = useState(null);
+    // Sugestões de progressão por exercício (calculadas ao carregar sessão nova).
+    const [progression, setProgression] = useState({});
 
     const profileId = user?.uid;
     const lastSyncedRef = useRef('');
@@ -36,6 +38,7 @@ export function useWorkoutSession(workoutId, user) {
         setError,
         setSyncState,
         setSessionConflict,
+        setProgression,
         lastSyncedRef
     });
 
@@ -104,6 +107,7 @@ export function useWorkoutSession(workoutId, user) {
         template,
         exercises,
         initialElapsed,
+        progression,
         updateExerciseSet,
         toggleSet,
         updateNotes,
