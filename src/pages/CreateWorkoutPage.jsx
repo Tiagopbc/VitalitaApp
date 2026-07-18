@@ -221,7 +221,9 @@ export default function CreateWorkoutPage({ user }) {
 
         if (editingExerciseId) {
             // Editar existente (merge preserva campos fora do formulário, como groupId)
-            setExercises(exercises.map(ex => ex.id === editingExerciseId ? { ...ex, ...finalExercise, id: editingExerciseId } : ex));
+            const updated = exercises.map(ex => ex.id === editingExerciseId ? { ...ex, ...finalExercise, id: editingExerciseId } : ex);
+            setExercises(updated);
+            suggestGroupingForBiSet(updated, editingExerciseId);
             setEditingExerciseId(null);
             setShowAddExercise(false);
         } else {
@@ -230,7 +232,9 @@ export default function CreateWorkoutPage({ user }) {
                 id: Date.now().toString(),
                 ...finalExercise
             };
-            setExercises([...exercises, exercise]);
+            const updated = [...exercises, exercise];
+            setExercises(updated);
+            suggestGroupingForBiSet(updated, exercise.id);
             setShowAddExercise(false);
         }
 
@@ -276,6 +280,26 @@ export default function CreateWorkoutPage({ user }) {
 
     function handleToggleLink(id) {
         setExercises(prev => toggleGroupWithPrevious(prev, prev.findIndex(ex => ex.id === id)));
+    }
+
+    // Método "Bi-set" sozinho é só informativo; o que muda a execução é o
+    // agrupamento. Ao salvar com esse método, oferece agrupar com o anterior.
+    function suggestGroupingForBiSet(list, exerciseId) {
+        const idx = list.findIndex(ex => ex.id === exerciseId);
+        if (idx <= 0) return;
+        const current = list[idx];
+        if (current.method !== 'Bi-set') return;
+        const previous = list[idx - 1];
+        if (current.groupId && current.groupId === previous.groupId) return;
+
+        toast('Bi-set é executado em dupla', {
+            description: `Agrupar com "${previous.name}" para alternar as séries na execução?`,
+            action: {
+                label: 'Agrupar',
+                onClick: () => handleToggleLink(exerciseId)
+            },
+            duration: 8000
+        });
     }
 
     async function handleSave() {
@@ -544,6 +568,13 @@ export default function CreateWorkoutPage({ user }) {
                                     />
                                 </label>
                             </div>
+
+                            {newExercise.method === 'Bi-set' && (
+                                <p className="flex items-start gap-1.5 text-[11px] leading-snug text-cyan-300/90 bg-cyan-500/10 border border-cyan-500/30 rounded-lg px-3 py-2">
+                                    <Link2 size={12} className="mt-0.5 shrink-0" />
+                                    <span>Para alternar as séries na execução, agrupe este exercício com o anterior usando o botão de corrente na lista.</span>
+                                </p>
+                            )}
 
                             <label className="flex flex-col gap-2 text-xs font-bold text-slate-400 uppercase tracking-wider">
                                 Observação
