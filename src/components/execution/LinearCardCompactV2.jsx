@@ -1,5 +1,5 @@
 import React, { useState, memo, useRef } from 'react';
-import { Minus, Plus, CheckCircle2, Info, Check, ArrowRight, Scale, LayoutList, Target, ArrowDown } from 'lucide-react';
+import { Minus, Plus, CheckCircle2, Info, Check, ArrowRight, Scale, LayoutList, Target, ArrowDown, TrendingUp, AlertTriangle } from 'lucide-react';
 import { NumericKeypad } from '../common/NumericKeypad';
 
 function generateId() {
@@ -28,7 +28,8 @@ export const LinearCardCompactV2 = memo(function LinearCardCompactV2({
     baseWeight,
     onUpdateSetMultiple,
     onToggleWeightMode,
-    onValidationError
+    onValidationError,
+    progressionHint
 }) {
     const completedCount = completedSets.filter(Boolean).length;
     const isExerciseFullyCompleted = completedCount === totalSets && totalSets > 0;
@@ -263,6 +264,25 @@ export const LinearCardCompactV2 = memo(function LinearCardCompactV2({
                 </div>
             </div>
 
+            {progressionHint && !isExerciseFullyCompleted && (
+                <div
+                    data-testid="progression-hint"
+                    className={`flex items-start gap-2 px-3 py-2 rounded-xl border text-[12px] leading-snug font-medium mb-1 ${progressionHint.type === 'increase'
+                        ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
+                        : progressionHint.type === 'stagnation'
+                            ? 'bg-amber-500/10 border-amber-500/30 text-amber-300'
+                            : 'bg-slate-800/50 border-slate-700/50 text-slate-300'
+                        }`}
+                >
+                    {progressionHint.type === 'increase'
+                        ? <TrendingUp size={14} className="mt-0.5 shrink-0" />
+                        : progressionHint.type === 'stagnation'
+                            ? <AlertTriangle size={14} className="mt-0.5 shrink-0" />
+                            : <Target size={14} className="mt-0.5 shrink-0" />}
+                    <span>{progressionHint.message}</span>
+                </div>
+            )}
+
             <div className="flex gap-1.5 mb-2">
                 {Array.from({ length: totalSets }).map((_, idx) => {
                     const setNum = idx + 1;
@@ -306,7 +326,7 @@ export const LinearCardCompactV2 = memo(function LinearCardCompactV2({
                                                 {formattedDisplay}
                                             </div>
                                         </div>
-                                        <button onClick={() => incrementWeight(index)} className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-cyan-500/10 border border-cyan-500/50 text-cyan-400 flex items-center justify-center shadow-[0_0_15px_rgba(6,182,212,0.15)]"><Plus className="w-[18px] md:w-5" strokeWidth={2.5} /></button>
+                                        <button onClick={() => incrementWeight(index)} className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-cyan-500/10 border border-cyan-500/50 text-cyan-400 flex items-center justify-center"><Plus className="w-[18px] md:w-5" strokeWidth={2.5} /></button>
                                         {index === 0 && !item.weight && suggestedWeight && (
                                             <div className="absolute top-1 left-1/2 -translate-x-1/2 -mt-1 opacity-0 group-hover:opacity-100 pointer-events-none"><span className="text-[9px] text-slate-300 bg-slate-800/90 px-1.5 rounded border border-slate-700">Hist: {suggestedWeight}</span></div>
                                         )}
@@ -326,7 +346,7 @@ export const LinearCardCompactV2 = memo(function LinearCardCompactV2({
                                                 {item.reps || (index===0?suggestedReps:null) || "0"}
                                             </div>
                                         </div>
-                                        <button onClick={() => incrementReps(index)} className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-cyan-500/10 border border-cyan-500/50 text-cyan-400 flex items-center justify-center shadow-[0_0_15px_rgba(6,182,212,0.15)]"><Plus className="w-[18px] md:w-5" strokeWidth={2.5} /></button>
+                                        <button onClick={() => incrementReps(index)} className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-cyan-500/10 border border-cyan-500/50 text-cyan-400 flex items-center justify-center"><Plus className="w-[18px] md:w-5" strokeWidth={2.5} /></button>
                                     </div>
                                 </div>
                             </div>

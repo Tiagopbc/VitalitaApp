@@ -36,13 +36,6 @@ vi.mock('../components/design-system/Button', () => ({
     }
 }));
 
-vi.mock('../components/design-system/RippleButton', () => ({
-    RippleButton: ({ children, onClick, ...props }) => (
-        <button onClick={onClick} {...props}>
-            {children}
-        </button>
-    )
-}));
 
 vi.mock('../components/design-system/Toast', () => ({
     Toast: ({ message }) => <div>{message}</div>

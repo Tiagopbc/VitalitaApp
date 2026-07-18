@@ -1,7 +1,8 @@
 /**
  * index.css
- * Valida a configuração do Tailwind CSS e Variáveis de Tema.
- * Define a paleta de cores 'Vitalità', famílias de fontes personalizadas, grade de espaçamento e classes utilitárias.
+ * Fonte única de verdade dos tokens de design do Vitalità.
+ * Define a paleta, cores semânticas (tema escuro padrão, preparado para tema claro),
+ * tipografia fluida, grade de espaçamento e utilitários.
  */
 @import "tailwindcss";
 @import "./fonts.css";
@@ -51,6 +52,43 @@
     --radius-lg: 20px;
     --radius-xl: 24px;
     --radius-2xl: 32px;
+
+    /* Animações */
+    --animate-ripple: ripple 600ms ease-out forwards;
+
+    @keyframes ripple {
+        to {
+            width: 320px;
+            height: 320px;
+            opacity: 0;
+        }
+    }
+}
+
+/*
+ * Cores semânticas: consumidas pelos componentes e por src/design/tokens.js.
+ * O tema escuro é o padrão. Um futuro tema claro só precisa redefinir estas
+ * variáveis (ex.: em [data-theme="light"]), sem tocar nos componentes.
+ */
+:root {
+    --vit-surface: #020617;
+    /* fundo da página */
+    --vit-panel: #0f172a;
+    /* cartões e painéis */
+    --vit-panel-raised: #1e293b;
+    /* superfícies elevadas (menus, inputs) */
+    --vit-border: rgba(148, 163, 184, 0.24);
+    --vit-text: #e2e8f0;
+    --vit-text-strong: #f8fafc;
+    --vit-muted: #94a3b8;
+    --vit-primary: #06b6d4;
+    --vit-primary-strong: #0891b2;
+    --vit-success: #10b981;
+    --vit-warning: #f59e0b;
+    --vit-danger: #ef4444;
+
+    --vit-shadow-card: 0 20px 45px rgba(2, 6, 23, 0.35);
+    --vit-shadow-glow: 0 0 24px rgba(6, 182, 212, 0.28);
 }
 
 @layer base {
@@ -58,23 +96,21 @@
         -webkit-tap-highlight-color: transparent;
         scroll-behavior: smooth;
         font-family: var(--font-sans);
-        background-color: #020617;
-        /* Uniform dark background */
+        background-color: var(--vit-surface);
         height: 100%;
         min-height: 100dvh;
         /* Use dynamic viewport height */
     }
 
     body {
-        background-color: #020617;
-        /* Ensure body also has the color */
-        color: #e2e8f0;
+        background-color: var(--vit-surface);
+        color: var(--vit-text);
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
         min-height: 100vh;
         min-height: 100dvh;
         overflow-x: hidden;
-        /* iOS Safe Area Support - using padding only for content push if needed, 
+        /* iOS Safe Area Support - using padding only for content push if needed,
            but background should be handled by the root elements */
         padding-top: env(safe-area-inset-top);
         padding-bottom: env(safe-area-inset-bottom);
@@ -82,19 +118,24 @@
         padding-right: env(safe-area-inset-right);
     }
 
-    /* Typography System */
+    /*
+     * Tipografia fluida: rem respeita a preferência de fonte do usuário e
+     * clamp() escala suavemente entre mobile e desktop.
+     */
     h1 {
         font-family: var(--font-heading);
-        font-size: 28px;
+        font-size: clamp(1.625rem, 1.4rem + 1vw, 2rem);
+        /* ~26px → 32px */
         font-weight: 700;
         line-height: 1.2;
         letter-spacing: 0.5px;
-        color: #f8fafc;
+        color: var(--vit-text-strong);
     }
 
     h2 {
         font-family: var(--font-heading);
-        font-size: 22px;
+        font-size: clamp(1.25rem, 1.15rem + 0.5vw, 1.5rem);
+        /* ~20px → 24px */
         font-weight: 700;
         line-height: 1.3;
         color: #f1f5f9;
@@ -103,24 +144,25 @@
 
     h3 {
         font-family: var(--font-heading);
-        font-size: 18px;
+        font-size: clamp(1.0625rem, 1rem + 0.3vw, 1.1875rem);
+        /* ~17px → 19px */
         font-weight: 600;
         line-height: 1.4;
-        color: #e2e8f0;
+        color: var(--vit-text);
     }
 
     p {
-        font-size: 14px;
+        font-size: 0.875rem;
         font-weight: 400;
         line-height: 1.6;
         color: #cbd5e1;
     }
 
     small {
-        font-size: 12px;
+        font-size: 0.75rem;
         font-weight: 500;
         line-height: 1.4;
-        color: #94a3b8;
+        color: var(--vit-muted);
     }
 
     /* Selection */
@@ -128,5 +170,30 @@
         background-color: rgba(6, 182, 212, 0.3);
         color: #fff;
     }
-}
 
+    /*
+     * Foco visível para navegação por teclado: anel ciano consistente em
+     * qualquer elemento interativo, sem afetar cliques de mouse/touch.
+     */
+    :focus-visible {
+        outline: 2px solid var(--vit-primary);
+        outline-offset: 2px;
+        border-radius: 4px;
+    }
+
+    /*
+     * Usuários com preferência por movimento reduzido: praticamente elimina
+     * animações e transições (CSS e framer-motion via MotionConfig no app).
+     */
+    @media (prefers-reduced-motion: reduce) {
+
+        *,
+        *::before,
+        *::after {
+            animation-duration: 0.01ms !important;
+            animation-iteration-count: 1 !important;
+            transition-duration: 0.01ms !important;
+            scroll-behavior: auto !important;
+        }
+    }
+}

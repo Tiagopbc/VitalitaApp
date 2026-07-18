@@ -8,6 +8,7 @@ import { DesktopSidebar } from './DesktopSidebar';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { useAuth } from './AuthContext';
 import { WorkoutProvider, useWorkout } from './context/WorkoutContext';
+import { MotionPreferences } from './components/common/MotionPreferences';
 import { safeGetItem, safeRemoveItem, safeGetJSON, safeSetJSON } from './utils/storage';
 
 // Carregamento Lazy de Páginas
@@ -472,8 +473,10 @@ function AppAuthedContent() {
 
 export default function AppAuthed() {
     return (
-        <WorkoutProvider>
-            <AppAuthedContent />
-        </WorkoutProvider>
+        <MotionPreferences>
+            <WorkoutProvider>
+                <AppAuthedContent />
+            </WorkoutProvider>
+        </MotionPreferences>
     );
 }

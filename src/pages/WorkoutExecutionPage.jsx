@@ -13,18 +13,20 @@ import {
     Check,
     CheckCircle2,
     Timer,
+    Calculator,
     Dumbbell,
     Eye,
     ChevronRight,
     Share2,
+    Link2,
     RotateCcw,
     Trash2,
     ArrowLeft
 } from 'lucide-react';
 import { RestTimer } from '../components/execution/RestTimer';
 // import { MuscleFocusDisplay } from '../components/execution/MuscleFocusDisplay'; // Unused
-import { RippleButton } from '../components/design-system/RippleButton';
 import { Button } from '../components/design-system/Button';
+import { prefersReducedMotion } from '../utils/motionPreferences';
 import MethodModal from '../MethodModal';
 import { LinearCardCompactV2 } from '../components/execution/LinearCardCompactV2';
 import { SessionConflictDialog } from '../components/execution/SessionConflictDialog';
@@ -35,10 +37,13 @@ import { SyncStatusBadge } from '../components/design-system/SyncStatusBadge';
 // --- HOOKS PERSONALIZADOS ---
 import { useWorkoutTimer } from '../hooks/useWorkoutTimer';
 import { useWorkoutSession } from '../hooks/useWorkoutSession';
+import { useWakeLock } from '../hooks/useWakeLock';
 import { checkNewAchievements } from '../utils/evaluateAchievements';
+import { computeGroupSegments, getGroupInfo, groupLabel } from '../utils/exerciseGroups';
 import { userPreferencesService } from '../services/userPreferencesService';
 import { workoutService } from '../services/workoutService';
 const AchievementUnlockedModal = React.lazy(() => import('../components/achievements/AchievementUnlockedModal').then(module => ({ default: module.AchievementUnlockedModal })));
+const GymToolsModal = React.lazy(() => import('../components/execution/GymToolsModal').then(module => ({ default: module.GymToolsModal })));
 const loadShareableWorkoutCard = () => import('../components/sharing/ShareableWorkoutCard').then(module => ({ default: module.ShareableWorkoutCard }));
 const ShareableWorkoutCard = React.lazy(loadShareableWorkoutCard);
 const shareCardBgSrc = '/bg-share-dumbbells.jpg';
@@ -84,7 +89,7 @@ const TopBarButton = ({ icon, label, variant = 'default', onClick, active, isBac
     const iconSize = isBack ? 16 : prominence === 'large' ? 15 : 13;
 
     const variants = {
-        primary: "bg-cyan-500/10 text-cyan-400 border-cyan-500/50 hover:bg-cyan-500/20 shadow-[0_0_15px_rgba(34,211,238,0.1)]",
+        primary: "bg-cyan-500/10 text-cyan-400 border-cyan-500/50 hover:bg-cyan-500/20",
         danger: "bg-red-500/10 text-red-400 border-red-500/20 hover:bg-red-500/20",
         default: active
             ? "bg-slate-800 text-white border-slate-600 shadow-lg"
@@ -126,7 +131,7 @@ function ProgressCard({ completedCount, totalCount }) {
                     <div
                         key={idx}
                         className={`flex-1 rounded-full transition-all duration-500 ${idx < completedCount
-                            ? 'bg-cyan-500 shadow-[0_0_10px_rgba(6,182,212,0.5)]'
+                            ? 'bg-cyan-500'
                             : 'bg-slate-800/50'
                             }`}
                     />
@@ -152,6 +157,7 @@ export function WorkoutExecutionPage({ user }) {
         exercises,
         sessionConflict,
         initialElapsed,
+        progression,
         updateExerciseSet,
         updateNotes,
         completeSetAutoFill,
@@ -176,6 +182,10 @@ export function WorkoutExecutionPage({ user }) {
     const [showAchievementModal, setShowAchievementModal] = useState(false);
     const [restDuration, setRestDuration] = useState(90);
     const [autoStartTimer, setAutoStartTimer] = useState(false);
+    const [showGymTools, setShowGymTools] = useState(false);
+
+    // Mantém a tela ligada durante o treino ativo (evita perder o timer de descanso).
+    useWakeLock(!loading && !isFinished);
 
     // Aquece recursos de compartilhamento para evitar atraso no modal final.
     useEffect(() => {
@@ -248,39 +258,57 @@ export function WorkoutExecutionPage({ user }) {
         }
     };
 
+    const scrollToExercise = (targetExerciseId) => {
+        const nextElement = document.getElementById(`exercise-${targetExerciseId}`);
+        if (nextElement) {
+            const yOffset = -100; // Ajuste para a barra superior fixa
+            const y = nextElement.getBoundingClientRect().top + window.scrollY + yOffset;
+            window.scrollTo({ top: y, behavior: 'smooth' });
+        }
+    };
+
     const handleCompleteSetWrapper = (...args) => {
         completeSetAutoFill(...args);
-        if (autoStartTimer) {
-            setShowTimer(true);
-        }
 
         const [exerciseId, currentSetNum] = args;
         const exerciseIndex = exercises.findIndex(ex => ex.id === exerciseId);
-        
-        if (exerciseIndex !== -1) {
-            const ex = exercises[exerciseIndex];
-            // Verifica se a série concluída é a última série deste exercício
-            if (currentSetNum === ex.sets.length) {
-                setTimeout(() => {
-                    if (focusMode) {
-                        // Modo Foco: avançar para o próximo exercício
-                        if (currentExerciseIndex < exercises.length - 1) {
-                            setCurrentExerciseIndex(prev => prev + 1);
-                        }
-                    } else {
-                        // Modo Normal: rolar até o próximo exercício
-                        if (exerciseIndex < exercises.length - 1) {
-                            const nextExerciseId = exercises[exerciseIndex + 1].id;
-                            const nextElement = document.getElementById(`exercise-${nextExerciseId}`);
-                            if (nextElement) {
-                                const yOffset = -100; // Ajuste para a barra superior fixa
-                                const y = nextElement.getBoundingClientRect().top + window.scrollY + yOffset;
-                                window.scrollTo({ top: y, behavior: 'smooth' });
-                            }
-                        }
-                    }
-                }, 400); // Pequeno delay para a animação da série concluída
+        const group = exerciseIndex !== -1 ? getGroupInfo(exercises, exerciseIndex) : null;
+
+        // Em grupos (bi-set/circuito) o descanso acontece só ao fim da volta,
+        // ou seja, ao concluir a série do último exercício do grupo.
+        if (autoStartTimer && (!group || group.isLastMember)) {
+            setShowTimer(true);
+        }
+
+        if (exerciseIndex === -1) return;
+        const ex = exercises[exerciseIndex];
+        const isLastSetOfExercise = currentSetNum === ex.sets.length;
+
+        let targetIndex = null;
+        if (group) {
+            if (!group.isLastMember) {
+                // Alterna para o próximo exercício do grupo (sem descanso).
+                targetIndex = group.nextMemberIndex;
+            } else if (!isLastSetOfExercise) {
+                // Fim da volta: retorna ao primeiro exercício do grupo.
+                targetIndex = group.firstIndex;
+            } else if (exerciseIndex < exercises.length - 1) {
+                // Grupo concluído: segue para o próximo exercício da ficha.
+                targetIndex = exerciseIndex + 1;
             }
+        } else if (isLastSetOfExercise && exerciseIndex < exercises.length - 1) {
+            targetIndex = exerciseIndex + 1;
+        }
+
+        if (targetIndex !== null) {
+            const targetId = exercises[targetIndex].id;
+            setTimeout(() => {
+                if (focusMode) {
+                    setCurrentExerciseIndex(targetIndex);
+                } else {
+                    scrollToExercise(targetId);
+                }
+            }, 400); // Pequeno delay para a animação da série concluída
         }
     };
 
@@ -376,12 +404,14 @@ export function WorkoutExecutionPage({ user }) {
         const success = await finishSession(elapsedSeconds);
         
         if (success) {
-            const { default: confetti } = await import('canvas-confetti');
-            confetti({
-                particleCount: 150,
-                spread: 100,
-                origin: { y: 0.6 }
-            });
+            if (!prefersReducedMotion()) {
+                const { default: confetti } = await import('canvas-confetti');
+                confetti({
+                    particleCount: 150,
+                    spread: 100,
+                    origin: { y: 0.6 }
+                });
+            }
 
             if (user) {
                 const sessionPayload = {
@@ -684,6 +714,13 @@ export function WorkoutExecutionPage({ user }) {
                                 />
 
                                 <TopBarButton
+                                    icon={<Calculator />}
+                                    label="CALC"
+                                    active={showGymTools}
+                                    onClick={() => setShowGymTools(true)}
+                                />
+
+                                <TopBarButton
                                     icon={<Timer />}
                                     label="TIMER"
                                     active={showTimer}
@@ -722,8 +759,16 @@ export function WorkoutExecutionPage({ user }) {
                             Anterior
                         </Button>
 
-                        <span className="text-sm font-bold text-slate-400">
+                        <span className="text-sm font-bold text-slate-400 flex items-center gap-2">
                             {currentExerciseIndex + 1} de {totalExercises}
+                            {(() => {
+                                const focusGroup = getGroupInfo(exercises, currentExerciseIndex);
+                                return focusGroup ? (
+                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-cyan-500/15 border border-cyan-500/40 text-cyan-300 text-[10px] uppercase tracking-wide">
+                                        <Link2 size={10} /> {focusGroup.label}
+                                    </span>
+                                ) : null;
+                            })()}
                         </span>
 
                         <Button
@@ -785,20 +830,23 @@ export function WorkoutExecutionPage({ user }) {
                                     onUpdateNotes={updateNotes}
                                     onToggleWeightMode={() => toggleExerciseWeightMode(ex.id)}
                                     onValidationError={setError}
+                                    progressionHint={progression?.[ex.id]}
                                 />
                             );
                         })()
                     ) : (
-                        exercises.map((ex) => {
-                            const firstIncomplete = ex.sets.findIndex(s => !s.completed);
-                            const defaultActive = firstIncomplete !== -1 ? firstIncomplete : ex.sets.length - 1;
-                            const activeSetIdx = activeSetIndices[ex.id] !== undefined ? activeSetIndices[ex.id] : defaultActive;
-                            const safeIdx = Math.max(0, Math.min(activeSetIdx, ex.sets.length - 1));
-                            const activeSet = ex.sets[safeIdx];
+                        computeGroupSegments(exercises).map((segment) => {
+                            const groupedCards = segment.indices.map((exerciseIdx) => {
+                                const ex = exercises[exerciseIdx];
+                                const firstIncomplete = ex.sets.findIndex(s => !s.completed);
+                                const defaultActive = firstIncomplete !== -1 ? firstIncomplete : ex.sets.length - 1;
+                                const activeSetIdx = activeSetIndices[ex.id] !== undefined ? activeSetIndices[ex.id] : defaultActive;
+                                const safeIdx = Math.max(0, Math.min(activeSetIdx, ex.sets.length - 1));
+                                const activeSet = ex.sets[safeIdx];
 
-                            return (
-                                <div id={`exercise-${ex.id}`} key={ex.id}>
-                                    <LinearCardCompactV2
+                                return (
+                                    <div id={`exercise-${ex.id}`} key={ex.id}>
+                                        <LinearCardCompactV2
                                         exerciseId={ex.id}
                                         setId={activeSet.id}
                                         exerciseName={ex.name}
@@ -826,7 +874,31 @@ export function WorkoutExecutionPage({ user }) {
                                         onUpdateNotes={updateNotes}
                                         onToggleWeightMode={() => toggleExerciseWeightMode(ex.id)}
                                         onValidationError={setError}
-                                    />
+                                        progressionHint={progression?.[ex.id]}
+                                        />
+                                    </div>
+                                );
+                            });
+
+                            if (!segment.groupId) {
+                                return groupedCards;
+                            }
+
+                            return (
+                                <div
+                                    key={`group-${segment.groupId}`}
+                                    data-testid="exercise-group"
+                                    className="rounded-[28px] border border-cyan-500/25 bg-cyan-500/[0.04] p-2 pt-3 space-y-4"
+                                >
+                                    <div className="flex items-center gap-2 px-3">
+                                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-cyan-500/15 border border-cyan-500/40 text-cyan-300 text-[10px] font-bold uppercase tracking-widest">
+                                            <Link2 size={11} /> {groupLabel(segment.indices.length)}
+                                        </span>
+                                        <span className="text-[11px] text-slate-500 font-medium">
+                                            Alterne as séries • descanso ao fim da volta
+                                        </span>
+                                    </div>
+                                    {groupedCards}
                                 </div>
                             );
                         })
@@ -848,6 +920,15 @@ export function WorkoutExecutionPage({ user }) {
                     methodName={selectedMethod}
                     onClose={() => setSelectedMethod(null)}
                 />
+
+                {showGymTools && (
+                    <React.Suspense fallback={null}>
+                        <GymToolsModal
+                            isOpen={showGymTools}
+                            onClose={() => setShowGymTools(false)}
+                        />
+                    </React.Suspense>
+                )}
 
                 {/* MODAL DE CANCELAMENTO */}
                 {showCancelModal && (

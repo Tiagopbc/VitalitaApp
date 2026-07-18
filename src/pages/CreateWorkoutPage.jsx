@@ -6,7 +6,8 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { getFirestoreDeps } from '../firebaseDb';
-import { Dumbbell, Trash2, Plus, GripVertical, X } from 'lucide-react';
+import { Dumbbell, Trash2, Plus, GripVertical, X, Link2 } from 'lucide-react';
+import { toggleGroupWithPrevious, normalizeGroups, computeGroupSegments, groupLabel } from '../utils/exerciseGroups';
 import { Button } from '../components/design-system/Button';
 import { EmptyState } from '../components/design-system/EmptyState';
 import { PageHeader } from '../components/design-system/PageHeader';
@@ -26,7 +27,7 @@ const methods = [
 
 import { workoutService } from '../services/workoutService';
 
-function ReorderableExerciseItem({ ex, index, handleEditExercise, removeExercise }) {
+function ReorderableExerciseItem({ ex, index, handleEditExercise, removeExercise, groupBadge, canLink, isLinkedToPrev, onToggleLink }) {
     const dragControls = useDragControls();
 
     return (
@@ -36,7 +37,7 @@ function ReorderableExerciseItem({ ex, index, handleEditExercise, removeExercise
             value={ex}
             dragListener={false}
             dragControls={dragControls}
-            className="p-4 rounded-[14px] border border-slate-400/35 bg-[#0f172a]/80 flex items-center gap-3 cursor-pointer hover:border-cyan-500/50 transition-colors select-none"
+            className={`p-4 rounded-[14px] border bg-[#0f172a]/80 flex items-center gap-3 cursor-pointer hover:border-cyan-500/50 transition-colors select-none ${groupBadge ? 'border-cyan-500/40 border-l-4 border-l-cyan-500/70' : 'border-slate-400/35'}`}
             onClick={() => handleEditExercise(ex)}
         >
             <div
@@ -53,8 +54,13 @@ function ReorderableExerciseItem({ ex, index, handleEditExercise, removeExercise
                 <GripVertical size={18} />
             </div>
             <div className="flex-1 min-w-0">
-                <div className="text-[0.7rem] text-cyan-400 uppercase tracking-widest font-bold mb-1">
-                    {ex.muscleGroup || ex.group || ex.muscleFocus?.primary || 'Geral'}
+                <div className="text-[0.7rem] text-cyan-400 uppercase tracking-widest font-bold mb-1 flex items-center gap-2">
+                    <span>{ex.muscleGroup || ex.group || ex.muscleFocus?.primary || 'Geral'}</span>
+                    {groupBadge && (
+                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-cyan-500/15 border border-cyan-500/40 text-cyan-300 text-[0.6rem] normal-case tracking-normal">
+                            <Link2 size={10} /> {groupBadge}
+                        </span>
+                    )}
                 </div>
                 <div className="text-[0.95rem] font-semibold text-gray-200 mb-1 uppercase truncate">
                     {index + 1}. {ex.name}
@@ -69,7 +75,28 @@ function ReorderableExerciseItem({ ex, index, handleEditExercise, removeExercise
                     </div>
                 )}
             </div>
-            <div className="flex-shrink-0">
+            <div className="flex-shrink-0 flex flex-col gap-2">
+                {canLink && (
+                    <Button
+                        variant="unstyled"
+                        title={isLinkedToPrev
+                            ? 'Desagrupar do exercício anterior'
+                            : 'Agrupar com o exercício anterior (bi-set/tri-set)'}
+                        aria-label={isLinkedToPrev
+                            ? `Desagrupar ${ex.name} do exercício anterior`
+                            : `Agrupar ${ex.name} com o exercício anterior`}
+                        aria-pressed={!!isLinkedToPrev}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onToggleLink(ex.id);
+                        }}
+                        className={`w-8 h-8 p-0 rounded-lg border flex items-center justify-center transition-colors ${isLinkedToPrev
+                            ? 'bg-cyan-500/15 border-cyan-500/50 text-cyan-400 hover:bg-cyan-500/25'
+                            : 'bg-slate-800/60 border-slate-600/40 text-slate-400 hover:text-cyan-400 hover:border-cyan-500/40'}`}
+                    >
+                        <Link2 size={16} />
+                    </Button>
+                )}
                 <Button
                     variant="danger"
                     size="xs"
@@ -193,8 +220,8 @@ export default function CreateWorkoutPage({ user }) {
         };
 
         if (editingExerciseId) {
-            // Editar existente
-            setExercises(exercises.map(ex => ex.id === editingExerciseId ? { ...finalExercise, id: editingExerciseId } : ex));
+            // Editar existente (merge preserva campos fora do formulário, como groupId)
+            setExercises(exercises.map(ex => ex.id === editingExerciseId ? { ...ex, ...finalExercise, id: editingExerciseId } : ex));
             setEditingExerciseId(null);
             setShowAddExercise(false);
         } else {
@@ -244,7 +271,11 @@ export default function CreateWorkoutPage({ user }) {
     }
 
     function removeExercise(id) {
-        setExercises(exercises.filter(ex => ex.id !== id));
+        setExercises(normalizeGroups(exercises.filter(ex => ex.id !== id)));
+    }
+
+    function handleToggleLink(id) {
+        setExercises(prev => toggleGroupWithPrevious(prev, prev.findIndex(ex => ex.id === id)));
     }
 
     async function handleSave() {
@@ -263,7 +294,7 @@ export default function CreateWorkoutPage({ user }) {
 
             // Sanitizar o array de exercícios para remover propriedades undefined,
             // Proxies ou referências circulares que o framer-motion possa ter injetado
-            const sanitizedExercises = JSON.parse(JSON.stringify(exercises));
+            const sanitizedExercises = JSON.parse(JSON.stringify(normalizeGroups(exercises)));
 
             const workoutData = {
                 name: workoutName,
@@ -359,15 +390,30 @@ export default function CreateWorkoutPage({ user }) {
                         onReorder={setExercises}
                         className="space-y-3"
                     >
-                        {exercises.map((ex, index) => (
-                            <ReorderableExerciseItem
-                                key={ex.id}
-                                ex={ex}
-                                index={index}
-                                handleEditExercise={handleEditExercise}
-                                removeExercise={removeExercise}
-                            />
-                        ))}
+                        {(() => {
+                            const segments = computeGroupSegments(exercises);
+                            const badgeByIndex = {};
+                            segments.forEach(segment => {
+                                if (segment.groupId) {
+                                    const label = groupLabel(segment.indices.length);
+                                    segment.indices.forEach(i => { badgeByIndex[i] = label; });
+                                }
+                            });
+
+                            return exercises.map((ex, index) => (
+                                <ReorderableExerciseItem
+                                    key={ex.id}
+                                    ex={ex}
+                                    index={index}
+                                    handleEditExercise={handleEditExercise}
+                                    removeExercise={removeExercise}
+                                    groupBadge={badgeByIndex[index] || null}
+                                    canLink={index > 0}
+                                    isLinkedToPrev={index > 0 && !!ex.groupId && ex.groupId === exercises[index - 1]?.groupId}
+                                    onToggleLink={handleToggleLink}
+                                />
+                            ));
+                        })()}
                     </Reorder.Group>
                 )}
             </div>

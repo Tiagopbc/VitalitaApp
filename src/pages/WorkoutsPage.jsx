@@ -25,7 +25,6 @@ import {
     ListOrdered
 } from 'lucide-react';
 
-import { RippleButton } from '../components/design-system/RippleButton';
 import { Button } from '../components/design-system/Button';
 import { EmptyState } from '../components/design-system/EmptyState';
 import { PageHeader } from '../components/design-system/PageHeader';
@@ -445,7 +444,7 @@ export default function WorkoutsPage({ onNavigateToCreate, onNavigateToWorkout, 
                                 {/* Menu / order controls */}
                                 {isOrganizing ? (
                                     <div className="flex shrink-0 flex-col gap-1">
-                                        <RippleButton
+                                        <Button variant="unstyled" haptic="medium"
                                             aria-label={`Mover ${workout.name} para cima`}
                                             title="Mover para cima"
                                             disabled={idx === 0 || savingOrder}
@@ -456,8 +455,8 @@ export default function WorkoutsPage({ onNavigateToCreate, onNavigateToWorkout, 
                                             className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-700 bg-slate-800/70 text-slate-300 disabled:cursor-not-allowed disabled:opacity-25"
                                         >
                                             <ArrowUp size={18} />
-                                        </RippleButton>
-                                        <RippleButton
+                                        </Button>
+                                        <Button variant="unstyled" haptic="medium"
                                             aria-label={`Mover ${workout.name} para baixo`}
                                             title="Mover para baixo"
                                             disabled={idx === filteredWorkouts.length - 1 || savingOrder}
@@ -468,11 +467,11 @@ export default function WorkoutsPage({ onNavigateToCreate, onNavigateToWorkout, 
                                             className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-700 bg-slate-800/70 text-slate-300 disabled:cursor-not-allowed disabled:opacity-25"
                                         >
                                             <ArrowDown size={18} />
-                                        </RippleButton>
+                                        </Button>
                                     </div>
                                 ) : (
                                     <div className="relative">
-                                        <RippleButton
+                                        <Button variant="unstyled" haptic="medium"
                                             aria-label={`Abrir opções de ${workout.name}`}
                                             onClick={(e) => {
                                                 e.stopPropagation();
@@ -481,7 +480,7 @@ export default function WorkoutsPage({ onNavigateToCreate, onNavigateToWorkout, 
                                             className="p-2 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition-colors card-menu-btn"
                                         >
                                             <MoreVertical size={20} />
-                                        </RippleButton>
+                                        </Button>
 
                                         {/* Dropdown */}
                                         {activeCardMenu === workout.id && (
@@ -528,7 +527,7 @@ export default function WorkoutsPage({ onNavigateToCreate, onNavigateToWorkout, 
                                 </div>
                             ) : (
                                 <div className="flex gap-3">
-                                    <RippleButton
+                                    <Button variant="unstyled" haptic="medium"
                                         onClick={(e) => {
                                             e.stopPropagation();
                                             setSelectedWorkout(selectedWorkout === workout.id ? null : workout.id);
@@ -536,14 +535,14 @@ export default function WorkoutsPage({ onNavigateToCreate, onNavigateToWorkout, 
                                         className="flex-1 py-3 bg-slate-800 hover:bg-slate-700 rounded-xl text-white text-xs font-bold transition-colors"
                                     >
                                         {selectedWorkout === workout.id ? 'Ocultar' : 'Ver Exercícios'}
-                                    </RippleButton>
+                                    </Button>
 
-                                    <RippleButton
+                                    <Button variant="unstyled" haptic="medium"
                                         onClick={() => handleCardClick(workout.id, workout.name)}
                                         className="flex-1 py-3 bg-linear-to-r from-cyan-500 to-blue-600 hover:to-blue-500 rounded-xl text-white text-xs font-bold shadow-lg shadow-cyan-500/20 flex items-center justify-center gap-2"
                                     >
                                         <Play size={14} fill="currentColor" /> INICIAR
-                                    </RippleButton>
+                                    </Button>
                                 </div>
                             )}
 

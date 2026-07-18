@@ -1,10 +1,21 @@
 /**
  * Button.jsx
- * Componente de botão reutilizável com múltiplas variantes (primary, ghost, danger, etc.) e tamanhos.
- * Suporta estado de carregamento, ícones e badges.
+ * Botão único do design system: variantes (primary, secondary, ghost, danger, ...),
+ * tamanhos, estado de carregamento, ícones, badges, efeito ripple e feedback háptico.
+ * A variante 'unstyled' fornece apenas o comportamento (ripple/háptica) para
+ * superfícies com estilo próprio — substitui o antigo RippleButton.
  */
-import React from 'react';
+import React, { useState } from 'react';
 import { Loader2 } from 'lucide-react';
+
+const HAPTIC_PATTERNS = {
+    light: [10],
+    medium: [30],
+    heavy: [50],
+    double: [30, 50, 30],
+    success: [50, 100, 50, 100, 50],
+    error: [100, 50, 100]
+};
 
 export const Button = ({
     variant = 'primary',
@@ -16,13 +27,17 @@ export const Button = ({
     rightIcon,
     fullWidth = false,
     badge,
+    ripple = true,
+    haptic,
     children,
     onClick,
     type = 'button',
     ...props
 }) => {
+    const [ripples, setRipples] = useState([]);
+    const isUnstyled = variant === 'unstyled';
+
     // Estilos base combinando com "Anatomia do Botão" e "Transições"
-    // transition-all duration-200 ease-out active:translate-y-0 active:opacity-95 hover:-translate-y-[1px]
     const baseStyles = 'inline-flex items-center justify-center font-bold font-semibold tracking-widest uppercase transition-all duration-200 ease-out outline-none select-none active:translate-y-0 active:opacity-95 hover:-translate-y-[1px] disabled:opacity-50 disabled:pointer-events-none disabled:cursor-not-allowed';
 
     // Estilos de tamanho combinando com "Tamanhos"
@@ -36,10 +51,10 @@ export const Button = ({
 
     // Estilos de variante combinando com "Variantes" e "Design Tokens"
     const variantStyles = {
-        // PRIMÁRIO: Gradiente ciano + brilho + borda
+        // PRIMÁRIO: Gradiente ciano + brilho + borda (reservado à ação principal da tela)
         primary: 'bg-[radial-gradient(circle_at_top_left,#3abff8_0%,#0ea5e9_42%,#1d4ed8_100%)] border border-sky-400/80 text-white shadow-[0_8px_20px_rgba(37,99,235,0.4)] hover:shadow-[0_12px_30px_rgba(37,99,235,0.5)]',
 
-        // SECUNDÁRIO: Contorno transparente
+        // SECUNDÁRIO: Contorno transparente em slate neutro
         secondary: 'bg-transparent border border-slate-400/30 text-slate-400 hover:border-slate-400/70 hover:text-slate-200',
 
         // TERCIÁRIO: Fundo preenchido sutil + contorno
@@ -51,21 +66,27 @@ export const Button = ({
         // PERIGO: Gradiente vermelho + brilho + borda
         danger: 'bg-[radial-gradient(circle_at_top_left,#ef4444_0%,#dc2626_42%,#991b1b_100%)] border border-red-500/80 text-white shadow-[0_8px_20px_rgba(220,38,38,0.4)] hover:shadow-[0_12px_30px_rgba(220,38,38,0.5)]',
 
-        // OUTLINE-PRIMÁRIO: Destaque ciano
-        'outline-primary': 'bg-cyan-500/10 border border-cyan-500/40 text-cyan-400 hover:shadow-[0_0_20px_rgba(6,182,212,0.3)]',
+        // OUTLINE-PRIMÁRIO: Destaque ciano sem glow (o brilho fica só no primary)
+        'outline-primary': 'bg-cyan-500/10 border border-cyan-500/40 text-cyan-400 hover:bg-cyan-500/15 hover:border-cyan-500/60',
 
-        // SUCESSO: Gradiente esmeralda (mantido para consistência como variante "Especial" se necessário)
+        // SUCESSO: Gradiente esmeralda — celebração/conclusão (finalizar treino, PR)
         success: 'bg-[radial-gradient(circle_at_top_left,#34d399_0%,#10b981_42%,#059669_100%)] border border-emerald-500/80 text-white shadow-[0_8px_20px_rgba(16,185,129,0.4)] hover:shadow-[0_12px_30px_rgba(16,185,129,0.5)]',
     };
 
     // Combinar classes
-    const combinedClasses = [
-        baseStyles,
-        sizeStyles[size] || sizeStyles.md,
-        variantStyles[variant] || variantStyles.primary,
-        fullWidth ? 'w-full' : '',
-        className
-    ].join(' ');
+    const combinedClasses = isUnstyled
+        ? [
+            'relative overflow-hidden cursor-pointer transition-all active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none',
+            className
+        ].join(' ')
+        : [
+            baseStyles,
+            'relative overflow-hidden',
+            sizeStyles[size] || sizeStyles.md,
+            variantStyles[variant] || variantStyles.primary,
+            fullWidth ? 'w-full' : '',
+            className
+        ].join(' ');
 
     // Tamanho do ícone baseado no tamanho do botão
     const iconSize = {
@@ -77,12 +98,55 @@ export const Button = ({
     }[size] || 18;
 
     const renderIcon = (icon) => {
-        // Se o ícone for um elemento React válido, clone-o com o tamanho correto se ainda não estiver definido, 
-        // ou apenas renderize-o. Podemos tentar forçar o tamanho, mas frequentemente ícones são passados como <Icon size={...} />
-        // Se o usuário passar <Icon />, poderíamos usar cloneElement para injetar o tamanho, mas por enquanto assumimos que foi passado corretamente ou tratado pelo wrapper.
-        // Idealmente, o usuário passa o componente Icon em si ou um elemento. 
-        // Let's just render it wrapped for flex behavior.
         return <span className="flex-shrink-0">{icon}</span>;
+    };
+
+    const handleClick = (e) => {
+        if (haptic && navigator.vibrate) {
+            navigator.vibrate(HAPTIC_PATTERNS[haptic] || HAPTIC_PATTERNS.medium);
+        }
+
+        if (ripple && e?.currentTarget?.getBoundingClientRect) {
+            const rect = e.currentTarget.getBoundingClientRect();
+            const newRipple = {
+                x: (e.clientX ?? rect.left + rect.width / 2) - rect.left,
+                y: (e.clientY ?? rect.top + rect.height / 2) - rect.top,
+                id: `${Date.now()}-${Math.random()}`
+            };
+            setRipples(prev => [...prev, newRipple]);
+            setTimeout(() => {
+                setRipples(prev => prev.filter(r => r.id !== newRipple.id));
+            }, 600);
+        }
+
+        if (onClick) onClick(e);
+    };
+
+    const rippleElements = ripple ? ripples.map(r => (
+        <span
+            key={r.id}
+            style={{
+                left: r.x,
+                top: r.y,
+                transform: 'translate(-50%, -50%)',
+            }}
+            className="absolute w-0 h-0 rounded-full bg-white/30 animate-ripple pointer-events-none"
+        />
+    )) : null;
+
+    if (isUnstyled) {
+        return (
+            <button
+                type={type}
+                className={combinedClasses}
+                disabled={disabled || loading}
+                onClick={handleClick}
+                {...props}
+            >
+                {children}
+                {rippleElements}
+            </button>
+        );
     }
 
     return (
@@ -90,7 +154,7 @@ export const Button = ({
             type={type}
             className={combinedClasses}
             disabled={disabled || loading}
-            onClick={onClick}
+            onClick={handleClick}
             {...props}
         >
             {loading ? (
@@ -111,6 +175,8 @@ export const Button = ({
             {!loading && rightIcon && (
                 renderIcon(rightIcon)
             )}
+
+            {rippleElements}
         </button>
     );
 };

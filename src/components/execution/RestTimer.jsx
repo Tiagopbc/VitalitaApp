@@ -6,6 +6,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Play, Pause, RotateCcw, X, Minus, Plus, Timer } from 'lucide-react';
 import { createPortal } from 'react-dom';
+import {
+    primeRestAudio,
+    playRestCompleteSound,
+    ensureNotificationPermission,
+    notifyRestComplete
+} from '../../utils/restTimerAlerts';
 
 export function RestTimer({ initialTime = 90, onComplete, isOpen, onClose, onDurationChange, autoStartTimer, onAutoStartChange }) {
     const [status, setStatus] = useState('idle'); // ocioso, rodando, pausado, completo
@@ -36,6 +42,11 @@ export function RestTimer({ initialTime = 90, onComplete, isOpen, onClose, onDur
     // Inicializar e Início Automático
     useEffect(() => {
         if (isOpen) {
+            // Abrir o timer é um gesto do usuário: prepara áudio e permissão de
+            // notificação para alertar mesmo com o app em segundo plano.
+            primeRestAudio();
+            ensureNotificationPermission().catch(() => undefined);
+
             // Only start if explicitly idle (prevents restart on re-renders)
             if (status === 'idle') {
                 setTimeout(() => {
@@ -74,6 +85,12 @@ export function RestTimer({ initialTime = 90, onComplete, isOpen, onClose, onDur
                 if (remaining <= 0) {
                     setStatus('complete');
                     vibrate([200, 100, 200, 100, 200]);
+                    playRestCompleteSound();
+                    // Com o app em segundo plano/tela bloqueada, o alerta visível
+                    // é a notificação do sistema.
+                    if (document.visibilityState === 'hidden') {
+                        notifyRestComplete();
+                    }
                     clearInterval(intervalRef.current);
                     endTimeRef.current = null;
                     if (onComplete) onComplete();
@@ -94,6 +111,7 @@ export function RestTimer({ initialTime = 90, onComplete, isOpen, onClose, onDur
             setStatus('paused');
         } else {
             vibrate(30);
+            primeRestAudio();
             setStatus('running');
         }
     };

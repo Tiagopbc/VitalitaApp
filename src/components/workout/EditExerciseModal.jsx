@@ -1,7 +1,7 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import { Plus } from 'lucide-react';
 import { PremiumCard } from '../design-system/PremiumCard';
-import { RippleButton } from '../design-system/RippleButton';
+import { Button } from '../design-system/Button';
 
 export function EditExerciseModal({ exercise, onClose, onSave }) {
     if (!exercise) return null;
@@ -139,7 +139,7 @@ export function EditExerciseModal({ exercise, onClose, onSave }) {
                             Cancelar
                         </motion.button>
 
-                        <RippleButton
+                        <Button variant="unstyled" haptic="medium"
                             onClick={() => {
 
                                 // Por enquanto apenas fechar, no app real salvaria
@@ -149,7 +149,7 @@ export function EditExerciseModal({ exercise, onClose, onSave }) {
                             className="flex-1 px-4 py-3 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-xl text-white font-bold text-center"
                         >
                             Salvar Alterações
-                        </RippleButton>
+                        </Button>
                     </div>
                 </PremiumCard>
             </motion.div>
