@@ -528,7 +528,7 @@ function HistoryPage({ user, isEmbedded = false }) {
     return (
         <div
             data-testid="history-page"
-            className="min-h-screen w-full min-w-0 max-w-full overflow-x-clip bg-[#020617] pb-48 lg:pb-32"
+            className="min-h-screen w-full min-w-0 max-w-full overflow-x-clip bg-[#020617] pb-8 lg:pb-12"
         >
             {/* --- CABEÇALHO --- */}
             <div className="sticky top-0 z-40 bg-[#020617]/95 backdrop-blur-md pt-2 pb-4 lg:pt-[calc(1.5rem+env(safe-area-inset-top))]">

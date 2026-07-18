@@ -533,7 +533,7 @@ export function HomeDashboard({
 
 
     return (
-        <div className="pb-44 lg:pb-8 max-w-3xl mx-auto w-full">
+        <div className="pb-4 lg:pb-8 max-w-3xl mx-auto w-full">
             <div className="w-full px-4 lg:px-8 flex flex-col">
 
                 {/* 1. SAUDAÇÃO */}

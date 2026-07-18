@@ -6,6 +6,7 @@
  */
 @import "tailwindcss";
 @import "./fonts.css";
+@import "./theme-light-compat.css";
 
 @theme {
     /* Cores - Vitalità Palette */
@@ -80,6 +81,7 @@
     --vit-border: rgba(148, 163, 184, 0.24);
     --vit-text: #e2e8f0;
     --vit-text-strong: #f8fafc;
+    --vit-text-soft: #cbd5e1;
     --vit-muted: #94a3b8;
     --vit-primary: #06b6d4;
     --vit-primary-strong: #0891b2;
@@ -89,6 +91,72 @@
 
     --vit-shadow-card: 0 20px 45px rgba(2, 6, 23, 0.35);
     --vit-shadow-glow: 0 0 24px rgba(6, 182, 212, 0.28);
+
+    color-scheme: dark;
+}
+
+/*
+ * Tema claro: ativado com data-theme="light" no <html> (ver src/utils/theme.js).
+ * As utilities do Tailwind v4 referenciam var(--color-*), então remapear a
+ * paleta aqui inverte as superfícies do app inteiro sem tocar nos componentes.
+ */
+:root[data-theme="light"] {
+    color-scheme: light;
+
+    --vit-surface: #f1f5f9;
+    --vit-panel: #ffffff;
+    --vit-panel-raised: #e2e8f0;
+    --vit-border: rgba(71, 85, 105, 0.22);
+    --vit-text: #1e293b;
+    --vit-text-strong: #0f172a;
+    --vit-text-soft: #334155;
+    --vit-muted: #64748b;
+    --vit-shadow-card: 0 20px 45px rgba(15, 23, 42, 0.12);
+    --vit-shadow-glow: 0 0 24px rgba(6, 182, 212, 0.2);
+
+    /* Escala slate invertida (superfícies escuras -> claras e vice-versa) */
+    --color-slate-950: #f8fafc;
+    --color-slate-900: #ffffff;
+    --color-slate-800: #e2e8f0;
+    --color-slate-700: #cbd5e1;
+    --color-slate-600: #94a3b8;
+    --color-slate-500: #64748b;
+    --color-slate-400: #475569;
+    --color-slate-300: #334155;
+    --color-slate-200: #1e293b;
+    --color-slate-100: #0f172a;
+    --color-slate-50: #020617;
+
+    /* Cinzas usados em textos de cards */
+    --color-gray-100: #0f172a;
+    --color-gray-200: #1e293b;
+    --color-gray-300: #334155;
+    --color-gray-400: #475569;
+
+    /* Texto "branco" vira tinta escura em superfícies claras. Botões com
+       gradiente saturado usam text-[#fff] literal e não são afetados. */
+    --color-white: #0f172a;
+
+    /* Ciano de destaque um tom mais escuro para contraste em fundo claro */
+    --color-cyan-400: #0891b2;
+    --color-cyan-300: #0e7490;
+}
+
+/* Superfícies com hex hardcoded (fora da paleta de variáveis) */
+:root[data-theme="light"] [class*="bg-[#020617]"] {
+    background-color: #f1f5f9;
+}
+
+:root[data-theme="light"] [class*="bg-[#0f172a]"] {
+    background-color: #ffffff;
+}
+
+:root[data-theme="light"] [class*="bg-[#1e293b]"] {
+    background-color: #e2e8f0;
+}
+
+:root[data-theme="light"] [class*="text-[#e2e8f0]"] {
+    color: #1e293b;
 }
 
 @layer base {
@@ -138,7 +206,7 @@
         /* ~20px → 24px */
         font-weight: 700;
         line-height: 1.3;
-        color: #f1f5f9;
+        color: var(--vit-text-strong);
         letter-spacing: 0.3px;
     }
 
@@ -155,7 +223,7 @@
         font-size: 0.875rem;
         font-weight: 400;
         line-height: 1.6;
-        color: #cbd5e1;
+        color: var(--vit-text-soft);
     }
 
     small {

@@ -52,7 +52,7 @@ export const Button = ({
     // Estilos de variante combinando com "Variantes" e "Design Tokens"
     const variantStyles = {
         // PRIMÁRIO: Gradiente ciano + brilho + borda (reservado à ação principal da tela)
-        primary: 'bg-[radial-gradient(circle_at_top_left,#3abff8_0%,#0ea5e9_42%,#1d4ed8_100%)] border border-sky-400/80 text-white shadow-[0_8px_20px_rgba(37,99,235,0.4)] hover:shadow-[0_12px_30px_rgba(37,99,235,0.5)]',
+        primary: 'bg-[radial-gradient(circle_at_top_left,#3abff8_0%,#0ea5e9_42%,#1d4ed8_100%)] border border-sky-400/80 text-[#fff] shadow-[0_8px_20px_rgba(37,99,235,0.4)] hover:shadow-[0_12px_30px_rgba(37,99,235,0.5)]',
 
         // SECUNDÁRIO: Contorno transparente em slate neutro
         secondary: 'bg-transparent border border-slate-400/30 text-slate-400 hover:border-slate-400/70 hover:text-slate-200',
@@ -64,13 +64,13 @@ export const Button = ({
         ghost: 'bg-transparent border-transparent text-slate-400 hover:bg-slate-700/10 hover:text-slate-300',
 
         // PERIGO: Gradiente vermelho + brilho + borda
-        danger: 'bg-[radial-gradient(circle_at_top_left,#ef4444_0%,#dc2626_42%,#991b1b_100%)] border border-red-500/80 text-white shadow-[0_8px_20px_rgba(220,38,38,0.4)] hover:shadow-[0_12px_30px_rgba(220,38,38,0.5)]',
+        danger: 'bg-[radial-gradient(circle_at_top_left,#ef4444_0%,#dc2626_42%,#991b1b_100%)] border border-red-500/80 text-[#fff] shadow-[0_8px_20px_rgba(220,38,38,0.4)] hover:shadow-[0_12px_30px_rgba(220,38,38,0.5)]',
 
         // OUTLINE-PRIMÁRIO: Destaque ciano sem glow (o brilho fica só no primary)
         'outline-primary': 'bg-cyan-500/10 border border-cyan-500/40 text-cyan-400 hover:bg-cyan-500/15 hover:border-cyan-500/60',
 
         // SUCESSO: Gradiente esmeralda — celebração/conclusão (finalizar treino, PR)
-        success: 'bg-[radial-gradient(circle_at_top_left,#34d399_0%,#10b981_42%,#059669_100%)] border border-emerald-500/80 text-white shadow-[0_8px_20px_rgba(16,185,129,0.4)] hover:shadow-[0_12px_30px_rgba(16,185,129,0.5)]',
+        success: 'bg-[radial-gradient(circle_at_top_left,#34d399_0%,#10b981_42%,#059669_100%)] border border-emerald-500/80 text-[#fff] shadow-[0_8px_20px_rgba(16,185,129,0.4)] hover:shadow-[0_12px_30px_rgba(16,185,129,0.5)]',
     };
 
     // Combinar classes
@@ -166,7 +166,7 @@ export const Button = ({
             <span className="flex items-center gap-1.5">
                 {children}
                 {badge !== undefined && (
-                    <span className="bg-red-500 text-white px-1.5 rounded-full text-[10px] min-w-[18px] h-[18px] flex items-center justify-center font-bold ml-1">
+                    <span className="bg-red-500 text-[#fff] px-1.5 rounded-full text-[10px] min-w-[18px] h-[18px] flex items-center justify-center font-bold ml-1">
                         {badge}
                     </span>
                 )}

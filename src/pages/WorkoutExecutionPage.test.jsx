@@ -131,7 +131,7 @@ describe('WorkoutExecutionPage', () => {
     it('opens cancel modal and confirms discard', async () => {
         render(<WorkoutExecutionPage user={{ uid: 'u1' }} />);
 
-        fireEvent.click(screen.getByRole('button', { name: 'CANCELAR' }));
+        fireEvent.click(screen.getByRole('button', { name: 'Cancelar treino' }));
         expect(screen.getByText('Cancelar Treino?')).toBeInTheDocument();
 
         const confirmButton = screen.getByRole('button', { name: 'Confirmar' });
@@ -162,18 +162,18 @@ describe('WorkoutExecutionPage', () => {
         expect(await screen.findByText('Compartilhar Resultado', {}, { timeout: 2000 })).toBeInTheDocument();
     });
 
-    it('removes the large bottom reserve in focus mode', () => {
+    it('keeps the bottom padding compact in both modes', () => {
         render(<WorkoutExecutionPage user={{ uid: 'u1' }} />);
 
         const page = screen.getByTestId('workout-execution-page');
         const footer = screen.getByTestId('workout-finish-footer');
         expect(page).toHaveAttribute('data-focus-mode', 'false');
-        expect(page).toHaveClass('pb-40');
+        expect(page).toHaveClass('pb-4');
+        expect(footer.className).not.toContain('6rem');
 
         fireEvent.click(screen.getByRole('button', { name: 'FOCO' }));
 
         expect(page).toHaveAttribute('data-focus-mode', 'true');
-        expect(page).not.toHaveClass('pb-40');
-        expect(footer.className).not.toContain('6rem');
+        expect(page).not.toHaveClass('pb-4');
     });
 });

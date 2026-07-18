@@ -301,7 +301,7 @@ export default function WorkoutsPage({ onNavigateToCreate, onNavigateToWorkout, 
 
     // --- RENDER ---
     return (
-        <div className="min-h-screen pb-48 pt-2 px-4 lg:px-8 w-full max-w-5xl mx-auto lg:pt-[calc(1.5rem+env(safe-area-inset-top))] lg:pb-32">
+        <div className="min-h-screen pb-8 pt-2 px-4 lg:px-8 w-full max-w-5xl mx-auto lg:pt-[calc(1.5rem+env(safe-area-inset-top))] lg:pb-12">
 
             {/* 1. HEADER & SEARCH */}
             <div className="space-y-6 pt-2 mb-8 lg:space-y-8 lg:pt-6">
