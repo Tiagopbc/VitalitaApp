@@ -28,6 +28,7 @@ import {
     Moon
 } from 'lucide-react';
 import { getStoredTheme, setTheme, THEMES } from '../utils/theme';
+import { ThemeSwitch } from '../components/design-system/ThemeSwitch';
 import { achievementsCatalog } from '../data/achievementsCatalog';
 import { evaluateAchievements, calculateStats, evaluateHistory } from '../utils/evaluateAchievements';
 import { calculateWeeklyStats } from '../utils/workoutStats';
@@ -332,16 +333,6 @@ export default function ProfilePage({ user, onLogout, onNavigateToHistory, onNav
                 {/* Brilho de Fundo */}
                 <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
 
-                {/* Alternador de tema (claro/escuro) */}
-                <Button
-                    variant="unstyled"
-                    onClick={() => handleThemeChange(appTheme === THEMES.dark ? THEMES.light : THEMES.dark)}
-                    aria-label={appTheme === THEMES.dark ? 'Mudar para o tema claro' : 'Mudar para o tema escuro'}
-                    title={appTheme === THEMES.dark ? 'Tema claro' : 'Tema escuro'}
-                    className="absolute top-4 right-4 z-20 w-10 h-10 rounded-full bg-slate-800/60 border border-slate-700/60 text-slate-300 hover:text-cyan-400 hover:border-cyan-500/40 flex items-center justify-center transition-colors"
-                >
-                    {appTheme === THEMES.dark ? <Sun size={18} /> : <Moon size={18} />}
-                </Button>
 
 
 
@@ -401,6 +392,22 @@ export default function ProfilePage({ user, onLogout, onNavigateToHistory, onNav
                     >
                         Personal
                     </Button>
+                </div>
+
+                {/* Tema do aplicativo */}
+                <div className="relative z-10 mt-4 flex items-center justify-between rounded-2xl border border-slate-800/60 bg-slate-950/40 px-4 py-3">
+                    <div className="flex items-center gap-2 text-slate-400">
+                        {appTheme === THEMES.light
+                            ? <Sun size={15} className="text-amber-500" />
+                            : <Moon size={15} className="text-cyan-400" />}
+                        <span className="text-xs font-bold uppercase tracking-wider">
+                            {appTheme === THEMES.light ? 'Modo claro' : 'Modo escuro'}
+                        </span>
+                    </div>
+                    <ThemeSwitch
+                        isLight={appTheme === THEMES.light}
+                        onToggle={() => handleThemeChange(appTheme === THEMES.dark ? THEMES.light : THEMES.dark)}
+                    />
                 </div>
 
                 {/* Experience Bar */}
