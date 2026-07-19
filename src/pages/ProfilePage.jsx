@@ -332,6 +332,17 @@ export default function ProfilePage({ user, onLogout, onNavigateToHistory, onNav
                 {/* Brilho de Fundo */}
                 <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
 
+                {/* Alternador de tema (claro/escuro) */}
+                <Button
+                    variant="unstyled"
+                    onClick={() => handleThemeChange(appTheme === THEMES.dark ? THEMES.light : THEMES.dark)}
+                    aria-label={appTheme === THEMES.dark ? 'Mudar para o tema claro' : 'Mudar para o tema escuro'}
+                    title={appTheme === THEMES.dark ? 'Tema claro' : 'Tema escuro'}
+                    className="absolute top-4 right-4 z-20 w-10 h-10 rounded-full bg-slate-800/60 border border-slate-700/60 text-slate-300 hover:text-cyan-400 hover:border-cyan-500/40 flex items-center justify-center transition-colors"
+                >
+                    {appTheme === THEMES.dark ? <Sun size={18} /> : <Moon size={18} />}
+                </Button>
+
 
 
                 <div className="flex gap-4 sm:gap-6 items-center relative z-10">
@@ -733,40 +744,6 @@ export default function ProfilePage({ user, onLogout, onNavigateToHistory, onNav
                         )}
                     </>
                 )}
-            </div>
-
-            {/* --- APARÊNCIA --- */}
-            <div className="mb-6 rounded-3xl border border-slate-800 bg-slate-900/50 p-5">
-                <SectionHeader icon={<Sun size={18} className="text-cyan-300" />} title="Aparência" />
-                <p className="mb-4 text-sm leading-relaxed text-slate-400">
-                    Escolha o tema do aplicativo. A preferência fica salva neste dispositivo.
-                </p>
-                <div className="grid grid-cols-2 gap-3" role="radiogroup" aria-label="Tema do aplicativo">
-                    <Button
-                        variant="unstyled"
-                        role="radio"
-                        aria-checked={appTheme === THEMES.dark}
-                        onClick={() => handleThemeChange(THEMES.dark)}
-                        className={`inline-flex items-center justify-center gap-2 rounded-2xl border px-4 py-3 text-xs font-bold uppercase tracking-widest transition-colors ${appTheme === THEMES.dark
-                            ? 'border-cyan-400/50 bg-cyan-400/10 text-cyan-300'
-                            : 'border-slate-700 bg-slate-950/40 text-slate-400 hover:border-slate-500 hover:text-slate-200'}`}
-                    >
-                        <Moon size={16} />
-                        Escuro
-                    </Button>
-                    <Button
-                        variant="unstyled"
-                        role="radio"
-                        aria-checked={appTheme === THEMES.light}
-                        onClick={() => handleThemeChange(THEMES.light)}
-                        className={`inline-flex items-center justify-center gap-2 rounded-2xl border px-4 py-3 text-xs font-bold uppercase tracking-widest transition-colors ${appTheme === THEMES.light
-                            ? 'border-cyan-400/50 bg-cyan-400/10 text-cyan-300'
-                            : 'border-slate-700 bg-slate-950/40 text-slate-400 hover:border-slate-500 hover:text-slate-200'}`}
-                    >
-                        <Sun size={16} />
-                        Claro
-                    </Button>
-                </div>
             </div>
 
             {/* --- PRIVACIDADE E TERMOS --- */}
