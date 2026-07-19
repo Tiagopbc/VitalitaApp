@@ -12,7 +12,7 @@ import {
     ensureNotificationPermission,
     notifyRestComplete
 } from '../../utils/restTimerAlerts';
-import { scheduleRestPush, cancelRestPush } from '../../services/restPushService';
+import { scheduleRestPush, cancelRestPush, warmRestPushSubscription } from '../../services/restPushService';
 
 export function RestTimer({ initialTime = 90, onComplete, isOpen, onClose, onDurationChange, autoStartTimer, onAutoStartChange }) {
     const [status, setStatus] = useState('idle'); // ocioso, rodando, pausado, completo
@@ -22,38 +22,76 @@ export function RestTimer({ initialTime = 90, onComplete, isOpen, onClose, onDur
     const endTimeRef = useRef(null);
     const intervalRef = useRef(null);
 
-    // Push agendado no servidor (notifica mesmo com o app fechado/tela bloqueada)
-    const pushMessageIdRef = useRef(null);
-
-    const cancelScheduledPush = () => {
-        if (pushMessageIdRef.current) {
-            cancelRestPush(pushMessageIdRef.current);
-            pushMessageIdRef.current = null;
-        }
-    };
-
     /*
      * Estratégia do push (a prova de suspensão do iOS): o agendamento no
      * servidor acontece SEMPRE com o app ativo — ao iniciar/retomar/ajustar o
      * timer — nunca no evento de ir para segundo plano (o iOS congela o JS
      * antes de o pedido completar). Se o usuário sair do app, o push já está
      * agendado e o sistema entrega na hora certa. Se ficar no app, o push é
-     * cancelado 5s antes do fim (folga confortável), e os alertas locais
+     * cancelado 5s antes do fim (em descansos >= 30s), e os alertas locais
      * cuidam do aviso — sem notificação duplicada.
+     *
+     * A contabilidade inclui pedidos em voo: se um agendamento resolver
+     * depois de um cancelamento (ex.: requisição congelada pelo iOS que
+     * resume ao voltar ao app), ele se cancela na hora — nunca fica órfão.
      */
+    const pushStateRef = useRef({ messageId: null, pending: null, canceled: false });
+    const lastScheduledSecondsRef = useRef(0);
+
+    const cancelScheduledPush = () => {
+        const state = pushStateRef.current;
+        state.canceled = true;
+        if (state.messageId) {
+            cancelRestPush(state.messageId);
+            state.messageId = null;
+        }
+        if (state.pending) {
+            const pending = state.pending;
+            state.pending = null;
+            pending.then((messageId) => {
+                if (messageId) cancelRestPush(messageId);
+            });
+        }
+    };
+
     const scheduleBackgroundPush = (seconds) => {
         cancelScheduledPush();
         if (!seconds || seconds < 3) return;
-        scheduleRestPush(seconds).then((messageId) => {
-            pushMessageIdRef.current = messageId;
+
+        const state = pushStateRef.current;
+        state.canceled = false;
+        lastScheduledSecondsRef.current = seconds;
+
+        const request = scheduleRestPush(seconds);
+        state.pending = request;
+        request.then((messageId) => {
+            if (state.pending === request) {
+                state.pending = null;
+            }
+            if (!messageId) return;
+            if (state.canceled) {
+                cancelRestPush(messageId);
+                return;
+            }
+            state.messageId = messageId;
         });
     };
 
-    // Cancela push pendente ao desmontar (fechar timer, trocar de página).
-    useEffect(() => () => {
-        if (pushMessageIdRef.current) {
-            cancelRestPush(pushMessageIdRef.current);
-        }
+    // Cancela push pendente (inclusive em voo) ao desmontar.
+    useEffect(() => {
+        const state = pushStateRef.current;
+        return () => {
+            state.canceled = true;
+            if (state.messageId) {
+                cancelRestPush(state.messageId);
+                state.messageId = null;
+            }
+            if (state.pending) {
+                state.pending.then((messageId) => {
+                    if (messageId) cancelRestPush(messageId);
+                });
+            }
+        };
     }, []);
 
     // Aumentei o raio de 52 para 80
@@ -77,10 +115,13 @@ export function RestTimer({ initialTime = 90, onComplete, isOpen, onClose, onDur
     // Inicializar e Início Automático
     useEffect(() => {
         if (isOpen) {
-            // Abrir o timer é um gesto do usuário: prepara áudio e permissão de
-            // notificação para alertar mesmo com o app em segundo plano.
+            // Abrir o timer é um gesto do usuário: prepara áudio, permissão de
+            // notificação e a assinatura de push (a primeira pode levar
+            // segundos; aquecida aqui, o agendamento vira uma requisição só).
             primeRestAudio();
-            ensureNotificationPermission().catch(() => undefined);
+            ensureNotificationPermission()
+                .then((granted) => { if (granted) warmRestPushSubscription(); })
+                .catch(() => undefined);
 
             // Only start if explicitly idle (prevents restart on re-renders)
             if (status === 'idle') {
@@ -122,7 +163,11 @@ export function RestTimer({ initialTime = 90, onComplete, isOpen, onClose, onDur
 
                 // Com o app visível, o alerta local cobre o fim: cancela o
                 // push com 5s de antecedência (folga que não perde corrida).
-                if (remaining <= 5 && remaining > 0 && pushMessageIdRef.current
+                // Só em descansos >= 30s — em timers curtos a janela comeria
+                // boa parte do tempo útil de sair do app.
+                if (remaining <= 5 && remaining > 0
+                    && lastScheduledSecondsRef.current >= 30
+                    && (pushStateRef.current.messageId || pushStateRef.current.pending)
                     && document.visibilityState === 'visible') {
                     cancelScheduledPush();
                 }
