@@ -39,3 +39,5 @@ output/pdf/*.pdf
 output/
 *.trace.json
 *.devtoolslog.json
+
+.env*.local

@@ -39,9 +39,15 @@ export default defineConfig([
     },
   },
   {
-    files: ['functions/**/*.js'],
+    files: ['functions/**/*.js', 'api/**/*.js'],
     languageOptions: {
       globals: globals.node,
+    },
+  },
+  {
+    files: ['public/push-sw.js'],
+    languageOptions: {
+      globals: globals.serviceworker,
     },
   },
 ])
