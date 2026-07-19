@@ -35,9 +35,7 @@ export function RestTimer({ initialTime = 90, onComplete, isOpen, onClose, onDur
     const scheduleBackgroundPush = (seconds) => {
         cancelScheduledPush();
         if (!seconds || seconds < 3) return;
-        // +2s de folga: concluindo em primeiro plano, dá tempo de cancelar
-        // antes da entrega; em segundo plano a notificação chega ~2s depois.
-        scheduleRestPush(seconds + 2).then((messageId) => {
+        scheduleRestPush(seconds).then((messageId) => {
             pushMessageIdRef.current = messageId;
         });
     };
@@ -48,6 +46,28 @@ export function RestTimer({ initialTime = 90, onComplete, isOpen, onClose, onDur
             cancelRestPush(pushMessageIdRef.current);
         }
     }, []);
+
+    // O push só existe quando o app sai de cena: agenda ao ir para segundo
+    // plano (tela bloqueada/troca de app) com o tempo restante e cancela ao
+    // voltar. Em primeiro plano os alertas locais cobrem — sem duplicata.
+    useEffect(() => {
+        if (!isOpen) return undefined;
+
+        const onVisibilityChange = () => {
+            if (document.visibilityState === 'hidden') {
+                if (status === 'running' && endTimeRef.current) {
+                    const remaining = Math.ceil((endTimeRef.current - Date.now()) / 1000);
+                    scheduleBackgroundPush(remaining);
+                }
+            } else {
+                cancelScheduledPush();
+            }
+        };
+
+        document.addEventListener('visibilitychange', onVisibilityChange);
+        return () => document.removeEventListener('visibilitychange', onVisibilityChange);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isOpen, status]);
 
     // Aumentei o raio de 52 para 80
     const radius = 80;
@@ -96,9 +116,6 @@ export function RestTimer({ initialTime = 90, onComplete, isOpen, onClose, onDur
     // Lógica do Cronômetro com Correção de Drift
     useEffect(() => {
         if (status === 'running') {
-            // Agenda o alerta de segundo plano para o fim do descanso.
-            scheduleBackgroundPush(timeLeft);
-
             if (!endTimeRef.current) {
                 endTimeRef.current = Date.now() + (timeLeft * 1000);
             } else {
@@ -130,8 +147,7 @@ export function RestTimer({ initialTime = 90, onComplete, isOpen, onClose, onDur
         } else {
             clearInterval(intervalRef.current);
             endTimeRef.current = null;
-            // Pausado, fechado ou concluído em primeiro plano: o alerta local
-            // já cobre; cancela a entrega em segundo plano.
+            // Pausado, fechado ou concluído: nenhum push deve ficar pendente.
             cancelScheduledPush();
         }
 
@@ -155,10 +171,9 @@ export function RestTimer({ initialTime = 90, onComplete, isOpen, onClose, onDur
         setStatus('running'); // Auto-start
         setTimeLeft(initialTime);
         endTimeRef.current = null; // Will be recalculated in useEffect
-        // Se já estava rodando, o efeito de status não reexecuta: reagenda aqui.
+        // Se já estava rodando, o efeito de status não reexecuta: ressincroniza aqui.
         if (status === 'running') {
             endTimeRef.current = Date.now() + (initialTime * 1000);
-            scheduleBackgroundPush(initialTime);
         }
     };
 
@@ -179,10 +194,6 @@ export function RestTimer({ initialTime = 90, onComplete, isOpen, onClose, onDur
             return newVal;
         });
 
-        // Reagenda o alerta de segundo plano com o novo tempo restante.
-        if (status === 'running') {
-            scheduleBackgroundPush(Math.max(0, timeLeft + amount));
-        }
 
         if (status === 'complete' && timeLeft + amount > 0) {
             setStatus('idle');
