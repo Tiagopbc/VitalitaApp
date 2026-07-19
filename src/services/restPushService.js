@@ -25,15 +25,39 @@ export function isPushSupported() {
         && 'Notification' in window;
 }
 
+// A primeira assinatura envolve registro no serviço de push do sistema e pode
+// levar segundos; o cache permite agendar com uma única requisição depois.
+let cachedSubscription = null;
+
 async function getPushSubscription() {
+    if (cachedSubscription) return cachedSubscription;
+
     const registration = await navigator.serviceWorker.ready;
     const existing = await registration.pushManager.getSubscription();
-    if (existing) return existing;
+    if (existing) {
+        cachedSubscription = existing;
+        return existing;
+    }
 
-    return registration.pushManager.subscribe({
+    cachedSubscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
     });
+    return cachedSubscription;
+}
+
+/**
+ * Pré-aquece a assinatura (chamar ao abrir o timer, com o app ativo), para
+ * que o agendamento em si seja uma única requisição rápida.
+ */
+export async function warmRestPushSubscription() {
+    if (!isPushSupported() || Notification.permission !== 'granted') return false;
+    try {
+        await getPushSubscription();
+        return true;
+    } catch {
+        return false;
+    }
 }
 
 /**
@@ -51,7 +75,10 @@ export async function scheduleRestPush(delaySeconds) {
             body: JSON.stringify({
                 subscription: subscription.toJSON(),
                 delaySeconds: Math.round(delaySeconds)
-            })
+            }),
+            // keepalive: o navegador completa o envio mesmo se o app for
+            // suspenso logo depois (usuário bloqueando a tela em seguida).
+            keepalive: true
         });
         if (!response.ok) return null;
         const data = await response.json().catch(() => null);
