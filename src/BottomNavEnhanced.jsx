@@ -62,7 +62,7 @@ export function BottomNavEnhanced({ activeTab, onTabChange }) {
             <div
                 className="flex items-center gap-1 p-1.5 rounded-[28px] border border-white/10 relative overflow-hidden backdrop-blur-3xl"
                 style={{
-                    background: 'rgba(12, 12, 14, 0.45)', // Base dark glass
+                    background: 'var(--vit-nav-glass)',
                     boxShadow: '0 20px 40px -10px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.05) inset',
                     WebkitBackdropFilter: 'blur(40px) saturate(180%)'
                 }}

@@ -1,0 +1,208 @@
+/**
+ * theme-light-compat.css
+ * GERADO para o tema claro: classes slate com modificador de opacidade
+ * compilam para hex literal (não var()), então precisam de override explícito.
+ * Usa color-mix com var(--color-slate-*) para que .theme-dark-locked possa
+ * re-fixar a paleta escura em subárvores (cards de compartilhamento).
+ * Regenerar se novas classes slate-*/opacidade forem adicionadas ao código.
+ */
+
+:root[data-theme="light"] [class~="bg-slate-400/20"] {
+    background-color: color-mix(in srgb, var(--color-slate-400) 20%, transparent);
+}
+
+:root[data-theme="light"] [class~="bg-slate-400/25"] {
+    background-color: color-mix(in srgb, var(--color-slate-400) 25%, transparent);
+}
+
+:root[data-theme="light"] [class~="bg-slate-800/20"] {
+    background-color: color-mix(in srgb, var(--color-slate-800) 20%, transparent);
+}
+
+:root[data-theme="light"] [class~="bg-slate-800/40"] {
+    background-color: color-mix(in srgb, var(--color-slate-800) 40%, transparent);
+}
+
+:root[data-theme="light"] [class~="bg-slate-800/50"] {
+    background-color: color-mix(in srgb, var(--color-slate-800) 50%, transparent);
+}
+
+:root[data-theme="light"] [class~="bg-slate-800/60"] {
+    background-color: color-mix(in srgb, var(--color-slate-800) 60%, transparent);
+}
+
+:root[data-theme="light"] [class~="bg-slate-800/70"] {
+    background-color: color-mix(in srgb, var(--color-slate-800) 70%, transparent);
+}
+
+:root[data-theme="light"] [class~="bg-slate-800/80"] {
+    background-color: color-mix(in srgb, var(--color-slate-800) 80%, transparent);
+}
+
+:root[data-theme="light"] [class~="bg-slate-800/90"] {
+    background-color: color-mix(in srgb, var(--color-slate-800) 90%, transparent);
+}
+
+:root[data-theme="light"] [class~="bg-slate-900/20"] {
+    background-color: color-mix(in srgb, var(--color-slate-900) 20%, transparent);
+}
+
+:root[data-theme="light"] [class~="bg-slate-900/30"] {
+    background-color: color-mix(in srgb, var(--color-slate-900) 30%, transparent);
+}
+
+:root[data-theme="light"] [class~="bg-slate-900/35"] {
+    background-color: color-mix(in srgb, var(--color-slate-900) 35%, transparent);
+}
+
+:root[data-theme="light"] [class~="bg-slate-900/40"] {
+    background-color: color-mix(in srgb, var(--color-slate-900) 40%, transparent);
+}
+
+:root[data-theme="light"] [class~="bg-slate-900/50"] {
+    background-color: color-mix(in srgb, var(--color-slate-900) 50%, transparent);
+}
+
+:root[data-theme="light"] [class~="bg-slate-900/55"] {
+    background-color: color-mix(in srgb, var(--color-slate-900) 55%, transparent);
+}
+
+:root[data-theme="light"] [class~="bg-slate-900/60"] {
+    background-color: color-mix(in srgb, var(--color-slate-900) 60%, transparent);
+}
+
+:root[data-theme="light"] [class~="bg-slate-900/70"] {
+    background-color: color-mix(in srgb, var(--color-slate-900) 70%, transparent);
+}
+
+:root[data-theme="light"] [class~="bg-slate-900/80"] {
+    background-color: color-mix(in srgb, var(--color-slate-900) 80%, transparent);
+}
+
+:root[data-theme="light"] [class~="bg-slate-900/95"] {
+    background-color: color-mix(in srgb, var(--color-slate-900) 95%, transparent);
+}
+
+:root[data-theme="light"] [class~="bg-slate-950/40"] {
+    background-color: color-mix(in srgb, var(--color-slate-950) 40%, transparent);
+}
+
+:root[data-theme="light"] [class~="bg-slate-950/45"] {
+    background-color: color-mix(in srgb, var(--color-slate-950) 45%, transparent);
+}
+
+:root[data-theme="light"] [class~="bg-slate-950/50"] {
+    background-color: color-mix(in srgb, var(--color-slate-950) 50%, transparent);
+}
+
+:root[data-theme="light"] [class~="bg-slate-950/60"] {
+    background-color: color-mix(in srgb, var(--color-slate-950) 60%, transparent);
+}
+
+:root[data-theme="light"] [class~="bg-slate-950/80"] {
+    background-color: color-mix(in srgb, var(--color-slate-950) 80%, transparent);
+}
+
+:root[data-theme="light"] [class~="border-slate-400/20"] {
+    border-color: color-mix(in srgb, var(--color-slate-400) 20%, transparent);
+}
+
+:root[data-theme="light"] [class~="border-slate-400/30"] {
+    border-color: color-mix(in srgb, var(--color-slate-400) 30%, transparent);
+}
+
+:root[data-theme="light"] [class~="border-slate-400/35"] {
+    border-color: color-mix(in srgb, var(--color-slate-400) 35%, transparent);
+}
+
+:root[data-theme="light"] [class~="border-slate-400/45"] {
+    border-color: color-mix(in srgb, var(--color-slate-400) 45%, transparent);
+}
+
+:root[data-theme="light"] [class~="border-slate-600/40"] {
+    border-color: color-mix(in srgb, var(--color-slate-600) 40%, transparent);
+}
+
+:root[data-theme="light"] [class~="border-slate-600/50"] {
+    border-color: color-mix(in srgb, var(--color-slate-600) 50%, transparent);
+}
+
+:root[data-theme="light"] [class~="border-slate-700/50"] {
+    border-color: color-mix(in srgb, var(--color-slate-700) 50%, transparent);
+}
+
+:root[data-theme="light"] [class~="border-slate-700/60"] {
+    border-color: color-mix(in srgb, var(--color-slate-700) 60%, transparent);
+}
+
+:root[data-theme="light"] [class~="border-slate-700/70"] {
+    border-color: color-mix(in srgb, var(--color-slate-700) 70%, transparent);
+}
+
+:root[data-theme="light"] [class~="border-slate-800/30"] {
+    border-color: color-mix(in srgb, var(--color-slate-800) 30%, transparent);
+}
+
+:root[data-theme="light"] [class~="border-slate-800/50"] {
+    border-color: color-mix(in srgb, var(--color-slate-800) 50%, transparent);
+}
+
+:root[data-theme="light"] [class~="border-slate-800/60"] {
+    border-color: color-mix(in srgb, var(--color-slate-800) 60%, transparent);
+}
+
+:root[data-theme="light"] [class~="border-slate-800/80"] {
+    border-color: color-mix(in srgb, var(--color-slate-800) 80%, transparent);
+}
+
+:root[data-theme="light"] [class~="border-slate-900/90"] {
+    border-color: color-mix(in srgb, var(--color-slate-900) 90%, transparent);
+}
+
+:root[data-theme="light"] [class~="from-slate-900/90"] {
+    --tw-gradient-from: color-mix(in srgb, var(--color-slate-900) 90%, transparent);
+}
+
+:root[data-theme="light"] [class~="hover:bg-slate-700/10"]:hover {
+    background-color: color-mix(in srgb, var(--color-slate-700) 10%, transparent);
+}
+
+:root[data-theme="light"] [class~="hover:bg-slate-800/40"]:hover {
+    background-color: color-mix(in srgb, var(--color-slate-800) 40%, transparent);
+}
+
+:root[data-theme="light"] [class~="hover:bg-slate-800/50"]:hover {
+    background-color: color-mix(in srgb, var(--color-slate-800) 50%, transparent);
+}
+
+:root[data-theme="light"] [class~="hover:bg-slate-800/80"]:hover {
+    background-color: color-mix(in srgb, var(--color-slate-800) 80%, transparent);
+}
+
+:root[data-theme="light"] [class~="hover:border-slate-400/70"]:hover {
+    border-color: color-mix(in srgb, var(--color-slate-400) 70%, transparent);
+}
+
+:root[data-theme="light"] [class~="text-slate-200/40"] {
+    color: color-mix(in srgb, var(--color-slate-200) 40%, transparent);
+}
+
+:root[data-theme="light"] [class~="text-slate-200/75"] {
+    color: color-mix(in srgb, var(--color-slate-200) 75%, transparent);
+}
+
+:root[data-theme="light"] [class~="text-slate-200/80"] {
+    color: color-mix(in srgb, var(--color-slate-200) 80%, transparent);
+}
+
+:root[data-theme="light"] [class~="text-slate-200/95"] {
+    color: color-mix(in srgb, var(--color-slate-200) 95%, transparent);
+}
+
+:root[data-theme="light"] [class~="text-slate-400/70"] {
+    color: color-mix(in srgb, var(--color-slate-400) 70%, transparent);
+}
+
+:root[data-theme="light"] [class~="to-slate-950/95"] {
+    --tw-gradient-to: color-mix(in srgb, var(--color-slate-950) 95%, transparent);
+}

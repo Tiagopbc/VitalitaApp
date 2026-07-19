@@ -346,7 +346,7 @@ function AppAuthedContent() {
             )}
 
             <div className={`w-full min-h-screen transition-all duration-300 relative flex flex-col ${user && !location.pathname.startsWith('/execute') && location.pathname !== '/login'
-                ? 'pt-[calc(1rem+env(safe-area-inset-top))] pb-44 lg:pb-8 lg:pt-8 lg:pl-64'
+                ? 'pt-[calc(1rem+env(safe-area-inset-top))] pb-24 lg:pb-8 lg:pt-8 lg:pl-64'
                 : ''
                 }`}>
                 <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex-1">

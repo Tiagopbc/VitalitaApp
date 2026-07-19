@@ -23,8 +23,11 @@ import {
     PencilLine,
     FileText,
     ShieldCheck,
-    FileDown
+    FileDown,
+    Sun,
+    Moon
 } from 'lucide-react';
+import { getStoredTheme, setTheme, THEMES } from '../utils/theme';
 import { achievementsCatalog } from '../data/achievementsCatalog';
 import { evaluateAchievements, calculateStats, evaluateHistory } from '../utils/evaluateAchievements';
 import { calculateWeeklyStats } from '../utils/workoutStats';
@@ -45,6 +48,11 @@ export default function ProfilePage({ user, onLogout, onNavigateToHistory, onNav
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [exportingData, setExportingData] = useState(false);
+    const [appTheme, setAppTheme] = useState(getStoredTheme);
+
+    const handleThemeChange = (nextTheme) => {
+        setAppTheme(setTheme(nextTheme));
+    };
 
     // --- VINCULAÇÃO DE PERSONAL TRAINER ---
     const [showLinkTrainer, setShowLinkTrainer] = useState(false);
@@ -317,7 +325,7 @@ export default function ProfilePage({ user, onLogout, onNavigateToHistory, onNav
     }
 
     return (
-        <div className="min-h-screen bg-slate-950 pb-48 px-4 pt-2 w-full max-w-3xl mx-auto lg:pb-32 lg:pt-6">
+        <div className="min-h-screen bg-slate-950 pb-8 px-4 pt-2 w-full max-w-3xl mx-auto lg:pb-12 lg:pt-6">
 
             {/* --- CARTÃO DE CABEÇALHO DO PERFIL --- */}
             <div className="bg-slate-900/50 rounded-3xl p-5 sm:p-6 mb-6 border border-slate-800 relative overflow-hidden">
@@ -725,6 +733,40 @@ export default function ProfilePage({ user, onLogout, onNavigateToHistory, onNav
                         )}
                     </>
                 )}
+            </div>
+
+            {/* --- APARÊNCIA --- */}
+            <div className="mb-6 rounded-3xl border border-slate-800 bg-slate-900/50 p-5">
+                <SectionHeader icon={<Sun size={18} className="text-cyan-300" />} title="Aparência" />
+                <p className="mb-4 text-sm leading-relaxed text-slate-400">
+                    Escolha o tema do aplicativo. A preferência fica salva neste dispositivo.
+                </p>
+                <div className="grid grid-cols-2 gap-3" role="radiogroup" aria-label="Tema do aplicativo">
+                    <Button
+                        variant="unstyled"
+                        role="radio"
+                        aria-checked={appTheme === THEMES.dark}
+                        onClick={() => handleThemeChange(THEMES.dark)}
+                        className={`inline-flex items-center justify-center gap-2 rounded-2xl border px-4 py-3 text-xs font-bold uppercase tracking-widest transition-colors ${appTheme === THEMES.dark
+                            ? 'border-cyan-400/50 bg-cyan-400/10 text-cyan-300'
+                            : 'border-slate-700 bg-slate-950/40 text-slate-400 hover:border-slate-500 hover:text-slate-200'}`}
+                    >
+                        <Moon size={16} />
+                        Escuro
+                    </Button>
+                    <Button
+                        variant="unstyled"
+                        role="radio"
+                        aria-checked={appTheme === THEMES.light}
+                        onClick={() => handleThemeChange(THEMES.light)}
+                        className={`inline-flex items-center justify-center gap-2 rounded-2xl border px-4 py-3 text-xs font-bold uppercase tracking-widest transition-colors ${appTheme === THEMES.light
+                            ? 'border-cyan-400/50 bg-cyan-400/10 text-cyan-300'
+                            : 'border-slate-700 bg-slate-950/40 text-slate-400 hover:border-slate-500 hover:text-slate-200'}`}
+                    >
+                        <Sun size={16} />
+                        Claro
+                    </Button>
+                </div>
             </div>
 
             {/* --- PRIVACIDADE E TERMOS --- */}
