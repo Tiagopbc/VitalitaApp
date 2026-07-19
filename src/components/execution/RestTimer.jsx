@@ -12,6 +12,7 @@ import {
     ensureNotificationPermission,
     notifyRestComplete
 } from '../../utils/restTimerAlerts';
+import { scheduleRestPush, cancelRestPush } from '../../services/restPushService';
 
 export function RestTimer({ initialTime = 90, onComplete, isOpen, onClose, onDurationChange, autoStartTimer, onAutoStartChange }) {
     const [status, setStatus] = useState('idle'); // ocioso, rodando, pausado, completo
@@ -20,6 +21,33 @@ export function RestTimer({ initialTime = 90, onComplete, isOpen, onClose, onDur
     // Refs para temporização precisa
     const endTimeRef = useRef(null);
     const intervalRef = useRef(null);
+
+    // Push agendado no servidor (notifica mesmo com o app fechado/tela bloqueada)
+    const pushMessageIdRef = useRef(null);
+
+    const cancelScheduledPush = () => {
+        if (pushMessageIdRef.current) {
+            cancelRestPush(pushMessageIdRef.current);
+            pushMessageIdRef.current = null;
+        }
+    };
+
+    const scheduleBackgroundPush = (seconds) => {
+        cancelScheduledPush();
+        if (!seconds || seconds < 3) return;
+        // +2s de folga: concluindo em primeiro plano, dá tempo de cancelar
+        // antes da entrega; em segundo plano a notificação chega ~2s depois.
+        scheduleRestPush(seconds + 2).then((messageId) => {
+            pushMessageIdRef.current = messageId;
+        });
+    };
+
+    // Cancela push pendente ao desmontar (troca de página, fim do treino).
+    useEffect(() => () => {
+        if (pushMessageIdRef.current) {
+            cancelRestPush(pushMessageIdRef.current);
+        }
+    }, []);
 
     // Aumentei o raio de 52 para 80
     const radius = 80;
@@ -68,6 +96,9 @@ export function RestTimer({ initialTime = 90, onComplete, isOpen, onClose, onDur
     // Lógica do Cronômetro com Correção de Drift
     useEffect(() => {
         if (status === 'running') {
+            // Agenda o alerta de segundo plano para o fim do descanso.
+            scheduleBackgroundPush(timeLeft);
+
             if (!endTimeRef.current) {
                 endTimeRef.current = Date.now() + (timeLeft * 1000);
             } else {
@@ -99,6 +130,9 @@ export function RestTimer({ initialTime = 90, onComplete, isOpen, onClose, onDur
         } else {
             clearInterval(intervalRef.current);
             endTimeRef.current = null;
+            // Pausado, fechado ou concluído em primeiro plano: o alerta local
+            // já cobre; cancela a entrega em segundo plano.
+            cancelScheduledPush();
         }
 
         return () => clearInterval(intervalRef.current);
@@ -121,6 +155,11 @@ export function RestTimer({ initialTime = 90, onComplete, isOpen, onClose, onDur
         setStatus('running'); // Auto-start
         setTimeLeft(initialTime);
         endTimeRef.current = null; // Will be recalculated in useEffect
+        // Se já estava rodando, o efeito de status não reexecuta: reagenda aqui.
+        if (status === 'running') {
+            endTimeRef.current = Date.now() + (initialTime * 1000);
+            scheduleBackgroundPush(initialTime);
+        }
     };
 
     const adjustTime = (amount) => {
@@ -139,6 +178,11 @@ export function RestTimer({ initialTime = 90, onComplete, isOpen, onClose, onDur
             }
             return newVal;
         });
+
+        // Reagenda o alerta de segundo plano com o novo tempo restante.
+        if (status === 'running') {
+            scheduleBackgroundPush(Math.max(0, timeLeft + amount));
+        }
 
         if (status === 'complete' && timeLeft + amount > 0) {
             setStatus('idle');

@@ -22,7 +22,8 @@ export default defineConfig(({ mode }) => {
     VitePWA({
       registerType: 'prompt',
       workbox: {
-        mode: pwaWorkboxMode
+        mode: pwaWorkboxMode,
+        importScripts: ['push-sw.js']
       },
       devOptions: {
         enabled: mode === 'development'
