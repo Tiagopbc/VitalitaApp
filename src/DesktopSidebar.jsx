@@ -40,9 +40,9 @@ export function DesktopSidebar({ activeTab, onTabChange, user, isTrainer }) {
         <aside
             className="hidden lg:flex flex-col fixed left-0 top-0 bottom-0 w-64 z-50 py-6 px-4 gap-8 font-sans"
             style={{
-                background: '#050B16', // Fundo azul marinho mais escuro
-                borderRight: '1px solid rgba(30, 41, 59, 0.4)',
-                boxShadow: '4px 0 24px rgba(0,0,0,0.4)'
+                background: 'var(--vit-sidebar)',
+                borderRight: '1px solid var(--vit-sidebar-border)',
+                boxShadow: 'var(--vit-sidebar-shadow)'
             }}
         >
             {/* Seção do Logo */}

@@ -71,7 +71,7 @@ export const VitalitaGlassCard = forwardRef(({ achievement, className = '' }, re
         // CONTAINER PRINCIPAL: Define tamanho, borda e efeito de vidro
         <div
             ref={ref}
-            className={`relative flex h-[500px] w-[340px] flex-col overflow-hidden rounded-[30px] border border-slate-800/50 bg-[#020617]/70 p-8 shadow-2xl backdrop-blur-[24px] transition-transform duration-500 hover:scale-[1.02] ${className}`}
+            className={`theme-dark-locked relative flex h-[500px] w-[340px] flex-col overflow-hidden rounded-[30px] border border-slate-800/50 bg-[#020617]/70 p-8 shadow-2xl backdrop-blur-[24px] transition-transform duration-500 hover:scale-[1.02] ${className}`}
         >
 
             {/* CAMADA 0: Ambient Glows (Luzes de fundo) */}
