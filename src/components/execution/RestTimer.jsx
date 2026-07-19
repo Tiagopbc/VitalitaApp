@@ -32,6 +32,15 @@ export function RestTimer({ initialTime = 90, onComplete, isOpen, onClose, onDur
         }
     };
 
+    /*
+     * Estratégia do push (a prova de suspensão do iOS): o agendamento no
+     * servidor acontece SEMPRE com o app ativo — ao iniciar/retomar/ajustar o
+     * timer — nunca no evento de ir para segundo plano (o iOS congela o JS
+     * antes de o pedido completar). Se o usuário sair do app, o push já está
+     * agendado e o sistema entrega na hora certa. Se ficar no app, o push é
+     * cancelado 5s antes do fim (folga confortável), e os alertas locais
+     * cuidam do aviso — sem notificação duplicada.
+     */
     const scheduleBackgroundPush = (seconds) => {
         cancelScheduledPush();
         if (!seconds || seconds < 3) return;
@@ -40,34 +49,12 @@ export function RestTimer({ initialTime = 90, onComplete, isOpen, onClose, onDur
         });
     };
 
-    // Cancela push pendente ao desmontar (troca de página, fim do treino).
+    // Cancela push pendente ao desmontar (fechar timer, trocar de página).
     useEffect(() => () => {
         if (pushMessageIdRef.current) {
             cancelRestPush(pushMessageIdRef.current);
         }
     }, []);
-
-    // O push só existe quando o app sai de cena: agenda ao ir para segundo
-    // plano (tela bloqueada/troca de app) com o tempo restante e cancela ao
-    // voltar. Em primeiro plano os alertas locais cobrem — sem duplicata.
-    useEffect(() => {
-        if (!isOpen) return undefined;
-
-        const onVisibilityChange = () => {
-            if (document.visibilityState === 'hidden') {
-                if (status === 'running' && endTimeRef.current) {
-                    const remaining = Math.ceil((endTimeRef.current - Date.now()) / 1000);
-                    scheduleBackgroundPush(remaining);
-                }
-            } else {
-                cancelScheduledPush();
-            }
-        };
-
-        document.addEventListener('visibilitychange', onVisibilityChange);
-        return () => document.removeEventListener('visibilitychange', onVisibilityChange);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [isOpen, status]);
 
     // Aumentei o raio de 52 para 80
     const radius = 80;
@@ -116,6 +103,9 @@ export function RestTimer({ initialTime = 90, onComplete, isOpen, onClose, onDur
     // Lógica do Cronômetro com Correção de Drift
     useEffect(() => {
         if (status === 'running') {
+            // Agenda o alerta de segundo plano já no início (app ativo).
+            scheduleBackgroundPush(timeLeft);
+
             if (!endTimeRef.current) {
                 endTimeRef.current = Date.now() + (timeLeft * 1000);
             } else {
@@ -129,6 +119,13 @@ export function RestTimer({ initialTime = 90, onComplete, isOpen, onClose, onDur
                 const remaining = Math.max(0, remainingRaw);
 
                 setTimeLeft(remaining);
+
+                // Com o app visível, o alerta local cobre o fim: cancela o
+                // push com 5s de antecedência (folga que não perde corrida).
+                if (remaining <= 5 && remaining > 0 && pushMessageIdRef.current
+                    && document.visibilityState === 'visible') {
+                    cancelScheduledPush();
+                }
 
                 if (remaining <= 0) {
                     setStatus('complete');
@@ -174,6 +171,7 @@ export function RestTimer({ initialTime = 90, onComplete, isOpen, onClose, onDur
         // Se já estava rodando, o efeito de status não reexecuta: ressincroniza aqui.
         if (status === 'running') {
             endTimeRef.current = Date.now() + (initialTime * 1000);
+            scheduleBackgroundPush(initialTime);
         }
     };
 
@@ -193,6 +191,11 @@ export function RestTimer({ initialTime = 90, onComplete, isOpen, onClose, onDur
             }
             return newVal;
         });
+
+        // Ajuste é ação em primeiro plano: reagenda o push com o novo tempo.
+        if (status === 'running') {
+            scheduleBackgroundPush(Math.max(0, timeLeft + amount));
+        }
 
 
         if (status === 'complete' && timeLeft + amount > 0) {
