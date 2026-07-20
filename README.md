@@ -1,152 +1,113 @@
 # Vitalità
 
-<div align="center">
+> Diário inteligente de treinos com acompanhamento de evolução, experiência offline e suporte aos fluxos de aluno e personal trainer.
 
-![Vitalità Banner](https://img.shields.io/badge/Vitalita-Fitness_Tracking-blue?style=for-the-badge&logo=activity)
+[![CI](https://github.com/Tiagopbc/VitalitaApp/actions/workflows/ci.yml/badge.svg)](https://github.com/Tiagopbc/VitalitaApp/actions/workflows/ci.yml)
+[![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white)](https://react.dev/)
+[![Firebase](https://img.shields.io/badge/Firebase-Auth%20%2B%20Firestore-FFCA28?logo=firebase&logoColor=black)](https://firebase.google.com/)
+[![Vercel](https://img.shields.io/badge/Deploy-Vercel-black?logo=vercel)](https://vercel.com/)
+[![License](https://img.shields.io/badge/license-portfolio-blue)](#licença-e-uso)
 
-<br />
+**Aplicação:** [vitalita.vercel.app](https://vitalita.vercel.app)
 
-[![React](https://img.shields.io/badge/React-19-61DAFB?style=flat-square&logo=react&logoColor=black)](https://react.dev/)
-[![Vite](https://img.shields.io/badge/Vite-7-646CFF?style=flat-square&logo=vite&logoColor=white)](https://vitejs.dev/)
-[![Firebase](https://img.shields.io/badge/Firebase-12-FFCA28?style=flat-square&logo=firebase&logoColor=black)](https://firebase.google.com/)
-[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4-38B2AC?style=flat-square&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
-[![Vitest](https://img.shields.io/badge/Vitest-Tested-729B1B?style=flat-square&logo=vitest&logoColor=white)](https://vitest.dev/)
+**Case técnico:** [docs/portfolio-case-study.md](docs/portfolio-case-study.md)
+**Arquitetura:** [docs/architecture.md](docs/architecture.md)
 
-**Diario inteligente de treinos, evolucao e performance.**
+## Sobre o projeto
 
-[Demo](https://vitalita.vercel.app) · [Documentacao Tecnica](docs/architecture.md) · [Case de Portfolio](docs/portfolio-case-study.md)
+O Vitalità nasceu como um projeto de estudo e evoluiu para uma aplicação web completa de acompanhamento de treinos. O objetivo atual é demonstrar práticas de engenharia aplicadas a um produto real: arquitetura modular, segurança no Firestore, resiliência de sessão, desempenho, privacidade, observabilidade e entrega contínua.
 
-</div>
+O projeto opera sem custo recorrente obrigatório de backend. A aplicação utiliza o plano Spark do Firebase e mantém integrações opcionais, como Sentry e App Check, configuradas de forma conservadora.
 
----
+## Estado atual
 
-## Visao Geral
+| Área | Situação |
+| --- | --- |
+| Aplicação web/PWA | Publicada na Vercel |
+| Autenticação | Firebase Auth com e-mail e Google |
+| Banco de dados | Cloud Firestore com regras e índices versionados |
+| CI | Lint, testes, regras do Firestore, build e cobertura |
+| Observabilidade | Sentry somente em ambientes Preview |
+| App Check | Registrado com reCAPTCHA Enterprise, em monitoramento |
+| Enforcement | Desativado por decisão consciente |
+| Privacidade | Política, termos, mapa de dados e exportação JSON |
 
-O **Vitalità** é um PWA de treino criado como projeto de estudo e portfolio de engenharia de software. A proposta é resolver uma dor simples: registrar treinos de musculacao com foco, consistencia e dados uteis, sem transformar a experiencia em uma rede social ou em um bloco de notas limitado.
+## Experiência do produto
 
-O projeto combina uma experiencia mobile-first com uma base tecnica progressivamente mais profissional: autenticacao, Firestore com regras versionadas, testes automatizados, paginacao de historico, PWA, controle de sessao ativa, modo personal trainer e documentacao de arquitetura.
+- Criação, edição, ordenação, arquivamento e execução de fichas de treino.
+- Registro de séries, carga, repetições, métodos de execução e observações.
+- Timer de descanso, modo foco e salvamento contínuo durante o treino.
+- Recuperação de sessão ativa após fechamento ou recarregamento do app.
+- Histórico paginado, evolução de carga e filtros por rotina ou exercício.
+- Metas semanais, streaks, níveis, conquistas e recordes pessoais.
+- Dashboard de personal trainer com vínculos e prescrição para alunos.
+- Layout responsivo para desktop, mobile e instalação como PWA.
+- Exportação dos dados do usuário em JSON.
 
-## Screenshots
+## Capturas de tela
 
-Capturas reais da demo publicada, usando somente telas publicas e dados ficticios no onboarding. Nenhuma conta foi criada durante a captura.
-
-| Login | Cadastro | Dados pessoais |
+| Login | Criação de conta | Perfil inicial |
 | --- | --- | --- |
-| ![Tela de login do Vitalità](docs/assets/screenshots/vitalita-login.png) | ![Tela de cadastro do Vitalità](docs/assets/screenshots/vitalita-signup-account.png) | ![Tela de dados pessoais do cadastro do Vitalità](docs/assets/screenshots/vitalita-signup-profile.png) |
+| ![Login do Vitalità](docs/assets/screenshots/vitalita-login.png) | ![Criação de conta](docs/assets/screenshots/vitalita-signup-account.png) | ![Perfil inicial](docs/assets/screenshots/vitalita-signup-profile.png) |
 
-## Objetivos de Engenharia
+## Destaques de engenharia
 
-- Construir um produto realista, usavel e demonstravel em portfolio.
-- Manter o projeto em custo zero no Firebase Spark enquanto for estudo pessoal.
-- Aplicar boas praticas de seguranca e privacidade mesmo sem usuarios externos.
-- Documentar caminhos profissionais de evolucao, como Cloud Functions, backfill e agregados server-side.
-- Demonstrar qualidade com CI, testes, regras Firestore e decisoes tecnicas rastreaveis.
+### Sessão de treino resiliente
 
-## Funcionalidades
+A sessão ativa é mantida localmente e sincronizada com o Firestore. O fluxo diferencia estados como salvando, salvo, offline, falha de sincronização e conflito, reduzindo o risco de perda de dados durante um treino.
 
-### Aluno
+### Segurança orientada à regra de negócio
 
-- Criacao e execucao de treinos.
-- Registro de carga, repeticoes, series concluidas e descanso.
-- Historico paginado de sessoes.
-- Dashboard com progresso semanal, streaks e sugestao de proximo treino.
-- Conquistas, marcas pessoais e volume acumulado.
-- PWA instalavel para uso mobile.
+As regras do Firestore validam propriedade, vínculo entre aluno e personal, campos permitidos e operações sensíveis. Os cenários de acesso são executados no Firebase Emulator Suite durante a CI.
 
-### Personal Trainer
+### Performance e previsibilidade de custo
 
-- Vinculo aluno-personal por convite.
-- Dashboard de alunos.
-- Prescricao de treinos para alunos vinculados.
-- Leitura de historico do aluno conforme regras de acesso.
+Históricos usam paginação e consultas indexadas. Estatísticas consolidadas podem ser lidas de `user_stats`, com fallback local para dados legados, evitando que o dashboard dependa de leituras completas do histórico.
 
-### Dados e Performance
+### Privacidade por padrão
 
-- Historico com paginacao para evitar leituras grandes no Firestore.
-- Leituras recentes limitadas para dashboards e estatisticas.
-- Estrutura opcional de `user_stats` documentada para evolucao server-side.
-- Feature flag `VITE_ENABLE_SERVER_USER_STATS=false` para manter o modo Spark/custo zero.
+A observabilidade sanitiza eventos e não associa identidade do usuário. O Sentry recebe eventos somente em Preview; Production permanece sem DSN. O App Check está registrado e monitorado, mas ainda não bloqueia solicitações.
+
+### Qualidade automatizada
+
+O pipeline valida aplicação, regras de segurança e código opcional de Functions. Dependências são instaladas com lockfile, e o build de produção faz parte de toda revisão.
 
 ## Arquitetura
 
 ```mermaid
 flowchart LR
-    User["Usuario PWA"] --> React["React/Vite App"]
-    React --> Auth["Firebase Auth"]
-    React --> Firestore["Cloud Firestore"]
-    React --> PWA["Service Worker/PWA"]
-    Firestore --> Rules["Firestore Security Rules"]
-    Firestore --> Indexes["Firestore Indexes"]
-    Functions["Cloud Functions opcionais"] -. "futuro/Blaze" .-> Firestore
+    UI[React 19 + Vite] --> AUTH[Firebase Authentication]
+    UI --> DB[Cloud Firestore]
+    UI --> LOCAL[Storage local e recuperação de sessão]
+    UI -. Preview .-> SENTRY[Sentry]
+    UI -. Atestado .-> CHECK[Firebase App Check]
+    FUNCTIONS[Cloud Functions opcionais] --> DB
+    CI[GitHub Actions] --> TESTS[Vitest + Firestore Emulator]
+    TESTS --> BUILD[Build de produção]
+    BUILD --> VERCEL[Vercel]
 ```
 
-### Camadas Principais
-
-- `src/pages`: telas de produto, como dashboard, historico, perfil, treino e personal.
-- `src/services`: acesso a Firebase e regras de negocio compartilhadas.
-- `src/hooks`: logica de sessao de treino, sincronizacao e timer.
-- `src/utils`: estatisticas, storage seguro, conquistas e helpers puros.
-- `firestore.rules`: regras de seguranca versionadas.
-- `tests/security`: testes automatizados das regras Firestore.
-- `functions`: camada opcional de Functions/backfill para evolucao futura em Blaze.
-- `docs`: documentacao tecnica do projeto.
-
-## Decisoes Tecnicas Relevantes
-
-### Custo Zero Com Arquitetura Profissional
-
-O projeto roda no Firebase Spark para evitar custos. Cloud Functions e backfill existem como arquitetura opcional documentada, mas ficam desativados por padrao. O app segue funcional usando fallback de sessoes recentes.
-
-### Segurança Firestore
-
-As regras protegem perfis, treinos, historico, convites e vinculos aluno-personal. O cliente nao pode escrever em `user_stats`, e o acesso do personal depende de vinculo ativo.
-
-### Performance
-
-O historico usa paginacao e as telas de resumo trabalham com janelas recentes limitadas. Isso reduz leituras desnecessarias, melhora previsibilidade de custo e evita dashboards dependentes de historico completo.
-
-### Robustez Da Sessao
-
-A execucao de treino foi tratada como fluxo critico: sessao ativa, persistencia, fallback local e sincronizacao foram separados para reduzir perda de dados durante o treino.
-
-## Qualidade
-
-Comandos principais:
-
-```bash
-npm run lint
-npm test -- --run
-npm run test:rules
-npm run build
-npm run test:coverage
-```
-
-O CI executa:
-
-- instalacao com `npm ci`
-- lint
-- testes Vitest
-- testes das Functions opcionais
-- Firebase Emulator para rules
-- build de producao
-- coverage
+O frontend é organizado por páginas, componentes, hooks e serviços de domínio. As integrações externas são inicializadas de forma defensiva: a ausência de Sentry, App Check ou Functions não impede o funcionamento principal do aplicativo.
 
 ## Stack
 
-- **Frontend**: React 19, Vite 7, Tailwind CSS 4
-- **Backend**: Firebase Auth, Cloud Firestore
-- **PWA**: Vite PWA
-- **Testes**: Vitest, React Testing Library, Firebase Rules Unit Testing
-- **Charts/UI**: Recharts, Lucide React, Framer Motion
-- **Deploy Web**: Vercel
-- **Arquitetura opcional**: Firebase Cloud Functions para agregados/backfill
+| Camada | Tecnologias |
+| --- | --- |
+| Interface | React 19, React Router, Tailwind CSS 4, Framer Motion |
+| Visualização | Recharts com carregamento sob demanda |
+| Backend gerenciado | Firebase Authentication e Cloud Firestore |
+| Segurança | Firestore Rules, Emulator Suite, App Check |
+| Observabilidade | Sentry em Preview e Vercel Speed Insights |
+| Testes | Vitest, Testing Library e Firebase Rules Unit Testing |
+| Entrega | GitHub Actions e Vercel |
 
-## Rodando Localmente
+## Executando localmente
 
-### Pre-requisitos
+### Pré-requisitos
 
-- Node.js 22 recomendado.
-- Projeto Firebase proprio ou variaveis de ambiente equivalentes.
+- Node.js 24 recomendado; Node.js 22 também é suportado.
+- npm compatível com o lockfile do projeto.
+- Java 21 para executar os testes das regras do Firestore.
 
 ### Instalação
 
@@ -154,57 +115,69 @@ O CI executa:
 git clone https://github.com/Tiagopbc/VitalitaApp.git
 cd VitalitaApp
 npm ci
-```
-
-Crie um `.env` com base em `.env.example`:
-
-```bash
-VITE_FIREBASE_API_KEY=
-VITE_FIREBASE_AUTH_DOMAIN=
-VITE_FIREBASE_PROJECT_ID=
-VITE_FIREBASE_STORAGE_BUCKET=
-VITE_FIREBASE_MESSAGING_SENDER_ID=
-VITE_FIREBASE_APP_ID=
-VITE_FIREBASE_APP_CHECK_SITE_KEY=
-VITE_FIREBASE_APP_CHECK_DEBUG=false
-VITE_ENABLE_SERVER_USER_STATS=false
-VITE_SENTRY_DSN=
-VITE_SENTRY_TRACING=false
-VITE_APP_ENV=
-VITE_APP_VERSION=
-```
-
-Na Vercel, o ambiente e a versao da observabilidade sao derivados automaticamente de `VERCEL_ENV` e `VERCEL_GIT_COMMIT_SHA`. As variaveis `VITE_APP_ENV` e `VITE_APP_VERSION` servem apenas como override local ou para outro provedor de deploy.
-
-Inicie o app:
-
-```bash
+cp .env.example .env.local
 npm run dev
 ```
 
-## Documentacao
+Preencha em `.env.local` as variáveis públicas do aplicativo Firebase. O arquivo `.env.example` também documenta as configurações opcionais de App Check, estatísticas server-side e Sentry.
 
-- [Arquitetura](docs/architecture.md)
-- [Modelo Firestore](docs/firestore-model.md)
-- [Regras de Segurança](docs/security-rules.md)
-- [Performance e Dados](docs/performance-data.md)
-- [Testes](docs/testing.md)
-- [Observabilidade](docs/observability.md)
-- [Firebase App Check](docs/app-check.md)
-- [Deploy de Functions opcional](docs/functions-deploy.md)
-- [Backfill opcional de user_stats](docs/user-stats-backfill.md)
-- [Case de Portfolio](docs/portfolio-case-study.md)
-- [Rascunho para LinkedIn](docs/linkedin-post.md)
+> Variáveis com prefixo `VITE_` são incorporadas ao bundle do navegador. Elas não devem conter segredos privados.
 
-## Roadmap
+## Validação
 
-- Melhorar acabamento visual das principais telas.
-- Adicionar conta demo anonima para capturar dashboard, historico e execucao de treino.
-- Criar fluxo guiado de demonstracao para LinkedIn e portfolio.
-- Validar as metricas do App Check em modo monitoramento; enforcement permanece fora do escopo atual.
-- Expandir eventos e alertas da observabilidade leve em ambiente controlado.
-- Se o projeto sair do modo estudo, avaliar Blaze, Functions e agregados incrementais.
+```bash
+npm run lint
+npm test
+npm run test:rules
+npm run build
+```
 
-## Licença
+Comandos adicionais:
 
-Projeto desenvolvido por **Tiago Cavalcanti** para estudo, portfolio e demonstracao tecnica.
+```bash
+npm run test:coverage
+npm run test:ui
+```
+
+## Documentação
+
+| Documento | Conteúdo |
+| --- | --- |
+| [Arquitetura](docs/architecture.md) | Fronteiras, fluxos e decisões técnicas |
+| [Modelo do Firestore](docs/firestore-model.md) | Coleções e relacionamentos |
+| [Regras de segurança](docs/security-rules.md) | Política de autorização e testes |
+| [Performance](docs/performance-data.md) | Paginação, bundle e estratégia de leitura |
+| [Privacidade e LGPD](docs/privacy-lgpd.md) | Mapa de dados, retenção e direitos |
+| [Observabilidade](docs/observability.md) | Sanitização e política Preview-only |
+| [App Check](docs/app-check.md) | Configuração monitorada e decisão de enforcement |
+| [Deploy de Functions](docs/functions-deploy.md) | Procedimento opcional para estatísticas server-side |
+| [Backfill de estatísticas](docs/user-stats-backfill.md) | Reconstrução administrativa de `user_stats` |
+| [Testes](docs/testing.md) | Estratégia e comandos de validação |
+| [Case de portfólio](docs/portfolio-case-study.md) | Problema, evolução e resultados |
+
+## Decisões e limitações atuais
+
+- O projeto prioriza recursos gratuitos e não depende de serviços pagos para funcionar.
+- Sentry permanece restrito a Preview para validar observabilidade sem coletar dados de uso real.
+- App Check permanece sem enforcement até haver volume e evidência suficientes para bloquear tráfego inválido sem afetar usuários legítimos.
+- Cloud Functions e estatísticas server-side são opcionais; o cliente mantém fallback compatível com dados existentes.
+- Exclusão completa e automatizada da conta ainda exige uma estratégia de limpeza confiável para documentos relacionados.
+
+## Próximas evoluções
+
+1. Criar testes E2E autenticados com dados previsíveis no Firebase Emulator.
+2. Acompanhar métricas do App Check antes de qualquer decisão de enforcement.
+3. Publicar source maps privados do Sentry nos builds de Preview.
+4. Implementar exclusão completa da conta e política técnica de retenção.
+5. Executar auditoria de acessibilidade e navegação por teclado.
+6. Atualizar o case de portfólio com capturas autenticadas e métricas finais.
+
+## Licença e uso
+
+Projeto pessoal desenvolvido para estudo, evolução técnica e apresentação em portfólio. O código pode ser consultado como referência; reutilizações devem preservar os créditos do autor.
+
+## Autor
+
+Desenvolvido por **Tiago Cavalcanti**.
+
+- [GitHub](https://github.com/Tiagopbc)

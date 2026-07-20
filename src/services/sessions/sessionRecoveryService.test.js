@@ -5,6 +5,8 @@ import {
     createSessionFingerprint,
     readSessionBackup,
     removeSessionBackup,
+    resolveSessionConflict,
+    SESSION_SYNC_STATES,
     writeSessionBackup
 } from './sessionRecoveryService';
 
@@ -62,5 +64,46 @@ describe('sessionRecoveryService', () => {
 
         expect(createSessionFingerprint(exercises, 1)).toBe(createSessionFingerprint(exercises, 29));
         expect(createSessionFingerprint(exercises, 31)).not.toBe(createSessionFingerprint(exercises, 29));
+    });
+
+    it('returns null when the requested conflict source has no candidate', () => {
+        const sessionConflict = { candidates: { cloud: { exercises: [], elapsedSeconds: 0 } } };
+        expect(resolveSessionConflict({ sessionConflict, source: 'local', backupKey: 'key' })).toBeNull();
+        expect(resolveSessionConflict({ sessionConflict: null, source: 'cloud', backupKey: 'key' })).toBeNull();
+    });
+
+    it('resolves a local candidate without touching the backup or fingerprint', () => {
+        const key = createSessionBackupKey('user-1', 'workout-1');
+        writeSessionBackup(key, { elapsedSeconds: 330, exercises: [{ id: 'local', sets: [] }] });
+        const localCandidate = { exercises: [{ id: 'local', sets: [] }], elapsedSeconds: 330 };
+        const sessionConflict = { candidates: { local: localCandidate } };
+
+        const resolution = resolveSessionConflict({ sessionConflict, source: 'local', backupKey: key });
+
+        expect(resolution.candidate).toBe(localCandidate);
+        expect(resolution.exercises).toBe(localCandidate.exercises);
+        expect(resolution.elapsedSeconds).toBe(330);
+        expect(resolution.fingerprint).toBe('');
+        expect(resolution.syncState).toBe(SESSION_SYNC_STATES.active);
+        // Backup local permanece intacto ao escolher a sessão local.
+        expect(readSessionBackup(key)).not.toBeNull();
+    });
+
+    it('resolves a cloud candidate, clears the local backup and seeds the fingerprint', () => {
+        const key = createSessionBackupKey('user-1', 'workout-1');
+        writeSessionBackup(key, { elapsedSeconds: 300, exercises: [{ id: 'local', sets: [] }] });
+        const cloudCandidate = {
+            exercises: [{ id: 'cloud', name: 'Supino', sets: [{ id: 'set-1', completed: true, weight: '40', reps: '10' }] }],
+            elapsedSeconds: 300
+        };
+        const sessionConflict = { candidates: { cloud: cloudCandidate } };
+
+        const resolution = resolveSessionConflict({ sessionConflict, source: 'cloud', backupKey: key });
+
+        expect(resolution.candidate).toBe(cloudCandidate);
+        expect(resolution.fingerprint).toBe(createSessionFingerprint(cloudCandidate.exercises, 300));
+        expect(resolution.syncState).toBe(SESSION_SYNC_STATES.active);
+        // Backup local é descartado ao escolher a sessão da nuvem.
+        expect(readSessionBackup(key)).toBeNull();
     });
 });

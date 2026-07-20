@@ -140,6 +140,25 @@ function createRecoveryCandidate(source, exercises, elapsedSeconds, timestampMs)
     };
 }
 
+export function resolveSessionConflict({ sessionConflict, source, backupKey }) {
+    const candidate = sessionConflict?.candidates?.[source];
+    if (!candidate) return null;
+
+    if (source === 'cloud') {
+        removeSessionBackup(backupKey);
+    }
+
+    return {
+        candidate,
+        exercises: candidate.exercises,
+        elapsedSeconds: candidate.elapsedSeconds,
+        fingerprint: source === 'cloud'
+            ? createSessionFingerprint(candidate.exercises, candidate.elapsedSeconds)
+            : '',
+        syncState: SESSION_SYNC_STATES.active
+    };
+}
+
 export function chooseSessionRecoverySource({ cloudData, localBackupData }) {
     const hasCloud = Boolean(cloudData?.exercises);
     const hasLocal = Boolean(localBackupData?.exercises);
