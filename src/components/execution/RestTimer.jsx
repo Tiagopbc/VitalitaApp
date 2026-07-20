@@ -12,11 +12,15 @@ import {
     ensureNotificationPermission,
     notifyRestComplete
 } from '../../utils/restTimerAlerts';
-import { scheduleRestPush, cancelRestPush, warmRestPushSubscription } from '../../services/restPushService';
+import { scheduleRestPush, cancelRestPush, warmRestPushSubscription, MIN_PUSH_DELAY_SECONDS } from '../../services/restPushService';
+import { describePushContext } from '../../services/pushDiagnostics';
 
 export function RestTimer({ initialTime = 90, onComplete, isOpen, onClose, onDurationChange, autoStartTimer, onAutoStartChange }) {
     const [status, setStatus] = useState('idle'); // ocioso, rodando, pausado, completo
     const [timeLeft, setTimeLeft] = useState(initialTime);
+    // Aviso quando o contexto atual não pode receber push (ex.: iOS fora da tela
+    // de início / atalho do Chrome) — orienta o usuário em vez de falhar calado.
+    const [showPushHint, setShowPushHint] = useState(false);
 
     // Refs para temporização precisa
     const endTimeRef = useRef(null);
@@ -56,7 +60,9 @@ export function RestTimer({ initialTime = 90, onComplete, isOpen, onClose, onDur
 
     const scheduleBackgroundPush = (seconds) => {
         cancelScheduledPush();
-        if (!seconds || seconds < 3) return;
+        // Piso alinhado ao backend (MIN_DELAY_SECONDS): abaixo disso o servidor
+        // rejeitaria; nesses descansos curtos ficamos só com o alerta local.
+        if (!seconds || seconds < MIN_PUSH_DELAY_SECONDS) return;
 
         const state = pushStateRef.current;
         state.canceled = false;
@@ -122,6 +128,11 @@ export function RestTimer({ initialTime = 90, onComplete, isOpen, onClose, onDur
             ensureNotificationPermission()
                 .then((granted) => { if (granted) warmRestPushSubscription(); })
                 .catch(() => undefined);
+
+            // No iOS, push só funciona em PWA instalado pela tela de início do
+            // Safari. Se o contexto não suporta push, avisa o usuário.
+            const ctx = describePushContext();
+            setShowPushHint(ctx.isIOS && ctx.reason === 'ios-not-standalone');
 
             // Only start if explicitly idle (prevents restart on re-renders)
             if (status === 'idle') {
@@ -263,6 +274,15 @@ export function RestTimer({ initialTime = 90, onComplete, isOpen, onClose, onDur
                         <span className="text-sm font-medium tracking-wide">Tempo de Descanso</span>
                     </div>
                 </div>
+
+                {/* Aviso: contexto sem push (iOS fora da tela de início) */}
+                {showPushHint && (
+                    <div className="mx-5 mb-2 px-4 py-3 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-200/90 text-xs leading-relaxed">
+                        Para receber o aviso com o app fechado ou a tela bloqueada,
+                        instale pelo <span className="font-semibold">Safari</span>:
+                        toque em Compartilhar → <span className="font-semibold">Adicionar à Tela de Início</span>.
+                    </div>
+                )}
 
                 {/* Display Circular do Cronômetro */}
                 <div className="relative my-6">

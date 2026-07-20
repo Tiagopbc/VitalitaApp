@@ -11,14 +11,17 @@ import App from './App';
 import { AuthProvider } from './AuthContext';
 import './index.css';
 import { initTheme } from './utils/theme';
+import { initPushDiagnostics } from './services/pushDiagnostics';
 import { SpeedInsightsLoader } from './components/SpeedInsightsLoader';
 import { ObservabilityTracker } from './components/ObservabilityTracker';
+import { PushDebugPanel } from './components/PushDebugPanel';
 import {
     initializeAppCheckMonitoring,
     isAppCheckMonitoringEnabled
 } from './services/appCheckService';
 
 initTheme();
+initPushDiagnostics();
 
 function renderApplication() {
     ReactDOM.createRoot(document.getElementById('root')).render(
@@ -27,6 +30,7 @@ function renderApplication() {
                 <BrowserRouter>
                     <ObservabilityTracker />
                     <App />
+                    <PushDebugPanel />
                     <SpeedInsightsLoader />
                 </BrowserRouter>
             </AuthProvider>
