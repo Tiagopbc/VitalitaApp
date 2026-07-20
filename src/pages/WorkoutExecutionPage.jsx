@@ -2,147 +2,41 @@
  * WorkoutExecutionPage.jsx
  * A interface principal de rastreamento de treinos.
  * Gerencia estado da sessão ativa, cronômetro, registro de séries e navegação de exercícios no 'Modo Foco'.
- * REFATORADO: Usa useWorkoutTimer e useWorkoutSession.
+ * REFATORADO: orquestrador fino — UI em `components/execution/`, lógica em
+ * `hooks/workout-execution/` + `hooks/useWorkoutSession`.
  */
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useWorkout } from '../context/WorkoutContext';
-import {
-    ChevronLeft,
-    RotateCw,
-    Check,
-    CheckCircle2,
-    Timer,
-    Calculator,
-    Dumbbell,
-    Eye,
-    ChevronRight,
-    Share2,
-    Link2,
-    RotateCcw,
-    Trash2,
-    ArrowLeft
-} from 'lucide-react';
+import { CheckCircle2 } from 'lucide-react';
 import { RestTimer } from '../components/execution/RestTimer';
-// import { MuscleFocusDisplay } from '../components/execution/MuscleFocusDisplay'; // Unused
 import { Button } from '../components/design-system/Button';
-import { prefersReducedMotion } from '../utils/motionPreferences';
 import MethodModal from '../MethodModal';
-import { LinearCardCompactV2 } from '../components/execution/LinearCardCompactV2';
 import { SessionConflictDialog } from '../components/execution/SessionConflictDialog';
 import { Toast } from '../components/design-system/Toast';
-import { Skeleton } from '../components/design-system/Skeleton';
 import { SyncStatusBadge } from '../components/design-system/SyncStatusBadge';
+import { ExecutionTopBar } from '../components/execution/ExecutionTopBar';
+import { ExecutionProgressCard } from '../components/execution/ExecutionProgressCard';
+import { FocusModeNav } from '../components/execution/FocusModeNav';
+import { ExecutionSkeleton } from '../components/execution/ExecutionSkeleton';
+import { ExerciseCard } from '../components/execution/ExerciseCard';
+import { ExerciseGroupCard } from '../components/execution/ExerciseGroupCard';
+import { CancelWorkoutModal } from '../components/execution/CancelWorkoutModal';
+import { ConfirmFinishModal } from '../components/execution/ConfirmFinishModal';
+import { WorkoutFinishModal } from '../components/execution/WorkoutFinishModal';
 
 // --- HOOKS PERSONALIZADOS ---
 import { useWorkoutTimer } from '../hooks/useWorkoutTimer';
 import { useWorkoutSession } from '../hooks/useWorkoutSession';
 import { useWakeLock } from '../hooks/useWakeLock';
-import { checkNewAchievements } from '../utils/evaluateAchievements';
-import { computeGroupSegments, getGroupInfo, groupLabel } from '../utils/exerciseGroups';
+import { useExecutionNavigation } from '../hooks/workout-execution/useExecutionNavigation';
+import { useFinishWorkoutFlow } from '../hooks/workout-execution/useFinishWorkoutFlow';
+import { useWorkoutShare } from '../hooks/workout-execution/useWorkoutShare';
+import { computeGroupSegments } from '../utils/exerciseGroups';
+import { computeSessionStats } from '../utils/computeSessionStats';
 import { userPreferencesService } from '../services/userPreferencesService';
-import { workoutService } from '../services/workoutService';
 const AchievementUnlockedModal = React.lazy(() => import('../components/achievements/AchievementUnlockedModal').then(module => ({ default: module.AchievementUnlockedModal })));
 const GymToolsModal = React.lazy(() => import('../components/execution/GymToolsModal').then(module => ({ default: module.GymToolsModal })));
-const loadShareableWorkoutCard = () => import('../components/sharing/ShareableWorkoutCard').then(module => ({ default: module.ShareableWorkoutCard }));
-const ShareableWorkoutCard = React.lazy(loadShareableWorkoutCard);
-const shareCardBgSrc = '/bg-share-dumbbells.jpg';
-
-const preloadedImages = new Map();
-
-function preloadImage(src) {
-    if (!src || typeof window === 'undefined') return Promise.resolve();
-    if (preloadedImages.has(src)) return preloadedImages.get(src);
-
-    const preloadPromise = new Promise((resolve) => {
-        const img = new Image();
-        img.crossOrigin = 'anonymous'; // CRITICAL: Match the component's crossOrigin to stop Safari caching conflicts
-        let settled = false;
-        const finish = () => {
-            if (settled) return;
-            settled = true;
-            img.onload = null;
-            img.onerror = null;
-            resolve();
-        };
-
-        img.onload = finish;
-        img.onerror = finish;
-        img.src = src;
-
-        if (img.complete) finish();
-    });
-
-    preloadedImages.set(src, preloadPromise);
-    return preloadPromise;
-}
-
-const TopBarButton = ({ icon, label, variant = 'default', onClick, active, iconOnly = false, prominence = 'compact' }) => {
-    // Ações principais mantêm rótulo; ações de navegação/destrutivas podem ser
-    // icon-only (rótulo vai para aria-label) para a barra caber sem rolagem.
-    const sizeStyles = iconOnly
-        ? "p-2.5 min-w-10 min-h-10 justify-center"
-        : prominence === 'large'
-            ? "px-3.5 py-2 text-[11px] tracking-wide min-h-9"
-            : "px-2.5 py-2 text-[10px] tracking-tight min-h-9";
-
-    const baseStyles = `flex items-center gap-1 rounded-lg font-bold uppercase transition-all duration-300 border backdrop-blur-md whitespace-nowrap ${sizeStyles}`;
-    const iconSize = iconOnly ? 18 : prominence === 'large' ? 15 : 14;
-
-    const variants = {
-        primary: "bg-cyan-500/10 text-cyan-400 border-cyan-500/50 hover:bg-cyan-500/20",
-        danger: "bg-red-500/10 text-red-400 border-red-500/20 hover:bg-red-500/20",
-        default: active
-            ? "bg-slate-800 text-white border-slate-600 shadow-lg"
-            : "bg-slate-900/60 text-slate-300 border-white/10 hover:bg-slate-800/80 hover:text-white"
-    };
-
-    return (
-        <button
-            onClick={onClick}
-            aria-label={label}
-            title={iconOnly ? label : undefined}
-            className={`${baseStyles} ${variants[variant]}`}
-        >
-            {React.cloneElement(icon, { size: iconSize, strokeWidth: 2.5 })}
-            {!iconOnly && <span>{label}</span>}
-        </button>
-    );
-};
-
-// --- SUBCOMPONENTE: Card de Progresso (Mantido inline por simplicidade ou mover para arquivo separado depois) ---
-function ProgressCard({ completedCount, totalCount }) {
-    return (
-        <div className="bg-slate-900/40 backdrop-blur-md rounded-3xl p-4 border border-slate-700/50 mb-4 shadow-xl shadow-black/20">
-            <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2">
-                    <div className="w-4 h-4 rounded-full border border-cyan-500/50 flex items-center justify-center bg-cyan-500/10">
-                        <Check size={9} className="text-cyan-400" strokeWidth={3} />
-                    </div>
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Progresso do Treino</span>
-                </div>
-
-                <div className="text-sm font-bold text-white">
-                    <span className="text-lg text-cyan-400 mr-1 font-heading">{completedCount}</span>
-                    <span className="text-slate-600">/ {totalCount}</span>
-                </div>
-            </div>
-
-            {/* Segmented Bar */}
-            <div className="flex gap-1.5 h-1.5 w-full">
-                {Array.from({ length: totalCount }).map((_, idx) => (
-                    <div
-                        key={idx}
-                        className={`flex-1 rounded-full transition-all duration-500 ${idx < completedCount
-                            ? 'bg-cyan-500'
-                            : 'bg-slate-800/50'
-                            }`}
-                    />
-                ))}
-            </div>
-        </div>
-    );
-}
 
 // --- COMPONENTE DA PÁGINA PRINCIPAL ---
 export function WorkoutExecutionPage({ user }) {
@@ -172,58 +66,19 @@ export function WorkoutExecutionPage({ user }) {
         toggleExerciseWeightMode
     } = useWorkoutSession(workoutId, user);
 
-
     // --- ESTADO DA UI ---
-    const [frozenSession, setFrozenSession] = useState(null); // Frozen data for summary
-    const [showFinishModal, setShowFinishModal] = useState(false);
     const [showTimer, setShowTimer] = useState(false);
     const [selectedMethod, setSelectedMethod] = useState(null);
     const [focusMode, setFocusMode] = useState(false);
     const [isFinished, setIsFinished] = useState(false); // Previne "Sessões Zumbis"
-    const [isFinishingSession, setIsFinishingSession] = useState(false);
-    const [newAchievements, setNewAchievements] = useState([]);
-    const [showAchievementModal, setShowAchievementModal] = useState(false);
     const [restDuration, setRestDuration] = useState(90);
     const [autoStartTimer, setAutoStartTimer] = useState(false);
     const [showGymTools, setShowGymTools] = useState(false);
+    const [showCancelModal, setShowCancelModal] = useState(false);
+    const [showConfirmFinishModal, setShowConfirmFinishModal] = useState(false);
 
     // Mantém a tela ligada durante o treino ativo (evita perder o timer de descanso).
     useWakeLock(!loading && !isFinished);
-
-    // Aquece recursos de compartilhamento para evitar atraso no modal final.
-    useEffect(() => {
-        if (typeof window === 'undefined') return undefined;
-
-        let cancelled = false;
-        let idleId = null;
-        let timerId = null;
-
-        const warmupShareResources = () => {
-            if (cancelled) return;
-            Promise.allSettled([
-                loadShareableWorkoutCard(),
-                import('html-to-image'),
-                preloadImage(shareCardBgSrc),
-                preloadImage('/pwa-192x192.png')
-            ]).catch(() => undefined);
-        };
-
-        if ('requestIdleCallback' in window) {
-            idleId = window.requestIdleCallback(warmupShareResources, { timeout: 1800 });
-        } else {
-            timerId = window.setTimeout(warmupShareResources, 900);
-        }
-
-        return () => {
-            cancelled = true;
-            if (idleId !== null && 'cancelIdleCallback' in window) {
-                window.cancelIdleCallback(idleId);
-            }
-            if (timerId !== null) {
-                window.clearTimeout(timerId);
-            }
-        };
-    }, []);
 
     // --- CARREGAR PREFERÊNCIAS DO USUÁRIO ---
     useEffect(() => {
@@ -261,72 +116,15 @@ export function WorkoutExecutionPage({ user }) {
         }
     };
 
-    const scrollToExercise = (targetExerciseId) => {
-        const nextElement = document.getElementById(`exercise-${targetExerciseId}`);
-        if (nextElement) {
-            const yOffset = -100; // Ajuste para a barra superior fixa
-            const y = nextElement.getBoundingClientRect().top + window.scrollY + yOffset;
-            window.scrollTo({ top: y, behavior: 'smooth' });
-        }
-    };
-
-    const handleCompleteSetWrapper = (...args) => {
-        completeSetAutoFill(...args);
-
-        const [exerciseId, currentSetNum] = args;
-        const exerciseIndex = exercises.findIndex(ex => ex.id === exerciseId);
-        const group = exerciseIndex !== -1 ? getGroupInfo(exercises, exerciseIndex) : null;
-
-        // Em grupos (bi-set/circuito) o descanso acontece só ao fim da volta,
-        // ou seja, ao concluir a série do último exercício do grupo.
-        if (autoStartTimer && (!group || group.isLastMember)) {
-            setShowTimer(true);
-        }
-
-        if (exerciseIndex === -1) return;
-        const ex = exercises[exerciseIndex];
-        const isLastSetOfExercise = currentSetNum === ex.sets.length;
-
-        let targetIndex = null;
-        if (group) {
-            if (!group.isLastMember) {
-                // Alterna para o próximo exercício do grupo (sem descanso).
-                targetIndex = group.nextMemberIndex;
-            } else if (!isLastSetOfExercise) {
-                // Fim da volta: retorna ao primeiro exercício do grupo.
-                targetIndex = group.firstIndex;
-            } else if (exerciseIndex < exercises.length - 1) {
-                // Grupo concluído: segue para o próximo exercício da ficha.
-                targetIndex = exerciseIndex + 1;
-            }
-        } else if (isLastSetOfExercise && exerciseIndex < exercises.length - 1) {
-            targetIndex = exerciseIndex + 1;
-        }
-
-        if (targetIndex !== null) {
-            const targetId = exercises[targetIndex].id;
-            setTimeout(() => {
-                if (focusMode) {
-                    setCurrentExerciseIndex(targetIndex);
-                } else {
-                    scrollToExercise(targetId);
-                }
-            }, 400); // Pequeno delay para a animação da série concluída
-        }
-    };
-
-    // Rolar para o topo quando o Modo Foco é ativado
-    // Rolar para o topo quando o Modo Foco é ativado
-    useEffect(() => {
-        if (focusMode) {
-            // Força o scroll suave para o topo
-            const forceScroll = () => window.scrollTo({ top: 0, behavior: 'smooth' });
-
-            forceScroll();
-            // Pequeno delay para garantir que o layout atualizou
-            setTimeout(forceScroll, 300);
-        }
-    }, [focusMode]);
+    // --- NAVEGAÇÃO (Modo Foco, série ativa, avanço bi-set/circuito) ---
+    const {
+        currentExerciseIndex,
+        activeSetIndices,
+        handleSetNavigation,
+        handleNextExercise,
+        handlePrevExercise,
+        handleCompleteSetWrapper
+    } = useExecutionNavigation({ exercises, focusMode, autoStartTimer, setShowTimer, completeSetAutoFill });
 
     const {
         elapsedSeconds,
@@ -355,31 +153,19 @@ export function WorkoutExecutionPage({ user }) {
         }
     }, [exercises, elapsedSeconds, loading, isFinished, syncSession]);
 
+    // --- FLUXO DE FINALIZAÇÃO ---
+    const {
+        frozenSession,
+        showFinishModal,
+        setShowFinishModal,
+        isFinishingSession,
+        newAchievements,
+        showAchievementModal,
+        setShowAchievementModal,
+        handleFinishWorkout
+    } = useFinishWorkoutFlow({ user, finishSession, setIsFinished });
 
-    // --- FOCUS NAVIGATION STATE ---
-    const [currentExerciseIndex, setCurrentExerciseIndex] = useState(0);
-    const [activeSetIndices, setActiveSetIndices] = useState({});
-
-    const handleSetNavigation = (exerciseId, setIndex) => {
-        setActiveSetIndices(prev => ({
-            ...prev,
-            [exerciseId]: setIndex
-        }));
-    };
-
-
-
-    // --- AÇÕES ---
-    const handleNextExercise = () => {
-        if (currentExerciseIndex < exercises.length - 1) setCurrentExerciseIndex(prev => prev + 1);
-    };
-    const handlePrevExercise = () => {
-        if (currentExerciseIndex > 0) setCurrentExerciseIndex(prev => prev - 1);
-    };
-
-    const [showCancelModal, setShowCancelModal] = useState(false);
-    const [showConfirmFinishModal, setShowConfirmFinishModal] = useState(false);
-
+    // --- CANCELAMENTO/DESCARTE ---
     const handleDiscard = () => {
         setShowCancelModal(true);
     };
@@ -395,143 +181,8 @@ export function WorkoutExecutionPage({ user }) {
         setShowCancelModal(false);
     };
 
-    const handleFinishWorkout = async () => {
-        setIsFinishingSession(true);
-
-        setFrozenSession({
-            exercises: JSON.parse(JSON.stringify(exercises)), // Deep clone
-            elapsedSeconds
-        });
-
-        setIsFinished(true); // Parar sincronização imediatamente
-        const success = await finishSession(elapsedSeconds);
-        
-        if (success) {
-            if (!prefersReducedMotion()) {
-                const { default: confetti } = await import('canvas-confetti');
-                confetti({
-                    particleCount: 150,
-                    spread: 100,
-                    origin: { y: 0.6 }
-                });
-            }
-
-            if (user) {
-                const sessionPayload = {
-                    id: 'temp_current',
-                    completedAt: new Date(),
-                    exercises: exercises,
-                    elapsedSeconds: elapsedSeconds,
-                    userId: user.uid
-                };
-
-                try {
-                    const unlocked = await checkNewAchievements(user.uid, sessionPayload, workoutService);
-                    setIsFinishingSession(false);
-                    if (unlocked && unlocked.length > 0) {
-                        setNewAchievements(unlocked);
-                        setShowAchievementModal(true);
-                    } else {
-                        setShowFinishModal(true);
-                    }
-                } catch (err) {
-                    console.error("checkNewAchievements error", err);
-                    setIsFinishingSession(false);
-                    setShowFinishModal(true);
-                }
-            } else {
-                setIsFinishingSession(false);
-                setShowFinishModal(true);
-            }
-        } else {
-            setIsFinishingSession(false);
-            setIsFinished(false); // Reativar se falhar
-            setFrozenSession(null);
-        }
-    };
-
     // --- COMPARTILHAMENTO ---
-    const [sharing, setSharing] = useState(false);
-    const shareCardRef = useRef(null);
-
-    const handleShare = async () => {
-        if (sharing) return;
-        if (!shareCardRef.current) {
-            setError("Card de compartilhamento indisponível.");
-            return;
-        }
-
-        // Verificação de Segurança: API Files requer Contexto Seguro (HTTPS ou localhost)
-        if (!window.isSecureContext) {
-            setError("O compartilhamento requer conexão segura. Use HTTPS ou localhost.");
-            return;
-        }
-
-        setSharing(true);
-        try {
-            // Wait for render and font load (with safety timeouts to avoid hangs)
-            const waitWithTimeout = async (promise, timeoutMs = 2000) => {
-                try {
-                    await Promise.race([
-                        promise,
-                        new Promise(resolve => setTimeout(resolve, timeoutMs))
-                    ]);
-                } catch {
-                    // Ignore font/image load errors and proceed
-                }
-            };
-
-            await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
-            if (document.fonts && document.fonts.ready) {
-                await waitWithTimeout(document.fonts.ready, 2000);
-            }
-
-            // Pega o Canvas montado (já nativo!)
-            const canvas = shareCardRef.current;
-            if (!canvas || !canvas.toBlob) {
-                throw new Error('Canvas não disponível para exportação.');
-            }
-
-            // Extrai a imagem hiper rápida
-            const blob = await new Promise((resolve, reject) => {
-                canvas.toBlob((b) => {
-                    if (b) resolve(b);
-                    else reject(new Error('Falha gerar blob do canvas'));
-                }, 'image/jpeg', 0.88);
-            });
-
-            const file = new File([blob], 'treino_concluido.jpg', { type: 'image/jpeg' });
-
-            if (navigator.canShare && navigator.canShare({ files: [file] })) {
-                try {
-                    await navigator.share({
-                        title: 'Treino Concluído!',
-                        text: `Acabei de completar o treino ${template?.name || 'Personalizado'}! 💪`,
-                        files: [file]
-                    });
-                    return;
-                } catch (err) {
-                    if (err?.name === 'AbortError') {
-                        return;
-                    }
-                    console.warn('Share failed, falling back to download:', err);
-                }
-            }
-
-            // Fallback de download
-            const blobUrl = URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.download = `treino_${new Date().toISOString().slice(0, 10)}.jpg`;
-            link.href = blobUrl;
-            link.click();
-            URL.revokeObjectURL(blobUrl);
-        } catch (err) {
-            console.error("Error sharing:", err);
-            setError("Erro ao gerar imagem de compartilhamento."); // Using existing setError
-        } finally {
-            setSharing(false);
-        }
-    };
+    const { sharing, shareCardRef, handleShare } = useWorkoutShare({ templateName: template?.name, setError });
 
     // Use frozen data if finished, otherwise live data
     const displayExercises = frozenSession?.exercises || exercises;
@@ -540,50 +191,26 @@ export function WorkoutExecutionPage({ user }) {
     // --- RENDERIZAÇÃO ---
     // If finished, we ignore loading state to keep the Summary/Modal visible
     if (loading && !isFinished && !frozenSession) {
-        return (
-            <div className="min-h-screen bg-[#020617] p-4 font-sans max-w-2xl mx-auto space-y-6">
-                <div className="flex justify-between items-center py-4">
-                    <Skeleton className="h-8 w-20 rounded-full" />
-                    <div className="flex gap-2">
-                        <Skeleton className="h-8 w-16 rounded-full" />
-                        <Skeleton className="h-8 w-16 rounded-full" />
-                        <Skeleton className="h-8 w-16 rounded-full" />
-                    </div>
-                </div>
-                <div className="h-10"></div>
-                <Skeleton className="h-32 w-full rounded-3xl" />
-                <div className="space-y-4">
-                    <Skeleton className="h-64 w-full rounded-3xl" />
-                    <Skeleton className="h-64 w-full rounded-3xl" />
-                </div>
-            </div>
-        );
+        return <ExecutionSkeleton />;
     }
 
-    const completedExercisesCount = displayExercises.filter(ex => ex.sets.every(s => s.completed)).length;
+    const sessionData = computeSessionStats({
+        exercises: displayExercises,
+        elapsedSeconds: displayElapsed,
+        templateName: template?.name
+    });
+    const completedExercisesCount = sessionData.exercisesCount;
     const totalExercises = displayExercises.length;
 
-    const sessionData = {
-        templateName: template?.name || 'Treino Personalizado',
-        duration: Math.floor(displayElapsed / 60) + "min",
-        exercisesCount: completedExercisesCount,
-        volumeLoad: displayExercises.reduce((acc, ex) => {
-            return acc + ex.sets.reduce((sAcc, s) => {
-                if (!s.completed) return sAcc;
-                if (s.drops && s.drops.length > 0) {
-                    return sAcc + s.drops.reduce((dAcc, d) => {
-                        const dw = parseFloat((d.weight || '').toString().replace(',', '.')) || 0;
-                        const dr = parseFloat((d.reps || '').toString().replace(',', '.')) || 0;
-                        return dAcc + (dw * dr);
-                    }, 0);
-                }
-                const weightStr = (s.weight || '').toString().replace(',', '.');
-                const repsStr = (s.reps || '').toString().replace(',', '.');
-                const w = parseFloat(weightStr) || 0;
-                const r = parseFloat(repsStr) || 0;
-                return sAcc + (w * r);
-            }, 0);
-        }, 0)
+    const cardHandlers = {
+        updateExerciseSet,
+        updateSetMultiple,
+        onSetNavigation: handleSetNavigation,
+        onSelectMethod: setSelectedMethod,
+        onCompleteSet: handleCompleteSetWrapper,
+        updateNotes,
+        toggleExerciseWeightMode,
+        onValidationError: setError
     };
 
     return (
@@ -622,50 +249,17 @@ export function WorkoutExecutionPage({ user }) {
             )}
 
             {showFinishModal && !showAchievementModal && (
-                <div className="fixed inset-0 z-[200] bg-black/95 backdrop-blur-xl animate-in fade-in overflow-y-auto">
-                    <div className="min-h-full flex flex-col items-center justify-center p-4">
-                        <div className="w-full max-w-md flex flex-col items-center space-y-4 my-auto">
-                            <div className="origin-top scale-[0.85] sm:scale-100 -mb-[92px] sm:mb-0">
-                                <React.Suspense fallback={
-                                    <div className="h-96 w-full rounded-3xl bg-slate-900/40 border border-slate-800/60 animate-pulse" />
-                                }>
-                                    <ShareableWorkoutCard
-                                        ref={shareCardRef}
-                                        session={sessionData}
-                                        userName={user?.displayName || 'Atleta'}
-                                        isVisible={true}
-                                    />
-                                </React.Suspense>
-                            </div>
-
-                            <div className="w-full space-y-3">
-                                <Button
-                                    onClick={handleShare}
-                                    disabled={sharing}
-                                    className="w-full h-12 bg-gradient-to-r from-cyan-500 via-blue-500 to-blue-600 hover:from-cyan-400 hover:via-blue-400 hover:to-blue-500 text-white font-bold rounded-2xl shadow-lg shadow-cyan-500/25 flex items-center justify-center gap-2"
-                                >
-                                    {sharing ? 'Gerando...' : (
-                                        <>
-                                            <Share2 size={18} />
-                                            Compartilhar Resultado
-                                        </>
-                                    )}
-                                </Button>
-
-                                <Button
-                                    onClick={() => {
-                                        if (onFinish) onFinish();
-                                        else window.location.href = '/';
-                                    }}
-                                    variant="ghost"
-                                    className="w-full h-12 text-slate-400 hover:text-white"
-                                >
-                                    Fechar e Sair
-                                </Button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                <WorkoutFinishModal
+                    session={sessionData}
+                    userName={user?.displayName || 'Atleta'}
+                    sharing={sharing}
+                    onShare={handleShare}
+                    onClose={() => {
+                        if (onFinish) onFinish();
+                        else window.location.href = '/';
+                    }}
+                    cardRef={shareCardRef}
+                />
             )}
             {error && <Toast message={error} type="error" onClose={() => setError(null)} />}
             <SessionConflictDialog
@@ -675,75 +269,16 @@ export function WorkoutExecutionPage({ user }) {
             />
             <div className="max-w-2xl mx-auto flex flex-col">
 
-                <div
-                    className="
-                        fixed top-0 left-0 right-0 z-50 pointer-events-none
-                        bg-slate-950/80
-                        backdrop-blur-xl
-                        border-b border-white/5
-                        shadow-2xl shadow-black/40
-                        rounded-b-3xl
-                    "
-                    style={{
-                        paddingTop: 'env(safe-area-inset-top)',
-                        height: 'auto'
-                    }}
-                >
-                    <div className="
-                        relative mx-auto max-w-2xl
-                        px-4 py-2
-                        pointer-events-auto
-                    ">
-                        {/* Ambient glow effect (Full Height) */}
-                        <div className="absolute inset-0 bg-gradient-to-b from-cyan-500/5 to-transparent pointer-events-none rounded-b-3xl" />
-
-                        <div className="relative z-10 flex items-center justify-between gap-2">
-                            {/* Left side - Back button */}
-                            <TopBarButton
-                                icon={<ArrowLeft />}
-                                label="Voltar"
-                                variant="primary"
-                                onClick={() => onFinish()}
-                                iconOnly
-                            />
-
-                            {/* Right side - Action buttons */}
-                            <div className="flex items-center gap-1.5 py-1 flex-1 justify-end min-w-0 pl-2">
-                                <TopBarButton
-                                    icon={<Trash2 />}
-                                    label="Cancelar treino"
-                                    variant="danger"
-                                    onClick={handleDiscard}
-                                    iconOnly
-                                />
-
-                                <TopBarButton
-                                    icon={<Calculator />}
-                                    label="CALC"
-                                    active={showGymTools}
-                                    prominence="large"
-                                    onClick={() => setShowGymTools(true)}
-                                />
-
-                                <TopBarButton
-                                    icon={<Timer />}
-                                    label="TIMER"
-                                    active={showTimer}
-                                    prominence="large"
-                                    onClick={() => setShowTimer(!showTimer)}
-                                />
-
-                                <TopBarButton
-                                    icon={<Eye />}
-                                    label="FOCO"
-                                    active={focusMode}
-                                    prominence="large"
-                                    onClick={() => setFocusMode(!focusMode)}
-                                />
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                <ExecutionTopBar
+                    onBack={() => onFinish()}
+                    onDiscard={handleDiscard}
+                    onOpenGymTools={() => setShowGymTools(true)}
+                    showGymTools={showGymTools}
+                    showTimer={showTimer}
+                    onToggleTimer={() => setShowTimer(!showTimer)}
+                    focusMode={focusMode}
+                    onToggleFocus={() => setFocusMode(!focusMode)}
+                />
 
                 <div style={{ height: 'calc(65px + env(safe-area-inset-top))' }}></div>
 
@@ -752,161 +287,43 @@ export function WorkoutExecutionPage({ user }) {
                 </div>
 
                 {focusMode && (
-                    <div className="px-4 mb-2 mt-0 flex items-center justify-between pointer-events-auto relative z-40">
-                        <Button
-                            variant="outline-primary"
-                            size="sm"
-                            onClick={handlePrevExercise}
-                            disabled={currentExerciseIndex === 0}
-                            leftIcon={<ChevronLeft size={16} />}
-                            className="backdrop-blur-md"
-                        >
-                            Anterior
-                        </Button>
-
-                        <span className="text-sm font-bold text-slate-400 flex items-center gap-2">
-                            {currentExerciseIndex + 1} de {totalExercises}
-                            {(() => {
-                                const focusGroup = getGroupInfo(exercises, currentExerciseIndex);
-                                return focusGroup ? (
-                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-cyan-500/15 border border-cyan-500/40 text-cyan-300 text-[10px] uppercase tracking-wide">
-                                        <Link2 size={10} /> {focusGroup.label}
-                                    </span>
-                                ) : null;
-                            })()}
-                        </span>
-
-                        <Button
-                            variant="outline-primary"
-                            size="sm"
-                            onClick={handleNextExercise}
-                            disabled={currentExerciseIndex === totalExercises - 1}
-                            rightIcon={<ChevronRight size={16} />}
-                            className="backdrop-blur-md"
-                        >
-                            Próximo
-                        </Button>
-                    </div>
+                    <FocusModeNav
+                        exercises={exercises}
+                        currentExerciseIndex={currentExerciseIndex}
+                        totalExercises={totalExercises}
+                        onPrev={handlePrevExercise}
+                        onNext={handleNextExercise}
+                    />
                 )}
 
                 {!focusMode && (
                     <div className="px-4 mb-2 mt-2">
-                        <ProgressCard completedCount={completedExercisesCount} totalCount={totalExercises} />
+                        <ExecutionProgressCard completedCount={completedExercisesCount} totalCount={totalExercises} />
                     </div>
                 )}
 
                 <main className={`px-4 mt-2 space-y-4`}>
                     {focusMode ? (
-                        exercises.length > 0 && (() => {
-                            const ex = exercises[currentExerciseIndex];
-                            const firstIncomplete = ex.sets.findIndex(s => !s.completed);
-                            const defaultActive = firstIncomplete !== -1 ? firstIncomplete : ex.sets.length - 1;
-                            const activeSetIdx = activeSetIndices[ex.id] !== undefined ? activeSetIndices[ex.id] : defaultActive;
-                            const safeIdx = Math.max(0, Math.min(activeSetIdx, ex.sets.length - 1));
-                            const activeSet = ex.sets[safeIdx];
-
-                            return (
-                                <LinearCardCompactV2
-                                    key={ex.id}
-                                    exerciseId={ex.id}
-                                    setId={activeSet.id}
-                                    exerciseName={ex.name}
-                                    muscleGroup={ex.muscleFocus?.primary || ex.group || 'Geral'}
-                                    method={ex.method || "Convencional"}
-                                    repsGoal={ex.reps || (ex.target ? ex.target.replace(/^\d+\s*x\s*/i, '').trim() : "12")}
-                                    currentSet={safeIdx + 1}
-                                    totalSets={ex.sets.length}
-                                    completedSets={ex.sets.map(s => s.completed)}
-                                    weight={activeSet.weight}
-                                    actualReps={activeSet.reps}
-                                    observation={ex.notes}
-                                    suggestedWeight={activeSet.targetWeight || activeSet.weight}
-                                    suggestedReps={activeSet.targetReps || ex.reps || (ex.target ? ex.target.replace(/^\d+\s*x\s*/i, '').trim() : "12")}
-                                    lastWeight={activeSet.lastWeight}
-                                    lastReps={activeSet.lastReps}
-                                    weightMode={activeSet.weightMode || 'total'}
-                                    baseWeight={activeSet.baseWeight}
-                                    drops={activeSet.drops}
-                                    onUpdateSet={updateExerciseSet}
-                                    onUpdateSetMultiple={updateSetMultiple}
-                                    onSetChange={(setNum) => handleSetNavigation(ex.id, setNum - 1)}
-                                    onMethodClick={() => setSelectedMethod(ex.method)}
-                                    onCompleteSet={handleCompleteSetWrapper}
-                                    onUpdateNotes={updateNotes}
-                                    onToggleWeightMode={() => toggleExerciseWeightMode(ex.id)}
-                                    onValidationError={setError}
-                                    progressionHint={progression?.[ex.id]}
-                                />
-                            );
-                        })()
+                        exercises.length > 0 && (
+                            <ExerciseCard
+                                key={exercises[currentExerciseIndex].id}
+                                exercise={exercises[currentExerciseIndex]}
+                                activeSetIndices={activeSetIndices}
+                                progression={progression}
+                                handlers={cardHandlers}
+                            />
+                        )
                     ) : (
-                        computeGroupSegments(exercises).map((segment) => {
-                            const groupedCards = segment.indices.map((exerciseIdx) => {
-                                const ex = exercises[exerciseIdx];
-                                const firstIncomplete = ex.sets.findIndex(s => !s.completed);
-                                const defaultActive = firstIncomplete !== -1 ? firstIncomplete : ex.sets.length - 1;
-                                const activeSetIdx = activeSetIndices[ex.id] !== undefined ? activeSetIndices[ex.id] : defaultActive;
-                                const safeIdx = Math.max(0, Math.min(activeSetIdx, ex.sets.length - 1));
-                                const activeSet = ex.sets[safeIdx];
-
-                                return (
-                                    <div id={`exercise-${ex.id}`} key={ex.id}>
-                                        <LinearCardCompactV2
-                                        exerciseId={ex.id}
-                                        setId={activeSet.id}
-                                        exerciseName={ex.name}
-                                        muscleGroup={ex.muscleFocus?.primary || ex.group || 'Geral'}
-                                        method={ex.method || "Convencional"}
-                                        repsGoal={ex.reps || (ex.target ? ex.target.replace(/^\d+\s*x\s*/i, '').trim() : "12")}
-                                        currentSet={safeIdx + 1}
-                                        totalSets={ex.sets.length}
-                                        completedSets={ex.sets.map(s => s.completed)}
-                                        weight={activeSet.weight}
-                                        actualReps={activeSet.reps}
-                                        observation={ex.notes}
-                                        suggestedWeight={activeSet.targetWeight || activeSet.weight}
-                                        suggestedReps={activeSet.targetReps || ex.reps || (ex.target ? ex.target.replace(/^\d+\s*x\s*/i, '').trim() : "12")}
-                                        lastWeight={activeSet.lastWeight}
-                                        lastReps={activeSet.lastReps}
-                                        weightMode={activeSet.weightMode || 'total'}
-                                        baseWeight={activeSet.baseWeight}
-                                        drops={activeSet.drops}
-                                        onUpdateSet={updateExerciseSet}
-                                        onUpdateSetMultiple={updateSetMultiple}
-                                        onSetChange={(setNum) => handleSetNavigation(ex.id, setNum - 1)}
-                                        onMethodClick={() => setSelectedMethod(ex.method)}
-                                        onCompleteSet={handleCompleteSetWrapper}
-                                        onUpdateNotes={updateNotes}
-                                        onToggleWeightMode={() => toggleExerciseWeightMode(ex.id)}
-                                        onValidationError={setError}
-                                        progressionHint={progression?.[ex.id]}
-                                        />
-                                    </div>
-                                );
-                            });
-
-                            if (!segment.groupId) {
-                                return groupedCards;
-                            }
-
-                            return (
-                                <div
-                                    key={`group-${segment.groupId}`}
-                                    data-testid="exercise-group"
-                                    className="rounded-[28px] border border-cyan-500/25 bg-cyan-500/[0.04] p-2 pt-3 space-y-4"
-                                >
-                                    <div className="flex items-center gap-2 px-3">
-                                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-cyan-500/15 border border-cyan-500/40 text-cyan-300 text-[10px] font-bold uppercase tracking-widest whitespace-nowrap shrink-0">
-                                            <Link2 size={11} /> {groupLabel(segment.indices.length)}
-                                        </span>
-                                        <span className="text-[11px] text-slate-500 font-medium leading-tight">
-                                            Alterne as séries • descanso ao fim da volta
-                                        </span>
-                                    </div>
-                                    {groupedCards}
-                                </div>
-                            );
-                        })
+                        computeGroupSegments(exercises).map((segment) => (
+                            <ExerciseGroupCard
+                                key={segment.groupId || `seg-${segment.indices[0]}`}
+                                segment={segment}
+                                exercises={exercises}
+                                activeSetIndices={activeSetIndices}
+                                progression={progression}
+                                handlers={cardHandlers}
+                            />
+                        ))
                     )}
                 </main>
 
@@ -937,65 +354,22 @@ export function WorkoutExecutionPage({ user }) {
 
                 {/* MODAL DE CANCELAMENTO */}
                 {showCancelModal && (
-                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
-                        <div className="w-full max-w-xs bg-[#0f172a] border border-slate-700 rounded-2xl p-6 shadow-2xl animate-in zoom-in-95 duration-200">
-                            <h3 className="text-lg font-bold text-white mb-2">Cancelar Treino?</h3>
-                            <p className="text-slate-400 text-sm mb-6">
-                                Todo o progresso deste treino será perdido e não poderá ser recuperado.
-                            </p>
-                            <div className="flex gap-3">
-                                <Button
-                                    onClick={() => setShowCancelModal(false)}
-                                    variant="ghost"
-                                    className="flex-1 h-10 text-slate-300 hover:text-white hover:bg-slate-800"
-                                >
-                                    Voltar
-                                </Button>
-                                <Button
-                                    onClick={confirmDiscard}
-                                    variant="danger"
-                                    className="flex-1 h-10 bg-red-500/5 text-red-400 border border-red-500/30 hover:bg-red-500/10 shadow-none hover:shadow-none"
-                                >
-                                    Confirmar
-                                </Button>
-                            </div>
-                        </div>
-                    </div>
+                    <CancelWorkoutModal
+                        onClose={() => setShowCancelModal(false)}
+                        onConfirm={confirmDiscard}
+                    />
                 )}
 
                 {/* MODAL DE CONFIRMAÇÃO DE FINALIZAÇÃO */}
                 {showConfirmFinishModal && (
-                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
-                        <div className="w-full max-w-xs bg-[#0f172a] border border-slate-700 rounded-2xl p-6 shadow-2xl animate-in zoom-in-95 duration-200">
-                            <h3 className="text-lg font-bold text-white mb-2">Finalizar Treino?</h3>
-                            <p className="text-slate-400 text-sm mb-6">
-                                Tem certeza que deseja encerrar o treino agora? Certifique-se de que registrou todas as séries.
-                            </p>
-                            <div className="flex gap-3">
-                                <Button
-                                    onClick={() => setShowConfirmFinishModal(false)}
-                                    variant="ghost"
-                                    className="flex-1 h-10 text-slate-300 hover:text-white hover:bg-slate-800"
-                                >
-                                    Voltar
-                                </Button>
-                                <Button
-                                    onClick={() => {
-                                        setShowConfirmFinishModal(false);
-                                        handleFinishWorkout();
-                                    }}
-                                    variant="success"
-                                    className="flex-1 h-10 bg-green-500/10 text-green-400 border border-green-500/30 hover:bg-green-500/20 shadow-none hover:shadow-none"
-                                >
-                                    Confirmar
-                                </Button>
-                            </div>
-                        </div>
-                    </div>
+                    <ConfirmFinishModal
+                        onClose={() => setShowConfirmFinishModal(false)}
+                        onConfirm={() => {
+                            setShowConfirmFinishModal(false);
+                            handleFinishWorkout({ exercises, elapsedSeconds });
+                        }}
+                    />
                 )}
-
-
-
 
                 {/* Footer Fim de Treino - Apenas mostra se o modal de finalização NÃO estiver visível */}
                 {!showFinishModal && (
@@ -1034,5 +408,3 @@ export function WorkoutExecutionPage({ user }) {
         </div >
     );
 }
-
-// Remove legacy helper functions and subcomponents that were moved or unused

@@ -1,8 +1,7 @@
 import { useCallback, useRef, useState } from 'react';
 import {
     createSessionBackupKey,
-    createSessionFingerprint,
-    removeSessionBackup,
+    resolveSessionConflict as resolveSessionConflictSelection,
     SESSION_SYNC_STATES
 } from '../services/sessions/sessionRecoveryService';
 import { useSessionExerciseActions } from './workout-session/useSessionExerciseActions';
@@ -80,20 +79,15 @@ export function useWorkoutSession(workoutId, user) {
     });
 
     const resolveSessionConflict = useCallback((source) => {
-        const candidate = sessionConflict?.candidates?.[source];
-        if (!candidate) return null;
+        const resolution = resolveSessionConflictSelection({ sessionConflict, source, backupKey });
+        if (!resolution) return null;
 
-        setExercises(candidate.exercises);
-        setInitialElapsed(candidate.elapsedSeconds);
-        lastSyncedRef.current = source === 'cloud'
-            ? createSessionFingerprint(candidate.exercises, candidate.elapsedSeconds)
-            : '';
-        if (source === 'cloud') {
-            removeSessionBackup(backupKey);
-        }
+        setExercises(resolution.exercises);
+        setInitialElapsed(resolution.elapsedSeconds);
+        lastSyncedRef.current = resolution.fingerprint;
         setSessionConflict(null);
-        setSyncState(SESSION_SYNC_STATES.active);
-        return candidate;
+        setSyncState(resolution.syncState);
+        return resolution.candidate;
     }, [backupKey, sessionConflict]);
 
     return {
