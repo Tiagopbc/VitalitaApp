@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { preloadImage } from '../../utils/imagePreload';
 import { canvasToJpegBlob } from '../../utils/shareWorkoutImage';
-import { loadShareableWorkoutCard } from '../../components/execution/WorkoutFinishModal';
+import { loadShareableWorkoutCard } from '../../components/execution/shareableWorkoutCardLoader';
 
 const shareCardBgSrc = '/bg-share-dumbbells.jpg';
 

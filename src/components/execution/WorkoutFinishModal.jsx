@@ -1,13 +1,7 @@
 import React from 'react';
 import { Share2 } from 'lucide-react';
 import { Button } from '../design-system/Button';
-
-/**
- * Loader do card compartilhável, exportado para que o warmup de recursos
- * (useWorkoutShare) possa pré-carregar o chunk antes do modal abrir.
- */
-export const loadShareableWorkoutCard = () =>
-    import('../sharing/ShareableWorkoutCard').then(module => ({ default: module.ShareableWorkoutCard }));
+import { loadShareableWorkoutCard } from './shareableWorkoutCardLoader';
 
 const ShareableWorkoutCard = React.lazy(loadShareableWorkoutCard);
 
