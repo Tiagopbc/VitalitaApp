@@ -23,7 +23,23 @@ self.addEventListener('push', (event) => {
         data: { url: data.url || '/' }
     };
 
-    event.waitUntil(self.registration.showNotification(title, options));
+    // Avisa os clients (para o diagnóstico registrar que o push chegou ao
+    // dispositivo). Se o app estiver em segundo plano, a mensagem é entregue
+    // quando a aba volta a rodar. Melhor esforço — não bloqueia a notificação.
+    const notify = self.registration.showNotification(title, options);
+    const report = self.clients
+        .matchAll({ type: 'window', includeUncontrolled: true })
+        .then((windowClients) => {
+            windowClients.forEach((client) => {
+                client.postMessage({
+                    type: 'rest-push-received',
+                    detail: { at: Date.now(), title }
+                });
+            });
+        })
+        .catch(() => undefined);
+
+    event.waitUntil(Promise.all([notify, report]));
 });
 
 self.addEventListener('notificationclick', (event) => {
