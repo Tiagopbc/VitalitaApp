@@ -49,6 +49,27 @@ describe("backfillUserStats", () => {
         expect(set).not.toHaveBeenCalled();
     });
 
+    it("compares against the stored doc so the dry-run shows what will change", async () => {
+        const set = vi.fn();
+        const log = createFakeLog();
+        const db = createFakeDb({
+            set,
+            existingStats: { prsCount: 3, distinctExercises: 2 }
+        });
+
+        await backfillUserStats(db, {
+            userId: "user-1",
+            batchSize: 50,
+            maxSessions: 2000,
+            write: false
+        }, log);
+
+        const [message] = log.info.mock.calls[0];
+        expect(message).toContain("PRs 1 (era 3)");
+        expect(message).toContain("exercicios 1 (era 2)");
+        expect(set).not.toHaveBeenCalled();
+    });
+
     it("writes aggregate when --write is enabled", async () => {
         const set = vi.fn();
         const db = createFakeDb({ set });
