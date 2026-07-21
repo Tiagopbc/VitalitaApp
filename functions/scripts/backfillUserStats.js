@@ -151,8 +151,12 @@ async function processUser(db, userId, options, summary, log, startedAt, userDat
 
         summary.processedUsers += 1;
 
+        const previousStats = (await db.doc(`user_stats/${userId}`).get()).data();
+
         if (!options.write) {
-            log.info(`[dry-run] ${userId}: ${stats.totalWorkouts} treinos, ${stats.totalTonnageKg}kg volume`);
+            log.info(`[dry-run] ${userId}: ${stats.totalWorkouts} treinos, ${stats.totalTonnageKg}kg volume`
+                + `, PRs ${formatDelta(previousStats?.prsCount, stats.prsCount)}`
+                + `, exercicios ${formatDelta(previousStats?.distinctExercises, stats.distinctExercises)}`);
             return;
         }
 
@@ -174,6 +178,15 @@ async function processUser(db, userId, options, summary, log, startedAt, userDat
         summary.failedUsers += 1;
         log.error(`[error] ${userId}: ${error.message}`);
     }
+}
+
+/**
+ * "47 (era 52)" — o dry-run existe para comparar com o que já está gravado,
+ * e a normalização de nomes derruba justamente PRs e exercícios distintos.
+ */
+function formatDelta(previous, next) {
+    if (!Number.isFinite(previous) || previous === next) return String(next);
+    return `${next} (era ${previous})`;
 }
 
 function requireValue(arg, value) {
