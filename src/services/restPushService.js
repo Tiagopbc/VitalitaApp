@@ -127,7 +127,11 @@ export async function scheduleRestPush(delaySeconds) {
         });
         if (!response.ok) {
             const body = await response.json().catch(() => null);
-            logPush('schedule:fail', { status: response.status, error: body?.error || null });
+            logPush('schedule:fail', {
+                status: response.status,
+                error: body?.error || null,
+                qstashStatus: body?.qstashStatus ?? null
+            });
             return null;
         }
         const data = await response.json().catch(() => null);

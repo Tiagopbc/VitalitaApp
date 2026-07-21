@@ -29,7 +29,8 @@ describe('/api/schedule-rest-push', () => {
         process.env.PUSH_INTERNAL_SECRET = 'segredo-teste';
         vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
             ok: true,
-            json: async () => ({ messageId: 'msg_123' })
+            status: 200,
+            text: async () => JSON.stringify({ messageId: 'msg_123' })
         }));
     });
 
@@ -80,10 +81,12 @@ describe('/api/schedule-rest-push', () => {
         expect(JSON.parse(options.body)).toEqual({ subscription: validSubscription, secret: 'segredo-teste' });
     });
 
-    it('responde 502 quando o QStash falha', async () => {
-        fetch.mockResolvedValueOnce({ ok: false, json: async () => ({}) });
+    it('responde 502 quando o QStash falha (e expõe o status do QStash)', async () => {
+        fetch.mockResolvedValueOnce({ ok: false, status: 401, text: async () => JSON.stringify({ error: 'unauthorized' }) });
         const res = makeRes();
         await handler({ method: 'POST', body: { subscription: validSubscription, delaySeconds: 90 } }, res);
         expect(res.statusCode).toBe(502);
+        expect(res.body.error).toBe('qstash_publish_failed');
+        expect(res.body.qstashStatus).toBe(401);
     });
 });

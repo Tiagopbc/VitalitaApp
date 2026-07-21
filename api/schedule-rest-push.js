@@ -56,13 +56,24 @@ export default async function handler(req, res) {
             body: JSON.stringify({ subscription, secret: internalSecret })
         });
 
-        const data = await response.json().catch(() => ({}));
+        const raw = await response.text();
+        let data = {};
+        try { data = raw ? JSON.parse(raw) : {}; } catch { /* resposta não-JSON */ }
+
         if (!response.ok || !data.messageId) {
-            return res.status(502).json({ error: 'qstash_publish_failed' });
+            // Loga o motivo real do QStash (o status aponta a causa: 401 = token
+            // inválido, 403 = sem permissão/quota, 404 = URL de destino errada).
+            console.error('qstash_publish_failed', {
+                qstashStatus: response.status,
+                target,
+                body: raw.slice(0, 300)
+            });
+            return res.status(502).json({ error: 'qstash_publish_failed', qstashStatus: response.status });
         }
 
         return res.status(200).json({ messageId: data.messageId });
-    } catch {
+    } catch (err) {
+        console.error('qstash_unreachable', { message: String(err?.message || err), target });
         return res.status(502).json({ error: 'qstash_unreachable' });
     }
 }
