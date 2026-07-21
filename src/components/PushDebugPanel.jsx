@@ -11,23 +11,24 @@ import { getPushLog, clearPushLog, describePushContext } from '../services/pushD
 const FLAG_KEY = 'vitalita:pushDebug';
 
 /**
- * Habilitado por `?debug=push`. A flag é "grudenta" (sessionStorage): sobrevive
- * a redirects de auth (ex.: /login) e à navegação entre rotas, que apagam a
- * query string. `?debug=off` desliga.
+ * Habilitado por `?debug=push`. A flag é "grudenta" (localStorage): sobrevive a
+ * redirects de auth (ex.: /login), à navegação entre rotas e — importante — à
+ * instalação na tela de início (o PWA standalone abre sem barra de endereço,
+ * então não dá para redigitar `?debug=push`). `?debug=off` desliga.
  */
 function isEnabled() {
     if (typeof window === 'undefined') return false;
     try {
         const param = new URLSearchParams(window.location.search).get('debug');
         if (param === 'push') {
-            sessionStorage.setItem(FLAG_KEY, '1');
+            localStorage.setItem(FLAG_KEY, '1');
             return true;
         }
         if (param === 'off') {
-            sessionStorage.removeItem(FLAG_KEY);
+            localStorage.removeItem(FLAG_KEY);
             return false;
         }
-        return sessionStorage.getItem(FLAG_KEY) === '1';
+        return localStorage.getItem(FLAG_KEY) === '1';
     } catch {
         return false;
     }
