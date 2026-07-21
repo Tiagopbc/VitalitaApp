@@ -24,7 +24,7 @@ export function CancelWorkoutModal({ onClose, onConfirm }) {
                     <Button
                         onClick={onConfirm}
                         variant="danger"
-                        className="flex-1 h-10 bg-red-500/5 text-red-400 border border-red-500/30 hover:bg-red-500/10 shadow-none hover:shadow-none"
+                        className="flex-1 h-10"
                     >
                         Confirmar
                     </Button>
