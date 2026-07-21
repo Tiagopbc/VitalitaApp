@@ -1,4 +1,5 @@
 import { achievementTargets } from "./achievementTargets.js";
+import { createExerciseMaxTracker, normalizeExerciseName } from "./exerciseName.js";
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 const TRANSITION_DATE = new Date(2026, 4, 11);
@@ -15,7 +16,7 @@ export function buildUserStatsFromSessions(sessions = [], options = {}) {
         .sort((a, b) => a.__date - b.__date);
 
     const totals = createEmptyTotals();
-    const exerciseMaxes = {};
+    const exerciseMaxTracker = createExerciseMaxTracker();
     const distinctExercises = new Set();
     const last7DaysCutoff = new Date(now.getTime() - 7 * MS_PER_DAY);
     const startOfYear = new Date(now.getFullYear(), 0, 1);
@@ -62,7 +63,7 @@ export function buildUserStatsFromSessions(sessions = [], options = {}) {
         }
         workoutsInCurrentYear += 1;
 
-        collectExerciseStats(session, totals, exerciseMaxes, distinctExercises);
+        collectExerciseStats(session, totals, exerciseMaxTracker, distinctExercises);
 
         const runningStats = {
             totalWorkouts: totals.totalWorkouts,
@@ -79,6 +80,7 @@ export function buildUserStatsFromSessions(sessions = [], options = {}) {
         unlockAchievements(achievementHistory, runningStats, sessionDate);
     });
 
+    const exerciseMaxes = exerciseMaxTracker.toObject();
     const weekly = calculateWeeklyAggregates(validSessions, weeklyGoal, now);
     const uniqueCurrentWeekDays = weekly.currentWeekActiveDays;
 
@@ -129,6 +131,33 @@ export function buildUserStatsFromSessions(sessions = [], options = {}) {
     };
 }
 
+/**
+ * União do histórico de conquistas já gravado com o recém-calculado, mantendo
+ * a data mais antiga. Conquista desbloqueada nunca volta a bloquear: o rebuild
+ * sobrescreve o doc inteiro ({ merge: false }) e a normalização de nomes pode
+ * derrubar `prsCount`/`distinctExercises` abaixo do alvo que já foi batido.
+ */
+export function mergeUnlockedAchievements(previous = {}, computed = {}) {
+    const merged = { ...(previous || {}) };
+
+    Object.entries(computed || {}).forEach(([id, entry]) => {
+        const existing = merged[id];
+        if (!existing) {
+            merged[id] = entry;
+            return;
+        }
+
+        const existingAt = Date.parse(existing.unlockedAt);
+        const computedAt = Date.parse(entry.unlockedAt);
+        const keepExisting = Number.isFinite(existingAt)
+            && (!Number.isFinite(computedAt) || existingAt <= computedAt);
+
+        merged[id] = keepExisting ? existing : entry;
+    });
+
+    return merged;
+}
+
 function createEmptyTotals() {
     return {
         totalWorkouts: 0,
@@ -145,7 +174,7 @@ function createEmptyTotals() {
     };
 }
 
-function collectExerciseStats(session, totals, exerciseMaxes, distinctExercises) {
+function collectExerciseStats(session, totals, exerciseMaxTracker, distinctExercises) {
     const exercises = session.results || session.exercises || [];
 
     const processSet = (set) => {
@@ -162,8 +191,11 @@ function collectExerciseStats(session, totals, exerciseMaxes, distinctExercises)
     };
 
     const processExercise = (name, data) => {
-        if (!name) return;
-        distinctExercises.add(name);
+        // Grafias diferentes do mesmo exercício compartilham a chave canônica:
+        // sem isto elas contariam como exercícios distintos e como PR extra.
+        const key = normalizeExerciseName(name);
+        if (!key) return;
+        distinctExercises.add(key);
 
         const sets = Array.isArray(data) ? data : [data];
         let sessionMaxWeight = 0;
@@ -180,9 +212,8 @@ function collectExerciseStats(session, totals, exerciseMaxes, distinctExercises)
             }
         });
 
-        if (sessionMaxWeight > (exerciseMaxes[name] || 0)) {
+        if (exerciseMaxTracker.record(name, sessionMaxWeight)) {
             totals.prsCount += 1;
-            exerciseMaxes[name] = sessionMaxWeight;
         }
     };
 
@@ -198,7 +229,7 @@ function collectExerciseStats(session, totals, exerciseMaxes, distinctExercises)
 
 function getSessionVolume(session) {
     const totals = createEmptyTotals();
-    collectExerciseStats(session, totals, {}, new Set());
+    collectExerciseStats(session, totals, createExerciseMaxTracker(), new Set());
     return totals.totalTonnageKg;
 }
 
