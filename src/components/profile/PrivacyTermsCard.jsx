@@ -9,7 +9,7 @@ import { PRIVACY_POLICY_VERSION, TERMS_OF_USE_VERSION } from '../../constants/le
  */
 export function PrivacyTermsCard({ hasPrivacyConsent, privacyConsent, exportingData, onExportData }) {
     return (
-        <div className="mb-6 rounded-3xl border border-slate-800 bg-slate-900/50 p-5">
+        <div className="rounded-3xl border border-slate-800 bg-slate-900/50 p-5">
             <SectionHeader icon={<ShieldCheck size={18} className="text-cyan-300" />} title="Privacidade e termos" />
             <p className="mb-4 text-sm leading-relaxed text-slate-400">
                 {hasPrivacyConsent

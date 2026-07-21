@@ -142,6 +142,10 @@ export default function ProfilePage({ user, onLogout, onNavigateToHistory, onNav
     return (
         <div className="min-h-screen bg-slate-950 pb-8 px-4 pt-2 w-full max-w-3xl mx-auto lg:pb-12 lg:pt-6">
 
+            {/* Espaçamento único entre as seções — os componentes não carregam
+                margens próprias, para o ritmo ficar consistente. */}
+            <div className="space-y-6">
+
             {/* --- CARTÃO DE CABEÇALHO DO PERFIL --- */}
             <ProfileHeaderCard
                 profile={profile}
@@ -162,7 +166,7 @@ export default function ProfilePage({ user, onLogout, onNavigateToHistory, onNav
                         variant="outline-primary"
                         size="sm"
                         onClick={onNavigateToTrainer}
-                        className="mb-6 w-full rounded-xl lg:hidden"
+                        className="w-full rounded-xl lg:hidden"
                         leftIcon={<Users size={14} />}
                     >
                         Área do Personal
@@ -193,6 +197,8 @@ export default function ProfilePage({ user, onLogout, onNavigateToHistory, onNav
                 exportingData={exportingData}
                 onExportData={handleExportData}
             />
+
+            </div>
 
             {/* ACHIEVEMENT SHARE MODAL */}
             {selectedAchievement && (

@@ -21,7 +21,7 @@ export function ProfileHeaderCard({
     onToggleTheme
 }) {
     return (
-        <div className="bg-slate-900/50 rounded-3xl p-5 sm:p-6 mb-6 border border-slate-800 relative overflow-hidden">
+        <div className="bg-slate-900/50 rounded-3xl p-5 sm:p-6 border border-slate-800 relative overflow-hidden">
             {/* Brilho de Fundo */}
             <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
 

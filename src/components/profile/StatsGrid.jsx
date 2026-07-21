@@ -6,7 +6,7 @@ import { Activity, BicepsFlexed, Dumbbell, Trophy } from 'lucide-react';
  */
 export function StatsGrid({ stats, onNavigateToHistory }) {
     return (
-        <div className="grid grid-cols-2 gap-4 mb-6 mt-6">
+        <div className="grid grid-cols-2 gap-4">
             {/* Treinos (Clickable) */}
             <button
                 onClick={onNavigateToHistory}
