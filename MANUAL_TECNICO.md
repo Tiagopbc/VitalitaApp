@@ -185,8 +185,21 @@ typeof window.grecaptcha            // "object"
 
 Filtrar a aba de rede por `recaptcha` não serve — as chamadas são cross-origin e podem não aparecer.
 
-Para testar localmente, use `VITE_FIREBASE_APP_CHECK_DEBUG=true` no `.env.local` (só funciona fora
-de produção) e registre no Firebase Console o token de debug impresso no console.
+Para testar localmente, o `.env.local` precisa das **duas** variáveis:
+
+```
+VITE_FIREBASE_APP_CHECK_SITE_KEY=<site key do reCAPTCHA Enterprise>
+VITE_FIREBASE_APP_CHECK_DEBUG=true
+```
+
+`getAppCheckRuntimeConfig` exige um site key não vazio mesmo em modo debug
+(`src/utils/appCheck.js`, linha 11: `enabled` depende de `Boolean(normalizedSiteKey)`), e o
+`.env.example` deixa esse campo em branco. Setar apenas o `DEBUG=true` não inicializa nada e
+**nenhum token de debug é impresso** — o App Check fica silenciosamente desligado. O site key é
+público, então pode ser copiado do console sem cuidado especial.
+
+Com as duas definidas, registre no Firebase Console o token de debug impresso no console do
+navegador. O modo debug só funciona fora de produção.
 
 **Pendente:** o enforcement ainda está desligado — o App Check apenas coleta métricas e não bloqueia
 nada. Só ligue depois de alguns dias com as requisições verificadas perto de 100% no Firebase
