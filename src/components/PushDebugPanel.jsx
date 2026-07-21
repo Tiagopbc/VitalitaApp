@@ -1,9 +1,11 @@
 /**
  * PushDebugPanel.jsx
- * Painel de diagnóstico do push do descanso. Fica oculto por padrão e só
- * aparece com `?debug=push` na URL. Mostra o contexto de instalação e o log de
- * eventos (getPushLog), para diagnosticar num aparelho real onde o push falha —
- * sem depender de cabo/console.
+ * Painel de diagnóstico do push do descanso. Mostra o contexto de instalação e
+ * o log de eventos (getPushLog), para diagnosticar num aparelho real onde o
+ * push falha — sem depender de cabo/console.
+ *
+ * Um botão flutuante (🐛) abre o painel; o ✕ fecha. Também pode ser ligado por
+ * `?debug=push` / desligado por `?debug=off` na URL (útil no desktop).
  */
 import React, { useEffect, useState } from 'react';
 import { getPushLog, clearPushLog, describePushContext } from '../services/pushDiagnostics';
@@ -50,32 +52,45 @@ export function PushDebugPanel() {
         return () => clearInterval(id);
     }, [enabled]);
 
-    // Gesto secreto para ligar o painel no PWA instalado (sem barra de endereço
-    // para digitar ?debug=push): 5 toques rápidos na faixa do topo da tela.
-    // O listener é em captura e não bloqueia nada — invisível para o uso normal.
-    useEffect(() => {
-        if (enabled) return undefined;
-        let count = 0;
-        let timer = null;
-        const onTap = (event) => {
-            if ((event.clientY ?? 999) > 60) return; // só no topo
-            count += 1;
-            clearTimeout(timer);
-            if (count >= 5) {
-                try { localStorage.setItem(FLAG_KEY, '1'); } catch { /* sem storage */ }
-                setEnabled(true);
-                return;
-            }
-            timer = setTimeout(() => { count = 0; }, 2500);
-        };
-        window.addEventListener('click', onTap, true);
-        return () => {
-            window.removeEventListener('click', onTap, true);
-            clearTimeout(timer);
-        };
-    }, [enabled]);
+    const enable = () => {
+        try { localStorage.setItem(FLAG_KEY, '1'); } catch { /* sem storage */ }
+        setEnabled(true);
+    };
+    const disable = () => {
+        try { localStorage.removeItem(FLAG_KEY); } catch { /* sem storage */ }
+        setEnabled(false);
+    };
 
-    if (!enabled) return null;
+    // Fechado: mostra só o botão flutuante para abrir o painel. Funciona no PWA
+    // instalado (sem barra de endereço para digitar ?debug=push).
+    if (!enabled) {
+        return (
+            <button
+                onClick={enable}
+                aria-label="Abrir diagnóstico de push"
+                style={{
+                    position: 'fixed',
+                    right: 12,
+                    bottom: 'calc(env(safe-area-inset-bottom, 0px) + 88px)',
+                    zIndex: 2147483647,
+                    width: 46,
+                    height: 46,
+                    borderRadius: 9999,
+                    background: 'rgba(2,6,23,0.7)',
+                    border: '1px solid #334155',
+                    color: '#38bdf8',
+                    fontSize: 20,
+                    lineHeight: 1,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.35)'
+                }}
+            >
+                🐛
+            </button>
+        );
+    }
 
     const box = {
         position: 'fixed',
@@ -97,12 +112,21 @@ export function PushDebugPanel() {
         <div style={box}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
                 <strong>push debug</strong>
-                <button
-                    onClick={() => { clearPushLog(); setLog([]); }}
-                    style={{ background: '#1e293b', color: '#e2e8f0', border: '1px solid #334155', borderRadius: 6, padding: '2px 8px' }}
-                >
-                    limpar
-                </button>
+                <div style={{ display: 'flex', gap: 6 }}>
+                    <button
+                        onClick={() => { clearPushLog(); setLog([]); }}
+                        style={{ background: '#1e293b', color: '#e2e8f0', border: '1px solid #334155', borderRadius: 6, padding: '2px 8px' }}
+                    >
+                        limpar
+                    </button>
+                    <button
+                        onClick={disable}
+                        aria-label="Fechar diagnóstico"
+                        style={{ background: '#1e293b', color: '#e2e8f0', border: '1px solid #334155', borderRadius: 6, padding: '2px 10px' }}
+                    >
+                        ✕
+                    </button>
+                </div>
             </div>
 
             {ctx && (
