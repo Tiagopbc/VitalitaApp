@@ -160,8 +160,6 @@ async function processUser(db, userId, options, summary, log, startedAt, userDat
             return;
         }
 
-        const previousStats = (await db.doc(`user_stats/${userId}`).get()).data();
-
         await db.doc(`user_stats/${userId}`).set({
             ...stats,
             achievements: mergeUnlockedAchievements(previousStats?.achievements, stats.achievements),
