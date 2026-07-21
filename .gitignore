@@ -18,6 +18,7 @@ dev-dist/
 .vscode/*
 !.vscode/extensions.json
 !.vscode/launch.json
+.claude/
 .idea
 !.idea/runConfigurations
 .DS_Store
