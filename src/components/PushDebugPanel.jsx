@@ -35,7 +35,7 @@ function isEnabled() {
 }
 
 export function PushDebugPanel() {
-    const [enabled] = useState(isEnabled);
+    const [enabled, setEnabled] = useState(isEnabled);
     const [log, setLog] = useState([]);
     const [ctx, setCtx] = useState(null);
 
@@ -48,6 +48,31 @@ export function PushDebugPanel() {
         refresh();
         const id = setInterval(refresh, 1000);
         return () => clearInterval(id);
+    }, [enabled]);
+
+    // Gesto secreto para ligar o painel no PWA instalado (sem barra de endereço
+    // para digitar ?debug=push): 5 toques rápidos na faixa do topo da tela.
+    // O listener é em captura e não bloqueia nada — invisível para o uso normal.
+    useEffect(() => {
+        if (enabled) return undefined;
+        let count = 0;
+        let timer = null;
+        const onTap = (event) => {
+            if ((event.clientY ?? 999) > 60) return; // só no topo
+            count += 1;
+            clearTimeout(timer);
+            if (count >= 5) {
+                try { localStorage.setItem(FLAG_KEY, '1'); } catch { /* sem storage */ }
+                setEnabled(true);
+                return;
+            }
+            timer = setTimeout(() => { count = 0; }, 2500);
+        };
+        window.addEventListener('click', onTap, true);
+        return () => {
+            window.removeEventListener('click', onTap, true);
+            clearTimeout(timer);
+        };
     }, [enabled]);
 
     if (!enabled) return null;
