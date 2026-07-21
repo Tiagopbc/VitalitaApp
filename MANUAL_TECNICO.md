@@ -99,7 +99,7 @@ Para rodar o projeto localmente:
     ```bash
     npm run dev
     ```
-    O servidor iniciará (geralmente em `http://localhost:5173`).
+    O servidor iniciará em `http://localhost:5175` (porta fixada em `vite.config.js`).
 
 3.  **Build para Produção:**
     ```bash
@@ -121,3 +121,75 @@ O projeto utiliza **ESLint** para garantir a qualidade do código. Configuraçõ
 - Padrões de importação modernos (ES Modules).
 
 Recomenda-se rodar `npm run lint` antes de commits importantes.
+
+## 7. Segurança das Credenciais
+
+### 7.1. A API key do Firebase é pública
+
+A `VITE_FIREBASE_API_KEY` é embutida no bundle JavaScript em tempo de build e vai para o navegador
+de todo usuário — isso é inerente a qualquer app Firebase web, não um descuido. Ela identifica o
+projeto; **não autoriza acesso a nada**. Quem controla acesso são as regras do Firestore
+(`firestore.rules`), as restrições da chave e o App Check.
+
+Consequência prática: **rotacionar essa chave não aumenta a segurança**, porque a chave nova seria
+igualmente pública. O alerta de secret scanning nº 1 deste repositório foi fechado como *won't fix*
+por esse motivo, em 21/07/2026, após aplicar as restrições descritas abaixo. Se um alerta
+equivalente reaparecer, a resposta é conferir as restrições — não gerar uma chave nova.
+
+O que **de fato** precisa ficar fora do repositório são os segredos de servidor: a chave privada
+VAPID e o token do QStash, ambos definidos apenas nas variáveis de ambiente da Vercel.
+
+### 7.2. Restrições da Browser key
+
+A única API key do projeto (`Browser key (auto created by Firebase)`, projeto Google Cloud
+`app-treino-17bbf`) está restrita a estes referrers HTTP:
+
+| Referrer | Motivo |
+| --- | --- |
+| `https://vitalita.vercel.app/*` | produção |
+| `https://app-treino-17bbf.firebaseapp.com/*` | **obrigatório** — `signInWithPopup` abre o popup do Google neste domínio |
+| `http://localhost:5175/*` | `npm run dev` |
+| `http://localhost:4173/*` | `npm run preview` |
+
+E limitada a 6 APIs: Cloud Firestore, Identity Toolkit, Token Service, Firebase Installations,
+Firebase App Check e reCAPTCHA Enterprise.
+
+O app **não usa** Storage, Analytics, Remote Config, Functions callable nem Firebase Cloud
+Messaging — o push de fim de descanso é Web Push nativo com VAPID própria via QStash
+(`src/services/restPushService.js`), sem FCM.
+
+> **Deploys de preview da Vercel não conseguem autenticar nem ler o Firestore**, porque o console
+> do Google não aceita curinga parcial de subdomínio (`vitalita-*.vercel.app`). Antes de concluir
+> que um PR quebrou o app em preview, verifique se não é isso. Para reativá-los, bastaria adicionar
+> `https://*.vercel.app/*` — ao custo de liberar qualquer site hospedado em `.vercel.app`.
+
+Curingas em porta (`http://localhost:*/*`) também são rejeitados; por isso as portas estão fixas.
+
+### 7.3. App Check
+
+O App Check está ativo com reCAPTCHA Enterprise (chave `vitalita-appcheck`, score-based, sem
+desafio visível). A ativação é feita só por variável de ambiente: `src/utils/appCheck.js` habilita
+quando `VITE_FIREBASE_APP_CHECK_SITE_KEY` está preenchida e o build é de produção, e
+`src/services/appCheckService.js` faz o `initializeAppCheck` com import dinâmico. Falhas são
+engolidas e reportadas ao Sentry — o App Check nunca bloqueia o boot do app.
+
+`VITE_*` é embutida em **tempo de build**: alterar a variável na Vercel não tem efeito sem um
+**redeploy**.
+
+Para verificar em produção, no console do navegador:
+
+```js
+typeof window.grecaptcha            // "object"
+!!document.querySelector('.grecaptcha-badge')  // true
+```
+
+Filtrar a aba de rede por `recaptcha` não serve — as chamadas são cross-origin e podem não aparecer.
+
+Para testar localmente, use `VITE_FIREBASE_APP_CHECK_DEBUG=true` no `.env.local` (só funciona fora
+de produção) e registre no Firebase Console o token de debug impresso no console.
+
+**Pendente:** o enforcement ainda está desligado — o App Check apenas coleta métricas e não bloqueia
+nada. Só ligue depois de alguns dias com as requisições verificadas perto de 100% no Firebase
+Console → App Check → APIs, e **apenas no Cloud Firestore**. Deixe o Authentication de fora enquanto
+estiver marcado como PRÉ-LANÇAMENTO: travar o login com um recurso em beta tranca você para fora do
+próprio app.
