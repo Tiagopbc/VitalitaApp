@@ -1,23 +1,34 @@
 
 // evaluateAchievements.js
 
+import { createExerciseMaxTracker, normalizeExerciseName } from './exerciseName';
+
+/**
+ * Conquista já registrada em `unlockedMap` continua desbloqueada mesmo que o
+ * valor atual fique abaixo do alvo — a normalização de nomes de exercício pode
+ * derrubar `prsCount`/`distinctExercises`, e o usuário não perde o que ganhou.
+ */
 export function evaluateAchievements(catalog, stats, unlockedMap = {}) {
     return catalog.map((a) => {
         const value = getValue(a.type, stats);
-        const isUnlocked = value >= a.target;
+        const wasUnlocked = Boolean(unlockedMap[a.id]);
+        const isUnlocked = value >= a.target || wasUnlocked;
 
         const unlockedAt =
             unlockedMap[a.id]?.unlockedAt ??
             (isUnlocked ? new Date().toISOString() : null);
+
+        // Desbloqueada => barra cheia, ainda que o valor recalculado tenha caído.
+        const progressValue = isUnlocked ? a.target : value;
 
         return {
             ...a,
             value,
             isUnlocked,
             unlockedAt,
-            progressValue: Math.min(value, a.target),
-            progressRatio: Math.min(1, value / a.target),
-            progressText: format(a, value)
+            progressValue,
+            progressRatio: Math.min(1, progressValue / a.target),
+            progressText: format(a, progressValue)
         };
     });
 }
@@ -89,8 +100,8 @@ export function calculateStats(sessions) {
     let prsCount = 0;
     let distinctExercisesSet = new Set();
 
-    // Mapas para rastrear PR: nomeExercício -> pesoMax
-    const exerciseMaxWeight = {};
+    // Máximos por exercício canônico (também é a fonte do prsCount).
+    const exerciseMaxTracker = createExerciseMaxTracker();
 
     const now = new Date();
     const oneWeekAgo = new Date();
@@ -149,7 +160,10 @@ export function calculateStats(sessions) {
 
         // Auxiliar para iterar exercícios
         const processExercise = (name, sets) => {
-            distinctExercisesSet.add(name);
+            // Grafias diferentes do mesmo exercício compartilham a chave canônica.
+            const key = normalizeExerciseName(name);
+            if (!key) return;
+            distinctExercisesSet.add(key);
             let sessionMaxWeight = 0;
 
             if (Array.isArray(sets)) {
@@ -178,23 +192,9 @@ export function calculateStats(sessions) {
                 }
             }
 
-            // Verificação de PR
-            if (sessionMaxWeight > 0) {
-                const currentMax = exerciseMaxWeight[name] || 0;
-                if (sessionMaxWeight > currentMax) {
-                    if (currentMax > 0) {
-                        // Contar apenas como PR se superar um recorde positivo anterior? 
-                        // Ou a primeira vez é um PR? Geralmente primeira vez é PR também (Novo PR!).
-                        // Catálogo do usuário diz "Primeiro PR", "10 PRs".
-                        // Se eu contar todo primeiro exercício como PR, usuários terão muitos PRs inicialmente.
-                        // Mas estritamente falando, um PB é um PB.
-                        prsCount++;
-                    } else {
-                        // Primeira vez fazendo exercício é tecnicamente um PR.
-                        prsCount++;
-                    }
-                    exerciseMaxWeight[name] = sessionMaxWeight;
-                }
+            // Verificação de PR (a primeira vez também conta como recorde).
+            if (exerciseMaxTracker.record(name, sessionMaxWeight)) {
+                prsCount++;
             }
         };
 
@@ -220,7 +220,7 @@ export function calculateStats(sessions) {
         prsCount,
 
         distinctExercises: distinctExercisesSet.size,
-        exerciseMaxes: exerciseMaxWeight
+        exerciseMaxes: exerciseMaxTracker.toObject()
     };
 }
 
@@ -248,7 +248,7 @@ export function evaluateHistory(sessions, catalog) {
         totalReps: 0,
         prsCount: 0,
         distinctExercises: new Set(),
-        exerciseMaxes: {} // name -> maxWeight
+        exerciseMaxTracker: createExerciseMaxTracker()
     };
 
     // Sliding window for 7 days: array of timestamps
@@ -324,7 +324,9 @@ export function evaluateHistory(sessions, catalog) {
         };
 
         const processExercise = (name, data) => {
-            runningStats.distinctExercises.add(name);
+            const key = normalizeExerciseName(name);
+            if (!key) return;
+            runningStats.distinctExercises.add(key);
             let sessionMax = 0;
             const sets = Array.isArray(data) ? data : [data];
 
@@ -333,14 +335,9 @@ export function evaluateHistory(sessions, catalog) {
                 if (w > sessionMax) sessionMax = w;
             });
 
-            if (sessionMax > 0) {
-                const currentMax = runningStats.exerciseMaxes[name] || 0;
-                if (sessionMax > currentMax) {
-                    // Always count as PR? Or only if currentMax > 0?
-                    // Catalog implies "First PR" is a thing. Let's count all improvements/firsts.
-                    runningStats.prsCount++;
-                    runningStats.exerciseMaxes[name] = sessionMax;
-                }
+            // A primeira vez no exercício também conta como recorde.
+            if (runningStats.exerciseMaxTracker.record(name, sessionMax)) {
+                runningStats.prsCount++;
             }
         };
 

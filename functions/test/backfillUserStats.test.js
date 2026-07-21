@@ -69,9 +69,35 @@ describe("backfillUserStats", () => {
             totalTonnageKg: 1000
         }), { merge: false });
     });
+
+    it("preserves achievements already unlocked in the stored doc", async () => {
+        const set = vi.fn();
+        const db = createFakeDb({
+            set,
+            existingStats: {
+                achievements: {
+                    pr_50: { unlockedAt: "2026-05-01T00:00:00.000Z", value: 50 }
+                }
+            }
+        });
+
+        await backfillUserStats(db, {
+            userId: "user-1",
+            batchSize: 50,
+            maxSessions: 2000,
+            write: true
+        }, createFakeLog());
+
+        const written = set.mock.calls[0][0];
+        expect(written.achievements.pr_50).toEqual({
+            unlockedAt: "2026-05-01T00:00:00.000Z",
+            value: 50
+        });
+        expect(written.achievements.w_1).toBeTruthy();
+    });
 });
 
-function createFakeDb({ set }) {
+function createFakeDb({ set, existingStats = null }) {
     const userDoc = {
         data: () => ({
             weeklyGoal: 4
@@ -101,7 +127,10 @@ function createFakeDb({ set }) {
             }
 
             if (path === "user_stats/user-1") {
-                return { set };
+                return {
+                    set,
+                    get: async () => ({ data: () => existingStats })
+                };
             }
 
             throw new Error(`unexpected doc path ${path}`);

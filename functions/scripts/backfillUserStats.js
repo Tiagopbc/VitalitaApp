@@ -1,7 +1,7 @@
 import { pathToFileURL } from "node:url";
 import { initializeApp, applicationDefault } from "firebase-admin/app";
 import { FieldPath, FieldValue, getFirestore } from "firebase-admin/firestore";
-import { buildUserStatsFromSessions } from "../src/userStatsCalculator.js";
+import { buildUserStatsFromSessions, mergeUnlockedAchievements } from "../src/userStatsCalculator.js";
 
 const DEFAULT_BATCH_SIZE = 50;
 const DEFAULT_MAX_SESSIONS = 2000;
@@ -156,8 +156,11 @@ async function processUser(db, userId, options, summary, log, startedAt, userDat
             return;
         }
 
+        const previousStats = (await db.doc(`user_stats/${userId}`).get()).data();
+
         await db.doc(`user_stats/${userId}`).set({
             ...stats,
+            achievements: mergeUnlockedAchievements(previousStats?.achievements, stats.achievements),
             source: "backfill_script",
             backfillLimit: options.maxSessions,
             backfillTruncated: sessionsSnap.size >= options.maxSessions,

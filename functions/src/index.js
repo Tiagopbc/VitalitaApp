@@ -2,7 +2,7 @@ import { initializeApp } from "firebase-admin/app";
 import { getFirestore, FieldValue } from "firebase-admin/firestore";
 import { onDocumentCreated } from "firebase-functions/v2/firestore";
 import * as logger from "firebase-functions/logger";
-import { buildUserStatsFromSessions } from "./userStatsCalculator.js";
+import { buildUserStatsFromSessions, mergeUnlockedAchievements } from "./userStatsCalculator.js";
 
 initializeApp();
 
@@ -27,8 +27,9 @@ export const rebuildUserStatsOnSessionCreated = onDocumentCreated(
 );
 
 async function rebuildUserStats(userId, sourceSessionId) {
-    const [userSnap, sessionsSnap] = await Promise.all([
+    const [userSnap, statsSnap, sessionsSnap] = await Promise.all([
         db.doc(`users/${userId}`).get(),
+        db.doc(`user_stats/${userId}`).get(),
         db.collection("workout_sessions")
             .where("userId", "==", userId)
             .orderBy("completedAt", "desc")
@@ -50,6 +51,7 @@ async function rebuildUserStats(userId, sourceSessionId) {
 
     await db.doc(`user_stats/${userId}`).set({
         ...stats,
+        achievements: mergeUnlockedAchievements(statsSnap.data()?.achievements, stats.achievements),
         rebuildLimit: MAX_REBUILD_SESSIONS,
         rebuildTruncated: sessionsSnap.size >= MAX_REBUILD_SESSIONS,
         sourceSessionId,
