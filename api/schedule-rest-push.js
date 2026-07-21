@@ -4,7 +4,12 @@
  * Corpo: { subscription: PushSubscriptionJSON, delaySeconds: number }
  * Resposta: { messageId } — usado para cancelar se o timer for pausado/ajustado.
  */
-const QSTASH_PUBLISH_URL = 'https://qstash.upstash.io/v2/publish/';
+// Base do QStash — IMPORTANTE: é específica por REGIÃO. `qstash.upstash.io`
+// aponta para eu-central-1; se a conta/token forem de outra região (ex.:
+// us-east-1) o publish falha com 404 "user not found in this region". Defina
+// QSTASH_URL com o endpoint da sua região (copie do Console do QStash →
+// Quickstart, junto com o QSTASH_TOKEN, para garantir que casam).
+const DEFAULT_QSTASH_BASE = 'https://qstash.upstash.io';
 
 const MIN_DELAY_SECONDS = 5;
 const MAX_DELAY_SECONDS = 3600;
@@ -43,9 +48,11 @@ export default async function handler(req, res) {
     }
 
     const target = `${baseUrl.replace(/\/+$/, '')}/api/send-rest-push`;
+    const qstashBase = (process.env.QSTASH_URL || DEFAULT_QSTASH_BASE).replace(/\/+$/, '');
+    const publishUrl = `${qstashBase}/v2/publish/${target}`;
 
     try {
-        const response = await fetch(QSTASH_PUBLISH_URL + target, {
+        const response = await fetch(publishUrl, {
             method: 'POST',
             headers: {
                 Authorization: `Bearer ${token}`,

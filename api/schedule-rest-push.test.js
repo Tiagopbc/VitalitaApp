@@ -39,6 +39,7 @@ describe('/api/schedule-rest-push', () => {
         delete process.env.QSTASH_TOKEN;
         delete process.env.VITALITA_BASE_URL;
         delete process.env.PUSH_INTERNAL_SECRET;
+        delete process.env.QSTASH_URL;
     });
 
     it('rejeita métodos diferentes de POST', async () => {
@@ -79,6 +80,16 @@ describe('/api/schedule-rest-push', () => {
         expect(url).toBe('https://qstash.upstash.io/v2/publish/https://vitalita.vercel.app/api/send-rest-push');
         expect(options.headers['Upstash-Delay']).toBe('92s');
         expect(JSON.parse(options.body)).toEqual({ subscription: validSubscription, secret: 'segredo-teste' });
+    });
+
+    it('usa o endpoint da região quando QSTASH_URL está definido', async () => {
+        process.env.QSTASH_URL = 'https://qstash-us-east-1.upstash.io';
+        const res = makeRes();
+        await handler({ method: 'POST', body: { subscription: validSubscription, delaySeconds: 90 } }, res);
+
+        expect(res.statusCode).toBe(200);
+        const [url] = fetch.mock.calls[0];
+        expect(url).toBe('https://qstash-us-east-1.upstash.io/v2/publish/https://vitalita.vercel.app/api/send-rest-push');
     });
 
     it('responde 502 quando o QStash falha (e expõe o status do QStash)', async () => {
