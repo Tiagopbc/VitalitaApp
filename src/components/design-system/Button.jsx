@@ -5,7 +5,7 @@
  * A variante 'unstyled' fornece apenas o comportamento (ripple/háptica) para
  * superfícies com estilo próprio — substitui o antigo RippleButton.
  */
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Loader2 } from 'lucide-react';
 
 const HAPTIC_PATTERNS = {
@@ -36,6 +36,15 @@ export const Button = ({
 }) => {
     const [ripples, setRipples] = useState([]);
     const isUnstyled = variant === 'unstyled';
+
+    // Timers do ripple pendentes: limpos no unmount para que o setTimeout não
+    // dispare depois que o componente sai da árvore (evita setState em
+    // componente desmontado — e "window is not defined" no teardown dos testes).
+    const rippleTimers = useRef([]);
+    useEffect(() => () => {
+        rippleTimers.current.forEach(clearTimeout);
+        rippleTimers.current = [];
+    }, []);
 
     // Estilos base combinando com "Anatomia do Botão" e "Transições"
     const baseStyles = 'inline-flex items-center justify-center font-bold font-semibold tracking-widest uppercase transition-all duration-200 ease-out outline-none select-none active:translate-y-0 active:opacity-95 hover:-translate-y-[1px] disabled:opacity-50 disabled:pointer-events-none disabled:cursor-not-allowed';
@@ -114,9 +123,11 @@ export const Button = ({
                 id: `${Date.now()}-${Math.random()}`
             };
             setRipples(prev => [...prev, newRipple]);
-            setTimeout(() => {
+            const timerId = setTimeout(() => {
                 setRipples(prev => prev.filter(r => r.id !== newRipple.id));
+                rippleTimers.current = rippleTimers.current.filter(id => id !== timerId);
             }, 600);
+            rippleTimers.current.push(timerId);
         }
 
         if (onClick) onClick(e);
