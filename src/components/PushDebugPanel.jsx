@@ -4,8 +4,9 @@
  * o log de eventos (getPushLog), para diagnosticar num aparelho real onde o
  * push falha — sem depender de cabo/console.
  *
- * Um botão flutuante (🐛) abre o painel; o ✕ fecha. Também pode ser ligado por
- * `?debug=push` / desligado por `?debug=off` na URL (útil no desktop).
+ * Oculto por padrão: abre com `?debug=push` na URL e fecha no ✕ (ou com
+ * `?debug=off`). Sem afordância visível em produção — o painel só aparece para
+ * quem souber o parâmetro.
  */
 import React, { useEffect, useState } from 'react';
 import { getPushLog, clearPushLog, describePushContext } from '../services/pushDiagnostics';
@@ -52,45 +53,12 @@ export function PushDebugPanel() {
         return () => clearInterval(id);
     }, [enabled]);
 
-    const enable = () => {
-        try { localStorage.setItem(FLAG_KEY, '1'); } catch { /* sem storage */ }
-        setEnabled(true);
-    };
     const disable = () => {
         try { localStorage.removeItem(FLAG_KEY); } catch { /* sem storage */ }
         setEnabled(false);
     };
 
-    // Fechado: mostra só o botão flutuante para abrir o painel. Funciona no PWA
-    // instalado (sem barra de endereço para digitar ?debug=push).
-    if (!enabled) {
-        return (
-            <button
-                onClick={enable}
-                aria-label="Abrir diagnóstico de push"
-                style={{
-                    position: 'fixed',
-                    right: 12,
-                    bottom: 'calc(env(safe-area-inset-bottom, 0px) + 88px)',
-                    zIndex: 2147483647,
-                    width: 46,
-                    height: 46,
-                    borderRadius: 9999,
-                    background: 'rgba(2,6,23,0.7)',
-                    border: '1px solid #334155',
-                    color: '#38bdf8',
-                    fontSize: 20,
-                    lineHeight: 1,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    boxShadow: '0 4px 12px rgba(0,0,0,0.35)'
-                }}
-            >
-                🐛
-            </button>
-        );
-    }
+    if (!enabled) return null;
 
     const box = {
         position: 'fixed',
