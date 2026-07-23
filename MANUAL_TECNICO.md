@@ -247,6 +247,18 @@ Decisões de arquitetura que valem entender antes de mexer:
   Google (lib `jose`), sem service account. PDFs acima de ~3 MB são recusados (`413`) — também
   para caber no limite de corpo das funções da Vercel.
 
+**Não há cota por usuário — o teto de gasto é a proteção.** Um ID token válido prova identidade,
+mas não limita uso: como o cadastro é aberto, uma conta poderia chamar o endpoint em loop, e cada
+chamada custa dinheiro. A decisão consciente (23/07/2026) foi **não** implementar cota por usuário
+enquanto o app está em pré-lançamento, e no lugar disso definir um **limite mensal de gasto no
+Console da Anthropic** (Settings → Limits). O pior caso passa a ser o valor do teto, não uma conta
+ilimitada.
+
+> Reveja essa decisão **antes de abrir o cadastro ao público**. A partir daí o certo é uma cota
+> diária por usuário. Ela cabe na arquitetura atual sem Admin SDK: a função pode ler e escrever um
+> contador em `pdf_import_quota/{uid}` pela **API REST do Firestore**, autenticando com o próprio
+> ID token do aluno, e as `firestore.rules` garantem que o contador só possa ser incrementado.
+
 **Custo:** cerca de US$ 0,04 por PDF (~5k tokens de entrada + ~700 de saída). PDFs escaneados
 custam mais que os de texto nativo. Como a importação acontece uma vez por prescrição — não por
 treino executado — o gasto mensal fica na casa de poucos dólares. Meça com `count_tokens` num PDF
