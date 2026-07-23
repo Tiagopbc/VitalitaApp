@@ -259,6 +259,22 @@ ilimitada.
 > contador em `pdf_import_quota/{uid}` pela **API REST do Firestore**, autenticando com o próprio
 > ID token do aluno, e as `firestore.rules` garantem que o contador só possa ser incrementado.
 
+**Diagnóstico pela mensagem na tela.** Cada falha tem mensagem própria, para que um relato de
+aluno ("deu erro ao importar") já identifique a causa sem abrir log:
+
+| Mensagem exibida ao aluno | HTTP | Causa | O que fazer |
+| --- | --- | --- | --- |
+| "A leitura automática está indisponível. Avise o suporte…" | 402 | **saldo esgotado na Anthropic** | adicionar fundos em platform.claude.com → Créditos da organização |
+| "Importação por PDF indisponível no momento." | 503 | falta `ANTHROPIC_API_KEY` ou `FIREBASE_PROJECT_ID` no build | conferir variáveis e redeployar |
+| "Importação por PDF indisponível neste ambiente." | 404 | a função não está no ar (ex.: `npm run dev`) | usar `npx vercel dev` ou o site publicado |
+| "Muitas importações ao mesmo tempo." | 429 | rate limit da Anthropic | aguardar alguns minutos |
+| "Não encontramos exercícios nesse PDF." | 422 | a IA leu mas não achou ficha | conferir se o PDF está legível |
+| "Não autorizado. Entre novamente." | 401 | ID token inválido / `FIREBASE_PROJECT_ID` errado | conferir o valor da variável |
+
+A mensagem de saldo é **deliberadamente neutra** — o aluno não deve ver detalhe de cobrança, e é o
+único caso que pede contato com o suporte. Quem precisa saber que é saldo é o operador: o log da
+função na Vercel registra `pdf_import_sem_saldo` com a ação corretiva explícita.
+
 **Custo:** cerca de US$ 0,04 por PDF (~5k tokens de entrada + ~700 de saída). PDFs escaneados
 custam mais que os de texto nativo. Como a importação acontece uma vez por prescrição — não por
 treino executado — o gasto mensal fica na casa de poucos dólares. Meça com `count_tokens` num PDF

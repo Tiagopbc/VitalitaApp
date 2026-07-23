@@ -76,6 +76,23 @@ async function verifyFirebaseToken(authHeader, projectId) {
     }
 }
 
+/**
+ * Identifica falta de saldo/problema de cobrança na Anthropic.
+ * A API sinaliza isso de formas diferentes conforme o caso (402, 403 com
+ * `type: billing_error`, ou 400 citando o saldo), então checamos status, type e
+ * mensagem em vez de depender de um formato único.
+ */
+function isBillingError(err) {
+    const status = err?.status;
+    const type = err?.type || err?.error?.type;
+
+    if (status === 402) return true;
+    if (type === 'billing_error') return true;
+
+    const message = String(err?.message || '').toLowerCase();
+    return status === 400 && /credit balance|billing|insufficient|quota/.test(message);
+}
+
 function cleanShort(value, fallback) {
     if (value === null || value === undefined) return fallback;
     const str = String(value).trim();
@@ -159,7 +176,25 @@ export default async function handler(req, res) {
         }
         return res.status(200).json(parsed);
     } catch (err) {
-        console.error('pdf_import_failed', { message: String(err?.message || err) });
+        // Saldo esgotado: 402 é traduzido pelo cliente numa mensagem neutra pedindo
+        // contato com o suporte. O aluno não deve ver detalhe de cobrança — quem
+        // precisa saber que é saldo é o operador, e para isso serve este log.
+        if (isBillingError(err)) {
+            console.error('pdf_import_sem_saldo', {
+                status: err?.status,
+                type: err?.type,
+                message: String(err?.message || err),
+                acao: 'adicionar fundos em platform.claude.com (Créditos da organização)'
+            });
+            return res.status(402).json({ error: 'ai_billing' });
+        }
+
+        if (err?.status === 429) {
+            console.error('pdf_import_rate_limited', { message: String(err?.message || err) });
+            return res.status(429).json({ error: 'ai_rate_limited' });
+        }
+
+        console.error('pdf_import_failed', { status: err?.status, message: String(err?.message || err) });
         return res.status(502).json({ error: 'ai_unavailable' });
     }
 }

@@ -70,6 +70,14 @@ export async function importWorkoutFromPdf(file) {
     if (res.status === 401) throw new Error('Não autorizado. Entre novamente.');
     if (res.status === 413) throw new Error('PDF muito grande (máximo 3 MB).');
     if (res.status === 422) throw new Error('Não encontramos exercícios nesse PDF. Confira se a ficha está legível.');
+    // 402 = saldo esgotado no provedor de IA. Mensagem deliberadamente neutra: o
+    // aluno não precisa (nem deve) saber de cobrança, só do que fazer agora.
+    if (res.status === 402) {
+        throw new Error('A leitura automática está indisponível. Avise o suporte do app — enquanto isso, você pode cadastrar o treino manualmente.');
+    }
+    if (res.status === 429) {
+        throw new Error('Muitas importações ao mesmo tempo. Tente novamente em alguns minutos.');
+    }
     if (!res.ok) throw new Error('Não foi possível ler esse PDF. Tente outro arquivo.');
 
     const data = await res.json().catch(() => ({}));

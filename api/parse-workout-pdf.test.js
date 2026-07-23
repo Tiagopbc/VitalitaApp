@@ -144,4 +144,47 @@ describe('/api/parse-workout-pdf', () => {
         await handler(makeReq(), res);
         expect(res.statusCode).toBe(502);
     });
+
+    describe('saldo esgotado', () => {
+        // A Anthropic sinaliza falta de saldo de formas diferentes; todas devem
+        // virar 402 para o cliente exibir a mensagem neutra de "avise o suporte".
+        it('reconhece 400 citando o saldo', async () => {
+            const err = Object.assign(new Error('Your credit balance is too low to access the Anthropic API'), { status: 400 });
+            createMock.mockRejectedValueOnce(err);
+            const res = makeRes();
+            await handler(makeReq(), res);
+            expect(res.statusCode).toBe(402);
+            expect(res.body.error).toBe('ai_billing');
+        });
+
+        it('reconhece type billing_error', async () => {
+            const err = Object.assign(new Error('billing issue'), { status: 403, type: 'billing_error' });
+            createMock.mockRejectedValueOnce(err);
+            const res = makeRes();
+            await handler(makeReq(), res);
+            expect(res.statusCode).toBe(402);
+        });
+
+        it('reconhece status 402 direto', async () => {
+            createMock.mockRejectedValueOnce(Object.assign(new Error('payment required'), { status: 402 }));
+            const res = makeRes();
+            await handler(makeReq(), res);
+            expect(res.statusCode).toBe(402);
+        });
+
+        it('não confunde erro comum de 400 com falta de saldo', async () => {
+            createMock.mockRejectedValueOnce(Object.assign(new Error('invalid document format'), { status: 400 }));
+            const res = makeRes();
+            await handler(makeReq(), res);
+            expect(res.statusCode).toBe(502);
+        });
+    });
+
+    it('responde 429 quando a IA limita a taxa', async () => {
+        createMock.mockRejectedValueOnce(Object.assign(new Error('rate limited'), { status: 429 }));
+        const res = makeRes();
+        await handler(makeReq(), res);
+        expect(res.statusCode).toBe(429);
+        expect(res.body.error).toBe('ai_rate_limited');
+    });
 });
