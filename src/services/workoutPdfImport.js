@@ -8,6 +8,16 @@
 // ~3 MB de PDF (o servidor limita o base64 a ~3,3 MB). Fichas de treino são pequenas.
 const MAX_PDF_BYTES = 3 * 1024 * 1024;
 
+/**
+ * A feature depende de configuração de servidor (`ANTHROPIC_API_KEY`), que o cliente
+ * não tem como inspecionar sem gastar uma requisição. Usamos a mesma convenção de
+ * flag do projeto (ver `VITE_ENABLE_SERVER_USER_STATS`) para não exibir um botão que
+ * só falharia ao ser clicado em ambientes sem a chave configurada.
+ */
+export function isPdfImportEnabled() {
+    return import.meta.env.VITE_ENABLE_PDF_IMPORT === 'true';
+}
+
 function fileToBase64(file) {
     return new Promise((resolve, reject) => {
         const reader = new FileReader();

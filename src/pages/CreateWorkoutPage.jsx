@@ -38,7 +38,7 @@ const EMPTY_EXERCISE = {
 };
 
 import { workoutService } from '../services/workoutService';
-import { importWorkoutFromPdf } from '../services/workoutPdfImport';
+import { importWorkoutFromPdf, isPdfImportEnabled } from '../services/workoutPdfImport';
 
 function ReorderableExerciseItem({ ex, index, handleEditExercise, removeExercise, groupBadge, canLink, isLinkedToPrev, onToggleLink }) {
     const dragControls = useDragControls();
@@ -158,8 +158,9 @@ export default function CreateWorkoutPage({ user }) {
     const [suggestions, setSuggestions] = useState([]);
     const [isSearching, setIsSearching] = useState(false);
 
-    // Importação por PDF (só na criação; a revisão acontece nesta própria tela)
-    const isCreating = !initialData?.id && !editId;
+    // Importação por PDF (só na criação, e só onde o servidor está configurado;
+    // a revisão acontece nesta própria tela)
+    const canImportPdf = !initialData?.id && !editId && isPdfImportEnabled();
     const pdfInputRef = useRef(null);
     const [importingPdf, setImportingPdf] = useState(false);
 
@@ -373,7 +374,7 @@ export default function CreateWorkoutPage({ user }) {
             />
 
             {/* Importar ficha de um PDF (IA lê e preenche; o usuário revisa aqui mesmo) */}
-            {isCreating && (
+            {canImportPdf && (
                 <div className="mb-6">
                     <input
                         ref={pdfInputRef}

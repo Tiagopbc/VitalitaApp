@@ -33,7 +33,7 @@ import { PremiumCard } from '../components/design-system/PremiumCard';
 import { AddCardioModal } from '../components/AddCardioModal';
 import { StarterWorkoutsLibrary } from '../components/workout/StarterWorkoutsLibrary';
 import { ConfirmDialog } from '../components/design-system/ConfirmDialog';
-import { normalizeActiveWorkoutOrder, sortWorkoutTemplates } from '../utils/workoutTemplateOrder';
+import { nextDisplayOrder, normalizeActiveWorkoutOrder, sortWorkoutTemplates } from '../utils/workoutTemplateOrder';
 import { toast } from 'sonner';
 const ExerciseCard = React.lazy(() => import('../components/workout/ExerciseCard').then(module => ({ default: module.ExerciseCard })));
 const EditExerciseModal = React.lazy(() => import('../components/workout/EditExerciseModal').then(module => ({ default: module.EditExerciseModal })));
@@ -114,7 +114,7 @@ export default function WorkoutsPage({ onNavigateToCreate, onNavigateToWorkout, 
                 {
                     category: starter.category,
                     muscleGroups: starter.muscleGroups,
-                    displayOrder: workouts.filter(w => !w.isArchived).length
+                    displayOrder: nextDisplayOrder(workouts)
                 }
             );
             await loadWorkouts(true);
@@ -242,7 +242,7 @@ export default function WorkoutsPage({ onNavigateToCreate, onNavigateToWorkout, 
                 userId: user.uid,
                 createdBy: user.uid,
                 assignedByTrainer: false,
-                displayOrder: workouts.filter(workout => !workout.isArchived).length
+                displayOrder: nextDisplayOrder(workouts)
             };
 
             try {

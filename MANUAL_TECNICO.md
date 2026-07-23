@@ -214,16 +214,25 @@ próprio app.
 devolve os exercícios em JSON. **É a única funcionalidade paga do projeto** — as demais operam em
 custo zero por decisão (ver `user_stats` recalculado no cliente).
 
-Duas variáveis de servidor na Vercel, ambas obrigatórias:
+Três variáveis na Vercel, todas obrigatórias para a feature funcionar:
 
-| Variável | Uso |
-| --- | --- |
-| `ANTHROPIC_API_KEY` | chave da API da Anthropic. **Nunca** prefixe com `VITE_` — isso a embutiria no bundle público |
-| `FIREBASE_PROJECT_ID` | valida o `issuer`/`audience` do ID token do Firebase |
+| Variável | Escopo | Uso |
+| --- | --- | --- |
+| `ANTHROPIC_API_KEY` | servidor | chave da API da Anthropic. **Nunca** prefixe com `VITE_` — isso a embutiria no bundle público |
+| `FIREBASE_PROJECT_ID` | servidor | valida o `issuer`/`audience` do ID token do Firebase |
+| `VITE_ENABLE_PDF_IMPORT` | build | `true` exibe o botão de importar. Padrão desligado |
 
-**Degradação limpa:** sem qualquer uma das duas, a função responde `503` e o cliente exibe
-"Importação por PDF indisponível" — nada mais do app é afetado. Enquanto você não configurar as
-variáveis, a feature simplesmente não existe e não gera custo.
+A flag de build existe porque o cliente **não tem como descobrir** se o servidor tem a chave sem
+gastar uma requisição. Sem ela, o botão apareceria em qualquer ambiente e só falharia ao ser
+clicado. Mesma convenção do `VITE_ENABLE_SERVER_USER_STATS`.
+
+**Degradação em duas camadas:** com a flag desligada o botão nem aparece; se a flag estiver ligada
+mas faltar uma das variáveis de servidor, a função responde `503` e o cliente exibe "Importação por
+PDF indisponível". Em nenhum dos casos o resto do app é afetado, e não há custo enquanto a feature
+não for configurada.
+
+> ⚠️ Ligue as três juntas. `VITE_ENABLE_PDF_IMPORT=true` sem a `ANTHROPIC_API_KEY` mostra um botão
+> que sempre falha — e, por ser `VITE_*`, ela só passa a valer após um **redeploy**.
 
 Decisões de arquitetura que valem entender antes de mexer:
 
