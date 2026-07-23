@@ -3,7 +3,7 @@
  * Exibe uma grade de modelos de treino disponíveis para o usuário.
  * Suporta pesquisa, filtragem (por empurrar/puxar/pernas/etc) e classificação de modelos.
  */
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { getFirestoreDeps } from '../firebaseDb';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
@@ -22,7 +22,8 @@ import {
     ArrowDown,
     ArrowUp,
     Check,
-    ListOrdered
+    ListOrdered,
+    Sparkles
 } from 'lucide-react';
 
 import { Button } from '../components/design-system/Button';
@@ -30,6 +31,7 @@ import { EmptyState } from '../components/design-system/EmptyState';
 import { PageHeader } from '../components/design-system/PageHeader';
 import { PremiumCard } from '../components/design-system/PremiumCard';
 import { AddCardioModal } from '../components/AddCardioModal';
+import { StarterWorkoutsLibrary } from '../components/workout/StarterWorkoutsLibrary';
 import { ConfirmDialog } from '../components/design-system/ConfirmDialog';
 import { normalizeActiveWorkoutOrder, sortWorkoutTemplates } from '../utils/workoutTemplateOrder';
 import { toast } from 'sonner';
@@ -56,41 +58,74 @@ export default function WorkoutsPage({ onNavigateToCreate, onNavigateToWorkout, 
     const [deletingWorkout, setDeletingWorkout] = useState(false);
     const [isOrganizing, setIsOrganizing] = useState(false);
     const [savingOrder, setSavingOrder] = useState(false);
-    
-    useEffect(() => {
-        async function fetchWorkouts() {
-            try {
-                // CACHED FETCH
-                const { workoutService } = await import('../services/workoutService');
-                const loadedWorkouts = await workoutService.getTemplates(user.uid);
 
-                const formattedWorkouts = loadedWorkouts.map(data => ({
-                    id: data.id,
-                    name: data.name,
-                    exercisesCount: data.exercises ? data.exercises.length : 0,
-                    exercises: data.exercises || [],
-                    duration: data.estimatedDuration || '45-60min',
-                    muscleGroups: data.muscleGroups || [],
-                    lastPerformed: data.lastPerformed ? new Date(data.lastPerformed.toDate()).toLocaleDateString('pt-BR') : 'Nunca',
-                    lastPerformedDate: data.lastPerformed ? data.lastPerformed.toDate() : null,
-                    frequency: '1x/sem',
-                    timesPerformed: data.timesPerformed || 0,
-                    isFavorite: !!data.isFavorite,
-                    category: data.category || 'fullbody',
-                    createdBy: data.createdBy,
-                    assignedByTrainer: data.assignedByTrainer,
-                    completedToday: false,
-                    isArchived: !!data.isArchived,
-                    displayOrder: Number.isInteger(data.displayOrder) ? data.displayOrder : null
-                }));
+    // Biblioteca de fichas modelo (onboarding / começo rápido)
+    const [isLibraryOpen, setIsLibraryOpen] = useState(false);
+    const [cloningStarterId, setCloningStarterId] = useState(null);
 
-                setWorkouts(formattedWorkouts);
-            } catch (error) {
-                console.error("Error fetching workouts:", error);
-            }
+    const loadWorkouts = useCallback(async (forceRefresh = false) => {
+        try {
+            // CACHED FETCH
+            const { workoutService } = await import('../services/workoutService');
+            const loadedWorkouts = await workoutService.getTemplates(user.uid, forceRefresh);
+
+            const formattedWorkouts = loadedWorkouts.map(data => ({
+                id: data.id,
+                name: data.name,
+                exercisesCount: data.exercises ? data.exercises.length : 0,
+                exercises: data.exercises || [],
+                duration: data.estimatedDuration || '45-60min',
+                muscleGroups: data.muscleGroups || [],
+                lastPerformed: data.lastPerformed ? new Date(data.lastPerformed.toDate()).toLocaleDateString('pt-BR') : 'Nunca',
+                lastPerformedDate: data.lastPerformed ? data.lastPerformed.toDate() : null,
+                frequency: '1x/sem',
+                timesPerformed: data.timesPerformed || 0,
+                isFavorite: !!data.isFavorite,
+                category: data.category || 'fullbody',
+                createdBy: data.createdBy,
+                assignedByTrainer: data.assignedByTrainer,
+                completedToday: false,
+                isArchived: !!data.isArchived,
+                displayOrder: Number.isInteger(data.displayOrder) ? data.displayOrder : null
+            }));
+
+            setWorkouts(formattedWorkouts);
+        } catch (error) {
+            console.error("Error fetching workouts:", error);
         }
-        void fetchWorkouts();
     }, [user]);
+
+    useEffect(() => {
+        void loadWorkouts();
+    }, [loadWorkouts]);
+
+    const handleCloneStarter = async (starter) => {
+        setCloningStarterId(starter.id);
+        try {
+            const { workoutService } = await import('../services/workoutService');
+            const exercises = starter.exercises.map((ex, i) => ({ ...ex, id: `${Date.now()}-${i}` }));
+            await workoutService.createTemplate(
+                {
+                    name: starter.name,
+                    exercises,
+                    targetUserId: user.uid,
+                    createdBy: user.uid
+                },
+                {
+                    category: starter.category,
+                    muscleGroups: starter.muscleGroups,
+                    displayOrder: workouts.filter(w => !w.isArchived).length
+                }
+            );
+            await loadWorkouts(true);
+            toast.success('Treino adicionado às suas fichas.');
+            setIsLibraryOpen(false);
+        } catch (err) {
+            toast.error(err.message || 'Erro ao adicionar o treino.');
+        } finally {
+            setCloningStarterId(null);
+        }
+    };
 
     // --- CLICK OUTSIDE HANDLERS ---
     useEffect(() => {
@@ -323,6 +358,15 @@ export default function WorkoutsPage({ onNavigateToCreate, onNavigateToWorkout, 
                             </Button>
                         ) : (
                             <div className="flex w-full gap-2 sm:w-auto">
+                                <Button
+                                    variant="secondary"
+                                    size="sm"
+                                    onClick={() => setIsLibraryOpen(true)}
+                                    className="flex-1 rounded-xl px-2 sm:flex-none sm:px-4"
+                                    leftIcon={<Sparkles size={16} />}
+                                >
+                                    Modelos
+                                </Button>
                                 <Button
                                     variant="secondary"
                                     size="sm"
@@ -597,13 +641,23 @@ export default function WorkoutsPage({ onNavigateToCreate, onNavigateToWorkout, 
                             : 'Crie sua primeira ficha para começar a organizar os treinos.'
                         }
                         action={!searchQuery && !isTrainerMode ? (
-                            <Button
-                                size="sm"
-                                onClick={() => onNavigateToCreate(null, { targetUserId: user.uid })}
-                                leftIcon={<Plus size={16} />}
-                            >
-                                Criar Treino
-                            </Button>
+                            <div className="flex flex-col gap-2 sm:flex-row">
+                                <Button
+                                    size="sm"
+                                    variant="secondary"
+                                    onClick={() => setIsLibraryOpen(true)}
+                                    leftIcon={<Sparkles size={16} />}
+                                >
+                                    Ver modelos prontos
+                                </Button>
+                                <Button
+                                    size="sm"
+                                    onClick={() => onNavigateToCreate(null, { targetUserId: user.uid })}
+                                    leftIcon={<Plus size={16} />}
+                                >
+                                    Criar Treino
+                                </Button>
+                            </div>
                         ) : null}
                     />
                 )}
@@ -631,10 +685,17 @@ export default function WorkoutsPage({ onNavigateToCreate, onNavigateToWorkout, 
                 )}
             </AnimatePresence>
 
-            <AddCardioModal 
-                isOpen={isAddCardioOpen} 
-                onClose={() => setIsAddCardioOpen(false)} 
-                user={user} 
+            <AddCardioModal
+                isOpen={isAddCardioOpen}
+                onClose={() => setIsAddCardioOpen(false)}
+                user={user}
+            />
+
+            <StarterWorkoutsLibrary
+                isOpen={isLibraryOpen}
+                onClose={() => setIsLibraryOpen(false)}
+                onClone={handleCloneStarter}
+                cloningId={cloningStarterId}
             />
 
             <ConfirmDialog

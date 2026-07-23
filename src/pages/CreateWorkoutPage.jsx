@@ -3,10 +3,9 @@
  * Interface para criar e editar modelos de treino.
  * Permite aos usuários adicionar exercícios, definir séries/repetições/métodos e salvar no Firestore.
  */
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
-import { getFirestoreDeps } from '../firebaseDb';
-import { Dumbbell, Trash2, Plus, GripVertical, X, Link2 } from 'lucide-react';
+import { Dumbbell, Trash2, Plus, GripVertical, X, Link2, FileUp } from 'lucide-react';
 import { toggleGroupWithPrevious, normalizeGroups, computeGroupSegments, groupLabel } from '../utils/exerciseGroups';
 import { Button } from '../components/design-system/Button';
 import { EmptyState } from '../components/design-system/EmptyState';
@@ -25,7 +24,21 @@ const methods = [
     'Rest-Pause', 'Cardio 140 bpm'
 ];
 
+// Estado inicial de um exercício no formulário. Centralizado para manter todos
+// os campos controlados (evita warning uncontrolled→controlled) em cada reset.
+const EMPTY_EXERCISE = {
+    muscleGroup: '',
+    name: '',
+    sets: '3',
+    reps: '12',
+    method: 'Convencional',
+    rest: '',
+    notes: '',
+    targetWeight: ''
+};
+
 import { workoutService } from '../services/workoutService';
+import { importWorkoutFromPdf } from '../services/workoutPdfImport';
 
 function ReorderableExerciseItem({ ex, index, handleEditExercise, removeExercise, groupBadge, canLink, isLinkedToPrev, onToggleLink }) {
     const dragControls = useDragControls();
@@ -67,6 +80,7 @@ function ReorderableExerciseItem({ ex, index, handleEditExercise, removeExercise
                 </div>
                 <div className="text-[0.8rem] text-slate-400 font-medium truncate">
                     {ex.sets || '?'} sets × {ex.reps || '?'} reps • {ex.method || 'Convencional'}
+                    {ex.targetWeight && <span className="text-cyan-400/80 ml-1">• {ex.targetWeight} kg</span>}
                     {ex.rest && <span className="text-slate-500 ml-1">• ⏱ {ex.rest}</span>}
                 </div>
                 {ex.notes && (
@@ -144,6 +158,29 @@ export default function CreateWorkoutPage({ user }) {
     const [suggestions, setSuggestions] = useState([]);
     const [isSearching, setIsSearching] = useState(false);
 
+    // Importação por PDF (só na criação; a revisão acontece nesta própria tela)
+    const isCreating = !initialData?.id && !editId;
+    const pdfInputRef = useRef(null);
+    const [importingPdf, setImportingPdf] = useState(false);
+
+    async function handlePdfSelected(event) {
+        const file = event.target.files?.[0];
+        event.target.value = ''; // permite reimportar o mesmo arquivo
+        if (!file) return;
+
+        setImportingPdf(true);
+        try {
+            const parsed = await importWorkoutFromPdf(file);
+            if (parsed.name) setWorkoutName(parsed.name);
+            setExercises(parsed.exercises.map((ex, i) => ({ ...ex, id: `${Date.now()}-${i}` })));
+            toast.success(`${parsed.exercises.length} exercícios importados. Revise antes de salvar.`);
+        } catch (err) {
+            toast.error(err.message || 'Não foi possível importar o PDF.');
+        } finally {
+            setImportingPdf(false);
+        }
+    }
+
     // Corrigir IDs ausentes no carregamento (suporte a dados legados)
     useEffect(() => {
         if (exercises.some(ex => !ex.id)) {
@@ -155,15 +192,7 @@ export default function CreateWorkoutPage({ user }) {
     }, [exercises]);
 
     // Estado do formulário
-    const [newExercise, setNewExercise] = useState({
-        muscleGroup: '',
-        name: '',
-        sets: '3',
-        reps: '12',
-        method: 'Convencional',
-        rest: '',
-        notes: ''
-    });
+    const [newExercise, setNewExercise] = useState({ ...EMPTY_EXERCISE });
 
     // Efeito de Busca com Debounce
     useEffect(() => {
@@ -239,15 +268,7 @@ export default function CreateWorkoutPage({ user }) {
         }
 
         // Resetar formulário
-        setNewExercise({
-            muscleGroup: '',
-            name: '',
-            sets: '3',
-            reps: '12',
-            method: 'Convencional',
-            rest: '',
-            notes: ''
-        });
+        setNewExercise({ ...EMPTY_EXERCISE });
         setSuggestions([]);
     }
 
@@ -269,7 +290,8 @@ export default function CreateWorkoutPage({ user }) {
             reps: exerciseToEdit.reps || '12',
             method: exerciseToEdit.method || 'Convencional',
             rest: exerciseToEdit.rest || '',
-            notes: exerciseToEdit.notes || ''
+            notes: exerciseToEdit.notes || '',
+            targetWeight: exerciseToEdit.targetWeight || ''
         });
         setShowAddExercise(true);
     }
@@ -310,34 +332,26 @@ export default function CreateWorkoutPage({ user }) {
 
         setLoading(true);
         try {
-            const { db, collection, addDoc, updateDoc, doc, serverTimestamp } = await getFirestoreDeps();
-            // Determinar Usuário Alvo
+            // Determinar Usuário Alvo (aluno vinculado) ou o próprio usuário.
             const targetUserId = creationContext?.targetUserId || user.uid;
-            // Determinar Criado Por (Sempre o usuário logado)
-            const createdBy = user.uid;
 
             // Sanitizar o array de exercícios para remover propriedades undefined,
             // Proxies ou referências circulares que o framer-motion possa ter injetado
             const sanitizedExercises = JSON.parse(JSON.stringify(normalizeGroups(exercises)));
 
-            const workoutData = {
-                name: workoutName,
-                exercises: sanitizedExercises,
-                updatedAt: serverTimestamp()
-            };
-
             if (initialData?.id) {
-                // ATUALIZAR
-                const docRef = doc(db, 'workout_templates', initialData.id);
-                await updateDoc(docRef, workoutData);
+                // ATUALIZAR ficha existente
+                await workoutService.updateTemplate(initialData.id, {
+                    name: workoutName,
+                    exercises: sanitizedExercises
+                });
             } else {
-                // CRIAR
-                await addDoc(collection(db, 'workout_templates'), {
-                    ...workoutData,
-                    createdBy: createdBy,
-                    userId: targetUserId, // Associa o treino ao aluno (ou ao próprio usuário)
-                    assignedByTrainer: targetUserId !== user.uid, // Flag opcional
-                    createdAt: serverTimestamp(),
+                // CRIAR (inclui revisão de importação por PDF, que chega sem id)
+                await workoutService.createTemplate({
+                    name: workoutName,
+                    exercises: sanitizedExercises,
+                    targetUserId,
+                    createdBy: user.uid
                 });
             }
             onBack();
@@ -357,6 +371,33 @@ export default function CreateWorkoutPage({ user }) {
                 icon={<Dumbbell size={20} />}
                 onBack={onBack}
             />
+
+            {/* Importar ficha de um PDF (IA lê e preenche; o usuário revisa aqui mesmo) */}
+            {isCreating && (
+                <div className="mb-6">
+                    <input
+                        ref={pdfInputRef}
+                        type="file"
+                        accept="application/pdf"
+                        className="hidden"
+                        onChange={handlePdfSelected}
+                    />
+                    <Button
+                        variant="secondary"
+                        fullWidth
+                        loading={importingPdf}
+                        disabled={importingPdf}
+                        onClick={() => pdfInputRef.current?.click()}
+                        leftIcon={<FileUp size={18} />}
+                        className="border-dashed border-slate-600/50 bg-slate-900/30 text-slate-300 hover:text-cyan-400 hover:border-cyan-500/50 h-14"
+                    >
+                        {importingPdf ? 'Lendo o PDF...' : 'Importar treino de um PDF'}
+                    </Button>
+                    <p className="mt-2 text-center text-xs text-slate-500">
+                        A ficha do personal é lida automaticamente. Você confere tudo antes de salvar.
+                    </p>
+                </div>
+            )}
 
             {/* Entrada do Nome do Treino */}
             <div className="mb-8">
@@ -387,15 +428,7 @@ export default function CreateWorkoutPage({ user }) {
                             <Button
                                 onClick={() => {
                                     setEditingExerciseId(null);
-                                    setNewExercise({
-                                        muscleGroup: '',
-                                        name: '',
-                                        sets: '3',
-                                        reps: '12',
-                                        method: 'Convencional',
-                                        rest: '',
-                                        notes: ''
-                                    });
+                                    setNewExercise({ ...EMPTY_EXERCISE });
                                     setShowAddExercise(true);
                                 }}
                                 variant="secondary"
@@ -455,15 +488,7 @@ export default function CreateWorkoutPage({ user }) {
                                     setShowAddExercise(false);
                                     setEditingExerciseId(null);
                                     // Resetar formulário
-                                    setNewExercise({
-                                        muscleGroup: '',
-                                        name: '',
-                                        sets: '3',
-                                        reps: '12',
-                                        method: 'Convencional',
-                                        rest: '',
-                                        notes: ''
-                                    });
+                                    setNewExercise({ ...EMPTY_EXERCISE });
                                 }}
                                 className="text-slate-400 hover:text-white transition-colors"
                             >
@@ -569,6 +594,23 @@ export default function CreateWorkoutPage({ user }) {
                                 </label>
                             </div>
 
+                            <label className="flex flex-col gap-2 text-xs font-bold text-slate-400 uppercase tracking-wider">
+                                Carga alvo (kg) <span className="text-slate-600 normal-case tracking-normal font-medium">— opcional</span>
+                                <input
+                                    type="number"
+                                    inputMode="decimal"
+                                    min="0"
+                                    step="0.5"
+                                    value={newExercise.targetWeight}
+                                    onChange={(e) => setNewExercise({ ...newExercise, targetWeight: e.target.value })}
+                                    placeholder="Ex: 40"
+                                    className="w-full rounded-xl border border-slate-600 bg-slate-800/50 text-white px-4 py-3 text-sm outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/50 transition-all"
+                                />
+                                <span className="text-[11px] normal-case tracking-normal font-medium text-slate-500">
+                                    Prescreva uma carga inicial. Ela já aparece pré-preenchida na primeira execução.
+                                </span>
+                            </label>
+
                             {newExercise.method === 'Bi-set' && (
                                 <p className="flex items-start gap-1.5 text-[11px] leading-snug text-cyan-300/90 bg-cyan-500/10 border border-cyan-500/30 rounded-lg px-3 py-2">
                                     <Link2 size={12} className="mt-0.5 shrink-0" />
@@ -625,15 +667,7 @@ export default function CreateWorkoutPage({ user }) {
                 <Button
                     onClick={() => {
                         setEditingExerciseId(null);
-                        setNewExercise({
-                            muscleGroup: '',
-                            name: '',
-                            sets: '3',
-                            reps: '12',
-                            method: 'Convencional',
-                            rest: '',
-                            notes: ''
-                        });
+                        setNewExercise({ ...EMPTY_EXERCISE });
                         setShowAddExercise(true);
                     }}
                     variant="secondary"

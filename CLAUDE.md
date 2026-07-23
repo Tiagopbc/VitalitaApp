@@ -61,6 +61,12 @@ Ler antes de "consertar" algo que parece quebrado — vários destes já foram d
 
 **`user_stats` recalculado no cliente é intencional, não dívida.** `VITE_ENABLE_SERVER_USER_STATS` fica desligada por padrão para operar em custo zero; com ela desligada o cliente recalcula totais, streaks e conquistas a partir das sessões recentes (fallback em `ProfilePage.jsx` e `publishStats` de `HomeDashboard.jsx`). A Cloud Function existe mas não é lida.
 
+**A importação por PDF é a única funcionalidade paga.** `api/parse-workout-pdf.js` chama a API da Anthropic (`claude-opus-4-8`) para ler a ficha, a ~US$ 0,04 por PDF. Exige `ANTHROPIC_API_KEY` e `FIREBASE_PROJECT_ID` (variáveis de servidor na Vercel, nunca `VITE_*`); sem elas a função responde 503 e a UI degrada sem afetar o resto. A função **só parseia** — quem grava em `workout_templates` é o cliente autenticado via `workoutService.createTemplate`, respeitando as `firestore.rules`. A revisão humana no `CreateWorkoutPage` antes de salvar é proposital, não opcional. Detalhes em [MANUAL_TECNICO.md](MANUAL_TECNICO.md) §7.4.
+
+**Toda escrita em `workout_templates` passa por `workoutService`.** `createTemplate`/`updateTemplate` são o caminho único usado pela criação manual, pela biblioteca de modelos (`src/data/starterWorkouts.js`) e pela importação por PDF. Não volte a chamar `addDoc` direto numa página.
+
+**As `firestore.rules` só validam chaves de topo.** O `hasOnly` roda sobre `request.resource.data.keys()`, então campos *dentro* do array `exercises` (como o `targetWeight` da carga-alvo) não precisam ser liberados nas regras. Campo novo no topo do documento, sim — e aí exige cenário em `tests/security/firestore.rules.test.js`.
+
 **O push de descanso não usa FCM.** É Web Push nativo com VAPID própria, agendado via QStash: `src/services/restPushService.js` → `api/schedule-rest-push.js` → `api/send-rest-push.js`, com `public/push-sw.js` importado no service worker pelo `vite-plugin-pwa`. Segredos de servidor (`QSTASH_TOKEN`, `QSTASH_URL`, `PUSH_INTERNAL_SECRET`, chave VAPID privada) existem só nas variáveis de ambiente da Vercel.
 
 **Testar push só vale em iPhone com a tela bloqueada.** No desktop o push aparece mesmo com falhas que quebram o fluxo real.

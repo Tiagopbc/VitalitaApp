@@ -12,7 +12,9 @@ import { MemoryRouter } from 'react-router-dom';
 vi.mock('../services/workoutService', () => ({
     workoutService: {
         searchExercises: vi.fn().mockResolvedValue([]),
-        getWorkoutById: vi.fn()
+        getWorkoutById: vi.fn(),
+        createTemplate: vi.fn().mockResolvedValue('new-workout-id'),
+        updateTemplate: vi.fn().mockResolvedValue(undefined)
     }
 }));
 
@@ -146,8 +148,8 @@ describe('CreateWorkoutPage Integration', () => {
         expect(saveButton).not.toBeDisabled();
     });
 
-    it('submits the workout to Firestore', async () => {
-        addDoc.mockResolvedValue({ id: 'new-workout-id' });
+    it('cria a ficha via workoutService.createTemplate', async () => {
+        const { workoutService } = await import('../services/workoutService');
 
         render(
             <MemoryRouter>
@@ -174,13 +176,21 @@ describe('CreateWorkoutPage Integration', () => {
         // expect(saveButton).toHaveTextContent('Salvando...'); // Removed flaky text assertion
 
         await waitFor(() => {
-            expect(addDoc).toHaveBeenCalledTimes(1);
+            expect(workoutService.createTemplate).toHaveBeenCalledTimes(1);
             expect(mockNavigate).toHaveBeenCalledWith(-1);
         });
+
+        const [payload] = workoutService.createTemplate.mock.calls[0];
+        expect(payload).toMatchObject({
+            name: 'Leg Day',
+            targetUserId: 'user123',
+            createdBy: 'user123'
+        });
+        expect(payload.exercises).toHaveLength(1);
     });
 
-    it('updates an existing workout when initialData has id', async () => {
-        updateDoc.mockResolvedValue();
+    it('atualiza a ficha existente via workoutService.updateTemplate', async () => {
+        const { workoutService } = await import('../services/workoutService');
 
         render(
             <MemoryRouter initialEntries={[{
@@ -202,10 +212,15 @@ describe('CreateWorkoutPage Integration', () => {
         fireEvent.click(saveButton);
 
         await waitFor(() => {
-            expect(updateDoc).toHaveBeenCalledTimes(1);
-            expect(addDoc).not.toHaveBeenCalled();
+            expect(workoutService.updateTemplate).toHaveBeenCalledTimes(1);
+            expect(workoutService.createTemplate).not.toHaveBeenCalled();
             expect(mockNavigate).toHaveBeenCalledWith(-1);
         });
+
+        expect(workoutService.updateTemplate).toHaveBeenCalledWith(
+            'workout-1',
+            expect.objectContaining({ name: 'Edit Workout' })
+        );
     });
 
     it('loads workout data by editId when refreshing URL', async () => {

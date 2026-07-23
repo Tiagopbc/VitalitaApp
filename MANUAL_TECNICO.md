@@ -137,7 +137,8 @@ por esse motivo, em 21/07/2026, após aplicar as restrições descritas abaixo. 
 equivalente reaparecer, a resposta é conferir as restrições — não gerar uma chave nova.
 
 O que **de fato** precisa ficar fora do repositório são os segredos de servidor: a chave privada
-VAPID e o token do QStash, ambos definidos apenas nas variáveis de ambiente da Vercel.
+VAPID, o token do QStash e a `ANTHROPIC_API_KEY` (ver §7.4), todos definidos apenas nas variáveis
+de ambiente da Vercel.
 
 ### 7.2. Restrições da Browser key
 
@@ -206,3 +207,38 @@ nada. Só ligue depois de alguns dias com as requisições verificadas perto de 
 Console → App Check → APIs, e **apenas no Cloud Firestore**. Deixe o Authentication de fora enquanto
 estiver marcado como PRÉ-LANÇAMENTO: travar o login com um recurso em beta tranca você para fora do
 próprio app.
+
+### 7.4. Importação de treino por PDF (`ANTHROPIC_API_KEY`)
+
+`api/parse-workout-pdf.js` lê um PDF de ficha com a API da Anthropic (modelo `claude-opus-4-8`) e
+devolve os exercícios em JSON. **É a única funcionalidade paga do projeto** — as demais operam em
+custo zero por decisão (ver `user_stats` recalculado no cliente).
+
+Duas variáveis de servidor na Vercel, ambas obrigatórias:
+
+| Variável | Uso |
+| --- | --- |
+| `ANTHROPIC_API_KEY` | chave da API da Anthropic. **Nunca** prefixe com `VITE_` — isso a embutiria no bundle público |
+| `FIREBASE_PROJECT_ID` | valida o `issuer`/`audience` do ID token do Firebase |
+
+**Degradação limpa:** sem qualquer uma das duas, a função responde `503` e o cliente exibe
+"Importação por PDF indisponível" — nada mais do app é afetado. Enquanto você não configurar as
+variáveis, a feature simplesmente não existe e não gera custo.
+
+Decisões de arquitetura que valem entender antes de mexer:
+
+- **A função só faz parsing; quem grava é o cliente.** Ela devolve JSON e o app grava em
+  `workout_templates` pelo caminho normal (`workoutService.createTemplate`), sujeito às
+  `firestore.rules` — inclusive a regra que já permite personal → aluno. Isso evita trazer o
+  Firebase Admin e uma service account para a Vercel, coisa que nenhuma função em `api/` faz hoje.
+- **Revisão humana é obrigatória por design.** O resultado abre o `CreateWorkoutPage` preenchido;
+  o usuário confere e só então salva. Parsing por IA não é 100% confiável, e uma série/repetição
+  errada vira treino errado.
+- **Controle de abuso:** a função exige um ID token válido do Firebase, verificado por JWKS do
+  Google (lib `jose`), sem service account. PDFs acima de ~3 MB são recusados (`413`) — também
+  para caber no limite de corpo das funções da Vercel.
+
+**Custo:** cerca de US$ 0,04 por PDF (~5k tokens de entrada + ~700 de saída). PDFs escaneados
+custam mais que os de texto nativo. Como a importação acontece uma vez por prescrição — não por
+treino executado — o gasto mensal fica na casa de poucos dólares. Meça com `count_tokens` num PDF
+real antes de assumir qualquer número.
