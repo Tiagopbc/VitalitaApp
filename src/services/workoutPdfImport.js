@@ -5,6 +5,8 @@
  * A escrita no Firestore continua sendo feita pelo cliente (via workoutService).
  */
 
+import { auth } from '../firebaseAuth';
+
 // ~3 MB de PDF (o servidor limita o base64 a ~3,3 MB). Fichas de treino são pequenas.
 const MAX_PDF_BYTES = 3 * 1024 * 1024;
 
@@ -40,8 +42,12 @@ export async function importWorkoutFromPdf(file) {
     if (file.type !== 'application/pdf') throw new Error('O arquivo precisa ser um PDF.');
     if (file.size > MAX_PDF_BYTES) throw new Error('PDF muito grande (máximo 3 MB).');
 
-    const { getAuth } = await import('firebase/auth');
-    const currentUser = getAuth().currentUser;
+    // Usa o módulo de auth já inicializado do projeto. NÃO troque por
+    // `await import('firebase/auth')`: como todo o resto do app importa esse
+    // pacote de forma estática, misturar import dinâmico faz o manualChunks do
+    // vite.config.js emitir o vendor-firebase-app com dependência circular, e o
+    // app quebra em produção com "Cannot access 're' before initialization".
+    const currentUser = auth.currentUser;
     if (!currentUser) throw new Error('Sessão expirada. Entre novamente.');
     const idToken = await currentUser.getIdToken();
 
