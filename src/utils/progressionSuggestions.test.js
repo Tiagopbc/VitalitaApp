@@ -96,6 +96,30 @@ describe('buildProgressionSuggestion', () => {
         const result = buildProgressionSuggestion([entry], '8-12');
         expect(result.type).toBe('maintain');
     });
+
+    it('sugere a carga-alvo prescrita quando não há histórico', () => {
+        const result = buildProgressionSuggestion([], '8-12', { targetWeight: '40' });
+        expect(result.type).toBe('start');
+        expect(result.suggestedWeight).toBe(40);
+        expect(result.message).toContain('40');
+    });
+
+    it('usa a carga-alvo quando o histórico não tem carga (peso corporal)', () => {
+        const result = buildProgressionSuggestion([makeEntry('', '12')], '8-12', { targetWeight: '30' });
+        expect(result.type).toBe('start');
+        expect(result.suggestedWeight).toBe(30);
+    });
+
+    it('histórico com carga prevalece sobre a carga-alvo', () => {
+        const result = buildProgressionSuggestion([makeEntry('40', '12')], '8-12', { targetWeight: '20' });
+        expect(result.type).toBe('increase');
+        expect(result.suggestedWeight).toBe(42.5);
+    });
+
+    it('anexa o 1RM estimado à sugestão baseada em histórico', () => {
+        const result = buildProgressionSuggestion([makeEntry('40', '12')], '8-12');
+        expect(result.estimatedOneRepMax).toBeGreaterThan(40);
+    });
 });
 
 describe('buildProgressionMap', () => {
@@ -123,5 +147,14 @@ describe('buildProgressionMap', () => {
 
     it('retorna mapa vazio sem sessões', () => {
         expect(buildProgressionMap([], template)).toEqual({});
+    });
+
+    it('sugere carga inicial para exercício prescrito sem histórico', () => {
+        const templateComAlvo = [
+            { id: 'ex1', name: 'Supino Reto', reps: '8-12', targetWeight: '50' }
+        ];
+        const map = buildProgressionMap([], templateComAlvo);
+        expect(map.ex1.type).toBe('start');
+        expect(map.ex1.suggestedWeight).toBe(50);
     });
 });

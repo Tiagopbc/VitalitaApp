@@ -137,7 +137,8 @@ por esse motivo, em 21/07/2026, após aplicar as restrições descritas abaixo. 
 equivalente reaparecer, a resposta é conferir as restrições — não gerar uma chave nova.
 
 O que **de fato** precisa ficar fora do repositório são os segredos de servidor: a chave privada
-VAPID e o token do QStash, ambos definidos apenas nas variáveis de ambiente da Vercel.
+VAPID, o token do QStash e a `ANTHROPIC_API_KEY` (ver §7.4), todos definidos apenas nas variáveis
+de ambiente da Vercel.
 
 ### 7.2. Restrições da Browser key
 
@@ -206,3 +207,75 @@ nada. Só ligue depois de alguns dias com as requisições verificadas perto de 
 Console → App Check → APIs, e **apenas no Cloud Firestore**. Deixe o Authentication de fora enquanto
 estiver marcado como PRÉ-LANÇAMENTO: travar o login com um recurso em beta tranca você para fora do
 próprio app.
+
+### 7.4. Importação de treino por PDF (`ANTHROPIC_API_KEY`)
+
+`api/parse-workout-pdf.js` lê um PDF de ficha com a API da Anthropic (modelo `claude-opus-4-8`) e
+devolve os exercícios em JSON. **É a única funcionalidade paga do projeto** — as demais operam em
+custo zero por decisão (ver `user_stats` recalculado no cliente).
+
+Três variáveis na Vercel, todas obrigatórias para a feature funcionar:
+
+| Variável | Escopo | Uso |
+| --- | --- | --- |
+| `ANTHROPIC_API_KEY` | servidor | chave da API da Anthropic. **Nunca** prefixe com `VITE_` — isso a embutiria no bundle público |
+| `FIREBASE_PROJECT_ID` | servidor | valida o `issuer`/`audience` do ID token do Firebase |
+| `VITE_ENABLE_PDF_IMPORT` | build | `true` exibe o botão de importar. Padrão desligado |
+
+A flag de build existe porque o cliente **não tem como descobrir** se o servidor tem a chave sem
+gastar uma requisição. Sem ela, o botão apareceria em qualquer ambiente e só falharia ao ser
+clicado. Mesma convenção do `VITE_ENABLE_SERVER_USER_STATS`.
+
+**Degradação em duas camadas:** com a flag desligada o botão nem aparece; se a flag estiver ligada
+mas faltar uma das variáveis de servidor, a função responde `503` e o cliente exibe "Importação por
+PDF indisponível". Em nenhum dos casos o resto do app é afetado, e não há custo enquanto a feature
+não for configurada.
+
+> ⚠️ Ligue as três juntas. `VITE_ENABLE_PDF_IMPORT=true` sem a `ANTHROPIC_API_KEY` mostra um botão
+> que sempre falha — e, por ser `VITE_*`, ela só passa a valer após um **redeploy**.
+
+Decisões de arquitetura que valem entender antes de mexer:
+
+- **A função só faz parsing; quem grava é o cliente.** Ela devolve JSON e o app grava em
+  `workout_templates` pelo caminho normal (`workoutService.createTemplate`), sujeito às
+  `firestore.rules` — inclusive a regra que já permite personal → aluno. Isso evita trazer o
+  Firebase Admin e uma service account para a Vercel, coisa que nenhuma função em `api/` faz hoje.
+- **Revisão humana é obrigatória por design.** O resultado abre o `CreateWorkoutPage` preenchido;
+  o usuário confere e só então salva. Parsing por IA não é 100% confiável, e uma série/repetição
+  errada vira treino errado.
+- **Controle de abuso:** a função exige um ID token válido do Firebase, verificado por JWKS do
+  Google (lib `jose`), sem service account. PDFs acima de ~3 MB são recusados (`413`) — também
+  para caber no limite de corpo das funções da Vercel.
+
+**Não há cota por usuário — o teto de gasto é a proteção.** Um ID token válido prova identidade,
+mas não limita uso: como o cadastro é aberto, uma conta poderia chamar o endpoint em loop, e cada
+chamada custa dinheiro. A decisão consciente (23/07/2026) foi **não** implementar cota por usuário
+enquanto o app está em pré-lançamento, e no lugar disso definir um **limite mensal de gasto no
+Console da Anthropic** (Settings → Limits). O pior caso passa a ser o valor do teto, não uma conta
+ilimitada.
+
+> Reveja essa decisão **antes de abrir o cadastro ao público**. A partir daí o certo é uma cota
+> diária por usuário. Ela cabe na arquitetura atual sem Admin SDK: a função pode ler e escrever um
+> contador em `pdf_import_quota/{uid}` pela **API REST do Firestore**, autenticando com o próprio
+> ID token do aluno, e as `firestore.rules` garantem que o contador só possa ser incrementado.
+
+**Diagnóstico pela mensagem na tela.** Cada falha tem mensagem própria, para que um relato de
+aluno ("deu erro ao importar") já identifique a causa sem abrir log:
+
+| Mensagem exibida ao aluno | HTTP | Causa | O que fazer |
+| --- | --- | --- | --- |
+| "A leitura automática está indisponível. Avise o suporte…" | 402 | **saldo esgotado na Anthropic** | adicionar fundos em platform.claude.com → Créditos da organização |
+| "Importação por PDF indisponível no momento." | 503 | falta `ANTHROPIC_API_KEY` ou `FIREBASE_PROJECT_ID` no build | conferir variáveis e redeployar |
+| "Importação por PDF indisponível neste ambiente." | 404 | a função não está no ar (ex.: `npm run dev`) | usar `npx vercel dev` ou o site publicado |
+| "Muitas importações ao mesmo tempo." | 429 | rate limit da Anthropic | aguardar alguns minutos |
+| "Não encontramos exercícios nesse PDF." | 422 | a IA leu mas não achou ficha | conferir se o PDF está legível |
+| "Não autorizado. Entre novamente." | 401 | ID token inválido / `FIREBASE_PROJECT_ID` errado | conferir o valor da variável |
+
+A mensagem de saldo é **deliberadamente neutra** — o aluno não deve ver detalhe de cobrança, e é o
+único caso que pede contato com o suporte. Quem precisa saber que é saldo é o operador: o log da
+função na Vercel registra `pdf_import_sem_saldo` com a ação corretiva explícita.
+
+**Custo:** cerca de US$ 0,04 por PDF (~5k tokens de entrada + ~700 de saída). PDFs escaneados
+custam mais que os de texto nativo. Como a importação acontece uma vez por prescrição — não por
+treino executado — o gasto mensal fica na casa de poucos dólares. Meça com `count_tokens` num PDF
+real antes de assumir qualquer número.

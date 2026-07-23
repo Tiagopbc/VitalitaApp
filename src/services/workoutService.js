@@ -186,6 +186,50 @@ export const workoutService = {
     },
 
     /**
+     * Cria uma ficha de treino (template) no Firestore.
+     * Caminho de escrita único, reutilizado por CreateWorkoutPage, pela biblioteca
+     * de modelos prontos e pela importação por PDF.
+     *
+     * @param {Object} params
+     * @param {string} params.name - Nome da ficha.
+     * @param {Array} params.exercises - Exercícios já sanitizados (sem Proxies/undefined).
+     * @param {string} params.targetUserId - Dono da ficha (aluno ou o próprio usuário).
+     * @param {string} params.createdBy - UID de quem está criando (sempre o autenticado).
+     * @param {Object} [extra] - Campos opcionais permitidos (category, muscleGroups, displayOrder...).
+     * @returns {Promise<string>} ID do documento criado.
+     */
+    async createTemplate({ name, exercises, targetUserId, createdBy }, extra = {}) {
+        const { db, collection, addDoc, serverTimestamp } = await getFirestoreDeps();
+        const docRef = await addDoc(collection(db, TEMPLATES_COLLECTION), {
+            ...extra,
+            name,
+            exercises,
+            createdBy,
+            userId: targetUserId,
+            assignedByTrainer: targetUserId !== createdBy,
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp()
+        });
+        this.clearCache();
+        return docRef.id;
+    },
+
+    /**
+     * Atualiza nome e exercícios de uma ficha existente.
+     * @param {string} templateId
+     * @param {{ name: string, exercises: Array }} data
+     */
+    async updateTemplate(templateId, { name, exercises }) {
+        const { db, doc, updateDoc, serverTimestamp } = await getFirestoreDeps();
+        await updateDoc(doc(db, TEMPLATES_COLLECTION, templateId), {
+            name,
+            exercises,
+            updatedAt: serverTimestamp()
+        });
+        this.clearCache();
+    },
+
+    /**
      * Obter a ÚLTIMA sessão CONCLUÍDA do usuário (Limit 1).
      * Otimizado para lógica de "Próxima Sugestão".
      * @param {string} userId 

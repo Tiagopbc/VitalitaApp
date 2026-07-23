@@ -4,7 +4,9 @@
  * Analisa as sessões recentes de um exercício e sugere: aumentar a carga,
  * consolidar a atual ou intervir na estagnação (deload/troca de método).
  */
-import { parseDecimal } from './strengthMath';
+import { parseDecimal, estimateOneRepMax } from './strengthMath';
+
+const formatKg = (value) => value.toLocaleString('pt-BR', { maximumFractionDigits: 2 });
 
 /**
  * Interpreta a meta de repetições ("8-12", "12", "10 a 12") como {min, max}.
@@ -27,12 +29,18 @@ function analyzeEntry(entry, goal) {
     if (completedSets.length === 0) return null;
 
     const topWeight = Math.max(...completedSets.map(s => parseDecimal(s.weight)));
+    // Reps executadas na(s) série(s) com a carga mais alta — base para estimar o 1RM.
+    const topReps = Math.max(
+        ...completedSets
+            .filter(s => parseDecimal(s.weight) === topWeight)
+            .map(s => parseDecimal(s.reps))
+    );
     const allSetsCompleted = sets.length > 0 && completedSets.length === sets.length;
     const hitRepGoal = goal
         ? completedSets.every(s => parseDecimal(s.reps) >= goal.max)
         : false;
 
-    return { topWeight, allSetsCompleted, hitRepGoal };
+    return { topWeight, topReps, allSetsCompleted, hitRepGoal };
 }
 
 /**
@@ -49,17 +57,34 @@ export function suggestedIncrement(weight) {
  * @param {Array} recentEntries - entradas do exercício nas sessões recentes,
  *   da mais nova para a mais antiga: [{ sets: [{ weight, reps, completed }] }]
  * @param {string|number} targetReps - meta de repetições da ficha (ex.: "8-12")
- * @returns {{ type: 'increase'|'maintain'|'stagnation', suggestedWeight?: number,
- *             currentWeight: number, message: string } | null}
+ * @param {Object} [options]
+ * @param {string|number} [options.targetWeight] - carga-alvo prescrita na ficha,
+ *   usada como baseline quando ainda não há histórico do exercício.
+ * @returns {{ type: 'increase'|'maintain'|'stagnation'|'start', suggestedWeight?: number,
+ *             currentWeight: number, estimatedOneRepMax?: number, message: string } | null}
  */
-export function buildProgressionSuggestion(recentEntries, targetReps) {
-    if (!Array.isArray(recentEntries) || recentEntries.length === 0) return null;
-
+export function buildProgressionSuggestion(recentEntries, targetReps, options = {}) {
     const goal = parseRepTarget(targetReps) || { min: 8, max: 12 };
-    const latest = analyzeEntry(recentEntries[0], goal);
-    if (!latest || latest.topWeight <= 0) return null;
+    const targetWeight = parseDecimal(options.targetWeight);
 
-    const formatKg = (value) => value.toLocaleString('pt-BR', { maximumFractionDigits: 2 });
+    // Baseline: sem histórico utilizável, sugere a carga-alvo prescrita na ficha.
+    const startSuggestion = targetWeight > 0
+        ? {
+            type: 'start',
+            currentWeight: 0,
+            suggestedWeight: targetWeight,
+            message: `Carga inicial sugerida pelo treino: ${formatKg(targetWeight)} kg.`
+        }
+        : null;
+
+    if (!Array.isArray(recentEntries) || recentEntries.length === 0) return startSuggestion;
+
+    const latest = analyzeEntry(recentEntries[0], goal);
+    if (!latest || latest.topWeight <= 0) return startSuggestion;
+
+    // Sinal secundário: 1RM estimado a partir da melhor série registrada.
+    const oneRepMax = estimateOneRepMax(latest.topWeight, latest.topReps);
+    const estimatedOneRepMax = oneRepMax?.oneRepMax;
 
     // Meta batida em todas as séries: hora de subir a carga.
     if (latest.allSetsCompleted && latest.hitRepGoal) {
@@ -69,6 +94,7 @@ export function buildProgressionSuggestion(recentEntries, targetReps) {
             type: 'increase',
             currentWeight: latest.topWeight,
             suggestedWeight,
+            estimatedOneRepMax,
             message: `Meta batida no último treino. Tente ${formatKg(suggestedWeight)} kg (+${formatKg(increment)}).`
         };
     }
@@ -85,6 +111,7 @@ export function buildProgressionSuggestion(recentEntries, targetReps) {
                 type: 'stagnation',
                 currentWeight: latest.topWeight,
                 suggestedWeight: deloadWeight,
+                estimatedOneRepMax,
                 message: `3 treinos sem evolução em ${formatKg(latest.topWeight)} kg. Considere um deload (~${formatKg(deloadWeight)} kg) ou trocar o método.`
             };
         }
@@ -93,6 +120,7 @@ export function buildProgressionSuggestion(recentEntries, targetReps) {
     return {
         type: 'maintain',
         currentWeight: latest.topWeight,
+        estimatedOneRepMax,
         message: `Consolide ${formatKg(latest.topWeight)} kg até completar ${goal.max} repetições em todas as séries.`
     };
 }
@@ -119,7 +147,7 @@ export function buildProgressionMap(recentSessions, templateExercises) {
             .filter(Boolean);
 
         const targetReps = ex.reps || (typeof ex.target === 'string' ? ex.target.split('x')[1] : null);
-        const suggestion = buildProgressionSuggestion(entries, targetReps);
+        const suggestion = buildProgressionSuggestion(entries, targetReps, { targetWeight: ex.targetWeight });
         if (suggestion && ex.id) {
             map[ex.id] = suggestion;
         }

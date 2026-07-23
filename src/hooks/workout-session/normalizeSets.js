@@ -46,10 +46,11 @@ export function mapTemplateExercises(tmplData, lastSessionExercises = []) {
                 ...set,
                 id: set.id || generateId(),
                 completed: false,
-                weight: lastSet?.weight || set.weight || '',
+                // Sem histórico do exercício, usa a carga-alvo prescrita na ficha (ex.targetWeight).
+                weight: lastSet?.weight || ex.targetWeight || set.weight || '',
                 reps: lastSet?.reps || set.reps || '',
                 targetReps: set.reps || ex.reps,
-                targetWeight: lastSet?.weight || '',
+                targetWeight: lastSet?.weight || ex.targetWeight || '',
                 lastWeight: lastSet?.weight || null,
                 lastReps: lastSet?.reps || null,
                 weightMode: lastSet?.weightMode || set.weightMode || 'total',
