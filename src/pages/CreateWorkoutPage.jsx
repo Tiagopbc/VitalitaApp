@@ -163,6 +163,17 @@ export default function CreateWorkoutPage({ user }) {
     const canImportPdf = !initialData?.id && !editId && isPdfImportEnabled();
     const pdfInputRef = useRef(null);
     const [importingPdf, setImportingPdf] = useState(false);
+    // Fila de revisão: o PDF pode trazer vários treinos (A, B, C). Revisamos e
+    // salvamos um por vez; ao salvar, o próximo aparece nesta mesma tela.
+    const [importQueue, setImportQueue] = useState(null); // { workouts: [...], index }
+
+    function loadWorkoutIntoForm(workout) {
+        setWorkoutName(workout?.name || '');
+        setExercises((workout?.exercises || []).map((ex, i) => ({ ...ex, id: `${Date.now()}-${i}` })));
+        setShowAddExercise(false);
+        setEditingExerciseId(null);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
 
     async function handlePdfSelected(event) {
         const file = event.target.files?.[0];
@@ -171,10 +182,14 @@ export default function CreateWorkoutPage({ user }) {
 
         setImportingPdf(true);
         try {
-            const parsed = await importWorkoutFromPdf(file);
-            if (parsed.name) setWorkoutName(parsed.name);
-            setExercises(parsed.exercises.map((ex, i) => ({ ...ex, id: `${Date.now()}-${i}` })));
-            toast.success(`${parsed.exercises.length} exercícios importados. Revise antes de salvar.`);
+            const { workouts } = await importWorkoutFromPdf(file);
+            setImportQueue({ workouts, index: 0 });
+            loadWorkoutIntoForm(workouts[0]);
+            if (workouts.length > 1) {
+                toast.success(`${workouts.length} treinos encontrados. Revise o 1º e salve — os próximos aparecem em seguida.`);
+            } else {
+                toast.success(`Treino importado (${workouts[0].exercises.length} exercícios). Revise antes de salvar.`);
+            }
         } catch (err) {
             toast.error(err.message || 'Não foi possível importar o PDF.');
         } finally {
@@ -355,6 +370,17 @@ export default function CreateWorkoutPage({ user }) {
                     createdBy: user.uid
                 });
             }
+
+            // Fila de importação: se há mais treinos no PDF, carrega o próximo em
+            // vez de sair, para o usuário revisar e salvar um a um.
+            if (importQueue && importQueue.index + 1 < importQueue.workouts.length) {
+                const nextIndex = importQueue.index + 1;
+                setImportQueue({ ...importQueue, index: nextIndex });
+                loadWorkoutIntoForm(importQueue.workouts[nextIndex]);
+                setLoading(false);
+                toast.success(`Treino salvo. Revise o próximo (${nextIndex + 1} de ${importQueue.workouts.length}).`);
+                return;
+            }
             onBack();
         } catch (err) {
             console.error(err);
@@ -374,7 +400,7 @@ export default function CreateWorkoutPage({ user }) {
             />
 
             {/* Importar ficha de um PDF (IA lê e preenche; o usuário revisa aqui mesmo) */}
-            {canImportPdf && (
+            {canImportPdf && !importQueue && (
                 <div className="mb-6">
                     <input
                         ref={pdfInputRef}
@@ -397,6 +423,19 @@ export default function CreateWorkoutPage({ user }) {
                     <p className="mt-2 text-center text-xs text-slate-500">
                         A ficha do personal é lida automaticamente. Você confere tudo antes de salvar.
                     </p>
+                </div>
+            )}
+
+            {/* Progresso da revisão em fila, quando o PDF trouxe mais de um treino */}
+            {importQueue && importQueue.workouts.length > 1 && (
+                <div className="mb-6 flex items-center gap-3 rounded-xl border border-cyan-500/30 bg-cyan-500/10 px-4 py-3">
+                    <FileUp size={18} className="shrink-0 text-cyan-400" />
+                    <div className="min-w-0 text-sm">
+                        <span className="font-semibold text-cyan-300">
+                            Treino {importQueue.index + 1} de {importQueue.workouts.length}
+                        </span>
+                        <span className="text-slate-400"> — revise e salve; o próximo aparece em seguida.</span>
+                    </div>
                 </div>
             )}
 
@@ -689,7 +728,11 @@ export default function CreateWorkoutPage({ user }) {
                 fullWidth
                 className="shadow-xl disabled:border-slate-700 disabled:bg-slate-900/60 disabled:bg-none disabled:text-slate-500 disabled:shadow-none disabled:opacity-100"
             >
-                {loading ? 'Salvando...' : 'Salvar Treino'}
+                {loading
+                    ? 'Salvando...'
+                    : (importQueue && importQueue.index + 1 < importQueue.workouts.length)
+                        ? 'Salvar e revisar o próximo'
+                        : 'Salvar Treino'}
             </Button>
             {(exercises.length === 0 || !workoutName) && !loading && (
                 <p className="mt-3 text-center text-xs text-slate-500">

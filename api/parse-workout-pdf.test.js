@@ -39,18 +39,19 @@ function makeReq(overrides = {}) {
     };
 }
 
-const toolResponse = {
-    content: [{
-        type: 'tool_use',
-        name: 'registrar_treino',
-        input: {
-            name: 'Treino A - Peito',
-            exercises: [
-                { muscleGroup: 'Peito', name: 'Supino Reto', sets: '4', reps: '8-10', method: 'Convencional', rest: '90s', targetWeight: '40' }
-            ]
-        }
-    }]
-};
+// Monta a resposta de tool_use da Anthropic a partir dos treinos informados.
+function toolResp(workouts) {
+    return { content: [{ type: 'tool_use', name: 'registrar_treinos', input: { workouts } }] };
+}
+
+const toolResponse = toolResp([
+    {
+        name: 'Treino A - Peito',
+        exercises: [
+            { muscleGroup: 'Peito', name: 'Supino Reto', sets: '4', reps: '8-10', method: 'Convencional', rest: '90s', targetWeight: '40' }
+        ]
+    }
+]);
 
 describe('/api/parse-workout-pdf', () => {
     beforeEach(() => {
@@ -98,44 +99,105 @@ describe('/api/parse-workout-pdf', () => {
         expect(res.statusCode).toBe(400);
     });
 
-    it('devolve a ficha estruturada em 200', async () => {
+    it('devolve os treinos estruturados em 200', async () => {
         const res = makeRes();
         await handler(makeReq(), res);
         expect(res.statusCode).toBe(200);
-        expect(res.body.name).toBe('Treino A - Peito');
-        expect(res.body.exercises).toHaveLength(1);
-        expect(res.body.exercises[0]).toMatchObject({
+        expect(res.body.workouts).toHaveLength(1);
+        expect(res.body.workouts[0].name).toBe('Treino A - Peito');
+        expect(res.body.workouts[0].exercises[0]).toMatchObject({
             muscleGroup: 'Peito',
             name: 'Supino Reto',
-            targetWeight: '40'
+            targetWeight: '40',
+            groupedWithPrevious: false
         });
+    });
+
+    it('devolve vários treinos (A, B, C) do mesmo PDF', async () => {
+        createMock.mockResolvedValueOnce(toolResp([
+            { name: 'Treino A', exercises: [{ name: 'Puxada', sets: '4', reps: '15' }] },
+            { name: 'Treino B', exercises: [{ name: 'Agachamento', sets: '4', reps: '15' }] },
+            { name: 'Treino C', exercises: [{ name: 'Supino', sets: '4', reps: '15' }] }
+        ]));
+        const res = makeRes();
+        await handler(makeReq(), res);
+        expect(res.statusCode).toBe(200);
+        expect(res.body.workouts.map(w => w.name)).toEqual(['Treino A', 'Treino B', 'Treino C']);
     });
 
     it('sanitiza grupo muscular e método inválidos', async () => {
-        createMock.mockResolvedValueOnce({
-            content: [{
-                type: 'tool_use',
-                name: 'registrar_treino',
-                input: {
-                    name: 'X',
-                    exercises: [{ muscleGroup: 'Inexistente', name: 'Exercício', sets: '3', reps: '10', method: 'Método Zé' }]
-                }
-            }]
-        });
+        createMock.mockResolvedValueOnce(toolResp([
+            { name: 'X', exercises: [{ muscleGroup: 'Inexistente', name: 'Exercício', sets: '3', reps: '10', method: 'Método Zé' }] }
+        ]));
         const res = makeRes();
         await handler(makeReq(), res);
         expect(res.statusCode).toBe(200);
-        expect(res.body.exercises[0].muscleGroup).toBe('Geral');
-        expect(res.body.exercises[0].method).toBe('Convencional');
+        expect(res.body.workouts[0].exercises[0].muscleGroup).toBe('Geral');
+        expect(res.body.workouts[0].exercises[0].method).toBe('Convencional');
     });
 
     it('responde 422 quando nenhum exercício é encontrado', async () => {
-        createMock.mockResolvedValueOnce({
-            content: [{ type: 'tool_use', name: 'registrar_treino', input: { name: 'Vazio', exercises: [] } }]
-        });
+        createMock.mockResolvedValueOnce(toolResp([{ name: 'Vazio', exercises: [] }]));
         const res = makeRes();
         await handler(makeReq(), res);
         expect(res.statusCode).toBe(422);
+    });
+
+    describe('decomposição de bi-set/tri-set', () => {
+        it('quebra "A + B" num bi-set de dois exercícios ligados', async () => {
+            createMock.mockResolvedValueOnce(toolResp([{
+                name: 'Treino A',
+                exercises: [{
+                    muscleGroup: 'Costas',
+                    name: 'Bi-set: Puxada pela frente pronada + puxada pegada supinada',
+                    sets: '4', reps: '15', method: 'Bi-set'
+                }]
+            }]));
+            const res = makeRes();
+            await handler(makeReq(), res);
+            const ex = res.body.workouts[0].exercises;
+            expect(ex).toHaveLength(2);
+            expect(ex[0]).toMatchObject({ name: 'Puxada pela frente pronada', method: 'Bi-set', groupedWithPrevious: false });
+            expect(ex[1]).toMatchObject({ name: 'puxada pegada supinada', method: 'Bi-set', groupedWithPrevious: true });
+        });
+
+        it('quebra tri-set em três exercícios, todos ligados em cadeia', async () => {
+            createMock.mockResolvedValueOnce(toolResp([{
+                name: 'Treino C',
+                exercises: [{ name: 'Tri-set - A + B + C', sets: '4', reps: '12', method: 'Bi-set' }]
+            }]));
+            const res = makeRes();
+            await handler(makeReq(), res);
+            const ex = res.body.workouts[0].exercises;
+            expect(ex.map(e => e.name)).toEqual(['A', 'B', 'C']);
+            expect(ex.map(e => e.groupedWithPrevious)).toEqual([false, true, true]);
+        });
+
+        it('honra groupedWithPrevious já vindo da IA (exercícios separados)', async () => {
+            createMock.mockResolvedValueOnce(toolResp([{
+                name: 'Treino A',
+                exercises: [
+                    { name: 'Abdominal supra solo', sets: '4', reps: '15', method: 'Bi-set' },
+                    { name: 'Abdominal infra solo', sets: '4', reps: '15', method: 'Bi-set', groupedWithPrevious: true }
+                ]
+            }]));
+            const res = makeRes();
+            await handler(makeReq(), res);
+            const ex = res.body.workouts[0].exercises;
+            expect(ex.map(e => e.groupedWithPrevious)).toEqual([false, true]);
+        });
+
+        it('NÃO quebra drop-set cujas reps têm "+" (10+12+15)', async () => {
+            createMock.mockResolvedValueOnce(toolResp([{
+                name: 'Treino A',
+                exercises: [{ name: 'Remada cavalinho', sets: '4', reps: '10+12+15', method: 'Drop-set' }]
+            }]));
+            const res = makeRes();
+            await handler(makeReq(), res);
+            const ex = res.body.workouts[0].exercises;
+            expect(ex).toHaveLength(1);
+            expect(ex[0]).toMatchObject({ name: 'Remada cavalinho', reps: '10+12+15', method: 'Drop-set' });
+        });
     });
 
     it('responde 502 quando a IA falha', async () => {
