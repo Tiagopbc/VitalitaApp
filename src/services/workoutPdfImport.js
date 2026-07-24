@@ -20,6 +20,27 @@ export function isPdfImportEnabled() {
     return import.meta.env.VITE_ENABLE_PDF_IMPORT === 'true';
 }
 
+/**
+ * Converte a marca `groupedWithPrevious` (vinda da API) no `groupId` que o app
+ * usa para ligar exercícios de um bi-set/tri-set. Exercícios consecutivos
+ * marcados compartilham o mesmo id — é o que `exerciseGroups.js` espera.
+ */
+export function assignGroupIds(exercises = []) {
+    const out = exercises.map(ex => {
+        const { groupedWithPrevious, ...rest } = ex;
+        return { rest, grouped: Boolean(groupedWithPrevious) };
+    });
+    for (let i = 1; i < out.length; i++) {
+        if (out[i].grouped) {
+            const gid = out[i - 1].rest.groupId
+                || `grp_${Date.now().toString(36)}${i}${Math.random().toString(36).slice(2, 5)}`;
+            out[i - 1].rest.groupId = gid;
+            out[i].rest.groupId = gid;
+        }
+    }
+    return out.map(o => o.rest);
+}
+
 function fileToBase64(file) {
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
@@ -35,7 +56,8 @@ function fileToBase64(file) {
 
 /**
  * @param {File} file - PDF selecionado pelo usuário.
- * @returns {Promise<{ name: string, exercises: Array }>} ficha para revisão.
+ * @returns {Promise<{ workouts: Array<{ name: string, exercises: Array }> }>}
+ *          uma ficha por treino do PDF (Treino A, B, C...), para revisão em fila.
  */
 export async function importWorkoutFromPdf(file) {
     if (!file) throw new Error('Selecione um arquivo PDF.');
@@ -87,8 +109,15 @@ export async function importWorkoutFromPdf(file) {
     if (!res.ok) throw new Error('Não foi possível ler esse PDF. Tente outro arquivo.');
 
     const data = await res.json().catch(() => ({}));
-    const exercises = Array.isArray(data?.exercises) ? data.exercises : [];
-    if (exercises.length === 0) throw new Error('Não encontramos exercícios nesse PDF.');
+    const rawWorkouts = Array.isArray(data?.workouts) ? data.workouts : [];
+    const workouts = rawWorkouts
+        .map(w => ({
+            name: w?.name || '',
+            exercises: assignGroupIds(Array.isArray(w?.exercises) ? w.exercises : [])
+        }))
+        .filter(w => w.exercises.length > 0);
 
-    return { name: data.name || '', exercises };
+    if (workouts.length === 0) throw new Error('Não encontramos exercícios nesse PDF.');
+
+    return { workouts };
 }

@@ -7,7 +7,12 @@
  *
  * Corpo:   { pdfBase64: string }
  * Header:  Authorization: Bearer <Firebase ID token>   (controle de abuso do endpoint pago)
- * Resposta: { name: string, exercises: Array<{ muscleGroup, name, sets, reps, method, rest, notes, targetWeight }> }
+ * Resposta: { workouts: Array<{ name, exercises: Array<{ muscleGroup, name, sets, reps,
+ *            method, rest, notes, targetWeight, groupedWithPrevious }> }> }
+ *
+ * Um PDF pode ter vários treinos (Treino A, B, C...). Bi-set/tri-set são
+ * DECOMPOSTOS em exercícios separados e consecutivos, marcados com
+ * `groupedWithPrevious` — o cliente converte isso no `groupId` que liga a dupla.
  */
 import Anthropic from '@anthropic-ai/sdk';
 import { createRemoteJWKSet, jwtVerify } from 'jose';
@@ -22,34 +27,62 @@ const MAX_PDF_BASE64 = 4_400_000;
 const MUSCLE_GROUPS = ['Peito', 'Costas', 'Ombros', 'Bíceps', 'Tríceps', 'Quadríceps', 'Posteriores', 'Glúteos', 'Panturrilha', 'Abdômen'];
 const METHODS = ['Convencional', 'Drop-set', 'Pirâmide Crescente', 'Pirâmide Decrescente', 'Cluster set', 'Bi-set', 'Pico de contração', 'Falha total', 'Negativa', 'Rest-Pause', 'Cardio 140 bpm'];
 
+const EXERCISE_SCHEMA = {
+    type: 'object',
+    properties: {
+        muscleGroup: { type: 'string', enum: MUSCLE_GROUPS },
+        name: { type: 'string', description: 'Nome de UM exercício. Em bi-set/tri-set, NÃO junte os nomes com "+".' },
+        sets: { type: 'string', description: 'Número de séries (ex.: "4").' },
+        reps: { type: 'string', description: 'Repetições. Faixas "8-12" e séries de drop-set "10+12+15" preservadas.' },
+        method: { type: 'string', enum: METHODS },
+        rest: { type: 'string', description: 'Descanso (ex.: "60s").' },
+        notes: { type: 'string' },
+        targetWeight: { type: 'string', description: 'Carga em kg, se prescrita. Apenas o número.' },
+        groupedWithPrevious: {
+            type: 'boolean',
+            description: 'true se este exercício é executado em conjunto (bi-set/tri-set) com o exercício IMEDIATAMENTE anterior desta ficha. O primeiro exercício de um bi-set fica false; o segundo (e o terceiro, num tri-set) fica true.'
+        }
+    },
+    required: ['name', 'sets', 'reps']
+};
+
 const WORKOUT_TOOL = {
-    name: 'registrar_treino',
-    description: 'Registra a ficha de treino extraída do PDF, preservando a ordem dos exercícios.',
+    name: 'registrar_treinos',
+    description: 'Registra TODOS os treinos/fichas encontrados no PDF (ex.: Treino A, B e C), preservando a ordem dos exercícios de cada um.',
     input_schema: {
         type: 'object',
         properties: {
-            name: { type: 'string', description: 'Nome da ficha (ex.: "Treino A - Peito e Tríceps").' },
-            exercises: {
+            workouts: {
                 type: 'array',
+                description: 'Um item por ficha do documento. Leia todas as páginas.',
                 items: {
                     type: 'object',
                     properties: {
-                        muscleGroup: { type: 'string', enum: MUSCLE_GROUPS },
-                        name: { type: 'string' },
-                        sets: { type: 'string', description: 'Número de séries (ex.: "3").' },
-                        reps: { type: 'string', description: 'Faixa de repetições (ex.: "8-12").' },
-                        method: { type: 'string', enum: METHODS },
-                        rest: { type: 'string', description: 'Descanso (ex.: "60s").' },
-                        notes: { type: 'string' },
-                        targetWeight: { type: 'string', description: 'Carga em kg, se prescrita. Apenas o número.' }
+                        name: { type: 'string', description: 'Nome da ficha, com o foco. Ex.: "Treino A - Costas, bíceps e abdômen".' },
+                        exercises: { type: 'array', items: EXERCISE_SCHEMA }
                     },
-                    required: ['name', 'sets', 'reps']
+                    required: ['name', 'exercises']
                 }
             }
         },
-        required: ['name', 'exercises']
+        required: ['workouts']
     }
 };
+
+const PROMPT = [
+    'Extraia TODAS as fichas de treino de musculação deste PDF e registre-as com a ferramenta.',
+    'O documento costuma ter vários treinos (ex.: "Treino A", "Treino B", "Treino C") — cada cabeçalho de treino é uma ficha separada em `workouts`, na ordem. Leia todas as páginas.',
+    '',
+    'Regras:',
+    '- Nome da ficha: use o cabeçalho com o foco entre parênteses. Ex.: "Treino A - Costas, bíceps e abdômen".',
+    '- BI-SET / TRI-SET: quando dois (ou três) exercícios são feitos em conjunto — indicado por "bi-set", "tri-set" ou por "Exercício A + Exercício B" — registre-os como exercícios SEPARADOS e consecutivos. O primeiro com groupedWithPrevious=false; cada exercício seguinte do mesmo conjunto com groupedWithPrevious=true. Use method "Bi-set" em todos eles. NUNCA junte os dois nomes com "+".',
+    '- DROP-SET: é UM único exercício, method "Drop-set". As repetições em cascata (ex.: "10+12+15") vão inteiras no campo reps.',
+    '- Séries e repetições: "4 x 15" → sets "4", reps "15". Preserve faixas como "8-12".',
+    '- Descanso: "1m inter." → rest "60s".',
+    '- Grupo muscular: infira pelo foco do treino e pelo exercício.',
+    '- Carga (kg), se prescrita, vai em targetWeight (apenas o número).',
+    '- Não invente exercícios que não estejam no documento.'
+].join('\n');
 
 let jwksCache;
 function getJwks() {
@@ -99,23 +132,69 @@ function cleanShort(value, fallback) {
     return str ? str.slice(0, 20) : fallback;
 }
 
+// Prefixo "Bi-set:" / "Bi- set -" / "Tri-set —" no início do nome.
+const GROUP_PREFIX_RE = /^\s*(bi-?\s*set|tri-?\s*set)\b\s*[:\-–—]?\s*/i;
+const GROUP_HINT_RE = /bi-?\s*set|tri-?\s*set/i;
+
+/**
+ * Decompõe um bi-set/tri-set num array de exercícios separados e ligados.
+ * Rede de segurança determinística: mesmo que a IA devolva "A + B" num único
+ * exercício, aqui ele vira dois, com groupedWithPrevious marcando a ligação.
+ * Exercícios avulsos (e drop-sets, cujas reps têm "+") passam intactos.
+ */
+function decomposeExercise(ex) {
+    const rawName = String(ex.name).trim();
+    const looksGrouped = GROUP_HINT_RE.test(rawName) || GROUP_HINT_RE.test(String(ex.method || ''));
+    const nameNoPrefix = rawName.replace(GROUP_PREFIX_RE, '').trim();
+    const parts = nameNoPrefix.split(/\s*\+\s*/).map(p => p.trim()).filter(Boolean);
+
+    if (looksGrouped && parts.length >= 2) {
+        return parts.map((partName, idx) => ({
+            ...ex,
+            name: partName,
+            method: 'Bi-set',
+            groupedWithPrevious: idx > 0
+        }));
+    }
+    // Avulso: mantém o nome sem o prefixo de grupo (se houver) e honra a marca da IA.
+    return [{ ...ex, name: nameNoPrefix || rawName, groupedWithPrevious: Boolean(ex.groupedWithPrevious) }];
+}
+
+function sanitizeExerciseFields(ex) {
+    return {
+        muscleGroup: MUSCLE_GROUPS.includes(ex.muscleGroup) ? ex.muscleGroup : 'Geral',
+        name: String(ex.name).trim().slice(0, 80),
+        sets: cleanShort(ex.sets, '3'),
+        reps: cleanShort(ex.reps, '12'),
+        method: METHODS.includes(ex.method) ? ex.method : 'Convencional',
+        rest: cleanShort(ex.rest, ''),
+        notes: typeof ex.notes === 'string' ? ex.notes.trim().slice(0, 200) : '',
+        targetWeight: cleanShort(ex.targetWeight, ''),
+        groupedWithPrevious: Boolean(ex.groupedWithPrevious)
+    };
+}
+
 function sanitizeWorkout(input) {
     const name = typeof input?.name === 'string' ? input.name.trim().slice(0, 120) : '';
-    const list = Array.isArray(input?.exercises) ? input.exercises : [];
-    const exercises = list
+    const rawList = Array.isArray(input?.exercises) ? input.exercises : [];
+    const exercises = rawList
         .filter(ex => ex && typeof ex.name === 'string' && ex.name.trim())
-        .slice(0, 40)
-        .map(ex => ({
-            muscleGroup: MUSCLE_GROUPS.includes(ex.muscleGroup) ? ex.muscleGroup : 'Geral',
-            name: String(ex.name).trim().slice(0, 80),
-            sets: cleanShort(ex.sets, '3'),
-            reps: cleanShort(ex.reps, '12'),
-            method: METHODS.includes(ex.method) ? ex.method : 'Convencional',
-            rest: cleanShort(ex.rest, ''),
-            notes: typeof ex.notes === 'string' ? ex.notes.trim().slice(0, 200) : '',
-            targetWeight: cleanShort(ex.targetWeight, '')
-        }));
+        .flatMap(decomposeExercise)
+        .slice(0, 60)
+        .map(sanitizeExerciseFields);
+
+    // O primeiro exercício de uma ficha nunca está ligado a um anterior.
+    if (exercises[0]) exercises[0].groupedWithPrevious = false;
     return { name, exercises };
+}
+
+function sanitizeResult(input) {
+    const list = Array.isArray(input?.workouts) ? input.workouts : [];
+    const workouts = list
+        .map(sanitizeWorkout)
+        .filter(w => w.exercises.length > 0)
+        .slice(0, 10);
+    return { workouts };
 }
 
 export default async function handler(req, res) {
@@ -146,19 +225,14 @@ export default async function handler(req, res) {
         const client = new Anthropic({ apiKey });
         const message = await client.messages.create({
             model: MODEL,
-            max_tokens: 4096,
+            max_tokens: 8192,
             tools: [WORKOUT_TOOL],
             tool_choice: { type: 'tool', name: WORKOUT_TOOL.name },
             messages: [{
                 role: 'user',
                 content: [
                     { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: pdfBase64 } },
-                    {
-                        type: 'text',
-                        text: 'Extraia a ficha de treino de musculação deste PDF e registre-a com a ferramenta. '
-                            + 'Preserve a ordem dos exercícios. Quando a carga (kg) estiver prescrita, coloque-a em targetWeight (apenas o número). '
-                            + 'Não invente exercícios que não estejam no documento.'
-                    }
+                    { type: 'text', text: PROMPT }
                 ]
             }]
         });
@@ -170,8 +244,8 @@ export default async function handler(req, res) {
             return res.status(422).json({ error: 'parse_failed' });
         }
 
-        const parsed = sanitizeWorkout(toolUse.input);
-        if (parsed.exercises.length === 0) {
+        const parsed = sanitizeResult(toolUse.input);
+        if (parsed.workouts.length === 0) {
             return res.status(422).json({ error: 'no_exercises_found' });
         }
         return res.status(200).json(parsed);

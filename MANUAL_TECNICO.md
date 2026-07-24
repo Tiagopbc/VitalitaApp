@@ -240,6 +240,14 @@ Decisões de arquitetura que valem entender antes de mexer:
   `workout_templates` pelo caminho normal (`workoutService.createTemplate`), sujeito às
   `firestore.rules` — inclusive a regra que já permite personal → aluno. Isso evita trazer o
   Firebase Admin e uma service account para a Vercel, coisa que nenhuma função em `api/` faz hoje.
+- **Vários treinos por PDF.** A resposta é `{ workouts: [...] }` — um item por ficha do documento
+  (Treino A, B, C). No cliente, os treinos entram numa **fila de revisão** no `CreateWorkoutPage`:
+  o usuário revisa e salva um; o próximo aparece na mesma tela até acabar a fila.
+- **Bi-set/tri-set são decompostos.** "Bi-set: A + B" vira dois exercícios separados e consecutivos,
+  ligados pelo mesmo `groupId` (o que `exerciseGroups.js` espera), com método "Bi-set". A IA é
+  instruída a fazer isso via `groupedWithPrevious`, e `decomposeExercise` (no servidor) é a **rede
+  de segurança determinística**: mesmo que a IA junte os nomes com "+", a função separa. Drop-sets,
+  cujas reps têm "+" (ex.: "10+12+15"), não são afetados — só nomes de bi-set/tri-set são quebrados.
 - **Revisão humana é obrigatória por design.** O resultado abre o `CreateWorkoutPage` preenchido;
   o usuário confere e só então salva. Parsing por IA não é 100% confiável, e uma série/repetição
   errada vira treino errado.
