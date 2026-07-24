@@ -67,6 +67,8 @@ Ler antes de "consertar" algo que parece quebrado — vários destes já foram d
 
 **A importação por PDF é a única funcionalidade paga e tem armadilhas próprias** (custo por requisição, três env vars, decomposição de bi-sets, fila de revisão). Mexendo em `api/parse-workout-pdf.js`, `workoutPdfImport.js` ou no botão de importar treino? **Invoque o skill `importacao-pdf-treino`** antes.
 
+**A importação por PDF lê VÁRIOS treinos e decompõe bi-sets.** A resposta é `{ workouts: [...] }` — um item por ficha do documento (Treino A, B, C). Bi-set/tri-set são quebrados em exercícios separados e consecutivos, marcados com `groupedWithPrevious`; o cliente (`assignGroupIds` em `workoutPdfImport.js`) converte isso no `groupId` que `exerciseGroups.js` usa para ligar a dupla. A decomposição é **rede de segurança determinística** no servidor (`decomposeExercise`): mesmo que a IA devolva "A + B" num nome só, a função separa. No `CreateWorkoutPage` os treinos entram numa **fila de revisão** — salva um, o próximo aparece.
+
 **Toda escrita em `workout_templates` passa por `workoutService`.** `createTemplate`/`updateTemplate` são o caminho único usado pela criação manual, pela biblioteca de modelos (`src/data/starterWorkouts.js`) e pela importação por PDF. Não volte a chamar `addDoc` direto numa página.
 
 **As `firestore.rules` só validam chaves de topo.** Campo *dentro* do array `exercises` não precisa ser liberado; campo novo no **topo** do documento, sim — e aí exige cenário em `tests/security/firestore.rules.test.js`. Ver [docs/security-rules.md](docs/security-rules.md).
