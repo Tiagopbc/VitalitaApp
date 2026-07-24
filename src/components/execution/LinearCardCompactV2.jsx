@@ -305,10 +305,13 @@ export const LinearCardCompactV2 = memo(function LinearCardCompactV2({
                     return (
                         <div key={item.id} className="relative">
                             {index > 0 && (
-                                <div className="flex justify-center -mt-4 mb-2 relative z-0">
+                                <div className="flex justify-center items-center gap-1.5 -mt-4 mb-2 relative z-0">
                                     <div className="bg-slate-900 border border-slate-700 p-0.5 rounded-full text-cyan-500">
                                         <ArrowDown size={14}/>
                                     </div>
+                                    <span className="text-[9px] font-bold text-cyan-500/80 uppercase tracking-wider bg-slate-900 border border-slate-700 rounded-full px-2 py-0.5">
+                                        {index}ª Redução
+                                    </span>
                                 </div>
                             )}
                             <div className="grid grid-cols-2 gap-3 relative z-10 w-full mb-1">
