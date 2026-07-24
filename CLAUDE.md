@@ -65,19 +65,15 @@ Ler antes de "consertar" algo que parece quebrado — vários destes já foram d
 
 **Build de produção só é verificado rodando o bundle, com as flags de produção ligadas.** `npm run build` prova que compila, não que executa — e um `npm run preview` sem as `VITE_*` de produção pode esconder o bug, porque o Rollup remove por tree-shaking o código que a flag desliga. Foi assim que a quebra acima escapou. Para reproduzir o build real: `VITE_ENABLE_PDF_IMPORT=true npm run build && npm run preview` e abra http://localhost:4173.
 
-**A importação por PDF é a única funcionalidade paga.** `api/parse-workout-pdf.js` chama a API da Anthropic (`claude-opus-4-8`) para ler a ficha, a ~US$ 0,04 por PDF. Exige três variáveis: `ANTHROPIC_API_KEY` e `FIREBASE_PROJECT_ID` (servidor, nunca `VITE_*`) e `VITE_ENABLE_PDF_IMPORT=true` (build) para exibir o botão — o cliente não consegue detectar a config do servidor sem gastar requisição. Sem elas o botão some ou a função responde 503, sem afetar o resto. A função **só parseia** — quem grava em `workout_templates` é o cliente autenticado via `workoutService.createTemplate`, respeitando as `firestore.rules`. A revisão humana no `CreateWorkoutPage` antes de salvar é proposital, não opcional. Detalhes em [MANUAL_TECNICO.md](MANUAL_TECNICO.md) §7.4.
-
-**A importação por PDF lê VÁRIOS treinos e decompõe bi-sets.** A resposta é `{ workouts: [...] }` — um item por ficha do documento (Treino A, B, C). Bi-set/tri-set são quebrados em exercícios separados e consecutivos, marcados com `groupedWithPrevious`; o cliente (`assignGroupIds` em `workoutPdfImport.js`) converte isso no `groupId` que `exerciseGroups.js` usa para ligar a dupla. A decomposição é **rede de segurança determinística** no servidor (`decomposeExercise`): mesmo que a IA devolva "A + B" num nome só, a função separa. No `CreateWorkoutPage` os treinos entram numa **fila de revisão** — salva um, o próximo aparece.
+**A importação por PDF é a única funcionalidade paga e tem armadilhas próprias** (custo por requisição, três env vars, decomposição de bi-sets, fila de revisão). Mexendo em `api/parse-workout-pdf.js`, `workoutPdfImport.js` ou no botão de importar treino? **Invoque o skill `importacao-pdf-treino`** antes.
 
 **Toda escrita em `workout_templates` passa por `workoutService`.** `createTemplate`/`updateTemplate` são o caminho único usado pela criação manual, pela biblioteca de modelos (`src/data/starterWorkouts.js`) e pela importação por PDF. Não volte a chamar `addDoc` direto numa página.
 
-**As `firestore.rules` só validam chaves de topo.** O `hasOnly` roda sobre `request.resource.data.keys()`, então campos *dentro* do array `exercises` (como o `targetWeight` da carga-alvo) não precisam ser liberados nas regras. Campo novo no topo do documento, sim — e aí exige cenário em `tests/security/firestore.rules.test.js`.
+**As `firestore.rules` só validam chaves de topo.** Campo *dentro* do array `exercises` não precisa ser liberado; campo novo no **topo** do documento, sim — e aí exige cenário em `tests/security/firestore.rules.test.js`. Ver [docs/security-rules.md](docs/security-rules.md).
 
-**O push de descanso não usa FCM.** É Web Push nativo com VAPID própria, agendado via QStash: `src/services/restPushService.js` → `api/schedule-rest-push.js` → `api/send-rest-push.js`, com `public/push-sw.js` importado no service worker pelo `vite-plugin-pwa`. Segredos de servidor (`QSTASH_TOKEN`, `QSTASH_URL`, `PUSH_INTERNAL_SECRET`, chave VAPID privada) existem só nas variáveis de ambiente da Vercel.
+**O push de descanso não usa FCM** (é Web Push/VAPID via QStash) **e só é testável em iPhone com a tela bloqueada.** Mexendo nele? **Invoque o skill `push-descanso`**.
 
-**Testar push só vale em iPhone com a tela bloqueada.** No desktop o push aparece mesmo com falhas que quebram o fluxo real.
-
-**App Check está sem enforcement por decisão.** Ele só coleta métricas. Só ligue depois de dias com verificação perto de 100%, e apenas no Cloud Firestore — nunca no Authentication enquanto estiver em pré-lançamento, sob risco de travar o login. Ver [docs/app-check.md](docs/app-check.md).
+**App Check está sem enforcement por decisão.** Ver [docs/app-check.md](docs/app-check.md).
 
 ## Segurança do Firestore
 
