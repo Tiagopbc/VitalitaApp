@@ -282,17 +282,20 @@ export function WorkoutExecutionPage({ user }) {
 
                 <div style={{ height: 'calc(65px + env(safe-area-inset-top))' }}></div>
 
-                <div className="px-4 mt-2 mb-2 flex justify-end">
-                    <SyncStatusBadge status={syncState} />
-                </div>
+                {!focusMode && (
+                    <div className="px-4 mt-2 mb-2 flex justify-end">
+                        <SyncStatusBadge status={syncState} />
+                    </div>
+                )}
 
                 {focusMode && (
                     <FocusModeNav
-                        exercises={exercises}
                         currentExerciseIndex={currentExerciseIndex}
                         totalExercises={totalExercises}
                         onPrev={handlePrevExercise}
                         onNext={handleNextExercise}
+                        onDiscard={handleDiscard}
+                        syncStatus={syncState}
                     />
                 )}
 

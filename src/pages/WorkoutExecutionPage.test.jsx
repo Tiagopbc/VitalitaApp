@@ -144,6 +144,15 @@ describe('WorkoutExecutionPage', () => {
         expect(mockFinishWorkout).toHaveBeenCalled();
     });
 
+    it('moves cancel and sync status into FocusModeNav when focus mode is on', () => {
+        render(<WorkoutExecutionPage user={{ uid: 'u1' }} />);
+
+        fireEvent.click(screen.getByRole('button', { name: 'FOCO' }));
+
+        fireEvent.click(screen.getByRole('button', { name: 'Cancelar treino' }));
+        expect(screen.getByText('Cancelar Treino?')).toBeInTheDocument();
+    });
+
     it('finishes workout and shows finish modal', async () => {
         render(<WorkoutExecutionPage user={{ uid: 'u1' }} />);
 
