@@ -13,14 +13,18 @@ import { SyncStatusBadge } from '../design-system/SyncStatusBadge';
 export function FocusModeNav({ currentExerciseIndex, totalExercises, onPrev, onNext, onDiscard, syncStatus }) {
     return (
         <div className="px-4 mb-2 mt-0 flex flex-col pointer-events-auto relative z-40">
-            <div className="flex items-center justify-between mb-5">
-                <TopBarButton
-                    icon={<Trash2 />}
-                    label="Cancelar treino"
-                    variant="danger"
-                    onClick={onDiscard}
-                />
-                <SyncStatusBadge status={syncStatus} />
+            <div className="flex items-center justify-between gap-2 mb-5">
+                <div className="flex-shrink-0">
+                    <TopBarButton
+                        icon={<Trash2 />}
+                        label="Cancelar treino"
+                        variant="danger"
+                        onClick={onDiscard}
+                    />
+                </div>
+                <div className="min-w-0">
+                    <SyncStatusBadge status={syncStatus} />
+                </div>
             </div>
 
             <div className="flex items-center justify-between">
