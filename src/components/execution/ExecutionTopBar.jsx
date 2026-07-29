@@ -50,13 +50,15 @@ export function ExecutionTopBar({
 
                     {/* Right side - Action buttons */}
                     <div className="flex items-center gap-1.5 py-1 flex-1 justify-end min-w-0 pl-2">
-                        <TopBarButton
-                            icon={<Trash2 />}
-                            label="Cancelar treino"
-                            variant="danger"
-                            onClick={onDiscard}
-                            iconOnly
-                        />
+                        {!focusMode && (
+                            <TopBarButton
+                                icon={<Trash2 />}
+                                label="Cancelar treino"
+                                variant="danger"
+                                onClick={onDiscard}
+                                iconOnly
+                            />
+                        )}
 
                         <TopBarButton
                             icon={<Calculator />}
