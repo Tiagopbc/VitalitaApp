@@ -280,7 +280,7 @@ export function WorkoutExecutionPage({ user }) {
                     onToggleFocus={() => setFocusMode(!focusMode)}
                 />
 
-                <div style={{ height: 'calc(65px + env(safe-area-inset-top))' }}></div>
+                <div style={{ height: 'calc(58px + env(safe-area-inset-top))' }}></div>
 
                 {!focusMode && (
                     <div className="px-4 mt-2 mb-2 flex justify-end">

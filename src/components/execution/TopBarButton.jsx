@@ -7,9 +7,9 @@ import React from 'react';
  */
 export const TopBarButton = ({ icon, label, variant = 'default', onClick, active, iconOnly = false, prominence = 'compact' }) => {
     const sizeStyles = iconOnly
-        ? "p-2.5 min-w-10 min-h-10 justify-center"
+        ? "p-2 min-w-9 min-h-9 justify-center"
         : prominence === 'large'
-            ? "px-3.5 py-2 text-[11px] tracking-wide min-h-9"
+            ? "px-3 py-1.5 text-[11px] tracking-wide min-h-8"
             : "px-2.5 py-2 text-[10px] tracking-tight min-h-9";
 
     const baseStyles = `flex items-center gap-1 rounded-lg font-bold uppercase transition-all duration-300 border backdrop-blur-md whitespace-nowrap ${sizeStyles}`;
