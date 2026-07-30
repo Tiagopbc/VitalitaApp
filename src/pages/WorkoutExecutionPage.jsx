@@ -32,7 +32,7 @@ import { useWakeLock } from '../hooks/useWakeLock';
 import { useExecutionNavigation } from '../hooks/workout-execution/useExecutionNavigation';
 import { useFinishWorkoutFlow } from '../hooks/workout-execution/useFinishWorkoutFlow';
 import { useWorkoutShare } from '../hooks/workout-execution/useWorkoutShare';
-import { computeGroupSegments, getGroupInfo } from '../utils/exerciseGroups';
+import { computeGroupSegments, focusGroupBehaviorLabel } from '../utils/exerciseGroups';
 import { computeSessionStats } from '../utils/computeSessionStats';
 import { userPreferencesService } from '../services/userPreferencesService';
 const AchievementUnlockedModal = React.lazy(() => import('../components/achievements/AchievementUnlockedModal').then(module => ({ default: module.AchievementUnlockedModal })));
@@ -296,7 +296,7 @@ export function WorkoutExecutionPage({ user }) {
                         onNext={handleNextExercise}
                         onDiscard={handleDiscard}
                         syncStatus={syncState}
-                        groupLabel={getGroupInfo(exercises, currentExerciseIndex)?.label || null}
+                        groupLabel={focusGroupBehaviorLabel(exercises, currentExerciseIndex)}
                     />
                 )}
 

@@ -16,6 +16,21 @@ export function groupLabel(size) {
 }
 
 /**
+ * Rótulo do *comportamento* do grupo, para o Modo Foco.
+ *
+ * Diferente de `groupLabel`, que dá o nome do método: este descreve o que o
+ * app faz — alternar entre os exercícios do grupo a cada série, com descanso
+ * só ao fim da volta (ver `useExecutionNavigation`). O card do exercício já
+ * mostra uma tag de método (`method`, informativa e digitada pelo usuário);
+ * usar o nome também aqui repetiria a mesma palavra com dois significados.
+ */
+export function groupBehaviorLabel(size) {
+    if (size === 2) return 'Alterna em dupla';
+    if (size === 3) return 'Alterna em trio';
+    return 'Alterna em circuito';
+}
+
+/**
  * Divide a lista em segmentos consecutivos.
  * @returns {Array<{ groupId: string|null, indices: number[] }>}
  *          Segmentos com groupId null (ou grupo de 1) são exercícios avulsos.
@@ -43,7 +58,8 @@ export function computeGroupSegments(exercises) {
 /**
  * Informações do grupo do exercício em `index`, ou null se estiver avulso.
  * @returns {{ indices: number[], firstIndex: number, isLastMember: boolean,
- *             nextMemberIndex: number|null, label: string } | null}
+ *             nextMemberIndex: number|null, label: string,
+ *             behaviorLabel: string } | null}
  */
 export function getGroupInfo(exercises, index) {
     const segments = computeGroupSegments(exercises);
@@ -56,8 +72,33 @@ export function getGroupInfo(exercises, index) {
         firstIndex: segment.indices[0],
         isLastMember: pos === segment.indices.length - 1,
         nextMemberIndex: pos < segment.indices.length - 1 ? segment.indices[pos + 1] : null,
-        label: groupLabel(segment.indices.length)
+        label: groupLabel(segment.indices.length),
+        behaviorLabel: groupBehaviorLabel(segment.indices.length)
     };
+}
+
+/**
+ * Rótulo de comportamento a exibir no Modo Foco, ou `null` quando a tag de
+ * método do card já descreve o mesmo agrupamento — aí repetir só polui a tela.
+ *
+ * ⚠️ O `method` entra aqui **apenas para decidir a exibição**. Quem define se
+ * existe agrupamento continua sendo o `groupId`, via `getGroupInfo` — nunca o
+ * `method`, que é um rótulo informativo e pode estar ausente ou divergente.
+ * Ver o skill `method-vs-groupid`.
+ *
+ * Casos:
+ * - `method: "Bi-set"` numa dupla → o card já diz tudo, retorna `null`.
+ * - `method: "Convencional"` numa dupla (botão de corrente) → retorna o rótulo,
+ *   porque nada mais indicaria que o app vai alternar.
+ * - `method: "Bi-set"` num trio → retorna o rótulo, porque o card está
+ *   descrevendo um agrupamento diferente do real.
+ */
+export function focusGroupBehaviorLabel(exercises, index) {
+    const group = getGroupInfo(exercises, index);
+    if (!group) return null;
+
+    const method = String(exercises?.[index]?.method || '').trim().toLowerCase();
+    return method === group.label.toLowerCase() ? null : group.behaviorLabel;
 }
 
 /**

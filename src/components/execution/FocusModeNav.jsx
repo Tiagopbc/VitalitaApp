@@ -15,6 +15,10 @@ import { SyncStatusBadge } from '../design-system/SyncStatusBadge';
  * os exercícios e adiar o descanso. Um exercício agrupado pelo botão de
  * corrente (ou vindo do PDF) costuma manter `method: "Convencional"`, então
  * sem este rótulo não sobraria nenhuma indicação do comportamento real.
+ *
+ * Por isso o texto aqui descreve o **comportamento** ("Alterna em dupla") em
+ * vez do nome do método ("Bi-set"): quando os dois campos coincidem, repetir
+ * a mesma palavra faria parecer que é a mesma informação duplicada.
  */
 export function FocusModeNav({ currentExerciseIndex, totalExercises, onPrev, onNext, onDiscard, syncStatus, groupLabel }) {
     return (

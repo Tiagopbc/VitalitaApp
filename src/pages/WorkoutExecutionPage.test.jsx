@@ -185,7 +185,9 @@ describe('WorkoutExecutionPage', () => {
 
         // `groupId` — não `method` — é o que faz o Modo Foco alternar os
         // exercícios; sem este rótulo o usuário não teria como saber disso.
-        expect(screen.getByText('Bi-set')).toBeInTheDocument();
+        // O texto descreve o comportamento, não o nome do método, para não
+        // repetir a tag "Bi-set" que o card já mostra.
+        expect(screen.getByText('Alterna em dupla')).toBeInTheDocument();
     });
 
     it('omits the group label in focus mode for an ungrouped exercise', () => {
@@ -193,7 +195,21 @@ describe('WorkoutExecutionPage', () => {
 
         fireEvent.click(screen.getByRole('button', { name: 'FOCO' }));
 
-        expect(screen.queryByText('Bi-set')).not.toBeInTheDocument();
+        expect(screen.queryByText(/Alterna/i)).not.toBeInTheDocument();
+    });
+
+    it('omits the group label when the card method tag already describes the grouping', () => {
+        // Caminho da importação por PDF: define `groupId` e `method: "Bi-set"`.
+        // O card já mostra a tag, então repetir no topo só polui.
+        useWorkoutSession.mockReturnValue({
+            ...baseReturn,
+            exercises: groupedExercises.map(ex => ({ ...ex, method: 'Bi-set' }))
+        });
+        render(<WorkoutExecutionPage user={{ uid: 'u1' }} />);
+
+        fireEvent.click(screen.getByRole('button', { name: 'FOCO' }));
+
+        expect(screen.queryByText(/Alterna/i)).not.toBeInTheDocument();
     });
 
     it('finishes workout and shows finish modal', async () => {

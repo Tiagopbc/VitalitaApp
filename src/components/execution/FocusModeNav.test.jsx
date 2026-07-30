@@ -20,12 +20,12 @@ describe('FocusModeNav', () => {
 
     it('omits the group badge for an ungrouped exercise', () => {
         render(<FocusModeNav {...baseProps} groupLabel={null} />);
-        expect(screen.queryByText(/Bi-set/i)).not.toBeInTheDocument();
+        expect(screen.queryByText(/Alterna/i)).not.toBeInTheDocument();
     });
 
     it('shows the group badge when the exercise belongs to a group', () => {
-        render(<FocusModeNav {...baseProps} groupLabel="Bi-set" />);
-        expect(screen.getByText('Bi-set')).toBeInTheDocument();
+        render(<FocusModeNav {...baseProps} groupLabel="Alterna em dupla" />);
+        expect(screen.getByText('Alterna em dupla')).toBeInTheDocument();
     });
 
     it('disables Anterior on the first exercise', () => {
