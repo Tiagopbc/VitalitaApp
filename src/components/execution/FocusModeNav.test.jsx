@@ -13,10 +13,19 @@ describe('FocusModeNav', () => {
         syncStatus: SESSION_SYNC_STATES.saved
     };
 
-    it('shows the current position and no group badge', () => {
+    it('shows the current position', () => {
         render(<FocusModeNav {...baseProps} />);
         expect(screen.getByText('2 de 3')).toBeInTheDocument();
-        expect(screen.queryByText(/BI-SET/i)).not.toBeInTheDocument();
+    });
+
+    it('omits the group badge for an ungrouped exercise', () => {
+        render(<FocusModeNav {...baseProps} groupLabel={null} />);
+        expect(screen.queryByText(/Bi-set/i)).not.toBeInTheDocument();
+    });
+
+    it('shows the group badge when the exercise belongs to a group', () => {
+        render(<FocusModeNav {...baseProps} groupLabel="Bi-set" />);
+        expect(screen.getByText('Bi-set')).toBeInTheDocument();
     });
 
     it('disables Anterior on the first exercise', () => {

@@ -4,7 +4,12 @@
 
 Na tela de execução de treino, com o **Modo Foco** ativo, a linha entre a barra superior e o card do exercício fica apertada: o badge "SALVO AGORA" (ou outro estado de `SyncStatusBadge`) e o indicador de grupo "🔗 BI-SET" disputam espaço com o stepper ANTERIOR / "X de Y" / PRÓXIMO. Isso deixa a área visualmente poluída e aumenta o risco de toque errado.
 
-O badge de grupo (BI-SET) já aparece de forma redundante: `LinearCardCompactV2` (via `ExerciseCard`) já mostra a tag de método (ex. "BI-SET") ao lado de "Séries" e "Meta" no próprio card, num container `flex flex-wrap` que já quebra linha sozinho quando não cabe. O badge do stepper (vindo de `getGroupInfo` em `FocusModeNav`) duplica essa informação.
+Uma primeira versão desta spec afirmava que o badge de grupo era redundante, porque `LinearCardCompactV2` (via `ExerciseCard`) já mostra uma tag de método (ex. "BI-SET") ao lado de "Séries" e "Meta". **Isso estava errado** e foi corrigido depois que a revisão automática do PR apontou (obrigado, Codex):
+
+- `method` é um rótulo **puramente informativo**, digitado pelo usuário — não muda nada na execução. O próprio código diz isso em `CreateWorkoutPage.jsx:323`: *"Método 'Bi-set' sozinho é só informativo; o que muda a execução é o agrupamento."*
+- `groupId` é o que **de fato** faz o Modo Foco alternar os exercícios e adiar o descanso até o fim da volta.
+
+Os dois campos são independentes. O botão de corrente (`toggleGroupWithPrevious`) e a importação por PDF definem **só o `groupId`**, deixando `method: "Convencional"` — nesse caso a tag do card diz "CONVENCIONAL" enquanto a execução alterna os exercícios. O badge do stepper (vindo de `getGroupInfo`) era o **único** indicador correto do comportamento real no Modo Foco, não uma duplicata.
 
 ## Objetivo
 
@@ -16,7 +21,7 @@ Vale **somente para o Modo Foco** (`focusMode === true`). Fora dele, a `Executio
 
 ## Mudanças
 
-1. **Remover o badge BI-SET do stepper.** `FocusModeNav` deixa de calcular/renderizar o badge de grupo (`getGroupInfo`, ícone `Link2`) na linha do meio. A informação de bi-set continua visível via a tag de método já existente no card (`LinearCardCompactV2`), sem duplicação.
+1. **Tirar o badge de grupo do stepper, mas mantê-lo na linha utilitária.** O badge sai da linha do meio (onde espremia o "X de Y" entre ANTERIOR e PRÓXIMO) e passa a ficar entre o botão Cancelar e o status de sync, onde há espaço sobrando. Continua derivado do `groupId` via `getGroupInfo`, chamado na página e passado ao `FocusModeNav` pela prop `groupLabel`. **Não pode ser substituído pela tag de método do card** — ver a seção de contexto acima.
 
 2. **Botão "Cancelar treino" sai da `ExecutionTopBar` no Modo Foco.** `ExecutionTopBar` já recebe a prop `focusMode`; quando `true`, o `TopBarButton` de cancelar (ícone `Trash2`, variant `danger`) não é renderizado ali. Fora do Modo Foco, nada muda.
 
