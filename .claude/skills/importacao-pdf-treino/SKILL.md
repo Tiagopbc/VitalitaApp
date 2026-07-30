@@ -40,6 +40,8 @@ A resposta é `{ workouts: [...] }` — um item por ficha do documento (Treino A
 - Bi-set/tri-set são quebrados em exercícios separados e consecutivos, marcados com
   `groupedWithPrevious`. O cliente (`assignGroupIds` em `workoutPdfImport.js`)
   converte isso no `groupId` que `exerciseGroups.js` usa para religar a dupla.
+  **Só o `groupId` é definido — o `method` fica "Convencional".** Nenhuma UI deve
+  usar a tag de método para sinalizar agrupamento; ver o skill `method-vs-groupid`.
 - A decomposição é **rede de segurança determinística** no servidor
   (`decomposeExercise`): mesmo que a IA devolva "A + B" num nome só, a função separa.
 - No `CreateWorkoutPage` os treinos entram numa **fila de revisão** — salva um, o
