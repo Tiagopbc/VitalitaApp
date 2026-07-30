@@ -37,15 +37,36 @@ Isso cria dois casos assimétricos:
 
 ## A regra
 
-**Para indicar agrupamento na UI, derive de `groupId` via `getGroupInfo` / `groupLabel` — nunca leia o `method`.** O rótulo correto ("Bi-set", "Tri-set", "Circuito") vem do *tamanho* do grupo, não de um campo digitado.
+**Para saber se há agrupamento, derive de `groupId` via `getGroupInfo` — nunca do `method`.** O rótulo correto ("Bi-set", "Tri-set", "Circuito") vem do *tamanho* do grupo, não de um campo digitado.
 
 Onde isso já está feito certo:
 
 - `src/components/execution/ExerciseGroupCard.jsx` — fora do Modo Foco, mostra `groupLabel(segment.indices.length)`.
-- `src/components/execution/FocusModeNav.jsx` — no Modo Foco, recebe a prop `groupLabel`, que a página calcula com `getGroupInfo(exercises, currentExerciseIndex)?.label`.
+- `src/components/execution/FocusModeNav.jsx` — no Modo Foco, recebe a prop `groupLabel`, que a página calcula com `focusGroupBehaviorLabel(exercises, currentExerciseIndex)`.
+
+### A exceção: ler `method` para decidir *exibição*
+
+A regra proíbe usar `method` como **fonte da verdade** sobre agrupamento. Não proíbe consultá-lo para decidir se vale a pena mostrar algo — são perguntas diferentes:
+
+| Pergunta | Fonte | Permitido? |
+|---|---|---|
+| "Este exercício está agrupado?" | `groupId` / `getGroupInfo` | Só assim |
+| "A tag do card já diz isso ao usuário?" | `method` | Sim |
+
+`focusGroupBehaviorLabel` (`src/utils/exerciseGroups.js`) é o caso concreto: chama `getGroupInfo` para saber se há grupo — se não houver, retorna `null` e o `method` nem é lido — e só então compara com o `method` para omitir um rótulo que apenas repetiria a tag do card. Trocar o `method` por qualquer valor nunca faz um exercício agrupado parecer avulso na execução; no pior caso, mostra ou esconde um rótulo.
+
+**O teste do limite:** se o `method` mudar e o *comportamento de execução* mudar junto, a regra foi violada. Se só a densidade visual mudar, está dentro da exceção.
+
+### Por que o rótulo do Modo Foco fala de comportamento
+
+O card já mostra o **nome** do método ("BI-SET", clicável, abre a explicação). Repetir a mesma palavra no topo faria parecer a mesma informação duplicada, quando na verdade uma é rótulo e a outra é comportamento. Por isso `groupBehaviorLabel` devolve "Alterna em dupla" / "Alterna em trio" / "Alterna em circuito" — descreve o que o app faz (alternar a cada série, descanso só ao fim da volta, ver `useExecutionNavigation`), não como o exercício se chama.
 
 ## Red flag
 
-Qualquer PR que remova um badge derivado de `getGroupInfo` justificando que "a informação já aparece na tag de método do card". Aconteceu em 29/07/2026 no PR #47: a spec assumiu que os dois campos eram redundantes, as revisões por task e a revisão final herdaram a premissa sem questioná-la, e o Modo Foco ficou sem nenhum indicador de agrupamento para treinos vindos do PDF. Pego pela revisão automática do Codex, não pelo nosso processo.
+Qualquer PR que remova **incondicionalmente** um indicador derivado de `getGroupInfo` justificando que "a informação já aparece na tag de método do card". Aconteceu em 29/07/2026 no PR #47: a spec assumiu que os dois campos eram redundantes, as revisões por task e a revisão final herdaram a premissa sem questioná-la, e o Modo Foco ficou sem nenhum indicador de agrupamento quando o `method` não acompanhava. Pego pela revisão automática do Codex, não pelo nosso processo.
 
-O teste de regressão que cobre isso está em `src/pages/WorkoutExecutionPage.test.jsx` ("shows the group label in focus mode for a grouped exercise whose method is Convencional") — exercícios com `groupId` **e** `method: 'Convencional'`. Um teste que use `method: 'Bi-set'` nos dados não pega o caso.
+A diferença entre isso e a exceção legítima acima está no **incondicionalmente**: omitir o rótulo *quando o card comprovadamente já o mostra* é decisão de exibição; remover o cálculo é perder a informação.
+
+O teste de regressão que cobre isso está em `src/pages/WorkoutExecutionPage.test.jsx` ("shows the group label in focus mode for a grouped exercise whose method is Convencional") — exercícios com `groupId` **e** `method: 'Convencional'`. Um teste que use `method: 'Bi-set'` nos dados não pega o caso, porque aí o rótulo é omitido de propósito.
+
+Os quatro casos cobertos em `src/utils/exerciseGroups.test.js` (`focusGroupBehaviorLabel`) são o mapa completo: avulso, agrupado com método coincidente, agrupado com método "Convencional", e método descrevendo um agrupamento diferente do real.
