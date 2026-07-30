@@ -75,12 +75,12 @@ export function SyncStatusBadge({ status, className = '' }) {
 
     return (
         <div
-            className={`inline-flex h-8 items-center gap-2 rounded-full border px-3 text-[11px] font-bold uppercase backdrop-blur-md ${config.className} ${className}`}
+            className={`inline-flex h-8 max-w-full min-w-0 items-center gap-2 rounded-full border px-3 text-[11px] font-bold uppercase backdrop-blur-md ${config.className} ${className}`}
             role="status"
             aria-live="polite"
         >
             <Icon size={14} className={config.spin ? 'animate-spin' : ''} />
-            <span className="whitespace-nowrap">{config.label}</span>
+            <span className="truncate min-w-0">{config.label}</span>
         </div>
     );
 }

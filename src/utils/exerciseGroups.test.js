@@ -1,6 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import {
     groupLabel,
+    groupBehaviorLabel,
+    focusGroupBehaviorLabel,
     computeGroupSegments,
     getGroupInfo,
     toggleGroupWithPrevious,
@@ -54,6 +56,58 @@ describe('getGroupInfo', () => {
         const info = getGroupInfo(list, 3);
         expect(info.isLastMember).toBe(true);
         expect(info.nextMemberIndex).toBeNull();
+    });
+
+    // O card do exercício já mostra o *nome* do método; o Modo Foco mostra o
+    // comportamento, para não repetir a mesma palavra com dois significados.
+    it('expõe um rótulo de comportamento distinto do nome do método', () => {
+        const info = getGroupInfo(list, 1);
+        expect(info.behaviorLabel).toBe('Alterna em trio');
+        expect(info.behaviorLabel).not.toBe(info.label);
+    });
+});
+
+describe('groupBehaviorLabel', () => {
+    it('descreve a alternância por tamanho do grupo', () => {
+        expect(groupBehaviorLabel(2)).toBe('Alterna em dupla');
+        expect(groupBehaviorLabel(3)).toBe('Alterna em trio');
+        expect(groupBehaviorLabel(4)).toBe('Alterna em circuito');
+        expect(groupBehaviorLabel(7)).toBe('Alterna em circuito');
+    });
+});
+
+describe('focusGroupBehaviorLabel', () => {
+    const withMethod = (id, groupId, method) => ({ id, name: id, method, ...(groupId ? { groupId } : {}) });
+
+    it('retorna null para exercício avulso', () => {
+        const list = [withMethod('a', null, 'Convencional')];
+        expect(focusGroupBehaviorLabel(list, 0)).toBeNull();
+    });
+
+    it('retorna null quando a tag de método do card já descreve o agrupamento', () => {
+        const list = [withMethod('a', 'g1', 'Bi-set'), withMethod('b', 'g1', 'Bi-set')];
+        expect(focusGroupBehaviorLabel(list, 0)).toBeNull();
+    });
+
+    // O caso do botão de corrente e da importação por PDF antiga: só `groupId`,
+    // sem method — sem este rótulo nada indicaria a alternância.
+    it('retorna o rótulo quando o exercício está agrupado mas o método é Convencional', () => {
+        const list = [withMethod('a', 'g1', 'Convencional'), withMethod('b', 'g1', 'Convencional')];
+        expect(focusGroupBehaviorLabel(list, 0)).toBe('Alterna em dupla');
+    });
+
+    it('retorna o rótulo quando o método descreve um agrupamento diferente do real', () => {
+        const list = [
+            withMethod('a', 'g1', 'Bi-set'),
+            withMethod('b', 'g1', 'Bi-set'),
+            withMethod('c', 'g1', 'Bi-set')
+        ];
+        expect(focusGroupBehaviorLabel(list, 0)).toBe('Alterna em trio');
+    });
+
+    it('ignora diferença de caixa e espaços no método', () => {
+        const list = [withMethod('a', 'g1', '  bi-SET '), withMethod('b', 'g1', 'Bi-set')];
+        expect(focusGroupBehaviorLabel(list, 0)).toBeNull();
     });
 });
 

@@ -32,7 +32,7 @@ import { useWakeLock } from '../hooks/useWakeLock';
 import { useExecutionNavigation } from '../hooks/workout-execution/useExecutionNavigation';
 import { useFinishWorkoutFlow } from '../hooks/workout-execution/useFinishWorkoutFlow';
 import { useWorkoutShare } from '../hooks/workout-execution/useWorkoutShare';
-import { computeGroupSegments } from '../utils/exerciseGroups';
+import { computeGroupSegments, focusGroupBehaviorLabel } from '../utils/exerciseGroups';
 import { computeSessionStats } from '../utils/computeSessionStats';
 import { userPreferencesService } from '../services/userPreferencesService';
 const AchievementUnlockedModal = React.lazy(() => import('../components/achievements/AchievementUnlockedModal').then(module => ({ default: module.AchievementUnlockedModal })));
@@ -282,17 +282,21 @@ export function WorkoutExecutionPage({ user }) {
 
                 <div style={{ height: 'calc(65px + env(safe-area-inset-top))' }}></div>
 
-                <div className="px-4 mt-2 mb-2 flex justify-end">
-                    <SyncStatusBadge status={syncState} />
-                </div>
+                {!focusMode && (
+                    <div className="px-4 mt-2 mb-2 flex justify-end">
+                        <SyncStatusBadge status={syncState} />
+                    </div>
+                )}
 
                 {focusMode && (
                     <FocusModeNav
-                        exercises={exercises}
                         currentExerciseIndex={currentExerciseIndex}
                         totalExercises={totalExercises}
                         onPrev={handlePrevExercise}
                         onNext={handleNextExercise}
+                        onDiscard={handleDiscard}
+                        syncStatus={syncState}
+                        groupLabel={focusGroupBehaviorLabel(exercises, currentExerciseIndex)}
                     />
                 )}
 

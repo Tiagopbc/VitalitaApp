@@ -51,9 +51,19 @@ export default defineConfig(({ mode }) => {
       }
     })
   ],
+  // As portas são fixas de propósito: a restrição de referrer da API key do
+  // Firebase só libera 5175 (dev) e 4173 (preview), e o console do Google não
+  // aceita curinga de porta. `strictPort` faz o Vite falhar de imediato quando
+  // a porta está ocupada, em vez de subir na vizinha — que carrega a página
+  // normalmente mas quebra o login com `auth/requests-from-referer-...-blocked`.
   server: {
     host: true, // Listen on all addresses
     port: 5175,
+    strictPort: true,
+  },
+  preview: {
+    port: 4173,
+    strictPort: true,
   },
   build: {
     modulePreload: {

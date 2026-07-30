@@ -94,6 +94,30 @@ const baseExercises = [
     }
 ];
 
+// Dois exercícios ligados por `groupId` mas com `method: 'Convencional'` — o
+// caso real do botão de corrente e da importação por PDF, que definem só o
+// agrupamento. É `groupId` (não `method`) que faz o Modo Foco alternar os
+// exercícios e adiar o descanso, então o rótulo do grupo precisa aparecer
+// mesmo com o método "Convencional".
+const groupedExercises = [
+    {
+        id: 'ex-1',
+        name: 'Supino',
+        method: 'Convencional',
+        groupId: 'grp_1',
+        reps: '10',
+        sets: [{ id: 's1', completed: false, reps: '10', weight: '40' }]
+    },
+    {
+        id: 'ex-2',
+        name: 'Crucifixo',
+        method: 'Convencional',
+        groupId: 'grp_1',
+        reps: '12',
+        sets: [{ id: 's2', completed: false, reps: '12', weight: '20' }]
+    }
+];
+
 describe('WorkoutExecutionPage', () => {
     let baseReturn;
     beforeEach(() => {
@@ -142,6 +166,50 @@ describe('WorkoutExecutionPage', () => {
 
         expect(baseReturn.discardSession).toHaveBeenCalled();
         expect(mockFinishWorkout).toHaveBeenCalled();
+    });
+
+    it('moves cancel and sync status into FocusModeNav when focus mode is on', () => {
+        render(<WorkoutExecutionPage user={{ uid: 'u1' }} />);
+
+        fireEvent.click(screen.getByRole('button', { name: 'FOCO' }));
+
+        fireEvent.click(screen.getByRole('button', { name: 'Cancelar treino' }));
+        expect(screen.getByText('Cancelar Treino?')).toBeInTheDocument();
+    });
+
+    it('shows the group label in focus mode for a grouped exercise whose method is Convencional', () => {
+        useWorkoutSession.mockReturnValue({ ...baseReturn, exercises: groupedExercises });
+        render(<WorkoutExecutionPage user={{ uid: 'u1' }} />);
+
+        fireEvent.click(screen.getByRole('button', { name: 'FOCO' }));
+
+        // `groupId` — não `method` — é o que faz o Modo Foco alternar os
+        // exercícios; sem este rótulo o usuário não teria como saber disso.
+        // O texto descreve o comportamento, não o nome do método, para não
+        // repetir a tag "Bi-set" que o card já mostra.
+        expect(screen.getByText('Alterna em dupla')).toBeInTheDocument();
+    });
+
+    it('omits the group label in focus mode for an ungrouped exercise', () => {
+        render(<WorkoutExecutionPage user={{ uid: 'u1' }} />);
+
+        fireEvent.click(screen.getByRole('button', { name: 'FOCO' }));
+
+        expect(screen.queryByText(/Alterna/i)).not.toBeInTheDocument();
+    });
+
+    it('omits the group label when the card method tag already describes the grouping', () => {
+        // Caminho da importação por PDF: define `groupId` e `method: "Bi-set"`.
+        // O card já mostra a tag, então repetir no topo só polui.
+        useWorkoutSession.mockReturnValue({
+            ...baseReturn,
+            exercises: groupedExercises.map(ex => ({ ...ex, method: 'Bi-set' }))
+        });
+        render(<WorkoutExecutionPage user={{ uid: 'u1' }} />);
+
+        fireEvent.click(screen.getByRole('button', { name: 'FOCO' }));
+
+        expect(screen.queryByText(/Alterna/i)).not.toBeInTheDocument();
     });
 
     it('finishes workout and shows finish modal', async () => {

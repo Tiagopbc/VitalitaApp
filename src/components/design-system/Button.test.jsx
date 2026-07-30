@@ -29,4 +29,10 @@ describe('Button', () => {
         // Check for parts of the danger variant class
         expect(button.className).toContain('bg-[radial-gradient(circle_at_top_left,#ef4444_0%,#dc2626_42%,#991b1b_100%)]');
     });
+
+    it('applies the outline-primary-strong variant classes', () => {
+        render(<Button variant="outline-primary-strong">Próximo</Button>);
+        const button = screen.getByRole('button');
+        expect(button.className).toContain('border-cyan-500/80');
+    });
 });

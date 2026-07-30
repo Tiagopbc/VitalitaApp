@@ -78,6 +78,12 @@ export const Button = ({
         // OUTLINE-PRIMÁRIO: Destaque ciano sem glow (o brilho fica só no primary)
         'outline-primary': 'bg-cyan-500/10 border border-cyan-500/40 text-cyan-400 hover:bg-cyan-500/15 hover:border-cyan-500/60',
 
+        // OUTLINE-PRIMÁRIO FORTE: mesmo espírito do outline-primary, com traço
+        // sólido e leve glow — usado nos botões Anterior/Próximo do Modo Foco,
+        // que precisam se destacar mais que o outline padrão (sem herdar o
+        // gradiente do primary, reservado à ação principal da tela).
+        'outline-primary-strong': 'bg-cyan-500/15 border-2 border-cyan-500/80 text-cyan-300 shadow-[0_0_14px_rgba(6,182,212,0.25)] hover:bg-cyan-500/25 hover:border-cyan-400',
+
         // SUCESSO: Gradiente esmeralda — celebração/conclusão (finalizar treino, PR)
         success: 'bg-[radial-gradient(circle_at_top_left,#34d399_0%,#10b981_42%,#059669_100%)] border border-emerald-500/80 text-[#fff] shadow-[0_8px_20px_rgba(16,185,129,0.4)] hover:shadow-[0_12px_30px_rgba(16,185,129,0.5)]',
     };
