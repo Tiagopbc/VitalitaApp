@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { FocusModeNav } from './FocusModeNav';
 import { SESSION_SYNC_STATES } from '../../services/sessions/sessionRecoveryService';
 
@@ -9,6 +9,7 @@ describe('FocusModeNav', () => {
         totalExercises: 3,
         onPrev: vi.fn(),
         onNext: vi.fn(),
+        onDiscard: vi.fn(),
         syncStatus: SESSION_SYNC_STATES.saved
     };
 
@@ -40,5 +41,11 @@ describe('FocusModeNav', () => {
     it('shows the sync status label', () => {
         render(<FocusModeNav {...baseProps} syncStatus={SESSION_SYNC_STATES.saved} />);
         expect(screen.getByText('Salvo agora')).toBeInTheDocument();
+    });
+
+    it('calls onDiscard when Cancelar treino is clicked', () => {
+        render(<FocusModeNav {...baseProps} />);
+        fireEvent.click(screen.getByRole('button', { name: 'Cancelar treino' }));
+        expect(baseProps.onDiscard).toHaveBeenCalledTimes(1);
     });
 });

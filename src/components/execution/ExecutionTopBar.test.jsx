@@ -20,10 +20,8 @@ describe('ExecutionTopBar', () => {
         expect(baseProps.onDiscard).toHaveBeenCalledTimes(1);
     });
 
-    it('also shows the Cancelar treino button in focus mode', () => {
-        baseProps.onDiscard.mockClear();
+    it('hides the Cancelar treino button in focus mode', () => {
         render(<ExecutionTopBar {...baseProps} focusMode />);
-        fireEvent.click(screen.getByRole('button', { name: 'Cancelar treino' }));
-        expect(baseProps.onDiscard).toHaveBeenCalledTimes(1);
+        expect(screen.queryByRole('button', { name: 'Cancelar treino' })).not.toBeInTheDocument();
     });
 });

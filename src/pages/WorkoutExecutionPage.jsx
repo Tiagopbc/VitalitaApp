@@ -294,6 +294,7 @@ export function WorkoutExecutionPage({ user }) {
                         totalExercises={totalExercises}
                         onPrev={handlePrevExercise}
                         onNext={handleNextExercise}
+                        onDiscard={handleDiscard}
                         syncStatus={syncState}
                         groupLabel={focusGroupBehaviorLabel(exercises, currentExerciseIndex)}
                     />

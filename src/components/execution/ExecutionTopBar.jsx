@@ -5,9 +5,9 @@ import { TopBarButton } from './TopBarButton';
  * Barra superior fixa da execução: voltar (esquerda) + ações (cancelar,
  * calculadora, timer, foco). Puramente controlada por props.
  *
- * O botão de cancelar fica aqui em qualquer modo — já esteve numa linha
- * separada dentro do Modo Foco (PR #47), mas isso deixava um vão vazio
- * grande demais abaixo da barra; voltou pra cá pra reduzir esse espaço.
+ * O botão de cancelar só aparece aqui fora do Modo Foco. No Modo Foco ele
+ * mora em `FocusModeNav`, pareado com o `SyncStatusBadge` — ver comentário
+ * lá para o histórico dessa ida e volta.
  */
 export function ExecutionTopBar({
     onBack,
@@ -54,13 +54,15 @@ export function ExecutionTopBar({
 
                     {/* Right side - Action buttons */}
                     <div className="flex items-center gap-1.5 py-1 flex-1 justify-end min-w-0 pl-2">
-                        <TopBarButton
-                            icon={<Trash2 />}
-                            label="Cancelar treino"
-                            variant="danger"
-                            onClick={onDiscard}
-                            iconOnly
-                        />
+                        {!focusMode && (
+                            <TopBarButton
+                                icon={<Trash2 />}
+                                label="Cancelar treino"
+                                variant="danger"
+                                onClick={onDiscard}
+                                iconOnly
+                            />
+                        )}
 
                         <TopBarButton
                             icon={<Calculator />}
