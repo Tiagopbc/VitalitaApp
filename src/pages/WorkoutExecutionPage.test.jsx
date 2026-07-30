@@ -168,7 +168,7 @@ describe('WorkoutExecutionPage', () => {
         expect(mockFinishWorkout).toHaveBeenCalled();
     });
 
-    it('moves cancel and sync status into FocusModeNav when focus mode is on', () => {
+    it('keeps cancel treino working (from the top bar) when focus mode is on', () => {
         render(<WorkoutExecutionPage user={{ uid: 'u1' }} />);
 
         fireEvent.click(screen.getByRole('button', { name: 'FOCO' }));

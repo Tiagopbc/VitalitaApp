@@ -1,13 +1,14 @@
-import { ChevronLeft, ChevronRight, Link2, Trash2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Link2 } from 'lucide-react';
 import { Button } from '../design-system/Button';
-import { TopBarButton } from './TopBarButton';
 import { SyncStatusBadge } from '../design-system/SyncStatusBadge';
 
 /**
  * Navegação Anterior/Próximo do Modo Foco. A linha "utilitária" logo acima
- * (cancelar treino + rótulo do grupo + status de sincronização) foi movida
- * pra cá porque não cabia nem na barra superior nem espremida ao lado do
- * indicador "X de Y".
+ * (rótulo do grupo + status de sincronização) fica aqui porque não cabia
+ * espremida ao lado do indicador "X de Y". O botão de cancelar treino não
+ * mora mais aqui — voltou pra `ExecutionTopBar` (ver comentário lá) porque a
+ * margem extra que ele exigia (pra não ficar colado no botão Anterior)
+ * deixava um vão grande demais entre a barra superior e este componente.
  *
  * O rótulo do grupo é derivado do `groupId` (via `getGroupInfo` na página) e
  * **não** pode ser substituído pela tag de método do card: `method` é só
@@ -20,25 +21,16 @@ import { SyncStatusBadge } from '../design-system/SyncStatusBadge';
  * vez do nome do método ("Bi-set"): quando os dois campos coincidem, repetir
  * a mesma palavra faria parecer que é a mesma informação duplicada.
  */
-export function FocusModeNav({ currentExerciseIndex, totalExercises, onPrev, onNext, onDiscard, syncStatus, groupLabel }) {
+export function FocusModeNav({ currentExerciseIndex, totalExercises, onPrev, onNext, syncStatus, groupLabel }) {
     return (
         <div className="px-4 mb-2 mt-0 flex flex-col pointer-events-auto relative z-40">
-            <div className="flex items-center justify-between gap-2 mb-5">
-                <div className="flex-shrink-0">
-                    <TopBarButton
-                        icon={<Trash2 />}
-                        label="Cancelar treino"
-                        variant="danger"
-                        onClick={onDiscard}
-                    />
-                </div>
-
+            <div className="flex items-center justify-between gap-2 mb-2">
                 {groupLabel ? (
                     <span className="min-w-0 inline-flex items-center gap-1 px-2 py-1 rounded-full bg-cyan-500/15 border border-cyan-500/40 text-cyan-300 text-[10px] font-bold uppercase tracking-wide">
                         <Link2 size={11} className="flex-shrink-0" />
                         <span className="truncate">{groupLabel}</span>
                     </span>
-                ) : null}
+                ) : <span />}
 
                 <div className="min-w-0">
                     <SyncStatusBadge status={syncStatus} />
