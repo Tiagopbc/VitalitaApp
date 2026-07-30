@@ -42,3 +42,5 @@ output/
 *.devtoolslog.json
 
 .env*.local
+
+.superpowers/
