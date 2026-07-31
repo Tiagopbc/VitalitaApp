@@ -45,8 +45,20 @@ vi.mock('../components/design-system/Skeleton', () => ({
     Skeleton: () => <div>Skeleton</div>
 }));
 
+// O card é mockado, mas expõe o `groupRound` recebido: o que esta suíte
+// verifica é a fiação (a página calcular e passar o resumo da volta). A
+// renderização dos dois estados do aviso é coberta por GroupRoundNotice.test.
 vi.mock('../components/execution/LinearCardCompactV2', () => ({
-    LinearCardCompactV2: () => <div>Card</div>
+    LinearCardCompactV2: ({ groupRound }) => (
+        <div>
+            Card
+            {groupRound && (
+                <div data-testid="card-group-round">
+                    {groupRound.label}|{groupRound.nextName}|{String(groupRound.roundNotStarted)}
+                </div>
+            )}
+        </div>
+    )
 }));
 
 vi.mock('../components/execution/RestTimer', () => ({
@@ -210,6 +222,48 @@ describe('WorkoutExecutionPage', () => {
         fireEvent.click(screen.getByRole('button', { name: 'FOCO' }));
 
         expect(screen.queryByText(/Alterna/i)).not.toBeInTheDocument();
+    });
+
+    // No Modo Foco só um exercício aparece por vez, então nada revelaria que
+    // concluir a série salta para o parceiro — que pode exigir outro
+    // equipamento. Nomear o parceiro é a informação que faltava.
+    it('passes the group round preview to the card in focus mode', () => {
+        useWorkoutSession.mockReturnValue({ ...baseReturn, exercises: groupedExercises });
+        render(<WorkoutExecutionPage user={{ uid: 'u1' }} />);
+
+        fireEvent.click(screen.getByRole('button', { name: 'FOCO' }));
+
+        // `method` é "Convencional" nestes dados: o resumo vem do `groupId`.
+        expect(screen.getByTestId('card-group-round')).toHaveTextContent('Bi-set|Crucifixo|true');
+    });
+
+    it('omits the group round preview for an ungrouped exercise', () => {
+        render(<WorkoutExecutionPage user={{ uid: 'u1' }} />);
+
+        fireEvent.click(screen.getByRole('button', { name: 'FOCO' }));
+
+        expect(screen.queryByTestId('card-group-round')).not.toBeInTheDocument();
+    });
+
+    it('marks the round as started once any member has a completed set', () => {
+        const started = groupedExercises.map((ex, i) =>
+            i === 0 ? { ...ex, sets: [{ ...ex.sets[0], completed: true }] } : ex
+        );
+        useWorkoutSession.mockReturnValue({ ...baseReturn, exercises: started });
+        render(<WorkoutExecutionPage user={{ uid: 'u1' }} />);
+
+        fireEvent.click(screen.getByRole('button', { name: 'FOCO' }));
+
+        expect(screen.getByTestId('card-group-round')).toHaveTextContent('Bi-set|Crucifixo|false');
+    });
+
+    // A lista mostra os exercícios do grupo juntos na moldura do
+    // ExerciseGroupCard — lá o aviso seria redundante.
+    it('does not pass the group round preview outside focus mode', () => {
+        useWorkoutSession.mockReturnValue({ ...baseReturn, exercises: groupedExercises });
+        render(<WorkoutExecutionPage user={{ uid: 'u1' }} />);
+
+        expect(screen.queryByTestId('card-group-round')).not.toBeInTheDocument();
     });
 
     it('finishes workout and shows finish modal', async () => {
