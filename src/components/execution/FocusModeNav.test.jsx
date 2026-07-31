@@ -43,9 +43,9 @@ describe('FocusModeNav', () => {
         expect(screen.getByText('Salvo agora')).toBeInTheDocument();
     });
 
-    it('calls onDiscard when Cancelar treino is clicked', () => {
+    it('calls onDiscard when Cancelar is clicked', () => {
         render(<FocusModeNav {...baseProps} />);
-        fireEvent.click(screen.getByRole('button', { name: 'Cancelar treino' }));
+        fireEvent.click(screen.getByRole('button', { name: 'Cancelar' }));
         expect(baseProps.onDiscard).toHaveBeenCalledTimes(1);
     });
 });

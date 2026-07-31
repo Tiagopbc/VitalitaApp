@@ -36,14 +36,14 @@ export function FocusModeNav({ currentExerciseIndex, totalExercises, onPrev, onN
                 </div>
             )}
 
-            <div className="flex items-center justify-between gap-2 mb-2">
+            <div className="flex items-center justify-between gap-2 mb-4">
                 <button
                     type="button"
                     onClick={onDiscard}
                     className="inline-flex h-8 items-center justify-center gap-2 rounded-full border px-3 text-[11px] font-bold uppercase backdrop-blur-md border-red-500/30 bg-red-500/10 text-red-400 hover:bg-red-500/20 hover:border-red-500/50 transition-colors"
                 >
                     <Trash2 size={14} />
-                    <span className="whitespace-nowrap">Cancelar treino</span>
+                    <span className="whitespace-nowrap">Cancelar</span>
                 </button>
 
                 <SyncStatusBadge status={syncStatus} />
