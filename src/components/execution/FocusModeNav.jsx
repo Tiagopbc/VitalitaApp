@@ -40,7 +40,7 @@ export function FocusModeNav({ currentExerciseIndex, totalExercises, onPrev, onN
                 <button
                     type="button"
                     onClick={onDiscard}
-                    className="inline-flex h-8 items-center justify-center gap-2 rounded-full border px-3 text-[11px] font-bold uppercase backdrop-blur-md border-red-500/30 bg-red-500/10 text-red-400 hover:bg-red-500/20 hover:border-red-500/50 transition-colors"
+                    className="inline-flex w-36 h-8 items-center justify-center gap-2 rounded-full border px-3 text-[11px] font-bold uppercase backdrop-blur-md border-red-500/30 bg-red-500/10 text-red-400 hover:bg-red-500/20 hover:border-red-500/50 transition-colors"
                 >
                     <Trash2 size={14} />
                     <span className="whitespace-nowrap">Cancelar</span>
@@ -56,7 +56,7 @@ export function FocusModeNav({ currentExerciseIndex, totalExercises, onPrev, onN
                     onClick={onPrev}
                     disabled={currentExerciseIndex === 0}
                     leftIcon={<ChevronLeft size={16} />}
-                    className="backdrop-blur-md"
+                    className="w-36 backdrop-blur-md"
                 >
                     Anterior
                 </Button>
@@ -71,7 +71,7 @@ export function FocusModeNav({ currentExerciseIndex, totalExercises, onPrev, onN
                     onClick={onNext}
                     disabled={currentExerciseIndex === totalExercises - 1}
                     rightIcon={<ChevronRight size={16} />}
-                    className="backdrop-blur-md"
+                    className="w-36 backdrop-blur-md"
                 >
                     Próximo
                 </Button>
