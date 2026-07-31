@@ -1,6 +1,7 @@
 import React, { useState, memo, useRef } from 'react';
 import { Minus, Plus, CheckCircle2, Info, Check, ArrowRight, Scale, LayoutList, Target, ArrowDown, TrendingUp, AlertTriangle } from 'lucide-react';
 import { NumericKeypad } from '../common/NumericKeypad';
+import { GroupRoundNotice } from './GroupRoundNotice';
 
 function generateId() {
     return Math.random().toString(36).substr(2, 9);
@@ -29,7 +30,8 @@ export const LinearCardCompactV2 = memo(function LinearCardCompactV2({
     onUpdateSetMultiple,
     onToggleWeightMode,
     onValidationError,
-    progressionHint
+    progressionHint,
+    groupRound
 }) {
     const completedCount = completedSets.filter(Boolean).length;
     const isExerciseFullyCompleted = completedCount === totalSets && totalSets > 0;
@@ -239,30 +241,45 @@ export const LinearCardCompactV2 = memo(function LinearCardCompactV2({
 
     return (
         <div className={`rounded-[24px] p-4 flex flex-col gap-3 transition-all duration-300 relative overflow-hidden ${containerClass}`}>
-            <div className="flex justify-between items-start mb-2 gap-3">
+            <div className="flex justify-between items-start gap-3">
                 <div className="flex-1 min-w-0">
                     <h3 className="text-[#e2e8f0] text-[20px] font-bold leading-tight uppercase relative" style={{ whiteSpace: 'normal', wordWrap: 'break-word', overflowWrap: 'break-word', display: 'block' }}>
                         {exerciseName}
                     </h3>
-                    <div className="flex flex-wrap items-center gap-2 mt-2 mb-0.5">
-                        <div className="flex items-center gap-1.5 bg-slate-800/50 px-2 py-0.5 rounded-md border border-slate-700/50">
-                            <LayoutList size={11} className="text-slate-400" />
-                            <span className="text-[11px] font-medium text-slate-300">{totalSets} Séries</span>
-                        </div>
-                        <div className="flex items-center gap-1.5 bg-slate-800/50 px-2 py-0.5 rounded-md border border-slate-700/50">
-                            <Target size={11} className="text-cyan-500" />
-                            <span className="text-[11px] font-bold text-cyan-400 tracking-wide">Meta: {repsGoal}</span>
-                        </div>
-                        <div onClick={onMethodClick} className="flex items-center gap-1.5 bg-slate-800/50 px-2 py-0.5 rounded-md border border-slate-700/50 cursor-pointer hover:bg-slate-700 transition-all group/badge">
-                            <Info size={11} className="text-blue-400 group-hover/badge:text-cyan-400 transition-colors" />
-                            <span className="text-[10px] font-bold text-slate-300 uppercase truncate max-w-[120px]">{method}</span>
-                        </div>
-                    </div>
                 </div>
                 <div className={`px-3 py-1.5 rounded-full text-base font-bold flex-shrink-0 border ${isExerciseFullyCompleted ? 'text-green-500 bg-green-500/10 border-green-500/30' : 'text-blue-500 bg-blue-500/10 border-blue-500/25'}`}>
                     {completedCount} / {totalSets}
                 </div>
             </div>
+
+            {/* Ocupa a largura inteira do card, e não a coluna do título: assim o
+                método fica ao lado da meta em vez de cair para a linha de baixo.
+
+                Os espaçamentos são apertados de propósito (gap-1, px-1.5, ícones
+                de 10px). A régua é "Convencional", o método padrão e a pill mais
+                larga: a 375px sobram 277px para a linha, e com o layout antigo
+                (dentro da coluna do título, px-2/gap-2/ícones 11px) faltavam
+                17px — ou seja, o caso mais comum do app quebrava. Com estes
+                valores sobram 12px. Mexer neles pede remedir. O `flex-wrap`
+                continua sendo a saída quando de fato não couber. */}
+            <div className="flex flex-wrap items-center gap-1 mt-2 mb-2">
+                <div className="flex items-center gap-1 bg-slate-800/50 px-1.5 py-0.5 rounded-md border border-slate-700/50">
+                    <LayoutList size={10} className="text-slate-400" />
+                    <span className="text-[11px] font-medium text-slate-300">{totalSets} Séries</span>
+                </div>
+                <div className="flex items-center gap-1 bg-slate-800/50 px-1.5 py-0.5 rounded-md border border-slate-700/50">
+                    <Target size={10} className="text-cyan-500" />
+                    <span className="text-[11px] font-bold text-cyan-400 tracking-wide">Meta: {repsGoal}</span>
+                </div>
+                <div onClick={onMethodClick} className="flex items-center gap-1 bg-slate-800/50 px-1.5 py-0.5 rounded-md border border-slate-700/50 cursor-pointer hover:bg-slate-700 transition-all group/badge">
+                    <Info size={10} className="text-blue-400 group-hover/badge:text-cyan-400 transition-colors" />
+                    <span className="text-[10px] font-bold text-slate-300 uppercase truncate max-w-[160px]">{method}</span>
+                </div>
+            </div>
+
+            {/* Antes do progressionHint de propósito: o que preparar vem antes
+                de quanto levantar. */}
+            <GroupRoundNotice round={groupRound} currentSet={currentSet} totalSets={totalSets} />
 
             {progressionHint && !isExerciseFullyCompleted && (
                 <div

@@ -102,6 +102,49 @@ export function focusGroupBehaviorLabel(exercises, index) {
 }
 
 /**
+ * Resumo da volta do grupo do exercício em `index`, para o Modo Foco.
+ *
+ * No Modo Foco só um exercício aparece por vez, então nada revela que a
+ * conclusão da série vai saltar para outro exercício — que às vezes exige
+ * outro equipamento (halter, barra, anilha). Este resumo existe para nomear
+ * os companheiros de volta *antes* da primeira série.
+ *
+ * ⚠️ Tudo aqui deriva do `groupId` (via `getGroupInfo`), inclusive o `label`,
+ * que vem do tamanho do grupo. O `method` do exercício não é lido: ele é um
+ * rótulo informativo e costuma valer "Convencional" mesmo em grupos criados
+ * pelo botão de corrente. Ver o skill `method-vs-groupid`.
+ *
+ * @returns {{ label: string,
+ *             members: Array<{ index: number, name: string, isCurrent: boolean }>,
+ *             nextIndex: number, nextName: string,
+ *             isLastMember: boolean, roundNotStarted: boolean } | null}
+ *          `null` para exercício avulso.
+ */
+export function getGroupRoundPreview(exercises, index) {
+    const group = getGroupInfo(exercises, index);
+    if (!group) return null;
+
+    // No último membro a volta reinicia no primeiro do grupo — o mesmo destino
+    // que `useExecutionNavigation` escolhe enquanto restam séries.
+    const nextIndex = group.nextMemberIndex !== null ? group.nextMemberIndex : group.firstIndex;
+
+    return {
+        label: group.label,
+        members: group.indices.map(i => ({
+            index: i,
+            name: exercises[i]?.name || '',
+            isCurrent: i === index
+        })),
+        nextIndex,
+        nextName: exercises[nextIndex]?.name || '',
+        isLastMember: group.isLastMember,
+        roundNotStarted: group.indices.every(
+            i => !(exercises[i]?.sets || []).some(set => set?.completed)
+        )
+    };
+}
+
+/**
  * Liga/desliga o exercício em `index` ao grupo do exercício anterior.
  * Retorna uma nova lista (não muta a original).
  */
