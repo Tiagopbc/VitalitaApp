@@ -3,13 +3,16 @@ import { Button } from '../design-system/Button';
 import { SyncStatusBadge } from '../design-system/SyncStatusBadge';
 
 /**
- * Navegação Anterior/Próximo do Modo Foco, com a linha "utilitária" logo
- * acima (cancelar treino + status de sincronização, e o rótulo de grupo
- * quando houver). O botão de cancelar treino não aparece na `ExecutionTopBar`
- * no Modo Foco — mora aqui, pareado com o `SyncStatusBadge`, com o mesmo
- * formato/altura de pill (`h-8 rounded-full`) usado por eles e pelos botões
- * Anterior/Próximo logo abaixo, pra os dois pares ficarem visualmente
- * simétricos.
+ * Navegação Anterior/Próximo do Modo Foco — uma linha só. Cancelar treino e
+ * o status de sincronização moram nas pontas dessa mesma linha, como
+ * círculos de ícone (sem rótulo de texto): antes cada um tinha sua própria
+ * fileira acima do stepper, e as três fileiras empilhadas (barra superior +
+ * essa linha + stepper) apertavam demais o topo da tela no Modo Foco. O
+ * texto de cada um continua acessível via `aria-label`/`title` — só não
+ * aparece visualmente.
+ *
+ * O botão de cancelar treino não aparece na `ExecutionTopBar` no Modo Foco —
+ * mora aqui.
  *
  * O rótulo do grupo é derivado do `groupId` (via `getGroupInfo` na página) e
  * **não** pode ser substituído pela tag de método do card: `method` é só
@@ -17,8 +20,7 @@ import { SyncStatusBadge } from '../design-system/SyncStatusBadge';
  * os exercícios e adiar o descanso. Um exercício agrupado pelo botão de
  * corrente (ou vindo do PDF) costuma manter `method: "Convencional"`, então
  * sem este rótulo não sobraria nenhuma indicação do comportamento real. Fica
- * numa linha própria, centralizado, pra não disputar espaço com o par
- * Cancelar/Salvo nem com o "X de Y" do stepper.
+ * numa linha própria, centralizado, pra não disputar espaço com o stepper.
  *
  * Por isso o texto aqui descreve o **comportamento** ("Alterna em dupla") em
  * vez do nome do método ("Bi-set"): quando os dois campos coincidem, repetir
@@ -36,45 +38,44 @@ export function FocusModeNav({ currentExerciseIndex, totalExercises, onPrev, onN
                 </div>
             )}
 
-            <div className="flex items-center justify-between gap-2 mb-2">
+            <div className="flex items-center justify-between gap-1.5">
                 <button
                     type="button"
                     onClick={onDiscard}
-                    className="inline-flex h-8 items-center justify-center gap-2 rounded-full border px-3 text-[11px] font-bold uppercase backdrop-blur-md border-red-500/30 bg-red-500/10 text-red-400 hover:bg-red-500/20 hover:border-red-500/50 transition-colors"
+                    aria-label="Cancelar treino"
+                    title="Cancelar treino"
+                    className="inline-flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full border backdrop-blur-md border-red-500/30 bg-red-500/10 text-red-400 hover:bg-red-500/20 hover:border-red-500/50 transition-colors"
                 >
                     <Trash2 size={14} />
-                    <span className="whitespace-nowrap">Cancelar treino</span>
                 </button>
 
-                <SyncStatusBadge status={syncStatus} />
-            </div>
-
-            <div className="flex items-center justify-between">
                 <Button
                     variant="outline-primary-strong"
-                    size="sm"
+                    size="xs"
                     onClick={onPrev}
                     disabled={currentExerciseIndex === 0}
-                    leftIcon={<ChevronLeft size={16} />}
+                    leftIcon={<ChevronLeft size={14} />}
                     className="backdrop-blur-md"
                 >
                     Anterior
                 </Button>
 
-                <span className="text-sm font-bold text-slate-400">
+                <span className="text-xs font-bold text-slate-400 whitespace-nowrap">
                     {currentExerciseIndex + 1} de {totalExercises}
                 </span>
 
                 <Button
                     variant="outline-primary-strong"
-                    size="sm"
+                    size="xs"
                     onClick={onNext}
                     disabled={currentExerciseIndex === totalExercises - 1}
-                    rightIcon={<ChevronRight size={16} />}
+                    rightIcon={<ChevronRight size={14} />}
                     className="backdrop-blur-md"
                 >
                     Próximo
                 </Button>
+
+                <SyncStatusBadge status={syncStatus} compact />
             </div>
         </div>
     );

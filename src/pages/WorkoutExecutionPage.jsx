@@ -280,7 +280,12 @@ export function WorkoutExecutionPage({ user }) {
                     onToggleFocus={() => setFocusMode(!focusMode)}
                 />
 
-                <div style={{ height: 'calc(58px + env(safe-area-inset-top))' }}></div>
+                {/* Só o "content height" da ExecutionTopBar (~44px) + respiro: o
+                    `env(safe-area-inset-top)` já é aplicado uma vez pelo `body`
+                    em index.css. Somar de novo aqui duplicava o recuo em
+                    iPhones com notch/Dynamic Island e abria um vão enorme
+                    entre a barra e o conteúdo abaixo. */}
+                <div style={{ height: '58px' }}></div>
 
                 {!focusMode && (
                     <div className="px-4 mt-2 mb-2 flex justify-end">
