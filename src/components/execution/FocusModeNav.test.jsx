@@ -40,12 +40,12 @@ describe('FocusModeNav', () => {
 
     it('shows the sync status label', () => {
         render(<FocusModeNav {...baseProps} syncStatus={SESSION_SYNC_STATES.saved} />);
-        expect(screen.getByText('Salvo agora')).toBeInTheDocument();
+        expect(screen.getByRole('status', { name: 'Salvo agora' })).toBeInTheDocument();
     });
 
     it('calls onDiscard when Cancelar is clicked', () => {
         render(<FocusModeNav {...baseProps} />);
-        fireEvent.click(screen.getByRole('button', { name: 'Cancelar' }));
+        fireEvent.click(screen.getByRole('button', { name: 'Cancelar treino' }));
         expect(baseProps.onDiscard).toHaveBeenCalledTimes(1);
     });
 });

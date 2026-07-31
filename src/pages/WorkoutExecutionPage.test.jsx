@@ -173,7 +173,7 @@ describe('WorkoutExecutionPage', () => {
 
         fireEvent.click(screen.getByRole('button', { name: 'FOCO' }));
 
-        fireEvent.click(screen.getByRole('button', { name: 'Cancelar' }));
+        fireEvent.click(screen.getByRole('button', { name: 'Cancelar treino' }));
         expect(screen.getByText('Cancelar Treino?')).toBeInTheDocument();
     });
 

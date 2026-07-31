@@ -69,9 +69,28 @@ const statusConfig = {
     }
 };
 
-export function SyncStatusBadge({ status, className = '' }) {
+/**
+ * `compact` renderiza só o círculo com o ícone (usado no stepper do Modo
+ * Foco, onde não há espaço pro rótulo). O texto continua acessível via
+ * `aria-label`/`title` — não é removido, só deixa de aparecer visualmente.
+ */
+export function SyncStatusBadge({ status, className = '', compact = false }) {
     const config = statusConfig[status] || statusConfig[SESSION_SYNC_STATES.active];
     const Icon = config.icon;
+
+    if (compact) {
+        return (
+            <div
+                className={`inline-flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full border backdrop-blur-md ${config.className} ${className}`}
+                role="status"
+                aria-live="polite"
+                aria-label={config.label}
+                title={config.label}
+            >
+                <Icon size={14} className={config.spin ? 'animate-spin' : ''} />
+            </div>
+        );
+    }
 
     return (
         <div
