@@ -442,9 +442,27 @@ function AppAuthedContent() {
                 </div>
             </div>
 
+            {/*
+              * `theme="dark"`: sem isso o sonner usa o tema claro por padrão, e o
+              * aviso saía num bloco quase branco no meio de um app todo escuro.
+              *
+              * `offset` no eixo Y: ancorado no topo, o aviso ficava atrás da status
+              * bar do iPhone e chegava a cobrir o título da tela. `42vh` ancora a
+              * borda de cima e cai opticamente no centro — é a API pública do
+              * sonner, preferida a sobrescrever CSS porque o pacote anima
+              * `transform` no eixo X e uma sobrescrita brigaria com isso.
+              * Objeto parcial: o sonner completa os lados omitidos com os padrões
+              * dele (24px no desktop, 16px no mobile).
+              */}
             {shouldRenderToaster && (
                 <Suspense fallback={null}>
-                    <SonnerToaster richColors position="top-center" />
+                    <SonnerToaster
+                        richColors
+                        theme="dark"
+                        position="top-center"
+                        offset={{ top: '42vh' }}
+                        mobileOffset={{ top: '42vh' }}
+                    />
                 </Suspense>
             )}
 
