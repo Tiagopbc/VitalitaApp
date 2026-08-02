@@ -8,7 +8,9 @@ import pluginCypress from 'eslint-plugin-cypress/flat'
 import pluginReact from 'eslint-plugin-react'
 
 export default defineConfig([
-  globalIgnores(['dist', 'dev-dist', 'coverage']),
+  // '.claude/**' porque padrões de flat config são ancorados na raiz: 'dist' e
+  // 'dev-dist' não alcançam as cópias dentro de .claude/worktrees/<branch>/.
+  globalIgnores(['dist', 'dev-dist', 'coverage', '.claude/**']),
   pluginCypress.configs.recommended,
   pluginReact.configs.flat.recommended,
   {
