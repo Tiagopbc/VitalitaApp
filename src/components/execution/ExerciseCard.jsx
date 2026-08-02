@@ -7,8 +7,12 @@ import { LinearCardCompactV2 } from './LinearCardCompactV2';
  *
  * `handlers` agrupa os callbacks vindos da página/hooks; `activeSetIndices`
  * mapeia exerciseId → índice de série selecionada.
+ *
+ * `groupRound` (opcional) é o resumo da volta do grupo, vindo de
+ * `getGroupRoundPreview`. Só o Modo Foco passa: na lista os exercícios do
+ * grupo já aparecem juntos dentro da moldura do `ExerciseGroupCard`.
  */
-export function ExerciseCard({ exercise: ex, activeSetIndices, progression, handlers }) {
+export function ExerciseCard({ exercise: ex, activeSetIndices, progression, handlers, groupRound }) {
     const {
         updateExerciseSet,
         updateSetMultiple,
@@ -58,6 +62,7 @@ export function ExerciseCard({ exercise: ex, activeSetIndices, progression, hand
             onToggleWeightMode={() => toggleExerciseWeightMode(ex.id)}
             onValidationError={onValidationError}
             progressionHint={progression?.[ex.id]}
+            groupRound={groupRound}
         />
     );
 }

@@ -3,6 +3,7 @@ import {
     groupLabel,
     groupBehaviorLabel,
     focusGroupBehaviorLabel,
+    getGroupRoundPreview,
     computeGroupSegments,
     getGroupInfo,
     toggleGroupWithPrevious,
@@ -108,6 +109,91 @@ describe('focusGroupBehaviorLabel', () => {
     it('ignora diferença de caixa e espaços no método', () => {
         const list = [withMethod('a', 'g1', '  bi-SET '), withMethod('b', 'g1', 'Bi-set')];
         expect(focusGroupBehaviorLabel(list, 0)).toBeNull();
+    });
+});
+
+describe('getGroupRoundPreview', () => {
+    // `sets` entra aqui só para o cálculo de `roundNotStarted`.
+    const withSets = (id, groupId, completedFlags) => ({
+        id,
+        name: `Exercício ${id}`,
+        ...(groupId ? { groupId } : {}),
+        sets: completedFlags.map(completed => ({ completed }))
+    });
+
+    const pair = () => [
+        withSets('a', 'g1', [false, false]),
+        withSets('b', 'g1', [false, false])
+    ];
+
+    it('retorna null para exercício avulso', () => {
+        const list = [withSets('a', null, [false]), withSets('b', 'g1', [false]), withSets('c', 'g1', [false])];
+        expect(getGroupRoundPreview(list, 0)).toBeNull();
+    });
+
+    // O rótulo vem do TAMANHO do grupo, nunca do campo `method` — um bi-set
+    // feito pelo botão de corrente costuma manter `method: "Convencional"`.
+    it('nomeia o grupo pelo tamanho, ignorando o method', () => {
+        const list = pair().map(ex => ({ ...ex, method: 'Convencional' }));
+        expect(getGroupRoundPreview(list, 0).label).toBe('Bi-set');
+    });
+
+    it('lista os membros na ordem e marca o atual', () => {
+        const preview = getGroupRoundPreview(pair(), 1);
+        expect(preview.members).toEqual([
+            { index: 0, name: 'Exercício a', isCurrent: false },
+            { index: 1, name: 'Exercício b', isCurrent: true }
+        ]);
+    });
+
+    it('aponta para o próximo membro do grupo', () => {
+        const preview = getGroupRoundPreview(pair(), 0);
+        expect(preview.isLastMember).toBe(false);
+        expect(preview.nextIndex).toBe(1);
+        expect(preview.nextName).toBe('Exercício b');
+    });
+
+    // No último membro a volta reinicia no primeiro — é o que
+    // `useExecutionNavigation` faz quando ainda restam séries.
+    it('no último membro, volta para o primeiro do grupo', () => {
+        const preview = getGroupRoundPreview(pair(), 1);
+        expect(preview.isLastMember).toBe(true);
+        expect(preview.nextIndex).toBe(0);
+        expect(preview.nextName).toBe('Exercício a');
+    });
+
+    it('roundNotStarted é verdadeiro só enquanto nenhum membro tem série concluída', () => {
+        expect(getGroupRoundPreview(pair(), 0).roundNotStarted).toBe(true);
+
+        const started = [
+            withSets('a', 'g1', [true, false]),
+            withSets('b', 'g1', [false, false])
+        ];
+        expect(getGroupRoundPreview(started, 0).roundNotStarted).toBe(false);
+
+        // Série concluída no parceiro também conta: a volta já começou.
+        const partnerStarted = [
+            withSets('a', 'g1', [false, false]),
+            withSets('b', 'g1', [true, false])
+        ];
+        expect(getGroupRoundPreview(partnerStarted, 0).roundNotStarted).toBe(false);
+    });
+
+    it('trata exercício sem sets como volta não iniciada', () => {
+        const list = [ex('a', 'g1'), ex('b', 'g1')];
+        expect(getGroupRoundPreview(list, 0).roundNotStarted).toBe(true);
+    });
+
+    it('funciona com grupos maiores que dois', () => {
+        const trio = [
+            withSets('a', 'g1', [false]),
+            withSets('b', 'g1', [false]),
+            withSets('c', 'g1', [false])
+        ];
+        const preview = getGroupRoundPreview(trio, 1);
+        expect(preview.label).toBe('Tri-set');
+        expect(preview.members).toHaveLength(3);
+        expect(preview.nextIndex).toBe(2);
     });
 });
 
