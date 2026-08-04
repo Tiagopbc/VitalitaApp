@@ -2,9 +2,9 @@
   "name": "treino",
   "private": true,
   "version": "0.0.0",
-  "packageManager": "npm@10.9.4",
+  "packageManager": "npm@11.17.0",
   "engines": {
-    "node": "22.x || 24.x"
+    "node": "24.x"
   },
   "type": "module",
   "scripts": {
