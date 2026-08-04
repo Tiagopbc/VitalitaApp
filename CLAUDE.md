@@ -8,6 +8,8 @@ Documentação, commits, PRs e comentários deste repositório são em **portugu
 
 ## Comandos
 
+O projeto roda em **Node 24 + npm 11** — use um gerenciador que leia o `.nvmrc` e instale com o `npm` que vem junto. Não é preferência de estilo; ver "Armadilhas".
+
 ```bash
 npm run dev              # Vite em http://localhost:5175 (porta FIXA, ver "Portas" abaixo)
 npm run build            # build de produção em dist/
@@ -50,6 +52,10 @@ PWA em React 19 + Vite, com Firebase Auth e Cloud Firestore direto do cliente. N
 ## Armadilhas específicas deste projeto
 
 Ler antes de "consertar" algo que parece quebrado — vários destes já foram decisões conscientes.
+
+**Node 24 + npm 11 é requisito do lockfile, não preferência.** Desde 04/08/2026 tudo aponta para o 24: `.nvmrc`, `engines.node: "24.x"`, `packageManager: npm@11.17.0`, `node-version: 24` no `ci.yml` e `runtime: nodejs24` no `firebase.json` — que é o runtime mais alto que o `firebase-tools` 15.x oferece, então subir o Node do projeto depende do Google primeiro. O npm 10 e o npm 11 discordam sobre 14 entradas aninhadas do `package-lock.json` (subárvore de proxy do `puppeteer-core`, transitiva do `lighthouse`, mais `quickjs-wasi`) e cada um é coerente consigo mesmo; o que quebra é **escritor e leitor em majors diferentes**, e só aparece no CI, que usa `npm ci` (estrito) e falha com `EUSAGE / Missing: proxy-agent@... from lock file`. Foi a causa do incidente de 23/07/2026, quando o CI ainda rodava Node 22. Minor e patch do npm são inofensivos, e `npm ci` é seguro em qualquer versão — ele instala a partir do lock e nunca escreve nele. Ao subir o Node major no futuro, regere o lockfile **no mesmo commit** que muda o `ci.yml`.
+
+**Gerenciador de versão de Node só vale em shell interativo.** O hook do `fnm`/`nvm` mora no `~/.zshrc`, que não é sourceado em shell não-interativo — então comandos rodados por agente ou script caem no Node do sistema, não no do `.nvmrc`. Confira com `node -v` antes de concluir que a máquina está na versão errada, e use `fnm exec --using=24 -- <comando>` quando a versão importar de verdade.
 
 **A API key do Firebase é pública e não deve ser rotacionada.** Ela é embutida no bundle por design e apenas identifica o projeto. Quem controla acesso são `firestore.rules`, as restrições da chave e o App Check. Um alerta de secret scanning já foi fechado como *won't fix* por isso (21/07/2026); se reaparecer, confira as restrições em vez de gerar chave nova. Detalhes em [MANUAL_TECNICO.md](MANUAL_TECNICO.md) §7.
 
