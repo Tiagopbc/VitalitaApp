@@ -33,7 +33,7 @@ import { AddCardioModal } from '../components/AddCardioModal';
 import { StarterWorkoutsLibrary } from '../components/workout/StarterWorkoutsLibrary';
 import { ConfirmDialog } from '../components/design-system/ConfirmDialog';
 import { nextDisplayOrder, normalizeActiveWorkoutOrder, sortWorkoutTemplates } from '../utils/workoutTemplateOrder';
-import { buildCopyName, isCopyName } from '../utils/workoutCopyName';
+import { buildCopyName, copyInsertIndex, isCopyName } from '../utils/workoutCopyName';
 import { countBySourceFilter, matchesSourceFilter } from '../utils/workoutSourceFilter';
 import { SourceFilterChips } from '../components/workout/SourceFilterChips';
 import { toast } from 'sonner';
@@ -215,9 +215,13 @@ export default function WorkoutsPage({ onNavigateToCreate, onNavigateToWorkout, 
 
     /**
      * Duplica uma ficha pelo caminho único de escrita (`workoutService`) e
-     * posiciona a cópia logo abaixo do original. Sem o reposicionamento a cópia
-     * pulava para o topo da lista: ela era a única com `displayOrder` definido,
-     * e `compareWorkoutTemplates` coloca quem tem ordem antes de quem não tem.
+     * posiciona a cópia no fim do bloco de cópias daquele treino — cronológico,
+     * "(Cópia)" e depois "(Cópia 2)". Entrar sempre logo abaixo do original
+     * deixava a mais recente por cima da mais antiga.
+     *
+     * Sem o reposicionamento a cópia pulava para o topo da lista: ela era a
+     * única com `displayOrder` definido, e `compareWorkoutTemplates` coloca
+     * quem tem ordem antes de quem não tem.
      */
     const duplicateWorkout = async (workout) => {
         const { workoutService } = await import('../services/workoutService');
@@ -269,7 +273,7 @@ export default function WorkoutsPage({ onNavigateToCreate, onNavigateToWorkout, 
             const activeWorkouts = normalizeActiveWorkoutOrder(workouts);
             const originalIndex = activeWorkouts.findIndex(item => item.id === workout.id);
             const reordered = [...activeWorkouts];
-            reordered.splice(originalIndex >= 0 ? originalIndex + 1 : reordered.length, 0, copy);
+            reordered.splice(copyInsertIndex(activeWorkouts, originalIndex, workout.name), 0, copy);
 
             const normalized = reordered.map((item, displayOrder) => ({ ...item, displayOrder }));
             const orderById = new Map(normalized.map(item => [item.id, item]));

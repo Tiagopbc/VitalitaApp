@@ -30,6 +30,36 @@ export function isCopyName(name) {
 }
 
 /**
+ * Onde encaixar uma cópia nova: no fim do bloco de cópias que já segue o
+ * original, para a ordem ficar cronológica — "(Cópia)" e só então "(Cópia 2)".
+ * Entrar sempre logo abaixo do original deixava a mais recente por cima.
+ *
+ * Só percorre o bloco contíguo: uma cópia que o usuário arrastou para longe
+ * fica onde ele a colocou, e a nova continua junto do original.
+ *
+ * @param {Array<{name: string}>} templates Fichas na ordem exibida.
+ * @param {number} originalIndex Posição do treino duplicado (-1 se não achou).
+ * @param {string} originalName Nome do treino duplicado.
+ * @returns {number} Índice de inserção.
+ */
+export function copyInsertIndex(templates = [], originalIndex, originalName) {
+    if (originalIndex < 0) return templates.length;
+
+    const base = stripCopySuffix(originalName);
+    let index = originalIndex + 1;
+
+    while (
+        index < templates.length
+        && isCopyName(templates[index]?.name)
+        && stripCopySuffix(templates[index]?.name) === base
+    ) {
+        index += 1;
+    }
+
+    return index;
+}
+
+/**
  * Primeiro nome livre da sequência "<base> (Cópia)", "<base> (Cópia 2)"...
  * Preenche lacunas: com "(Cópia)" e "(Cópia 3)" ocupados, devolve "(Cópia 2)".
  *

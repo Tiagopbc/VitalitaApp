@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildCopyName, isCopyName, stripCopySuffix } from './workoutCopyName';
+import { buildCopyName, copyInsertIndex, isCopyName, stripCopySuffix } from './workoutCopyName';
 
 describe('stripCopySuffix', () => {
     it('remove apenas o sufixo final de cópia', () => {
@@ -57,5 +57,34 @@ describe('buildCopyName', () => {
 
     it('funciona sem lista de nomes existentes', () => {
         expect(buildCopyName('Treino A')).toBe('Treino A (Cópia)');
+    });
+});
+
+describe('copyInsertIndex', () => {
+    const list = names => names.map(name => ({ name }));
+
+    it('entra logo abaixo do original quando ainda não há cópia', () => {
+        expect(copyInsertIndex(list(['Treino A', 'Treino B']), 0, 'Treino A')).toBe(1);
+    });
+
+    // Ordem cronológica: "(Cópia)" primeiro, "(Cópia 2)" depois.
+    it('entra no fim do bloco de cópias do mesmo treino', () => {
+        const templates = list(['Treino A', 'Treino A (Cópia)', 'Treino A (Cópia 2)', 'Treino B']);
+        expect(copyInsertIndex(templates, 0, 'Treino A')).toBe(3);
+    });
+
+    it('para no primeiro treino que não é cópia daquele original', () => {
+        const templates = list(['Treino A', 'Treino A (Cópia)', 'Treino B (Cópia)', 'Treino B']);
+        expect(copyInsertIndex(templates, 0, 'Treino A')).toBe(2);
+    });
+
+    // Duplicar a cópia continua alimentando o mesmo bloco.
+    it('usa o nome-base ao duplicar uma cópia', () => {
+        const templates = list(['Treino A', 'Treino A (Cópia)', 'Treino B']);
+        expect(copyInsertIndex(templates, 1, 'Treino A (Cópia)')).toBe(2);
+    });
+
+    it('joga para o fim quando o original não está na lista', () => {
+        expect(copyInsertIndex(list(['Treino A', 'Treino B']), -1, 'Treino C')).toBe(2);
     });
 });
