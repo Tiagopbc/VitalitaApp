@@ -284,18 +284,44 @@ describe('WorkoutExecutionPage', () => {
         expect(await screen.findByText('Compartilhar Resultado', {}, { timeout: 2000 })).toBeInTheDocument();
     });
 
-    it('keeps the bottom padding compact in both modes', () => {
+    // O "FINALIZAR TREINO" fica no fim da tela pelo fluxo (coluna flex +
+    // `mt-auto`), nunca por `position: fixed` — botão flutuante sobre a ficha
+    // foi justamente o que gerava toque errado no "CONCLUIR SÉRIE".
+    it('keeps the finish button pinned to the bottom in both modes', () => {
         render(<WorkoutExecutionPage user={{ uid: 'u1' }} />);
 
         const page = screen.getByTestId('workout-execution-page');
         const footer = screen.getByTestId('workout-finish-footer');
+
+        const expectBottomLayout = () => {
+            expect(page.className).toContain('flex');
+            expect(page.className).toContain('flex-col');
+            expect(page.className).toContain('min-h-[calc(100dvh');
+            expect(footer.className).toContain('mt-auto');
+            expect(footer.className).not.toContain('fixed');
+            // O `body` já reserva o safe-area inferior: repetir aqui deixava o
+            // botão boiando acima do rodapé real.
+            expect(footer.className).not.toContain('safe-area-inset-bottom');
+        };
+
         expect(page).toHaveAttribute('data-focus-mode', 'false');
-        expect(page).toHaveClass('pb-4');
-        expect(footer.className).not.toContain('6rem');
+        expectBottomLayout();
 
         fireEvent.click(screen.getByRole('button', { name: 'FOCO' }));
 
         expect(page).toHaveAttribute('data-focus-mode', 'true');
-        expect(page).not.toHaveClass('pb-4');
+        expectBottomLayout();
+    });
+
+    it('centers the exercise card in the leftover height only in focus mode', () => {
+        const { container } = render(<WorkoutExecutionPage user={{ uid: 'u1' }} />);
+        const main = container.querySelector('main');
+
+        expect(main.className).toContain('flex-1');
+        expect(main.className).not.toContain('justify-center');
+
+        fireEvent.click(screen.getByRole('button', { name: 'FOCO' }));
+
+        expect(main.className).toContain('justify-center');
     });
 });

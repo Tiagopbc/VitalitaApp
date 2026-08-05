@@ -213,14 +213,16 @@ export function WorkoutExecutionPage({ user }) {
         onValidationError: setError
     };
 
+    // Altura exata da área visível — não `min-h-screen`. O `body` já consome os
+    // dois safe-area insets (index.css), então `100vh` puro deixaria a página
+    // mais alta que a tela e o rodapé nunca encostaria embaixo. Com
+    // `flex flex-col`, o `<main>` toma a sobra e empurra o "FINALIZAR TREINO"
+    // para o fim da tela, sem precisar de botão flutuante.
     return (
         <div
             data-testid="workout-execution-page"
             data-focus-mode={focusMode ? 'true' : 'false'}
-            className={`min-h-screen bg-[#020617] text-slate-100 p-4 font-sans selection:bg-cyan-500/30 ${focusMode
-                ? 'pb-[calc(1rem+env(safe-area-inset-bottom))]'
-                : 'pb-4'
-                }`}
+            className="flex min-h-[calc(100dvh-env(safe-area-inset-top)-env(safe-area-inset-bottom))] flex-col bg-[#020617] p-4 font-sans text-slate-100 selection:bg-cyan-500/30"
         >
             {/* LOADER DE FINALIZAÇÃO DA SESSÃO */}
             {isFinishingSession && (
@@ -267,7 +269,7 @@ export function WorkoutExecutionPage({ user }) {
                 onChoose={handleResolveSessionConflict}
                 onKeepRecommended={() => handleResolveSessionConflict(sessionConflict?.source)}
             />
-            <div className="max-w-2xl mx-auto flex flex-col">
+            <div className="max-w-2xl mx-auto flex flex-1 w-full flex-col">
 
                 <ExecutionTopBar
                     onBack={() => onFinish()}
@@ -311,7 +313,11 @@ export function WorkoutExecutionPage({ user }) {
                     </div>
                 )}
 
-                <main className={`px-4 mt-2 space-y-4`}>
+                {/* `flex-1` absorve a sobra de altura. No Modo Foco a ficha
+                    ainda é centralizada nessa sobra; quando ela é mais alta que
+                    a tela o próprio `flex-1` cresce e a página rola normalmente,
+                    sem cortar o topo. */}
+                <main className={`px-4 mt-2 space-y-4 flex-1 ${focusMode ? 'flex flex-col justify-center' : ''}`}>
                     {focusMode ? (
                         exercises.length > 0 && (
                             <ExerciseCard
@@ -383,12 +389,16 @@ export function WorkoutExecutionPage({ user }) {
 
                 {/* Footer Fim de Treino - Apenas mostra se o modal de finalização NÃO estiver visível */}
                 {!showFinishModal && (
+                    /* `mt-auto` encosta o rodapé na base da tela sem `position:
+                       fixed` — com ficha curta (série de linha única) o
+                       "FINALIZAR TREINO" ficava colado no "CONCLUIR SÉRIE" e
+                       rendia toque errado. O `pb` não repete
+                       `env(safe-area-inset-bottom)`: o `body` já reserva esse
+                       espaço e somar de novo deixava o botão boiando acima do
+                       rodapé real. */
                     <div
                         data-testid="workout-finish-footer"
-                        className={`w-full ${focusMode
-                            ? 'mt-5 pb-[calc(1rem+env(safe-area-inset-bottom))]'
-                            : 'mt-6 pb-[calc(1.25rem+env(safe-area-inset-bottom))]'
-                            }`}
+                        className="w-full mt-auto pt-8 pb-1"
                     >
                         <div className="max-w-2xl mx-auto flex justify-center">
                             <div className="space-y-4 w-full flex flex-col items-center px-4">

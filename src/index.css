@@ -342,3 +342,16 @@
         }
     }
 }
+
+/*
+ * Faixa rolável sem barra visível (filtros em chips de "Meus Treinos"). A
+ * rolagem continua funcionando por toque e por teclado — só a barra some.
+ */
+@utility no-scrollbar {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+
+    &::-webkit-scrollbar {
+        display: none;
+    }
+}

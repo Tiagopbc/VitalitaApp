@@ -4,7 +4,6 @@
  * Suporta pesquisa, filtragem (por empurrar/puxar/pernas/etc) e classificação de modelos.
  */
 import React, { useState, useEffect, useCallback } from 'react';
-import { getFirestoreDeps } from '../firebaseDb';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
     Search,
@@ -34,6 +33,9 @@ import { AddCardioModal } from '../components/AddCardioModal';
 import { StarterWorkoutsLibrary } from '../components/workout/StarterWorkoutsLibrary';
 import { ConfirmDialog } from '../components/design-system/ConfirmDialog';
 import { nextDisplayOrder, normalizeActiveWorkoutOrder, sortWorkoutTemplates } from '../utils/workoutTemplateOrder';
+import { buildCopyName, isCopyName } from '../utils/workoutCopyName';
+import { countBySourceFilter, matchesSourceFilter } from '../utils/workoutSourceFilter';
+import { SourceFilterChips } from '../components/workout/SourceFilterChips';
 import { toast } from 'sonner';
 const ExerciseCard = React.lazy(() => import('../components/workout/ExerciseCard').then(module => ({ default: module.ExerciseCard })));
 const EditExerciseModal = React.lazy(() => import('../components/workout/EditExerciseModal').then(module => ({ default: module.EditExerciseModal })));
@@ -142,29 +144,13 @@ export default function WorkoutsPage({ onNavigateToCreate, onNavigateToWorkout, 
 
     // --- FILTER LOGIC ---
     const filteredWorkouts = sortWorkoutTemplates(workouts.filter(workout => {
-        // 1. Search
         const matchesSearch = workout.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
             (workout.muscleGroups && workout.muscleGroups.some(g => g.toLowerCase().includes(searchQuery.toLowerCase())));
 
-        // 2. Source Filter (My vs. Personal vs. Archived)
-        let matchesSource = true;
-        
-        if (sourceFilter === 'arquivados') {
-            // Só mostra arquivados
-            matchesSource = workout.isArchived;
-        } else {
-            // Em todas as outras abas, ESCONDE os arquivados
-            if (workout.isArchived) return false;
-            
-            if (sourceFilter === 'meus') {
-                matchesSource = workout.createdBy === user.uid || !workout.createdBy;
-            } else if (sourceFilter === 'personal') {
-                matchesSource = workout.createdBy && workout.createdBy !== user.uid;
-            }
-        }
-
-        return matchesSearch && matchesSource;
+        return matchesSearch && matchesSourceFilter(workout, sourceFilter, user.uid);
     }));
+
+    const sourceCounts = countBySourceFilter(workouts, user.uid);
 
     // --- ACTIONS ---
     const handleCardClick = (id, name) => {
@@ -227,6 +213,74 @@ export default function WorkoutsPage({ onNavigateToCreate, onNavigateToWorkout, 
         }
     };
 
+    /**
+     * Duplica uma ficha pelo caminho único de escrita (`workoutService`) e
+     * posiciona a cópia logo abaixo do original. Sem o reposicionamento a cópia
+     * pulava para o topo da lista: ela era a única com `displayOrder` definido,
+     * e `compareWorkoutTemplates` coloca quem tem ordem antes de quem não tem.
+     */
+    const duplicateWorkout = async (workout) => {
+        const { workoutService } = await import('../services/workoutService');
+        const exercises = workout.exercises || [];
+        const muscleGroups = workout.muscleGroups || [];
+        const name = buildCopyName(workout.name, workouts.map(item => item.name));
+
+        const newId = await workoutService.createTemplate(
+            {
+                name,
+                exercises,
+                targetUserId: user.uid,
+                createdBy: user.uid
+            },
+            {
+                category: workout.category || 'fullbody',
+                estimatedDuration: workout.duration,
+                muscleGroups,
+                displayOrder: nextDisplayOrder(workouts)
+            }
+        );
+
+        const copy = {
+            id: newId,
+            name,
+            exercisesCount: exercises.length,
+            exercises,
+            duration: workout.duration || '45-60min',
+            muscleGroups,
+            lastPerformed: 'Nunca',
+            lastPerformedDate: null,
+            frequency: '1x/sem',
+            timesPerformed: 0,
+            isFavorite: false,
+            category: workout.category || 'fullbody',
+            createdBy: user.uid,
+            assignedByTrainer: false,
+            completedToday: false,
+            isArchived: false,
+            displayOrder: nextDisplayOrder(workouts)
+        };
+
+        setWorkouts(prev => [...prev, copy]);
+        toast.success("Treino duplicado.");
+
+        // Reordenar é um extra: se falhar, a cópia continua existindo no fim da
+        // lista — não vale desfazer a duplicação nem alarmar o usuário.
+        try {
+            const activeWorkouts = normalizeActiveWorkoutOrder(workouts);
+            const originalIndex = activeWorkouts.findIndex(item => item.id === workout.id);
+            const reordered = [...activeWorkouts];
+            reordered.splice(originalIndex >= 0 ? originalIndex + 1 : reordered.length, 0, copy);
+
+            const normalized = reordered.map((item, displayOrder) => ({ ...item, displayOrder }));
+            const orderById = new Map(normalized.map(item => [item.id, item]));
+
+            setWorkouts(current => current.map(item => orderById.get(item.id) || item));
+            await workoutService.saveTemplateOrder(normalized);
+        } catch (orderError) {
+            console.error('Erro ao posicionar a cópia na lista:', orderError);
+        }
+    };
+
     const handleMenuAction = async (e, action, workout) => {
         e.stopPropagation();
         setActiveCardMenu(null);
@@ -234,83 +288,24 @@ export default function WorkoutsPage({ onNavigateToCreate, onNavigateToWorkout, 
         if (action === 'delete') {
             setWorkoutPendingDelete(workout);
         } else if (action === 'duplicate') {
-            const newWorkoutData = {
-                name: `${workout.name} (Cópia)`,
-                exercises: workout.exercises || [],
-                category: workout.category,
-                estimatedDuration: workout.duration,
-                userId: user.uid,
-                createdBy: user.uid,
-                assignedByTrainer: false,
-                displayOrder: nextDisplayOrder(workouts)
-            };
-
             try {
-                const { db, collection, addDoc, serverTimestamp } = await getFirestoreDeps();
-                const docRef = await addDoc(collection(db, 'workout_templates'), {
-                    ...newWorkoutData,
-                    createdAt: serverTimestamp(),
-                    updatedAt: serverTimestamp()
-                });
-                
-                // Limpar cache após mutação
-                const { workoutService } = await import('../services/workoutService');
-                workoutService.clearCache();
-
-                setWorkouts(prev => ([
-                    {
-                        id: docRef.id,
-                        name: newWorkoutData.name,
-                        exercisesCount: newWorkoutData.exercises?.length || 0,
-                        exercises: newWorkoutData.exercises || [],
-                        duration: newWorkoutData.estimatedDuration || '45-60min',
-                        muscleGroups: workout.muscleGroups || [],
-                        lastPerformed: 'Nunca',
-                        lastPerformedDate: null,
-                        frequency: '1x/sem',
-                        timesPerformed: 0,
-                        isFavorite: false,
-                        category: newWorkoutData.category || 'fullbody',
-                        createdBy: user.uid,
-                        assignedByTrainer: false,
-                        completedToday: false,
-                        isArchived: false,
-                        displayOrder: newWorkoutData.displayOrder
-                    },
-                    ...prev
-                ]));
-                toast.success("Treino duplicado.");
+                await duplicateWorkout(workout);
             } catch (err) {
                 toast.error(err.message || "Erro ao duplicar treino.");
             }
         } else if (action === 'edit') {
             onNavigateToCreate(workout);
-        } else if (action === 'archive') {
+        } else if (action === 'archive' || action === 'unarchive') {
+            const isArchived = action === 'archive';
             try {
-                const { db, doc, updateDoc } = await getFirestoreDeps();
-                await updateDoc(doc(db, 'workout_templates', workout.id), {
-                    isArchived: true
-                });
-                // Limpar cache após mutação
                 const { workoutService } = await import('../services/workoutService');
-                workoutService.clearCache();
+                await workoutService.setTemplateArchived(workout.id, isArchived);
 
-                setWorkouts(prev => prev.map(w => w.id === workout.id ? { ...w, isArchived: true } : w));
-                toast.success("Treino arquivado.");
-            } catch (err) { toast.error(err.message || "Erro ao arquivar treino."); }
-        } else if (action === 'unarchive') {
-            try {
-                const { db, doc, updateDoc } = await getFirestoreDeps();
-                await updateDoc(doc(db, 'workout_templates', workout.id), {
-                    isArchived: false
-                });
-                // Limpar cache após mutação
-                const { workoutService } = await import('../services/workoutService');
-                workoutService.clearCache();
-
-                setWorkouts(prev => prev.map(w => w.id === workout.id ? { ...w, isArchived: false } : w));
-                toast.success("Treino desarquivado.");
-            } catch (err) { toast.error(err.message || "Erro ao desarquivar treino."); }
+                setWorkouts(prev => prev.map(w => w.id === workout.id ? { ...w, isArchived } : w));
+                toast.success(isArchived ? "Treino arquivado." : "Treino desarquivado.");
+            } catch (err) {
+                toast.error(err.message || (isArchived ? "Erro ao arquivar treino." : "Erro ao desarquivar treino."));
+            }
         }
     };
 
@@ -318,11 +313,8 @@ export default function WorkoutsPage({ onNavigateToCreate, onNavigateToWorkout, 
         if (!workoutPendingDelete) return;
         setDeletingWorkout(true);
         try {
-            const { db, doc, deleteDoc } = await getFirestoreDeps();
-            await deleteDoc(doc(db, 'workout_templates', workoutPendingDelete.id));
-
             const { workoutService } = await import('../services/workoutService');
-            workoutService.clearCache();
+            await workoutService.deleteTemplate(workoutPendingDelete.id);
 
             setWorkouts(prev => prev.filter(w => w.id !== workoutPendingDelete.id));
             toast.success("Treino excluído.");
@@ -339,7 +331,7 @@ export default function WorkoutsPage({ onNavigateToCreate, onNavigateToWorkout, 
         <div className="min-h-screen pb-8 pt-2 px-4 lg:px-8 w-full max-w-5xl mx-auto lg:pt-[calc(1.5rem+env(safe-area-inset-top))] lg:pb-12">
 
             {/* 1. HEADER & SEARCH */}
-            <div className="space-y-6 pt-2 mb-8 lg:space-y-8 lg:pt-6">
+            <div className="space-y-4 pt-2 mb-8 lg:space-y-5 lg:pt-6">
                 {/* Top Bar - Hide if Trainer Mode */}
                 {!isTrainerMode && (
                     <PageHeader
@@ -356,66 +348,44 @@ export default function WorkoutsPage({ onNavigateToCreate, onNavigateToWorkout, 
                             >
                                 Concluir
                             </Button>
-                        ) : (
-                            <div className="flex w-full gap-2 sm:w-auto">
-                                <Button
-                                    variant="secondary"
-                                    size="sm"
-                                    onClick={() => setIsLibraryOpen(true)}
-                                    className="flex-1 rounded-xl px-2 sm:flex-none sm:px-4"
-                                    leftIcon={<Sparkles size={16} />}
-                                >
-                                    Modelos
-                                </Button>
-                                <Button
-                                    variant="secondary"
-                                    size="sm"
-                                    onClick={() => setIsAddCardioOpen(true)}
-                                    className="flex-1 rounded-xl px-2 sm:flex-none sm:px-4"
-                                    leftIcon={<Activity size={16} />}
-                                >
-                                    Cardio
-                                </Button>
-                                <Button
-                                    variant="secondary"
-                                    size="sm"
-                                    onClick={toggleOrganizing}
-                                    className="flex-1 rounded-xl px-2 sm:flex-none sm:px-4"
-                                    leftIcon={<ListOrdered size={16} />}
-                                >
-                                    Ordem
-                                </Button>
-                                <Button
-                                    size="sm"
-                                    onClick={() => onNavigateToCreate(null, { targetUserId: user.uid })}
-                                    className="flex-1 rounded-xl px-2 sm:flex-none sm:px-4"
-                                    leftIcon={<Plus size={16} />}
-                                >
-                                    Novo
-                                </Button>
-                            </div>
-                        )}
+                        ) : null}
                         className="mb-0"
                     />
                 )}
 
-
-
-                {/* New: Source Tabs - Hide if Trainer Mode (since trainer sees all relevant) */}
+                {/* Bloco de ações: "Novo treino" em destaque + atalhos compactos.
+                    Antes eram quatro botões dividindo a largura do celular, e o
+                    rótulo de cada um ficava espremido contra o próprio ícone. */}
                 {!isTrainerMode && !isOrganizing && (
-                    <div className="grid grid-cols-2 gap-1 p-1 bg-slate-900/50 rounded-xl mb-6 border border-slate-800 backdrop-blur-sm sm:grid-cols-4">
-                        {['all', 'meus', 'personal', 'arquivados'].map((filter) => (
-                            <button
-                                key={filter}
-                                onClick={() => setSourceFilter(filter)}
-                                className={`min-w-0 py-2 px-2 rounded-lg text-sm font-semibold transition-colors duration-200 whitespace-nowrap ${sourceFilter === filter
-                                    ? 'bg-cyan-500 text-black shadow-lg shadow-cyan-500/20'
-                                    : 'text-slate-400 hover:text-white hover:bg-slate-800'
-                                    }`}
+                    <div className="rounded-3xl border border-slate-800/50 bg-gradient-to-br from-slate-900/90 to-slate-950/95 p-3 shadow-md">
+                        <div className="flex flex-col gap-2 sm:flex-row sm:items-stretch">
+                            <div className="grid grid-cols-3 gap-2 sm:flex-1 sm:order-1">
+                                {[
+                                    { id: 'modelos', label: 'Modelos', icon: <Sparkles size={17} />, onClick: () => setIsLibraryOpen(true) },
+                                    { id: 'cardio', label: 'Cardio', icon: <Activity size={17} />, onClick: () => setIsAddCardioOpen(true) },
+                                    { id: 'ordem', label: 'Ordem', icon: <ListOrdered size={17} />, onClick: toggleOrganizing }
+                                ].map(shortcut => (
+                                    <Button
+                                        key={shortcut.id}
+                                        variant="unstyled"
+                                        haptic="light"
+                                        onClick={shortcut.onClick}
+                                        className="flex h-12 flex-col items-center justify-center gap-0.5 rounded-2xl border border-slate-800 bg-slate-900/60 text-slate-300 transition-colors hover:border-cyan-500/30 hover:bg-slate-800/70 hover:text-white sm:flex-row sm:gap-2"
+                                    >
+                                        <span className="text-cyan-400">{shortcut.icon}</span>
+                                        <span className="text-[11px] font-semibold tracking-wide sm:text-xs">{shortcut.label}</span>
+                                    </Button>
+                                ))}
+                            </div>
+
+                            <Button
+                                onClick={() => onNavigateToCreate(null, { targetUserId: user.uid })}
+                                className="h-12 w-full rounded-2xl sm:order-2 sm:h-auto sm:w-auto sm:px-6"
+                                leftIcon={<Plus size={18} />}
                             >
-                                {filter === 'all' ? 'Todos' : filter === 'meus' ? 'Meus Treinos' : filter === 'personal' ? 'Personal Play' : 'Arquivados'}
-                            </button>
-                        ))}
+                                Novo treino
+                            </Button>
+                        </div>
                     </div>
                 )}
 
@@ -430,7 +400,7 @@ export default function WorkoutsPage({ onNavigateToCreate, onNavigateToWorkout, 
                         </span>
                     </div>
                 ) : (
-                    <PremiumCard className="p-0">
+                    <div className="overflow-hidden rounded-3xl border border-slate-800/50 bg-gradient-to-br from-slate-900/90 to-slate-950/95 shadow-md">
                         <div className="relative">
                             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={20} />
                             <input
@@ -438,10 +408,18 @@ export default function WorkoutsPage({ onNavigateToCreate, onNavigateToWorkout, 
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                                 placeholder="Buscar por nome ou músculo..."
-                                className="w-full pl-12 pr-4 py-4 bg-transparent border-none text-white placeholder:text-slate-500 focus:ring-1 focus:ring-cyan-500 rounded-xl transition-colors"
+                                className="w-full pl-12 pr-4 py-4 bg-transparent border-none text-white placeholder:text-slate-500 focus:ring-1 focus:ring-cyan-500 rounded-3xl transition-colors"
                             />
                         </div>
-                    </PremiumCard>
+
+                        {!isTrainerMode && (
+                            <SourceFilterChips
+                                value={sourceFilter}
+                                counts={sourceCounts}
+                                onChange={setSourceFilter}
+                            />
+                        )}
+                    </div>
                 )}
             </div>
 
@@ -474,6 +452,15 @@ export default function WorkoutsPage({ onNavigateToCreate, onNavigateToWorkout, 
                                                 <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-500 border border-amber-500/30 flex items-center gap-1">
                                                     <Crown size={10} strokeWidth={3} />
                                                     COACH
+                                                </span>
+                                            )}
+                                            {/* Derivado do nome (ver workoutCopyName.js): o sufixo
+                                                "(Cópia)" se perde no fim de um título longo, então o
+                                                selo é o que de fato diferencia a cópia do original. */}
+                                            {isCopyName(workout.name) && (
+                                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-violet-500/15 text-violet-300 border border-violet-500/30 flex items-center gap-1">
+                                                    <Copy size={10} strokeWidth={3} />
+                                                    CÓPIA
                                                 </span>
                                             )}
                                             {workout.muscleGroups.map((tag, i) => (

@@ -230,6 +230,27 @@ export const workoutService = {
     },
 
     /**
+     * Arquiva ou desarquiva uma ficha.
+     * @param {string} templateId
+     * @param {boolean} isArchived
+     */
+    async setTemplateArchived(templateId, isArchived) {
+        const { db, doc, updateDoc } = await getFirestoreDeps();
+        await updateDoc(doc(db, TEMPLATES_COLLECTION, templateId), { isArchived });
+        this.clearCache();
+    },
+
+    /**
+     * Remove uma ficha. Não altera sessões já concluídas.
+     * @param {string} templateId
+     */
+    async deleteTemplate(templateId) {
+        const { db, doc, deleteDoc } = await getFirestoreDeps();
+        await deleteDoc(doc(db, TEMPLATES_COLLECTION, templateId));
+        this.clearCache();
+    },
+
+    /**
      * Obter a ÚLTIMA sessão CONCLUÍDA do usuário (Limit 1).
      * Otimizado para lógica de "Próxima Sugestão".
      * @param {string} userId 
