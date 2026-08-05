@@ -7,7 +7,8 @@ import { workoutService } from '../services/workoutService';
 vi.mock('../services/workoutService', () => ({
     workoutService: {
         getTemplates: vi.fn(),
-        saveTemplateOrder: vi.fn()
+        saveTemplateOrder: vi.fn(),
+        createTemplate: vi.fn()
     }
 }));
 
@@ -123,8 +124,81 @@ describe('WorkoutsPage', () => {
     it('calls onNavigateToCreate when clicking Novo Treino', async () => {
         const { onNavigateToCreate } = await renderPage();
 
-        fireEvent.click(screen.getByText('Novo'));
+        fireEvent.click(screen.getByRole('button', { name: 'Novo treino' }));
         expect(onNavigateToCreate).toHaveBeenCalledWith(null, { targetUserId: 'user123' });
+    });
+
+    it('shows how many workouts each source filter holds', async () => {
+        await renderPage();
+
+        // Todos 2 · Meus Treinos 1 · Personal Play 1 · Arquivados 0
+        expect(screen.getByRole('button', { name: 'Todos' })).toHaveTextContent('2');
+        expect(screen.getByRole('button', { name: 'Meus Treinos' })).toHaveTextContent('1');
+        expect(screen.getByRole('button', { name: 'Arquivados' })).toHaveTextContent('0');
+    });
+
+    describe('duplicar treino', () => {
+        const duplicate = async (workoutName) => {
+            fireEvent.click(screen.getByRole('button', { name: `Abrir opções de ${workoutName}` }));
+            fireEvent.click(screen.getByText('Duplicar'));
+        };
+
+        it('cria a cópia pelo workoutService, com nome numerado e grupos musculares', async () => {
+            workoutService.createTemplate.mockResolvedValue('w1-copy');
+            workoutService.saveTemplateOrder.mockResolvedValue(undefined);
+            await renderPage();
+
+            await duplicate('Treino Peito');
+
+            await waitFor(() => {
+                expect(workoutService.createTemplate).toHaveBeenCalledWith(
+                    expect.objectContaining({
+                        name: 'Treino Peito (Cópia)',
+                        targetUserId: 'user123',
+                        createdBy: 'user123'
+                    }),
+                    expect.objectContaining({ muscleGroups: ['Peito'] })
+                );
+            });
+        });
+
+        // Sem o reposicionamento a cópia pulava para o topo da lista.
+        it('posiciona a cópia logo abaixo do original', async () => {
+            workoutService.createTemplate.mockResolvedValue('w1-copy');
+            workoutService.saveTemplateOrder.mockResolvedValue(undefined);
+            await renderPage();
+
+            await duplicate('Treino Peito');
+
+            await waitFor(() => {
+                expect(workoutService.saveTemplateOrder).toHaveBeenCalledWith([
+                    expect.objectContaining({ id: 'w1', displayOrder: 0 }),
+                    expect.objectContaining({ id: 'w1-copy', displayOrder: 1 }),
+                    expect.objectContaining({ id: 'w2', displayOrder: 2 })
+                ]);
+            });
+        });
+
+        it('marca a cópia com o selo CÓPIA e numera a duplicação seguinte', async () => {
+            workoutService.createTemplate.mockResolvedValue('w1-copy');
+            workoutService.saveTemplateOrder.mockResolvedValue(undefined);
+            await renderPage();
+
+            await duplicate('Treino Peito');
+
+            expect(await screen.findByText('Treino Peito (Cópia)')).toBeInTheDocument();
+            expect(screen.getAllByText('CÓPIA')).toHaveLength(1);
+
+            workoutService.createTemplate.mockResolvedValue('w1-copy-2');
+            await duplicate('Treino Peito');
+
+            await waitFor(() => {
+                expect(workoutService.createTemplate).toHaveBeenLastCalledWith(
+                    expect.objectContaining({ name: 'Treino Peito (Cópia 2)' }),
+                    expect.anything()
+                );
+            });
+        });
     });
 
     it('lets the user move an active workout and persists the new order', async () => {
