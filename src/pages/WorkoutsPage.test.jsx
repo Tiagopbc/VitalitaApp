@@ -179,6 +179,28 @@ describe('WorkoutsPage', () => {
             });
         });
 
+        // Cronológico: a segunda cópia entra depois da primeira, não em cima.
+        it('empilha a cópia seguinte no fim do bloco de cópias', async () => {
+            workoutService.createTemplate.mockResolvedValue('w1-copy');
+            workoutService.saveTemplateOrder.mockResolvedValue(undefined);
+            await renderPage();
+
+            await duplicate('Treino Peito');
+            await screen.findByText('Treino Peito (Cópia)');
+
+            workoutService.createTemplate.mockResolvedValue('w1-copy-2');
+            await duplicate('Treino Peito');
+
+            await waitFor(() => {
+                expect(workoutService.saveTemplateOrder).toHaveBeenLastCalledWith([
+                    expect.objectContaining({ id: 'w1', displayOrder: 0 }),
+                    expect.objectContaining({ id: 'w1-copy', displayOrder: 1 }),
+                    expect.objectContaining({ id: 'w1-copy-2', displayOrder: 2 }),
+                    expect.objectContaining({ id: 'w2', displayOrder: 3 })
+                ]);
+            });
+        });
+
         it('marca a cópia com o selo CÓPIA e numera a duplicação seguinte', async () => {
             workoutService.createTemplate.mockResolvedValue('w1-copy');
             workoutService.saveTemplateOrder.mockResolvedValue(undefined);
