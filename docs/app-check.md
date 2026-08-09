@@ -62,6 +62,42 @@ As categorias principais no Firebase Console sao:
 
 Durante o monitoramento, essas categorias servem para diagnostico. Elas nao devem disparar bloqueio automatico.
 
+## Diagnostico: Verificadas Presas em 0%
+
+De 21/07 a 07/08/2026 o Cloud Firestore ficou em 0% verificadas e 100% sem verificacao. O numero
+parado parece "ainda ha pouco trafego", mas nesse caso era falha: o App Check nunca emitiu um token.
+
+O sinal esta no console do navegador em producao:
+
+```
+@firebase/app-check: AppCheck: 403 error.
+Attempts allowed again after 01d:00m:00s (appCheck/initial-throttle)
+```
+
+A causa foi um par de chaves reCAPTCHA Enterprise no mesmo projeto: o bundle usava `vitalita-appcheck`
+enquanto o registro em **App Check > Apps** apontava para `vitalita-web-app-check`, orfa de uma
+tentativa anterior. O Firebase recebia um atestado assinado pela chave errada e respondia
+`App attestation failed`. A correcao foi alinhar o registro com a chave do bundle, sem redeploy.
+
+Ordem de investigacao quando o percentual nao sai do zero:
+
+1. Confirme que o SDK inicializa: `typeof window.grecaptcha` deve ser `"object"` e
+   `document.querySelector('.grecaptcha-badge')` deve existir. Se nao, o problema e a variavel de
+   ambiente ou o redeploy, nao o registro.
+2. Compare a site key do bundle com a registrada em **App Check > Apps** (clique na linha do app).
+   Divergencia entre as duas e a causa mais provavel do `App attestation failed`.
+3. Confirme que a chave existe no projeto em **Google Cloud > Seguranca > reCAPTCHA Enterprise**. O
+   ID da chave e a propria site key.
+4. Se a resposta do 403 disser que as requisicoes para a API estao bloqueadas, o problema e a lista
+   de APIs permitidas da Browser key, nao o App Check.
+
+O procedimento de troca manual de token, que diagnostica isso em segundos sem esperar o throttle de
+24 horas, esta na secao 7.3 do `MANUAL_TECNICO.md`.
+
+Ao validar a correcao, lembre que o throttle de 24 horas e por navegador: use janela anonima ou
+apague o IndexedDB `firebase-app-check-database`. Sucesso nao gera log, entao a ausencia de erro novo
+no console e o sinal de que funcionou.
+
 ## Desenvolvimento Local
 
 O provider de debug deve ser usado somente quando for necessario testar App Check localmente:
