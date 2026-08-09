@@ -208,6 +208,66 @@ Console → App Check → APIs, e **apenas no Cloud Firestore**. Deixe o Authent
 estiver marcado como PRÉ-LANÇAMENTO: travar o login com um recurso em beta tranca você para fora do
 próprio app.
 
+#### Verificadas em 0% não é falta de uso — é falha
+
+De 21/07 a 07/08/2026 o Cloud Firestore ficou em **0% verificadas / 100% sem verificação**, o que
+parecia "pouco tráfego ainda". Não era: o App Check nunca conseguiu emitir um token. O console do
+navegador em produção mostrava
+
+```
+@firebase/app-check: AppCheck: 403 error.
+Attempts allowed again after 01d:00m:00s (appCheck/initial-throttle)
+```
+
+**Causa:** existiam duas chaves reCAPTCHA Enterprise no projeto — `vitalita-appcheck` (a do bundle,
+criada em 21/07) e `vitalita-web-app-check` (órfã, de uma tentativa de 16/07, com domínio de preview
+do git na lista). O registro em App Check → Apps apontava para a **órfã**, então o Firebase recebia
+um atestado assinado por uma chave que não era a esperada e respondia `App attestation failed`.
+Corrigido em 07/08/2026 apontando o registro para a chave do bundle. Não exigiu redeploy — o bundle
+já tinha a chave certa.
+
+**Como diagnosticar isso em segundos**, sem depender do throttle de 24h do SDK: no console do
+navegador em produção, gere um token real e troque na mão.
+
+```js
+const siteKey = '<VITE_FIREBASE_APP_CHECK_SITE_KEY do bundle>';
+const appId = '<appId do firebaseConfig>';
+const apiKey = '<apiKey do firebaseConfig>';
+
+// O SDK carrega enterprise.js sem `?render=` e usa widget invisível, então
+// `execute(siteKey)` só funciona com um script carregado à parte:
+await new Promise(ok => {
+  const s = document.createElement('script');
+  s.src = `https://www.google.com/recaptcha/enterprise.js?render=${siteKey}`;
+  s.onload = ok; document.head.appendChild(s);
+});
+const t = await grecaptcha.enterprise.execute(siteKey, { action: 'fire_base' });
+const r = await fetch(
+  `https://content-firebaseappcheck.googleapis.com/v1/projects/<projectId>/apps/${appId}:exchangeRecaptchaEnterpriseToken?key=${apiKey}`,
+  { method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ recaptcha_enterprise_token: t }) }
+);
+console.log(r.status, await r.json());
+```
+
+Leitura do resultado:
+
+| Resposta | Significado |
+| --- | --- |
+| `200` + `token` + `ttl` | Registro e chave batem — App Check está de pé. |
+| `403 App attestation failed` | Chave do bundle ≠ chave registrada em App Check → Apps (ou chave de outro projeto). |
+| `403` com "requests to this API are blocked" | Firebase App Check API fora da lista de APIs permitidas da Browser key (ver §7.2). |
+
+Duas armadilhas ao validar:
+
+- **O throttle é por navegador.** Depois de um 403 o SDK se bloqueia por 24h; a janela normal segue
+  mostrando `appCheck/throttled` mesmo com tudo já corrigido. Valide em janela anônima, ou apague o
+  IndexedDB `firebase-app-check-database` e recarregue. Sucesso não loga nada — a ausência de erro
+  novo no console **é** o sinal de que funcionou.
+- **O percentual demora a subir.** Ele é média de uma janela recente, então precisa de tráfego novo
+  para diluir os dias de requisições sem verificação. E requisição ao Firestore só acontece com o
+  usuário logado: abrir a tela de login não move o número.
+
 ### 7.4. Importação de treino por PDF (`ANTHROPIC_API_KEY`)
 
 `api/parse-workout-pdf.js` lê um PDF de ficha com a API da Anthropic (modelo `claude-opus-4-8`) e
