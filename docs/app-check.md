@@ -79,7 +79,29 @@ enquanto o registro em **App Check > Apps** apontava para `vitalita-web-app-chec
 tentativa anterior. O Firebase recebia um atestado assinado pela chave errada e respondia
 `App attestation failed`. A correcao foi alinhar o registro com a chave do bundle, sem redeploy.
 
-Ordem de investigacao quando o percentual nao sai do zero:
+### Painel no proprio app
+
+Abrir a URL com `?debug=appcheck` liga um painel fixo no rodape com o estado do token. Ele existe
+porque o Sentry fica desligado em Production por decisao (ver `observability.md`) e o PWA instalado
+no iPhone nao tem console acessivel. A flag persiste em `localStorage`, entao sobrevive a navegacao
+e ao app aberto pela tela de inicio; `?debug=off` desliga (e vale tambem para o painel de push, que
+abre com `?debug=push`).
+
+Estados possiveis:
+
+| Estado | Significado |
+| --- | --- |
+| `ativo` | Token emitido com sucesso na ultima verificacao. |
+| `falhando (<codigo>)` | O SDK inicializou mas nao conseguiu o token. E o caso do incidente. |
+| `desligado (sem site key)` | Variavel de ambiente ausente ou build de desenvolvimento. Nao e quebra. |
+
+O painel tambem lista o historico de falhas. Sucesso repetido nao entra na lista de proposito: com
+20 posicoes, registrar todo boot bem-sucedido empurraria para fora justamente a falha que se quer
+enxergar.
+
+### Ordem de investigacao
+
+Quando o percentual nao sai do zero:
 
 1. Confirme que o SDK inicializa: `typeof window.grecaptcha` deve ser `"object"` e
    `document.querySelector('.grecaptcha-badge')` deve existir. Se nao, o problema e a variavel de

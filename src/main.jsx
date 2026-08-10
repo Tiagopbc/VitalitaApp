@@ -15,6 +15,7 @@ import { initPushDiagnostics } from './services/pushDiagnostics';
 import { SpeedInsightsLoader } from './components/SpeedInsightsLoader';
 import { ObservabilityTracker } from './components/ObservabilityTracker';
 import { PushDebugPanel } from './components/PushDebugPanel';
+import { AppCheckDebugPanel } from './components/AppCheckDebugPanel';
 import {
     initializeAppCheckMonitoring,
     isAppCheckMonitoringEnabled
@@ -31,6 +32,7 @@ function renderApplication() {
                     <ObservabilityTracker />
                     <App />
                     <PushDebugPanel />
+                    <AppCheckDebugPanel />
                     <SpeedInsightsLoader />
                 </BrowserRouter>
             </AuthProvider>
