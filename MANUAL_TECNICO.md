@@ -226,7 +226,17 @@ um atestado assinado por uma chave que não era a esperada e respondia `App atte
 Corrigido em 07/08/2026 apontando o registro para a chave do bundle. Não exigiu redeploy — o bundle
 já tinha a chave certa.
 
-**Como diagnosticar isso em segundos**, sem depender do throttle de 24h do SDK: no console do
+**Primeira parada:** abra o app com `?debug=appcheck` na URL. Um painel no rodapé mostra se o token
+está sendo emitido (`ativo`), se falhou (`falhando (<código>)`) ou se o App Check nem está ligado
+(`desligado (sem site key)`), com o histórico de falhas. Funciona no PWA do iPhone, sem cabo nem
+console — que é justamente onde o incidente passou despercebido. `?debug=off` desliga. O painel de
+push do descanso abre do mesmo jeito, com `?debug=push`.
+
+O estado vem de `src/services/appCheckDiagnostics.js`, alimentado por uma verificação de token que
+`appCheckService.js` dispara **sem bloquear o boot**. Ela existe porque a inicialização do SDK passa
+normalmente mesmo quando a emissão do token falha — era exatamente esse o buraco.
+
+**Para diagnosticar direto na origem**, sem depender do throttle de 24h do SDK: no console do
 navegador em produção, gere um token real e troque na mão.
 
 ```js
