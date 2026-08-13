@@ -1,6 +1,6 @@
 // -----------------------------------------------------------------------------
 import React, { useState } from 'react';
-import { toast } from 'sonner';
+import { notify } from '../utils/notifyStore';
 
 import { Loader2, LogOut, Users } from 'lucide-react';
 import { getStoredTheme, setTheme, THEMES } from '../utils/theme';
@@ -43,15 +43,15 @@ export default function ProfilePage({ user, onLogout, onNavigateToHistory, onNav
         try {
             const { userService } = await import('../services/userService');
             await userService.linkTrainer(user.uid, inviteCode);
-            toast.success("Personal vinculado com sucesso!");
+            notify.success("Personal vinculado com sucesso!");
             setShowLinkTrainer(false);
             setInviteCode('');
         } catch (err) {
             console.error(err);
-            if (err.message === "PERSONAL_NOT_FOUND") toast.error("Convite inválido ou expirado.");
-            else if (err.message === "ALREADY_LINKED") toast.error("Você já está vinculado a este personal.");
-            else if (err.message === "LINK_TRAINER_FAILED") toast.error("Não foi possível vincular. Verifique o código ou se o vínculo já existe.");
-            else toast.error("Erro ao vincular.");
+            if (err.message === "PERSONAL_NOT_FOUND") notify.error("Convite inválido ou expirado.");
+            else if (err.message === "ALREADY_LINKED") notify.error("Você já está vinculado a este personal.");
+            else if (err.message === "LINK_TRAINER_FAILED") notify.error("Não foi possível vincular. Verifique o código ou se o vínculo já existe.");
+            else notify.error("Erro ao vincular.");
         } finally {
             setLinking(false);
         }
@@ -77,7 +77,7 @@ export default function ProfilePage({ user, onLogout, onNavigateToHistory, onNav
         // Validação de Email
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(profile.email)) {
-            toast.error("Por favor, insira um email válido.");
+            notify.error("Por favor, insira um email válido.");
             return;
         }
 
@@ -89,10 +89,10 @@ export default function ProfilePage({ user, onLogout, onNavigateToHistory, onNav
                 updatedAt: new Date().toISOString()
             });
             setShowEditModal(false);
-            toast.success("Perfil atualizado.");
+            notify.success("Perfil atualizado.");
         } catch (err) {
             console.error("Error saving profile:", err);
-            toast.error("Erro ao salvar perfil.");
+            notify.error("Erro ao salvar perfil.");
         } finally {
             setSaving(false);
         }
@@ -106,10 +106,10 @@ export default function ProfilePage({ user, onLogout, onNavigateToHistory, onNav
             const { privacyExportService } = await import('../services/privacyExportService');
             const exportPayload = await privacyExportService.buildUserDataExport(user);
             const fileName = privacyExportService.downloadJson(exportPayload);
-            toast.success(`Exportação criada: ${fileName}`);
+            notify.success(`Exportação criada: ${fileName}`);
         } catch (err) {
             console.error('Error exporting user data:', err);
-            toast.error('Não foi possível exportar seus dados agora.');
+            notify.error('Não foi possível exportar seus dados agora.');
         } finally {
             setExportingData(false);
         }

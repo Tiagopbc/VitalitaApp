@@ -7,7 +7,7 @@ import { EmptyState } from '../components/design-system/EmptyState';
 import { PageHeader } from '../components/design-system/PageHeader';
 import { PremiumCard } from '../components/design-system/PremiumCard';
 import { SectionHeader } from '../components/design-system/SectionHeader';
-import { toast } from 'sonner';
+import { notify } from '../utils/notifyStore';
 
 import HistoryPage from './HistoryPage';
 import WorkoutsPage from './WorkoutsPage';
@@ -104,7 +104,7 @@ export function TrainerDashboard({ user, onBack, onNavigateToCreateWorkout }) {
             setInviteCode(newInvite?.code || '');
         } catch (error) {
             console.error("Error creating trainer invite:", error);
-            toast.error("Erro ao gerar convite.");
+            notify.error("Erro ao gerar convite.");
         } finally {
             setInviteLoading(false);
         }
@@ -117,12 +117,12 @@ export function TrainerDashboard({ user, onBack, onNavigateToCreateWorkout }) {
             const { userService } = await import('../services/userService');
             await userService.unlinkTrainer(studentPendingUnlink.id, user.uid);
             await fetchStudents();
-            toast.success("Aluno desvinculado.");
+            notify.success("Aluno desvinculado.");
             setSelectedStudent(null);
             setStudentPendingUnlink(null);
         } catch (error) {
             console.error(error);
-            toast.error("Erro ao desvincular aluno.");
+            notify.error("Erro ao desvincular aluno.");
         } finally {
             setUnlinking(false);
         }
@@ -241,7 +241,7 @@ export function TrainerDashboard({ user, onBack, onNavigateToCreateWorkout }) {
                                 user={selectedStudent}
                                 isTrainerMode={true}
                                 onNavigateToCreate={handleNavigateToCreate}
-                                onNavigateToWorkout={() => toast.info("Modo visualização de Personal: execução desabilitada.")}
+                                onNavigateToWorkout={() => notify.info("Modo visualização de Personal: execução desabilitada.")}
                             />
                         </div>
                     ) : (

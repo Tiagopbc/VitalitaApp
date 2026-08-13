@@ -3,7 +3,7 @@ import { RefreshCw, ShieldCheck, Wifi } from 'lucide-react';
 import { useRegisterSW } from 'virtual:pwa-register/react';
 import { useWorkout } from '../context/WorkoutContext';
 import { Button } from './design-system/Button';
-import { toast } from 'sonner';
+import { notify } from '../utils/notifyStore';
 
 export function PwaUpdatePrompt() {
     const { activeWorkoutId } = useWorkout();
@@ -21,7 +21,7 @@ export function PwaUpdatePrompt() {
 
     useEffect(() => {
         if (!offlineReady) return;
-        toast.success('Vitalità pronto para uso offline.');
+        notify.success('Vitalità pronto para uso offline.');
         setOfflineReady(false);
     }, [offlineReady, setOfflineReady]);
 
@@ -32,7 +32,7 @@ export function PwaUpdatePrompt() {
 
     const handleUpdate = () => {
         if (hasActiveWorkout) {
-            toast.info('Finalize ou descarte o treino antes de atualizar o app.');
+            notify.info('Finalize ou descarte o treino antes de atualizar o app.');
             return;
         }
         updateServiceWorker(true);

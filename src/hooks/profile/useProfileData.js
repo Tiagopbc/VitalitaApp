@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { toast } from 'sonner';
+import { notify } from '../../utils/notifyStore';
 
 /**
  * Carrega o perfil do usuário (com timeout de segurança e retry via toast),
@@ -54,17 +54,18 @@ export function useProfileData(user) {
         } catch (err) {
             console.error("Error fetching profile (or timeout):", err);
 
-            // Only show toast if not already showing one (simple check or just replace)
-            toast.error("Erro ao carregar dados. Verifique sua conexão.", {
-                id: 'profile-fetch-error', // ID prevents duplicates
+            // Único aviso do app que espera toque: com ação, a barra não sobe
+            // sozinha — sumir em 3s levaria o "Tentar Novamente" embora antes de
+            // o usuário decidir. A deduplicação que o `id` fazia no sonner agora
+            // é regra do notifyStore (aviso idêntico não reinicia a barra).
+            notify.error("Erro ao carregar dados. Verifique sua conexão.", {
                 action: {
                     label: 'Tentar Novamente',
                     onClick: () => {
                         fetchingRef.current = false; // Allow retry
                         fetchProfileData();
                     }
-                },
-                duration: 5000
+                }
             });
 
             // Fallback: mostrar o que temos (dados de auth)

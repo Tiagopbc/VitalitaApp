@@ -10,7 +10,7 @@ import { toggleGroupWithPrevious, normalizeGroups, computeGroupSegments, groupLa
 import { Button } from '../components/design-system/Button';
 import { EmptyState } from '../components/design-system/EmptyState';
 import { PageHeader } from '../components/design-system/PageHeader';
-import { toast } from 'sonner';
+import { notify } from '../utils/notifyStore';
 import { Reorder, useDragControls } from 'framer-motion';
 
 const muscleGroups = [
@@ -186,12 +186,12 @@ export default function CreateWorkoutPage({ user }) {
             setImportQueue({ workouts, index: 0 });
             loadWorkoutIntoForm(workouts[0]);
             if (workouts.length > 1) {
-                toast.success(`${workouts.length} treinos encontrados. Revise o 1º e salve — os próximos aparecem em seguida.`);
+                notify.success(`${workouts.length} treinos encontrados. Revise o 1º e salve — os próximos aparecem em seguida.`);
             } else {
-                toast.success(`Treino importado (${workouts[0].exercises.length} exercícios). Revise antes de salvar.`);
+                notify.success(`Treino importado (${workouts[0].exercises.length} exercícios). Revise antes de salvar.`);
             }
         } catch (err) {
-            toast.error(err.message || 'Não foi possível importar o PDF.');
+            notify.error(err.message || 'Não foi possível importar o PDF.');
         } finally {
             setImportingPdf(false);
         }
@@ -330,7 +330,7 @@ export default function CreateWorkoutPage({ user }) {
         const previous = list[idx - 1];
         if (current.groupId && current.groupId === previous.groupId) return;
 
-        toast('Bi-set é executado em dupla', {
+        notify.info('Bi-set é executado em dupla', {
             description: `Agrupar com "${previous.name}" para alternar as séries na execução?`,
             action: {
                 label: 'Agrupar',
@@ -342,7 +342,7 @@ export default function CreateWorkoutPage({ user }) {
 
     async function handleSave() {
         if (!workoutName || exercises.length === 0) {
-            toast.error("Informe um nome e adicione pelo menos um exercício.");
+            notify.error("Informe um nome e adicione pelo menos um exercício.");
             return;
         }
 
@@ -378,13 +378,13 @@ export default function CreateWorkoutPage({ user }) {
                 setImportQueue({ ...importQueue, index: nextIndex });
                 loadWorkoutIntoForm(importQueue.workouts[nextIndex]);
                 setLoading(false);
-                toast.success(`Treino salvo. Revise o próximo (${nextIndex + 1} de ${importQueue.workouts.length}).`);
+                notify.success(`Treino salvo. Revise o próximo (${nextIndex + 1} de ${importQueue.workouts.length}).`);
                 return;
             }
             onBack();
         } catch (err) {
             console.error(err);
-            toast.error("Erro ao salvar treino.");
+            notify.error("Erro ao salvar treino.");
         } finally {
             setLoading(false);
         }
