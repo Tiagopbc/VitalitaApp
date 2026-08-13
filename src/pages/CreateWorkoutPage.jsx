@@ -381,6 +381,10 @@ export default function CreateWorkoutPage({ user }) {
                 notify.success(`Treino salvo. Revise o próximo (${nextIndex + 1} de ${importQueue.workouts.length}).`);
                 return;
             }
+            // Caminho normal: até aqui salvava e voltava pra lista em silêncio.
+            // A barra vive na raiz autenticada, então o aviso sobrevive ao
+            // `onBack()` e aparece já sobre a lista.
+            notify.success('Treino salvo.');
             onBack();
         } catch (err) {
             console.error(err);
