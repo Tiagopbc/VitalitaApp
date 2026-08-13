@@ -1,10 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { workoutService } from './workoutService';
 import { collection, getDocs, onSnapshot, query, where, startAfter, orderBy, limit, doc, getDoc, writeBatch } from 'firebase/firestore';
-import { toast } from 'sonner';
+import { notify } from '../utils/notifyStore';
 
-vi.mock('sonner', () => ({
-    toast: {
+vi.mock('../utils/notifyStore', () => ({
+    notify: {
         error: vi.fn()
     }
 }));
@@ -141,7 +141,7 @@ describe('workoutService', () => {
 
             try {
                 await expect(workoutService.getTemplates(mockUserId)).rejects.toThrow('Network Error');
-                expect(toast.error).toHaveBeenCalledWith('Erro ao carregar treinos. Verifique sua conexão.');
+                expect(notify.error).toHaveBeenCalledWith('Erro ao carregar treinos. Verifique sua conexão.');
             } finally {
                 consoleSpy.mockRestore();
             }
@@ -256,7 +256,7 @@ describe('workoutService', () => {
                     workoutService.getHistory(mockUserId, 'Template A')
                 ).rejects.toThrow('missing index');
 
-                expect(toast.error).toHaveBeenCalledWith('Erro de índice. Verifique o console.');
+                expect(notify.error).toHaveBeenCalledWith('Erro de índice. Verifique o console.');
             } finally {
                 consoleSpy.mockRestore();
             }
@@ -272,7 +272,7 @@ describe('workoutService', () => {
                     workoutService.getHistory(mockUserId, 'Template A')
                 ).rejects.toThrow('boom');
 
-                expect(toast.error).toHaveBeenCalledWith('Erro ao carregar histórico.');
+                expect(notify.error).toHaveBeenCalledWith('Erro ao carregar histórico.');
             } finally {
                 consoleSpy.mockRestore();
             }

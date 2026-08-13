@@ -1,5 +1,6 @@
 import { getFirestoreDeps } from '../firebaseDb';
 import { sortWorkoutTemplates } from '../utils/workoutTemplateOrder';
+import { notify } from '../utils/notifyStore';
 
 const TEMPLATES_COLLECTION = 'workout_templates';
 const SESSIONS_COLLECTION = 'workout_sessions';
@@ -9,19 +10,6 @@ export const SESSION_LIMITS = {
     profileStats: 300,
     achievementCheck: 300
 };
-
-let sonnerPromise;
-async function showToastError(message) {
-    try {
-        if (!sonnerPromise) {
-            sonnerPromise = import('sonner');
-        }
-        const { toast } = await sonnerPromise;
-        toast.error(message);
-    } catch {
-        // Silencia falha de toast para não mascarar erro principal.
-    }
-}
 
 // Cache em memória
 let templatesCache = {
@@ -107,7 +95,7 @@ export const workoutService = {
             return sorted;
         } catch (error) {
             console.error("Error fetching templates:", error);
-            await showToastError("Erro ao carregar treinos. Verifique sua conexão.");
+            notify.error("Erro ao carregar treinos. Verifique sua conexão.");
             throw error;
         }
     },
@@ -347,9 +335,9 @@ export const workoutService = {
             console.error("Error fetching history:", error);
             if (error.code === 'failed-precondition') {
                 console.warn("🔥 FIRESTORE INDEX MISSING! Open this link to create it:", error.message);
-                await showToastError("Erro de índice. Verifique o console.");
+                notify.error("Erro de índice. Verifique o console.");
             } else {
-                await showToastError("Erro ao carregar histórico.");
+                notify.error("Erro ao carregar histórico.");
             }
             throw error;
         }
@@ -503,7 +491,7 @@ export const workoutService = {
 
         } catch (error) {
             console.error("Error searching exercises:", error);
-            await showToastError("Erro ao buscar exercícios. Verifique sua conexão.");
+            notify.error("Erro ao buscar exercícios. Verifique sua conexão.");
             return [];
         }
     },
@@ -541,7 +529,7 @@ export const workoutService = {
             return docRef.id;
         } catch (error) {
             console.error("Error saving cardio session:", error);
-            await showToastError("Erro ao salvar sessão de cardio.");
+            notify.error("Erro ao salvar sessão de cardio.");
             throw error;
         }
     }

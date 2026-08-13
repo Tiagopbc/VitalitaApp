@@ -41,6 +41,7 @@ import { safeGetJSON, safeSetJSON, safeRemoveItem } from '../utils/storage';
 import { achievementsCatalog } from '../data/achievementsCatalog';
 import { evaluateAchievements, calculateStats } from '../utils/evaluateAchievements';
 import { AddCardioModal } from '../components/AddCardioModal';
+import { notify } from '../utils/notifyStore';
 
 const HOME_DASHBOARD_CACHE_VERSION = 1;
 
@@ -88,19 +89,6 @@ const MOTIVATIONAL_QUOTES = [
 ];
 
 const HOME_DASHBOARD_CACHE_TTL_MS = 30 * 60 * 1000;
-
-let toastPromise;
-async function showToastError(message) {
-    try {
-        if (!toastPromise) {
-            toastPromise = import('sonner');
-        }
-        const { toast } = await toastPromise;
-        toast.error(message);
-    } catch {
-        // Evita que falhas de UI escondam o erro original.
-    }
-}
 
 function getHomeDashboardCacheKey(userId) {
     return `home_dashboard_snapshot_v${HOME_DASHBOARD_CACHE_VERSION}_${userId}`;
@@ -233,12 +221,12 @@ export function HomeDashboard({
     const handleShareQuote = async () => {
         if (sharingQuote) return;
         if (!shareQuoteRef.current) {
-            await showToastError("Card de compartilhamento indisponível.");
+            notify.error("Card de compartilhamento indisponível.");
             return;
         }
 
         if (!window.isSecureContext) {
-            await showToastError("O compartilhamento requer conexão segura. Use HTTPS ou localhost.");
+            notify.error("O compartilhamento requer conexão segura. Use HTTPS ou localhost.");
             return;
         }
 
@@ -296,7 +284,7 @@ export function HomeDashboard({
             URL.revokeObjectURL(blobUrl);
         } catch (err) {
             console.error("Error sharing:", err);
-            await showToastError("Erro ao gerar imagem de compartilhamento.");
+            notify.error("Erro ao gerar imagem de compartilhamento.");
         } finally {
             setSharingQuote(false);
         }
