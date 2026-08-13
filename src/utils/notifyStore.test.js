@@ -109,12 +109,41 @@ describe('notifyStore', () => {
     });
 
     it('dismiss não deixa o timer antigo derrubar um aviso posterior', () => {
+        const listener = vi.fn();
+        subscribeToNotify(listener);
+
+        // Timer 1 dispararia em AUTO_DISMISS_MS
         notify.success('Treino salvo.');
+        expect(listener).toHaveBeenCalledTimes(1);
+
+        // Avançar até perto do disparo
+        vi.advanceTimersByTime(AUTO_DISMISS_MS - 500);
+
+        // Descartar: deve limpar o timer 1
         notify.dismiss();
+        expect(listener).toHaveBeenCalledTimes(2);
+
+        // Avançar 500ms: passa o ponto onde Timer 1 teria disparado
+        // Se dismiss() limpou corretamente, Timer 1 NÃO dispara
+        // Se dismiss() não limpou, Timer 1 dispara e chama listener
+        vi.advanceTimersByTime(500);
+
+        // Se dismiss() limpou corretamente, ainda em 2 chamadas
+        // Se dismiss() não limpou, será 3 (Timer 1 dispara)
+        expect(listener).toHaveBeenCalledTimes(2);
+
+        // Agora criar novo aviso
         notify.info('Outro aviso.');
+        expect(listener).toHaveBeenCalledTimes(3);
 
-        vi.advanceTimersByTime(AUTO_DISMISS_MS - 1);
-
+        // Timer 2 deve estar de pé
         expect(getNotifySnapshot()).toMatchObject({ message: 'Outro aviso.' });
+
+        // Avançar para Timer 2 disparar
+        vi.advanceTimersByTime(AUTO_DISMISS_MS);
+
+        // Timer 2 dispara e chama listener
+        expect(listener).toHaveBeenCalledTimes(4);
+        expect(getNotifySnapshot()).toBeNull();
     });
 });
