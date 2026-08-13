@@ -24,6 +24,28 @@
 
 O spec diz que o `TopBanner` "agenda o auto-dismiss". **O timer fica no store, não no componente.** Motivo: com o timer no store, as regras de tempo ("some em 3s", "com ação não some") são testáveis em JavaScript puro, sem depender do ciclo de animação do framer-motion dentro do jsdom — que é justamente onde teste de componente fica frágil. O componente vira uma view pura. Nada mais muda no comportamento descrito.
 
+## Emenda 1 — descoberta durante a execução (12/08/2026)
+
+A contagem de 39 chamadas foi feita com `grep "toast\."` e por isso **perdeu uma
+chamada sem método**: `toast('Bi-set é executado em dupla', { description, action,
+duration: 8000 })` em `CreateWorkoutPage.jsx:333` — a sugestão de agrupar quando o
+usuário salva um exercício marcado como "Bi-set" sem encadeá-lo com o anterior.
+São 40 chamadas, e `CreateWorkoutPage.jsx` tem 7, não 6.
+
+Ela usa duas opções que o store não previa. Decisão do usuário:
+
+- **`description` entra** como opção do store e segunda linha da barra (título em
+  negrito, explicação abaixo em corpo menor). Serve avisos futuros que precisem
+  explicar, não só este.
+- **`duration` entra** como opção, permitida inclusive junto de `action`. O padrão
+  segue: sem ação, `AUTO_DISMISS_MS`; com ação e sem `duration`, não some sozinha.
+  A sugestão de bi-set passa `8000` e mantém o comportamento de hoje — é sugestão
+  opcional, não erro, e ignorá-la deve bastar para ela sair de cena. O "Tentar
+  Novamente" do perfil continua sem `duration`, esperando toque.
+
+Isso reabre `notifyStore` e `TopBanner` (Tarefas 1 e 2) numa tarefa 5a, executada
+antes de fechar a Tarefa 5.
+
 ## Estrutura de arquivos
 
 **Criar:**
