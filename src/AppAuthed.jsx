@@ -9,6 +9,7 @@ import { ProtectedRoute } from './components/ProtectedRoute';
 import { useAuth } from './AuthContext';
 import { WorkoutProvider, useWorkout } from './context/WorkoutContext';
 import { MotionPreferences } from './components/common/MotionPreferences';
+import { TopBanner } from './components/design-system/TopBanner';
 import { safeGetItem, safeRemoveItem, safeGetJSON, safeSetJSON } from './utils/storage';
 
 // Carregamento Lazy de Páginas
@@ -23,7 +24,6 @@ const loadTrainerDashboard = () => import('./pages/TrainerDashboard').then(modul
 const loadPrivacyPolicyPage = () => import('./pages/PrivacyPolicyPage');
 const loadTermsOfUsePage = () => import('./pages/TermsOfUsePage');
 const loadBottomNavEnhanced = () => import('./BottomNavEnhanced').then(module => ({ default: module.BottomNavEnhanced }));
-const loadSonnerToaster = () => import('sonner').then(module => ({ default: module.Toaster }));
 const loadPwaUpdatePrompt = () => import('./components/PwaUpdatePrompt').then(module => ({ default: module.PwaUpdatePrompt }));
 
 const HomeDashboard = React.lazy(loadHomeDashboard);
@@ -37,7 +37,6 @@ const TrainerDashboard = React.lazy(loadTrainerDashboard);
 const PrivacyPolicyPage = React.lazy(loadPrivacyPolicyPage);
 const TermsOfUsePage = React.lazy(loadTermsOfUsePage);
 const BottomNavEnhanced = React.lazy(loadBottomNavEnhanced);
-const SonnerToaster = React.lazy(loadSonnerToaster);
 const PwaUpdatePrompt = React.lazy(loadPwaUpdatePrompt);
 
 const NAV_TRANSITIONS_STORAGE_KEY = 'vitalita_nav_transitions_v1';
@@ -118,7 +117,6 @@ function AppAuthedContent() {
     const { user, authLoading, logout } = useAuth();
     const { startWorkout } = useWorkout();
     const [isTrainer, setIsTrainer] = useState(false);
-    const [shouldRenderToaster, setShouldRenderToaster] = useState(false);
     const navigate = useNavigate();
     const location = useLocation();
     const userId = user?.uid;
@@ -142,20 +140,6 @@ function AppAuthedContent() {
 
         checkTrainerStatus();
     }, [userId]);
-
-    useEffect(() => {
-        if (typeof window === 'undefined') return undefined;
-
-        const scheduleToaster = () => setShouldRenderToaster(true);
-
-        if ('requestIdleCallback' in window) {
-            const idleId = window.requestIdleCallback(scheduleToaster, { timeout: 1500 });
-            return () => window.cancelIdleCallback(idleId);
-        }
-
-        const timeoutId = window.setTimeout(scheduleToaster, 700);
-        return () => window.clearTimeout(timeoutId);
-    }, []);
 
     useEffect(() => {
         if (!userId || typeof window === 'undefined' || typeof navigator === 'undefined') return undefined;
@@ -443,28 +427,16 @@ function AppAuthedContent() {
             </div>
 
             {/*
-              * `theme="dark"`: sem isso o sonner usa o tema claro por padrão, e o
-              * aviso saía num bloco quase branco no meio de um app todo escuro.
+              * A barra pinta de `top: 0` até abaixo da status bar e põe o texto
+              * na faixa sob o relógio. Não é o aviso "voltando pro topo": o que
+              * sumia atrás da status bar em #51/#53 era um card curto ancorado
+              * a `top-6`, inteiramente dentro daquela zona.
               *
-              * `offset` no eixo Y: ancorado no topo, o aviso ficava atrás da status
-              * bar do iPhone e chegava a cobrir o título da tela. `42vh` ancora a
-              * borda de cima e cai opticamente no centro — é a API pública do
-              * sonner, preferida a sobrescrever CSS porque o pacote anima
-              * `transform` no eixo X e uma sobrescrita brigaria com isso.
-              * Objeto parcial: o sonner completa os lados omitidos com os padrões
-              * dele (24px no desktop, 16px no mobile).
+              * Fica na raiz autenticada de propósito — salvar uma ficha volta
+              * pra lista no mesmo tique, e o aviso precisa sobreviver à
+              * navegação.
               */}
-            {shouldRenderToaster && (
-                <Suspense fallback={null}>
-                    <SonnerToaster
-                        richColors
-                        theme="dark"
-                        position="top-center"
-                        offset={{ top: '42vh' }}
-                        mobileOffset={{ top: '42vh' }}
-                    />
-                </Suspense>
-            )}
+            <TopBanner />
 
             {user && (
                 <Suspense fallback={null}>
