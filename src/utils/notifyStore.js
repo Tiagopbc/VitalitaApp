@@ -29,24 +29,40 @@ function clearTimer() {
 
 function push(type, message, options = {}) {
     const action = options.action || null;
+    // `null`, não `undefined`: mantém a forma do snapshot estável mesmo
+    // quando ninguém passa description (ver Tarefa 5a).
+    const description = options.description ?? null;
+    const duration = options.duration;
 
     // Aviso idêntico ao que já está na tela mantém o id: sem isso a barra
     // refaria a descida por cima dela mesma. Substitui a deduplicação por
-    // `id` que o sonner fazia em useProfileData.
-    if (current && current.type === type && current.message === message && !action && !current.action) {
+    // `id` que o sonner fazia em useProfileData. Leva a description em
+    // conta: mesma mensagem com explicação diferente é um aviso diferente.
+    if (
+        current &&
+        current.type === type &&
+        current.message === message &&
+        current.description === description &&
+        !action &&
+        !current.action
+    ) {
         return current.id;
     }
 
     clearTimer();
-    current = { id: nextId++, type, message, action };
+    current = { id: nextId++, type, message, description, action };
 
-    // Com ação, a barra espera toque — ver AUTO_DISMISS_MS no spec.
-    if (!action) {
+    // `duration` explícito manda mesmo com ação — é o caso do aviso de
+    // bi-set em CreateWorkoutPage, que tem botão e ainda assim some em 8s.
+    // Sem `duration`: some em AUTO_DISMISS_MS se não há ação, ou espera o
+    // toque se há (como antes desta emenda).
+    const dismissDelay = duration ?? (action ? null : AUTO_DISMISS_MS);
+    if (dismissDelay !== null) {
         timerId = setTimeout(() => {
             timerId = null;
             current = null;
             emit();
-        }, AUTO_DISMISS_MS);
+        }, dismissDelay);
     }
 
     emit();

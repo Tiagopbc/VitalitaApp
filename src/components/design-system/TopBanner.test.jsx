@@ -80,6 +80,34 @@ describe('TopBanner', () => {
         expect(screen.getByRole('status')).toHaveAttribute('aria-live', 'polite');
     });
 
+    // Emenda 5a: aviso de bi-set em CreateWorkoutPage tem título e explicação.
+    it('mostra a description como segunda linha, abaixo da message', () => {
+        render(<TopBanner />);
+
+        act(() => {
+            notify.info('Bi-set é executado em dupla', {
+                description: 'Agrupar com "Supino" para alternar as séries na execução?'
+            });
+        });
+
+        expect(screen.getByText('Bi-set é executado em dupla')).toBeInTheDocument();
+        expect(
+            screen.getByText('Agrupar com "Supino" para alternar as séries na execução?')
+        ).toBeInTheDocument();
+
+        const barra = screen.getByTestId('top-banner');
+        expect(barra.querySelectorAll('span').length).toBe(2);
+    });
+
+    it('sem description, a barra continua com uma linha só', () => {
+        render(<TopBanner />);
+
+        act(() => { notify.success('Treino salvo.'); });
+
+        const barra = screen.getByTestId('top-banner');
+        expect(barra.querySelectorAll('span').length).toBe(1);
+    });
+
     it('renderiza o botão da ação e o deixa clicável', () => {
         render(<TopBanner />);
 

@@ -61,7 +61,15 @@ export function TopBanner() {
                 >
                     <div className="flex items-center gap-3 px-5 py-3">
                         <Icon size={20} className="shrink-0" />
-                        <span className="flex-1 font-bold text-sm">{current.message}</span>
+                        {/* Coluna única para message + description: mesma coluna do
+                            título, à esquerda do botão de ação. Sem description, o
+                            `<span>` sobra sozinho e o layout não muda em nada. */}
+                        <div className="flex flex-1 flex-col items-start">
+                            <span className="font-bold text-sm">{current.message}</span>
+                            {current.description && (
+                                <span className="text-xs text-white/90">{current.description}</span>
+                            )}
+                        </div>
                         {current.action && (
                             <button
                                 type="button"

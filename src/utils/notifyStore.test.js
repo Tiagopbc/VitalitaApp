@@ -108,6 +108,45 @@ describe('notifyStore', () => {
         expect(getNotifySnapshot()).toBeNull();
     });
 
+    // A emenda 5a: CreateWorkoutPage precisa de uma segunda linha e de um
+    // tempo de vida próprio para o aviso de bi-set (ver notifyStore.js).
+    it('guarda a description no snapshot; ausente vira null', () => {
+        notify.info('Aviso.');
+        expect(getNotifySnapshot()).toMatchObject({ description: null });
+
+        resetNotifyStore();
+        notify.info('Aviso.', { description: 'Detalhe.' });
+        expect(getNotifySnapshot()).toMatchObject({ description: 'Detalhe.' });
+    });
+
+    it('mesma mensagem com description diferente gera id novo', () => {
+        const primeiro = notify.info('Aviso.', { description: 'Um.' });
+        const segundo = notify.info('Aviso.', { description: 'Dois.' });
+
+        expect(segundo).not.toBe(primeiro);
+    });
+
+    // O caso que motivou a emenda: aviso de bi-set tem botão e precisa
+    // mesmo assim sumir sozinho em 8s.
+    it('duration explícito é respeitado mesmo com action', () => {
+        notify.info('Bi-set é executado em dupla', {
+            action: { label: 'Agrupar', onClick: vi.fn() },
+            duration: 8000
+        });
+
+        vi.advanceTimersByTime(8000);
+
+        expect(getNotifySnapshot()).toBeNull();
+    });
+
+    it('duration explícito é respeitado sem action', () => {
+        notify.success('Treino salvo.', { duration: 500 });
+
+        vi.advanceTimersByTime(500);
+
+        expect(getNotifySnapshot()).toBeNull();
+    });
+
     it('dismiss não deixa o timer antigo derrubar um aviso posterior', () => {
         const listener = vi.fn();
         subscribeToNotify(listener);
