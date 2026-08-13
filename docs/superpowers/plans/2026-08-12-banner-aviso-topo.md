@@ -41,7 +41,30 @@ Ela usa duas opções que o store não previa. Decisão do usuário:
   segue: sem ação, `AUTO_DISMISS_MS`; com ação e sem `duration`, não some sozinha.
   A sugestão de bi-set passa `8000` e mantém o comportamento de hoje — é sugestão
   opcional, não erro, e ignorá-la deve bastar para ela sair de cena. O "Tentar
-  Novamente" do perfil continua sem `duration`, esperando toque.
+  Novamente" do perfil continua sem `duration`, esperando toque. **(Revertido pela
+  Emenda 2 — ver abaixo.)**
+
+## Emenda 2 — decidida na revisão final (13/08/2026)
+
+A regra "com ação, espera toque" foi desenhada olhando o aviso isolado. A revisão
+final da branch mostrou a consequência que ninguém tinha visto: como a barra vive
+na raiz autenticada e não tem X, swipe nem `dismiss` na desmontagem, o aviso de
+falha ao carregar o perfil ficava **permanente e sem forma de fechar**, acompanhando
+o usuário para Home, Treinos, Histórico e execução, por cima de tudo em `z-[10000]`.
+Bastava abrir o Perfil offline uma vez para ficar com uma faixa vermelha fixa no
+topo do app inteiro. O `sonner` não tinha esse problema porque aquela chamada
+passava `duration: 5000` mesmo tendo botão.
+
+Decisão do usuário: **devolver o `duration: 5000`** à chamada de `useProfileData`.
+Isso restaura a paridade com o comportamento anterior à migração e resolve de uma
+vez três coisas — a permanência, o vazamento do aviso entre telas, e o aviso
+sobrevivendo ao logout com um `onClick` preso a um hook já desmontado.
+
+Efeito colateral registrado: a deduplicação por `id` que o `sonner` fazia nessa
+chamada **não** tem substituto no store — o early-return de dedup exige
+`!action && !current.action`, e esta é a única chamada com ação. Quem evita o
+incômodo de repetição aqui é o `duration`, não a dedup. Os comentários de
+`useProfileData.js` e `notifyStore.js` afirmavam o contrário e foram corrigidos.
 
 Isso reabre `notifyStore` e `TopBanner` (Tarefas 1 e 2) numa tarefa 5a, executada
 antes de fechar a Tarefa 5.
