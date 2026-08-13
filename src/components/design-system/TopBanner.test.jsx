@@ -108,4 +108,26 @@ describe('TopBanner', () => {
         expect(onClick).toHaveBeenCalledTimes(1);
         expect(getNotifySnapshot()).toBeNull();
     });
+
+    // Sensível à ordem: se `handleAction` chamasse `onClick()` antes de
+    // `notify.dismiss()`, o `dismiss()` que roda depois apagaria o aviso novo
+    // que o onClick acabou de criar (caso de "Tentar Novamente" terminando em
+    // `notify.success(...)`). `dismiss()` precisa rodar primeiro.
+    it('limpa o aviso anterior antes de disparar o onClick, não depois', () => {
+        const onClick = vi.fn(() => notify.success('Reconectado.'));
+        render(<TopBanner />);
+
+        act(() => {
+            notify.error('Erro ao carregar dados.', { action: { label: 'Tentar Novamente', onClick } });
+        });
+
+        act(() => {
+            screen.getByRole('button', { name: 'Tentar Novamente' }).click();
+        });
+
+        expect(onClick).toHaveBeenCalledTimes(1);
+        expect(getNotifySnapshot()).toEqual(
+            expect.objectContaining({ type: 'success', message: 'Reconectado.' })
+        );
+    });
 });
