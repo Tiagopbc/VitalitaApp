@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { toast } from 'sonner';
+import { notify } from '../../utils/notifyStore';
 
 /**
  * Carrega o perfil do usuário (com timeout de segurança e retry via toast),
@@ -54,17 +54,26 @@ export function useProfileData(user) {
         } catch (err) {
             console.error("Error fetching profile (or timeout):", err);
 
-            // Only show toast if not already showing one (simple check or just replace)
-            toast.error("Erro ao carregar dados. Verifique sua conexão.", {
-                id: 'profile-fetch-error', // ID prevents duplicates
+            // O `id` que o sonner usava aqui para deduplicar saiu junto com o
+            // pacote, e a deduplicação do notifyStore não cobre este caso: o
+            // early-return dela exige `!action && !current.action`, e este aviso
+            // tem ação. O que evita o incômodo de repetição é o `duration`.
+            //
+            // O `duration: 5000` é o mesmo tempo de antes da migração e precisa
+            // ser explícito: sem ele o store não arma timer nenhum quando há
+            // ação, e a barra — que vive na raiz autenticada e não tem botão de
+            // fechar — acompanharia o usuário por todas as telas. Os 5s dão
+            // folga sobre os 3s padrão para o usuário decidir sobre o
+            // "Tentar Novamente" antes de a barra sair de cena sozinha.
+            notify.error("Erro ao carregar dados. Verifique sua conexão.", {
+                duration: 5000,
                 action: {
                     label: 'Tentar Novamente',
                     onClick: () => {
                         fetchingRef.current = false; // Allow retry
                         fetchProfileData();
                     }
-                },
-                duration: 5000
+                }
             });
 
             // Fallback: mostrar o que temos (dados de auth)

@@ -36,7 +36,7 @@ import { nextDisplayOrder, normalizeActiveWorkoutOrder, sortWorkoutTemplates } f
 import { buildCopyName, copyInsertIndex, isCopyName } from '../utils/workoutCopyName';
 import { countBySourceFilter, matchesSourceFilter } from '../utils/workoutSourceFilter';
 import { SourceFilterChips } from '../components/workout/SourceFilterChips';
-import { toast } from 'sonner';
+import { notify } from '../utils/notifyStore';
 const ExerciseCard = React.lazy(() => import('../components/workout/ExerciseCard').then(module => ({ default: module.ExerciseCard })));
 const EditExerciseModal = React.lazy(() => import('../components/workout/EditExerciseModal').then(module => ({ default: module.EditExerciseModal })));
 
@@ -120,10 +120,10 @@ export default function WorkoutsPage({ onNavigateToCreate, onNavigateToWorkout, 
                 }
             );
             await loadWorkouts(true);
-            toast.success('Treino adicionado às suas fichas.');
+            notify.success('Treino adicionado às suas fichas.');
             setIsLibraryOpen(false);
         } catch (err) {
-            toast.error(err.message || 'Erro ao adicionar o treino.');
+            notify.error(err.message || 'Erro ao adicionar o treino.');
         } finally {
             setCloningStarterId(null);
         }
@@ -193,7 +193,7 @@ export default function WorkoutsPage({ onNavigateToCreate, onNavigateToWorkout, 
             await workoutService.saveTemplateOrder(normalized);
         } catch (error) {
             console.error('Erro ao salvar ordem dos treinos:', error);
-            toast.error('Não foi possível salvar a nova ordem.');
+            notify.error('Não foi possível salvar a nova ordem.');
 
             try {
                 const { workoutService } = await import('../services/workoutService');
@@ -265,7 +265,7 @@ export default function WorkoutsPage({ onNavigateToCreate, onNavigateToWorkout, 
         };
 
         setWorkouts(prev => [...prev, copy]);
-        toast.success("Treino duplicado.");
+        notify.success("Treino duplicado.");
 
         // Reordenar é um extra: se falhar, a cópia continua existindo no fim da
         // lista — não vale desfazer a duplicação nem alarmar o usuário.
@@ -295,7 +295,7 @@ export default function WorkoutsPage({ onNavigateToCreate, onNavigateToWorkout, 
             try {
                 await duplicateWorkout(workout);
             } catch (err) {
-                toast.error(err.message || "Erro ao duplicar treino.");
+                notify.error(err.message || "Erro ao duplicar treino.");
             }
         } else if (action === 'edit') {
             onNavigateToCreate(workout);
@@ -306,9 +306,9 @@ export default function WorkoutsPage({ onNavigateToCreate, onNavigateToWorkout, 
                 await workoutService.setTemplateArchived(workout.id, isArchived);
 
                 setWorkouts(prev => prev.map(w => w.id === workout.id ? { ...w, isArchived } : w));
-                toast.success(isArchived ? "Treino arquivado." : "Treino desarquivado.");
+                notify.success(isArchived ? "Treino arquivado." : "Treino desarquivado.");
             } catch (err) {
-                toast.error(err.message || (isArchived ? "Erro ao arquivar treino." : "Erro ao desarquivar treino."));
+                notify.error(err.message || (isArchived ? "Erro ao arquivar treino." : "Erro ao desarquivar treino."));
             }
         }
     };
@@ -321,10 +321,10 @@ export default function WorkoutsPage({ onNavigateToCreate, onNavigateToWorkout, 
             await workoutService.deleteTemplate(workoutPendingDelete.id);
 
             setWorkouts(prev => prev.filter(w => w.id !== workoutPendingDelete.id));
-            toast.success("Treino excluído.");
+            notify.success("Treino excluído.");
             setWorkoutPendingDelete(null);
         } catch (err) {
-            toast.error(err.message || "Erro ao excluir treino.");
+            notify.error(err.message || "Erro ao excluir treino.");
         } finally {
             setDeletingWorkout(false);
         }

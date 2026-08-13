@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Activity, Clock, Navigation, Flame, X, Check } from 'lucide-react';
 import { Button } from './design-system/Button';
 import { workoutService } from '../services/workoutService';
-import { toast } from 'sonner';
+import { notify } from '../utils/notifyStore';
 
 export function AddCardioModal({ isOpen, onClose, user }) {
     const [activityType, setActivityType] = useState('Corrida');
@@ -24,7 +24,7 @@ export function AddCardioModal({ isOpen, onClose, user }) {
 
     const handleSave = async () => {
         if (!durationMin || durationMin <= 0) {
-            toast.error('Informe a duração do exercício.');
+            notify.error('Informe a duração do exercício.');
             return;
         }
 
@@ -38,11 +38,11 @@ export function AddCardioModal({ isOpen, onClose, user }) {
                 calories: parseInt(calories, 10) || 0,
                 notes
             });
-            toast.success('Cardio registrado com sucesso!');
+            notify.success('Cardio registrado com sucesso!');
             onClose();
         } catch (error) {
             console.error('AddCardio error:', error);
-            toast.error('Erro ao registrar cardio.');
+            notify.error('Erro ao registrar cardio.');
         } finally {
             setIsSaving(false);
         }
