@@ -61,6 +61,25 @@ describe('notifyStore', () => {
         expect(repetido).toBe(primeiro);
     });
 
+    // O early-return da deduplicação acontece ANTES do `clearTimer()`: aviso
+    // repetido não rearma o relógio, some no prazo do primeiro. Sem isso, uma
+    // tela que reemite o mesmo erro a cada render manteria a barra viva para
+    // sempre, empurrando o auto-dismiss adiante indefinidamente.
+    it('aviso repetido não rearma o relógio do primeiro', () => {
+        notify.error('Erro ao carregar treinos.');
+
+        vi.advanceTimersByTime(AUTO_DISMISS_MS - 500);
+        notify.error('Erro ao carregar treinos.');
+
+        // Ainda de pé: falta o resto do prazo do PRIMEIRO aviso.
+        expect(getNotifySnapshot()).not.toBeNull();
+
+        vi.advanceTimersByTime(500);
+
+        // Sumiu no prazo do primeiro, não do repetido.
+        expect(getNotifySnapshot()).toBeNull();
+    });
+
     it('mesma mensagem em tipo diferente gera id novo', () => {
         const primeiro = notify.info('Pronto.');
         const segundo = notify.success('Pronto.');
@@ -98,6 +117,19 @@ describe('notifyStore', () => {
 
         expect(getNotifySnapshot()).toMatchObject({ message: 'Erro ao carregar dados.' });
         expect(getNotifySnapshot().action.label).toBe('Tentar Novamente');
+    });
+
+    // `useSyncExternalStore` compara os snapshots por identidade (`Object.is`)
+    // a cada render: se `getNotifySnapshot()` devolvesse um objeto novo a cada
+    // chamada, o React concluiria que o store mudou toda vez e entraria em loop
+    // infinito de render ("The result of getSnapshot should be cached").
+    // Por isso o store guarda `current` e devolve a mesma referência.
+    it('devolve a mesma referência de snapshot enquanto nada muda', () => {
+        expect(getNotifySnapshot()).toBe(getNotifySnapshot());
+
+        notify.success('Treino salvo.');
+
+        expect(getNotifySnapshot()).toBe(getNotifySnapshot());
     });
 
     it('dismiss limpa na hora', () => {

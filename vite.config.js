@@ -87,7 +87,6 @@ export default defineConfig(({ mode }) => {
           if (packageId.startsWith('recharts/')) return 'vendor-recharts'
           if (packageId.startsWith('victory-vendor/') || packageId.startsWith('d3-')) return 'vendor-chart-vendor'
           if (packageId.startsWith('lucide-react/')) return 'vendor-lucide'
-          if (packageId.startsWith('sonner/')) return 'vendor-sonner'
 
           return undefined
         },

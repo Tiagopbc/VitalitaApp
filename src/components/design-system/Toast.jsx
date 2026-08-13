@@ -27,8 +27,12 @@ export function Toast({ message, type = 'error', onClose, duration = 3000 }) {
     // ele cai logo acima dos campos de peso/repetições da tela de execução —
     // aponta para o campo que a mensagem manda corrigir, sem cobri-lo.
     //
-    // Só este Toast mudou; os toasts do `sonner` (o verde de "salvo" e os avisos
-    // do resto do app) continuam no topo, por decisão do usuário em 31/07/2026.
+    // Só este Toast é centralizado. Os demais avisos do app (o verde de "salvo"
+    // e os erros do resto das telas) vivem no `TopBanner`, a barra full-bleed que
+    // desce do topo. Este componente ficou de fora daquela migração justamente
+    // pelo motivo acima: ele precisa aparecer junto dos campos de peso/repetições
+    // para apontar o campo que a mensagem manda corrigir — no topo perderia essa
+    // relação com o campo.
     //
     // O eixo X usa `inset-x-4 mx-auto w-fit`, e não `left-1/2 -translate-x-1/2`:
     // com `left-1/2` o elemento começa na metade da tela e só tem metade da

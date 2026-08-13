@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { render, screen, act } from '@testing-library/react';
+import { render, screen, act, waitFor } from '@testing-library/react';
 import { TopBanner } from './TopBanner';
 import { notify, resetNotifyStore, getNotifySnapshot } from '../../utils/notifyStore';
 
@@ -70,14 +70,22 @@ describe('TopBanner', () => {
         expect(screen.getByTestId('top-banner').className).toContain('pointer-events-none');
     });
 
-    it('anuncia erro como alert e sucesso como status', () => {
+    // Assíncrono por causa do `mode="wait"` do AnimatePresence: a barra nova só
+    // é montada depois que a anterior termina de sair, então esperar a troca é
+    // parte do comportamento, não flakiness. O `findByRole` faz esse papel sem
+    // depender de tempo fixo.
+    it('anuncia erro como alert e sucesso como status', async () => {
         render(<TopBanner />);
 
         act(() => { notify.error('Erro ao salvar treino.'); });
-        expect(screen.getByRole('alert')).toHaveAttribute('aria-live', 'assertive');
+        expect(await screen.findByRole('alert')).toHaveAttribute('aria-live', 'assertive');
 
         act(() => { notify.success('Treino salvo.'); });
-        expect(screen.getByRole('status')).toHaveAttribute('aria-live', 'polite');
+        expect(await screen.findByRole('status')).toHaveAttribute('aria-live', 'polite');
+
+        // A barra de erro não pode continuar montada junto com a de sucesso —
+        // duas barras full-bleed em z-10000 se sobreporiam.
+        await waitFor(() => expect(screen.queryByRole('alert')).not.toBeInTheDocument());
     });
 
     // Emenda 5a: aviso de bi-set em CreateWorkoutPage tem título e explicação.

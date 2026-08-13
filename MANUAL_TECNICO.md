@@ -27,7 +27,7 @@ O **Vitalità** é uma aplicação Single Page Application (SPA) construída com
 - **[Tailwind CSS v4](https://tailwindcss.com/):** Framework de utilitários CSS para estilização rápida e consistente.
 - **[Framer Motion](https://www.framer.com/motion/):** Biblioteca para animações complexas e transições de layout.
 - **[Lucide React](https://lucide.dev/):** Coleção de ícones vetoriais leves.
-- **[Sonner](https://sonner.emilkowal.ski/):** Componente de notificações (Toast) elegante e performático.
+- **`TopBanner` (componente próprio):** Barra de aviso full-bleed que desce do topo, alimentada pelo store de módulo `notifyStore`. Substituiu a biblioteca Sonner, que saiu do projeto.
 
 ### Gerenciamento de Estado e Dados
 - **Context API (React):** Gerenciamento de estado global para Autenticação (`AuthContext`) e Sessão de Treino (`WorkoutContext`).

@@ -54,11 +54,19 @@ export function useProfileData(user) {
         } catch (err) {
             console.error("Error fetching profile (or timeout):", err);
 
-            // Único aviso do app que espera toque: com ação, a barra não sobe
-            // sozinha — sumir em 3s levaria o "Tentar Novamente" embora antes de
-            // o usuário decidir. A deduplicação que o `id` fazia no sonner agora
-            // é regra do notifyStore (aviso idêntico não reinicia a barra).
+            // O `id` que o sonner usava aqui para deduplicar saiu junto com o
+            // pacote, e a deduplicação do notifyStore não cobre este caso: o
+            // early-return dela exige `!action && !current.action`, e este aviso
+            // tem ação. O que evita o incômodo de repetição é o `duration`.
+            //
+            // O `duration: 5000` é o mesmo tempo de antes da migração e precisa
+            // ser explícito: sem ele o store não arma timer nenhum quando há
+            // ação, e a barra — que vive na raiz autenticada e não tem botão de
+            // fechar — acompanharia o usuário por todas as telas. Os 5s dão
+            // folga sobre os 3s padrão para o usuário decidir sobre o
+            // "Tentar Novamente" antes de a barra sair de cena sozinha.
             notify.error("Erro ao carregar dados. Verifique sua conexão.", {
+                duration: 5000,
                 action: {
                     label: 'Tentar Novamente',
                     onClick: () => {

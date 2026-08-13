@@ -14,6 +14,13 @@
  *
  * O timer do auto-dismiss mora no `notifyStore`, não aqui: as regras de tempo
  * ficam testáveis sem depender do ciclo de animação dentro do jsdom.
+ *
+ * `mode="wait"` no `AnimatePresence`: no modo padrão (`sync`) a troca de um
+ * aviso por outro deixa as duas barras montadas por ~200ms, ambas em
+ * `fixed inset-x-0 top-0 z-[10000]` — uma subindo e a outra descendo pelo mesmo
+ * espaço. Acontece de verdade ao salvar ficha ("Treino salvo." → `onBack()` →
+ * a lista monta → `getTemplates` falha → erro). O custo é a barra nova esperar
+ * a saída da anterior, que é justamente o comportamento desejado.
  */
 import { useSyncExternalStore } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -45,7 +52,7 @@ export function TopBanner() {
     }
 
     return (
-        <AnimatePresence>
+        <AnimatePresence mode="wait">
             {current && (
                 <motion.div
                     key={current.id}
