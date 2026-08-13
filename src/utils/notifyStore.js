@@ -35,9 +35,17 @@ function push(type, message, options = {}) {
     const duration = options.duration;
 
     // Aviso idêntico ao que já está na tela mantém o id: sem isso a barra
-    // refaria a descida por cima dela mesma. Substitui a deduplicação por
-    // `id` que o sonner fazia em useProfileData. Leva a description em
-    // conta: mesma mensagem com explicação diferente é um aviso diferente.
+    // refaria a descida por cima dela mesma. Leva a description em conta:
+    // mesma mensagem com explicação diferente é um aviso diferente.
+    //
+    // A regra vale só para avisos SEM ação — a condição exige
+    // `!action && !current.action`. Aviso com botão nunca é deduplicado aqui,
+    // e o único do app é o de `useProfileData`; lá a repetição é resolvida
+    // pelo `duration: 5000`, que faz a barra sair de cena sozinha.
+    //
+    // Como o early-return acontece antes do `clearTimer()`, o aviso repetido
+    // também não rearma o relógio: ele some no prazo do primeiro
+    // (ver notifyStore.test.js).
     if (
         current &&
         current.type === type &&
