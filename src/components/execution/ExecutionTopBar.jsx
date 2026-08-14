@@ -39,6 +39,7 @@ export function ExecutionTopBar({
      */
     return (
         <div
+            data-execution-topbar=""
             className="
                 fixed top-0 left-0 right-0 z-50 pointer-events-none
                 bg-slate-950
