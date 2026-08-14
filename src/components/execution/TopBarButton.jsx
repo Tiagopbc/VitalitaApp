@@ -18,9 +18,18 @@ export const TopBarButton = ({ icon, label, variant = 'default', onClick, active
     const variants = {
         primary: "bg-cyan-500/10 text-cyan-400 border-cyan-500/50 hover:bg-cyan-500/20",
         danger: "bg-red-500/10 text-red-400 border-red-500/20 hover:bg-red-500/20",
+        // O inativo era `bg-slate-900/60 text-slate-300 border-white/10`: cinza
+        // sobre quase-preto, com borda a 10% de branco. Ao lado do card de
+        // execução, cheio de ciano e branco, lia como desabilitado.
+        //
+        // Clarear o inativo aproxima ele do ativo, que era `bg-slate-800`
+        // sólido — os dois estados quase se encostavam e o toggle deixava de
+        // se anunciar. Por isso o ativo passa a ser ciano, que é a cor que o
+        // app já usa para "ligado" (ver o `primary` logo acima), em vez de
+        // continuar disputando o mesmo cinza com o inativo.
         default: active
-            ? "bg-slate-800 text-white border-slate-600 shadow-lg"
-            : "bg-slate-900/60 text-slate-300 border-white/10 hover:bg-slate-800/80 hover:text-white"
+            ? "bg-cyan-500/20 text-cyan-300 border-cyan-400/60 shadow-lg shadow-cyan-500/20"
+            : "bg-slate-800/70 text-slate-100 border-white/25 hover:bg-slate-700/80 hover:text-white"
     };
 
     return (
