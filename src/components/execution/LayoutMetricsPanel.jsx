@@ -61,9 +61,77 @@ const Linha = ({ nome, valor, alerta }) => (
     </div>
 );
 
+/**
+ * Candidatos a causa do borrão, aplicados ao vivo na barra.
+ *
+ * A medição derrubou a hipótese do pixel fracionário — tudo inteiro nos dois
+ * modos. O que sobrou de confirmado: em tela cheia, o texto da barra rasteriza
+ * pior que o texto em fluxo normal logo abaixo, no mesmo print e na mesma
+ * ampliação. Ou seja, o problema é a camada de composição, não o conteúdo.
+ *
+ * Cada botão mexe em um suspeito de forçar ou piorar essa camada. Testar no
+ * aparelho é o único caminho: nenhum navegador de desktop reproduz.
+ */
+const CANDIDATOS = [
+    {
+        id: 'estatico',
+        rotulo: 'sem fixed',
+        dica: 'tira a camada de composição — a barra passa a rolar com a página',
+        aplicar: (el) => { el.style.position = 'static'; }
+    },
+    {
+        id: 'semRaio',
+        rotulo: 'sem raio',
+        dica: 'canto arredondado obriga máscara na camada',
+        aplicar: (el) => { el.style.borderRadius = '0'; }
+    },
+    {
+        id: 'semSombra',
+        rotulo: 'sem sombra',
+        dica: 'shadow-2xl aumenta a área que a camada precisa pintar',
+        aplicar: (el) => { el.style.boxShadow = 'none'; }
+    },
+    {
+        id: 'semGradiente',
+        rotulo: 'sem gradiente',
+        dica: 'o overlay ciano é mais uma camada por cima',
+        aplicar: (el) => {
+            const g = el.querySelector('[class*="from-cyan-500"]');
+            if (g) g.style.display = 'none';
+        }
+    },
+    {
+        id: 'camadaPropria',
+        rotulo: 'forçar camada',
+        dica: 'translateZ(0) força rasterização própria, às vezes na escala certa',
+        aplicar: (el) => { el.style.transform = 'translateZ(0)'; }
+    }
+];
+
 export function LayoutMetricsPanel() {
     const [m, setM] = useState(null);
+    const [aplicado, setAplicado] = useState(null);
     const remedir = useCallback(() => setM(medir()), []);
+
+    const limpar = useCallback(() => {
+        const el = document.querySelector('[data-execution-topbar]');
+        if (!el) return;
+        el.style.position = '';
+        el.style.borderRadius = '';
+        el.style.boxShadow = '';
+        el.style.transform = '';
+        const g = el.querySelector('[class*="from-cyan-500"]');
+        if (g) g.style.display = '';
+        setAplicado(null);
+    }, []);
+
+    const aplicar = useCallback((candidato) => {
+        const el = document.querySelector('[data-execution-topbar]');
+        if (!el) return;
+        limpar();
+        candidato.aplicar(el);
+        setAplicado(candidato.id);
+    }, [limpar]);
 
     // Medição sob toque, e não em efeito: o lint do projeto barra `setState`
     // síncrono dentro de effect, e medir depois que a tela assentou é mais fiel
@@ -121,6 +189,50 @@ export function LayoutMetricsPanel() {
             >
                 {m ? 'MEDIR DE NOVO' : 'MEDIR'}
             </button>
+
+            <div style={{ marginTop: 14, borderTop: '1px solid #334155', paddingTop: 10 }}>
+                <div style={{ color: '#67e8f9', fontWeight: 800, marginBottom: 2 }}>TESTE A/B DA CAMADA</div>
+                <div style={{ color: '#94a3b8', marginBottom: 8 }}>
+                    Toque num botão e olhe CALC / TIMER / FOCO acima. Qual deixa o texto cravado?
+                </div>
+
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                    {CANDIDATOS.map((c) => (
+                        <button
+                            key={c.id}
+                            type="button"
+                            onClick={() => aplicar(c)}
+                            title={c.dica}
+                            style={{
+                                flex: '1 1 46%', padding: '10px 4px', borderRadius: 8,
+                                border: `1px solid ${aplicado === c.id ? '#22d3ee' : '#334155'}`,
+                                background: aplicado === c.id ? '#083344' : '#1e293b',
+                                color: aplicado === c.id ? '#67e8f9' : '#cbd5e1',
+                                font: 'inherit', fontWeight: 800
+                            }}
+                        >
+                            {c.rotulo}
+                        </button>
+                    ))}
+                    <button
+                        type="button"
+                        onClick={limpar}
+                        style={{
+                            flex: '1 1 46%', padding: '10px 4px', borderRadius: 8,
+                            border: '1px solid #475569', background: '#0f172a',
+                            color: '#94a3b8', font: 'inherit', fontWeight: 800
+                        }}
+                    >
+                        original
+                    </button>
+                </div>
+
+                <div style={{ marginTop: 8, color: '#94a3b8' }}>
+                    {aplicado
+                        ? `aplicado: ${CANDIDATOS.find(c => c.id === aplicado)?.rotulo}`
+                        : 'nada aplicado — barra como está no código'}
+                </div>
+            </div>
         </div>
     );
 }
