@@ -21,16 +21,21 @@ export function ExecutionTopBar({
 }) {
     /*
      * Painel opaco e sem `backdrop-filter`, de propósito. Era `bg-slate-950/80`
-     * + `backdrop-blur-xl` até 14/08/2026, e isso deixava o texto dos botões
-     * borrado no iPhone: no WebKit, um elemento com `backdrop-filter` vira
-     * camada de composição e os filhos são rasterizados fora da resolução
-     * nativa. O card da execução, que fica fora deste painel, saía nítido na
-     * mesma tela — foi o que denunciou.
+     * + `backdrop-blur-xl` até 14/08/2026, e nessa configuração o texto dos
+     * botões saía borrado no iPhone — ícone, rótulo e borda das pílulas, tudo
+     * mole, enquanto o card do exercício saía nítido na mesma tela.
      *
-     * Não se perde nada de aparência: `slate-950` é `#020617`, a mesma cor do
-     * fundo da página, então o painel opaco é indistinguível do translúcido
-     * numa área chapada. A diferença aparece só quando o conteúdo rola por
-     * baixo — antes passava um borrão, agora some limpo atrás da barra.
+     * A suspeita é a combinação `position: fixed` + `backdrop-filter` forte, que
+     * no WebKit faz o elemento virar camada de composição e os filhos serem
+     * rasterizados abaixo da resolução nativa. **Não está provado**: o card do
+     * exercício usa `backdrop-blur-md` (LinearCardCompactV2) e não borra, então
+     * `backdrop-filter` sozinho não explica — o que difere aqui é o `fixed` e o
+     * raio maior. Reproduzir exige o aparelho; Chrome no desktop não mostra.
+     *
+     * De todo modo o blur aqui não pagava por si: `slate-950` é `#020617`, a
+     * mesma cor do fundo da página, então numa área chapada o painel opaco é
+     * indistinguível do translúcido. A diferença aparece só quando o conteúdo
+     * rola por baixo — antes passava um borrão, agora some limpo atrás da barra.
      */
     return (
         <div

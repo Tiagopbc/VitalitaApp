@@ -81,7 +81,7 @@ export function SyncStatusBadge({ status, className = '', compact = false }) {
     if (compact) {
         return (
             <div
-                className={`inline-flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full border backdrop-blur-md ${config.className} ${className}`}
+                className={`inline-flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full border ${config.className} ${className}`}
                 role="status"
                 aria-live="polite"
                 aria-label={config.label}
@@ -94,7 +94,7 @@ export function SyncStatusBadge({ status, className = '', compact = false }) {
 
     return (
         <div
-            className={`inline-flex h-8 max-w-full min-w-0 items-center gap-2 rounded-full border px-3 text-[11px] font-bold uppercase backdrop-blur-md ${config.className} ${className}`}
+            className={`inline-flex h-8 max-w-full min-w-0 items-center gap-2 rounded-full border px-3 text-[11px] font-bold uppercase ${config.className} ${className}`}
             role="status"
             aria-live="polite"
         >
