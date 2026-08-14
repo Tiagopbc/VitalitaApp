@@ -105,6 +105,22 @@ const CANDIDATOS = [
         rotulo: 'forçar camada',
         dica: 'translateZ(0) força rasterização própria, às vezes na escala certa',
         aplicar: (el) => { el.style.transform = 'translateZ(0)'; }
+    },
+    {
+        // Último candidato, e o único que não é sobre camada: index.css põe
+        // `-webkit-font-smoothing: antialiased` no body, o que troca subpixel
+        // por escala de cinza e AFINA texto claro sobre fundo escuro. O estrago
+        // se concentra em texto pequeno, negrito e caixa alta — exatamente
+        // CALC/TIMER/FOCO em 11px. Título grande em peso 700 aguenta.
+        id: 'fonteNormal',
+        rotulo: 'fonte normal',
+        dica: 'devolve a suavização subpixel só na barra',
+        aplicar: (el) => {
+            el.style.webkitFontSmoothing = 'auto';
+            el.querySelectorAll('*').forEach((filho) => {
+                filho.style.webkitFontSmoothing = 'auto';
+            });
+        }
     }
 ];
 
@@ -120,6 +136,10 @@ export function LayoutMetricsPanel() {
         el.style.borderRadius = '';
         el.style.boxShadow = '';
         el.style.transform = '';
+        el.style.webkitFontSmoothing = '';
+        el.querySelectorAll('*').forEach((filho) => {
+            filho.style.webkitFontSmoothing = '';
+        });
         const g = el.querySelector('[class*="from-cyan-500"]');
         if (g) g.style.display = '';
         setAplicado(null);
