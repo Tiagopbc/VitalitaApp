@@ -12,7 +12,13 @@ export const TopBarButton = ({ icon, label, variant = 'default', onClick, active
             ? "px-3 py-1.5 text-[11px] tracking-wide min-h-8"
             : "px-2.5 py-2 text-[10px] tracking-tight min-h-9";
 
-    const baseStyles = `flex items-center gap-1 rounded-lg font-bold uppercase transition-all duration-300 border backdrop-blur-md whitespace-nowrap ${sizeStyles}`;
+    // Sem `backdrop-blur-md`, que esteve aqui de 21/01/2026 a 14/08/2026: estes
+    // botões vivem dentro do painel da `ExecutionTopBar`, que já aplica
+    // `backdrop-blur-xl`. Desfocar o resultado já desfocado do pai não muda nada
+    // — o painel é uma superfície chapada, `slate-950` é a mesma cor do fundo da
+    // página — e `backdrop-filter` aninhado desenha um halo nas bordas
+    // arredondadas no WebKit do iPhone. Não devolva a classe.
+    const baseStyles = `flex items-center gap-1 rounded-lg font-bold uppercase transition-all duration-300 border whitespace-nowrap ${sizeStyles}`;
     const iconSize = iconOnly ? 18 : prominence === 'large' ? 15 : 14;
 
     const variants = {
@@ -27,8 +33,14 @@ export const TopBarButton = ({ icon, label, variant = 'default', onClick, active
         // se anunciar. Por isso o ativo passa a ser ciano, que é a cor que o
         // app já usa para "ligado" (ver o `primary` logo acima), em vez de
         // continuar disputando o mesmo cinza com o inativo.
+        //
+        // O ativo se marca por contorno, não por sombra: `shadow-cyan-500/20`
+        // desenhava um halo em volta da pílula. Borda em opacidade cheia e
+        // preenchimento um pouco mais forte dão o mesmo recado sem espalhar luz.
+        // A espessura fica em 1px — `border-2` só no ativo empurraria o layout
+        // a cada toque.
         default: active
-            ? "bg-cyan-500/20 text-cyan-300 border-cyan-400/60 shadow-lg shadow-cyan-500/20"
+            ? "bg-cyan-500/25 text-cyan-200 border-cyan-400"
             : "bg-slate-800/70 text-slate-100 border-white/25 hover:bg-slate-700/80 hover:text-white"
     };
 
