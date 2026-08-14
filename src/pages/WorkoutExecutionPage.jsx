@@ -282,12 +282,19 @@ export function WorkoutExecutionPage({ user }) {
                     onToggleFocus={() => setFocusMode(!focusMode)}
                 />
 
-                {/* Só o "content height" da ExecutionTopBar (~44px) + respiro: o
-                    `env(safe-area-inset-top)` já é aplicado uma vez pelo `body`
-                    em index.css. Somar de novo aqui duplicava o recuo em
-                    iPhones com notch/Dynamic Island e abria um vão enorme
-                    entre a barra e o conteúdo abaixo. */}
-                <div style={{ height: '58px' }}></div>
+                {/* Reserva no fluxo a altura que a ExecutionTopBar ocupa fixa,
+                    descontada a área segura: `env(safe-area-inset-top)` já é
+                    aplicado uma vez pelo `body` em index.css, e somar de novo
+                    aqui duplicava o recuo em iPhones com notch/Dynamic Island,
+                    abrindo um vão enorme entre a barra e o conteúdo.
+
+                    Medido: a barra tem 65px fora da área segura, então 66 deixa
+                    1px de folga. (O valor antigo era 58 para uma barra de 57px;
+                    o comentário anterior dizia "~44px", que estava errado.)
+                    Os 8px a mais acompanham o `+ 8px` que a barra ganhou no
+                    `paddingTop` para se afastar da Dynamic Island — os dois
+                    números andam juntos, mexeu num, meça o outro. */}
+                <div style={{ height: '66px' }}></div>
 
                 {!focusMode && (
                     <div className="px-4 mt-2 mb-2 flex justify-end">
