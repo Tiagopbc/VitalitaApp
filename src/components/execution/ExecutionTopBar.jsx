@@ -20,26 +20,27 @@ export function ExecutionTopBar({
     onToggleFocus
 }) {
     /*
-     * Painel opaco e sem `backdrop-filter`, de propósito. Era `bg-slate-950/80`
-     * + `backdrop-blur-xl` até 14/08/2026, e nessa configuração o texto dos
-     * botões saía borrado no iPhone — ícone, rótulo e borda das pílulas, tudo
-     * mole, enquanto o card do exercício saía nítido na mesma tela.
+     * Painel opaco e sem `backdrop-filter`. Era `bg-slate-950/80` +
+     * `backdrop-blur-xl` até 14/08/2026.
      *
-     * A suspeita é a combinação `position: fixed` + `backdrop-filter` forte, que
-     * no WebKit faz o elemento virar camada de composição e os filhos serem
-     * rasterizados abaixo da resolução nativa. **Não está provado**: o card do
-     * exercício usa `backdrop-blur-md` (LinearCardCompactV2) e não borra, então
-     * `backdrop-filter` sozinho não explica — o que difere aqui é o `fixed` e o
-     * raio maior. Reproduzir exige o aparelho; Chrome no desktop não mostra.
+     * Tirar o blur se justifica sozinho: os botões também tinham
+     * `backdrop-blur-md`, aninhado dentro deste, e desfocar o resultado já
+     * desfocado do pai não muda nada — `slate-950` é `#020617`, a mesma cor do
+     * fundo da página, então numa área chapada o painel opaco é indistinguível
+     * do translúcido. Era GPU gasta à toa. A única diferença real aparece com
+     * conteúdo rolando por baixo: antes passava um borrão, agora some limpo.
      *
-     * De todo modo o blur aqui não pagava por si: `slate-950` é `#020617`, a
-     * mesma cor do fundo da página, então numa área chapada o painel opaco é
-     * indistinguível do translúcido. A diferença aparece só quando o conteúdo
-     * rola por baixo — antes passava um borrão, agora some limpo atrás da barra.
+     * O que ele NÃO era: a causa do texto borrado que motivou a investigação.
+     * Isso foi testado no aparelho, com painel de A/B, e três hipóteses caíram —
+     * pixel fracionário (a geometria deu tudo inteiro: área segura 62px/186,
+     * barra 127px/381, viewport sem escala), a camada de composição (nem
+     * tirando o `position: fixed` o texto endurece) e a suavização de fonte.
+     *
+     * O culpado confirmado foi o "ambient glow" — ver o comentário logo abaixo.
+     * Não reintroduza nenhum dos dois achando que resolve nitidez.
      */
     return (
         <div
-            data-execution-topbar=""
             className="
                 fixed top-0 left-0 right-0 z-50 pointer-events-none
                 bg-slate-950
@@ -57,14 +58,21 @@ export function ExecutionTopBar({
                 height: 'auto'
             }}
         >
+            {/*
+              * Sem o "ambient glow" que existia aqui até 14/08/2026: um
+              * `absolute inset-0` com `bg-gradient-to-b from-cyan-500/5`.
+              *
+              * O `inset-0` era relativo a ESTE container, que começa depois do
+              * `padding-top` da área segura — então o gradiente não cobria a
+              * barra, cobria só a faixa dos botões, com uma borda dura no topo
+              * bem onde a linha começa. O efeito no iPhone era um véu ciano
+              * lavando as pílulas e um degrau de tom logo acima delas.
+              */}
             <div className="
                 relative mx-auto max-w-2xl
                 px-4 py-1.5
                 pointer-events-auto
             ">
-                {/* Ambient glow effect (Full Height) */}
-                <div className="absolute inset-0 bg-gradient-to-b from-cyan-500/5 to-transparent pointer-events-none rounded-b-3xl" />
-
                 <div className="relative z-10 flex items-center justify-between gap-2">
                     {/* Left side - Back button */}
                     <TopBarButton

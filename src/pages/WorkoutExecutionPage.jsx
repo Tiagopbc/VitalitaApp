@@ -16,8 +16,6 @@ import { SessionConflictDialog } from '../components/execution/SessionConflictDi
 import { Toast } from '../components/design-system/Toast';
 import { SyncStatusBadge } from '../components/design-system/SyncStatusBadge';
 import { ExecutionTopBar } from '../components/execution/ExecutionTopBar';
-// TEMPORÁRIO — remover junto com o painel de medição.
-import { LayoutMetricsPanel } from '../components/execution/LayoutMetricsPanel';
 import { ExecutionProgressCard } from '../components/execution/ExecutionProgressCard';
 import { FocusModeNav } from '../components/execution/FocusModeNav';
 import { ExecutionSkeleton } from '../components/execution/ExecutionSkeleton';
@@ -297,10 +295,6 @@ export function WorkoutExecutionPage({ user }) {
                     `paddingTop` para se afastar da Dynamic Island — os dois
                     números andam juntos, mexeu num, meça o outro. */}
                 <div style={{ height: '66px' }}></div>
-
-                {/* TEMPORÁRIO — medição do borrão da barra no PWA em tela cheia.
-                    Remover junto com LayoutMetricsPanel.jsx. */}
-                <LayoutMetricsPanel />
 
                 {!focusMode && (
                     <div className="px-4 mt-2 mb-2 flex justify-end">
