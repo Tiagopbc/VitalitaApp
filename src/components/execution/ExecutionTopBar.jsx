@@ -47,7 +47,12 @@ export function ExecutionTopBar({
                 rounded-b-3xl
             "
             style={{
-                paddingTop: 'env(safe-area-inset-top)',
+                // +8px sobre a área segura: com `env(safe-area-inset-top)` puro,
+                // sobravam só os 6px do `py-1.5` entre o fim da Dynamic Island e
+                // o topo dos botões, e a barra parecia colada nela. Quem mexer
+                // aqui precisa acertar junto o espaçador de 66px na
+                // WorkoutExecutionPage, que reserva esta altura no fluxo.
+                paddingTop: 'calc(env(safe-area-inset-top) + 8px)',
                 height: 'auto'
             }}
         >
