@@ -69,6 +69,34 @@ incômodo de repetição aqui é o `duration`, não a dedup. Os comentários de
 Isso reabre `notifyStore` e `TopBanner` (Tarefas 1 e 2) numa tarefa 5a, executada
 antes de fechar a Tarefa 5.
 
+## Emenda 3 — a barra não pinta mais sob o relógio (15/08/2026)
+
+Tudo neste plano que descreve a barra alcançando o pixel 0 e a cor cobrindo a
+área do relógio **deixou de valer**. Vale para o objetivo no topo do documento, o
+comentário da Tarefa 2 sobre "a cor precisa alcançar o pixel 0", o comentário da
+Tarefa 3 e a seção de verificação.
+
+O app trocou `apple-mobile-web-app-status-bar-style` de `black-translucent` para
+`black` (#70). O conteúdo deixa de passar por baixo da status bar,
+`env(safe-area-inset-top)` passa a **0** em tela cheia, e a barra começa abaixo
+da faixa que o iOS pinta. O `pt-[env(safe-area-inset-top)]` continua no código e
+vira no-op nesse modo, de propósito — volta a valer se a tag mudar.
+
+**Motivo:** com `black-translucent`, o iOS esfumaça o conteúdo que entra na faixa
+da status bar. Isso borrava os botões da `ExecutionTopBar`, que é `fixed` no topo
+e mora dentro da faixa. Antes de chegar aí, cinco hipóteses do lado do app foram
+testadas no aparelho com painel de A/B e todas caíram: `backdrop-filter`
+aninhado, pixel fracionário, camada de composição, suavização de fonte e o véu
+ciano do "ambient glow" — este último era real e foi corrigido em #69, mas era
+outro problema. O efeito é do sistema; nenhum CSS o remove.
+
+Quem localizou foi o usuário, rolando a Home e vendo a saudação borrar ao entrar
+na faixa enquanto a linha logo abaixo ficava nítida — observação que tirou a
+investigação da tela de execução, onde ela estava presa.
+
+**Decisão do usuário**, tomada comparando os dois estados no aparelho: texto
+nítido vale mais que cor de ponta a ponta.
+
 ## Estrutura de arquivos
 
 **Criar:**

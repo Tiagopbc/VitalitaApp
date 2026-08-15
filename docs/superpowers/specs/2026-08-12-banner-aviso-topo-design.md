@@ -16,6 +16,32 @@ Substituir o `sonner` por um componente próprio de barra superior, usado por **
 
 Não é o aviso voltando pro topo. A barra pinta de `top: 0` até abaixo da status bar — a cor ocupa a área do relógio e da bateria, e o **conteúdo** (ícone e texto) fica na faixa logo abaixo deles. O que escondia o aviso antigo era ele ser um card curto ancorado a `top-6`, inteiramente dentro da zona da status bar. Referência visual fornecida pelo usuário: banner amarelo full-bleed com o relógio do iOS por cima da cor.
 
+> **Emenda de 15/08/2026 — a cor não alcança mais o relógio.**
+>
+> O app trocou `apple-mobile-web-app-status-bar-style` de `black-translucent`
+> para `black` (#70). Com isso o conteúdo deixa de passar por baixo da status
+> bar, `env(safe-area-inset-top)` passa a **0** em tela cheia, e a barra verde
+> **não pinta mais sob o relógio** — ela começa abaixo da faixa que o iOS pinta.
+>
+> O `pt-[env(safe-area-inset-top)]` continua no componente e vira no-op nesse
+> modo. É de propósito: ele volta a valer sozinho se a tag mudar, e cobre
+> plataformas onde o inset não é zero.
+>
+> **Por que a troca:** com `black-translucent`, o iOS aplica um esfumaçado
+> próprio no conteúdo que entra na faixa da status bar. Isso borrava os botões
+> da barra de execução, que é `fixed` no topo e mora dentro da faixa. O usuário
+> localizou o efeito rolando a Home e vendo a saudação borrar ao entrar ali,
+> enquanto a linha logo abaixo ficava nítida. Cinco hipóteses do lado do app
+> foram testadas no aparelho antes disso e todas caíram — o efeito é do sistema,
+> e nenhum CSS o remove.
+>
+> **O que se perdeu:** o full-bleed sob o relógio, que era a premissa central
+> deste spec. A decisão foi do usuário, tomada comparando os dois estados no
+> aparelho: texto nítido valeu mais que cor de ponta a ponta.
+>
+> O resto do spec — fila de um, `id` como chave de remount, `pointer-events-none`,
+> auto-dismiss, aviso com ação — segue valendo sem alteração.
+
 ## Decisão de arquitetura
 
 Duas abordagens foram avaliadas:

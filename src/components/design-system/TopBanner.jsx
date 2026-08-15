@@ -2,10 +2,21 @@
  * TopBanner.jsx
  * Barra de aviso que desce do topo — o único formato de aviso do app.
  *
- * Ela pinta de `top: 0` até abaixo da status bar (`pt-[env(safe-area-inset-top)]`)
- * e põe o conteúdo na faixa sob o relógio. Isso é o oposto do defeito que #51/#53
- * corrigiram: o aviso antigo era um card curto ancorado a `top-6`, inteiramente
- * dentro da zona da status bar, e sumia sem ser lido.
+ * Ela ocupa a largura inteira a partir do topo do conteúdo do app. O desenho
+ * original ia além: pintava até o pixel 0, com a cor cobrindo a área do relógio
+ * e o texto na faixa abaixo dele — o oposto do defeito que #51/#53 corrigiram,
+ * em que um card curto ancorado a `top-6` sumia dentro da zona da status bar.
+ *
+ * Desde 15/08/2026 isso não acontece mais: o app passou a declarar
+ * `apple-mobile-web-app-status-bar-style: black` (index.html), o conteúdo deixou
+ * de correr por baixo da status bar e `env(safe-area-inset-top)` virou 0 em tela
+ * cheia. Com `black-translucent` o iOS esfumaçava o que entrava naquela faixa, e
+ * isso borrava os botões da barra de execução.
+ *
+ * O `pt-[env(safe-area-inset-top)]` fica: vira no-op nesse modo e volta a valer
+ * sozinho se a tag mudar ou em plataforma onde o inset não seja zero. A lição de
+ * #51/#53 continua de pé — o que não pode voltar é ancorar o aviso num card
+ * curto no topo.
  *
  * `pointer-events-none` no wrapper: sem botão, a barra não recebe toque nenhum,
  * e por isso pode ficar em z-10000 — acima dos modais de z-9999 (NumericKeypad,
