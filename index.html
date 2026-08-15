@@ -9,7 +9,25 @@
   <link rel="preload" href="/fonts/Outfit-700-normal-54.woff2" as="font" type="font/woff2" crossorigin />
   <link rel="icon" type="image/png" href="/apple-touch-icon.png" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <!--
+    EM TESTE (15/08/2026) — era `black-translucent`.
+
+    Com `black-translucent` + `viewport-fit=cover`, o conteúdo passa por baixo da
+    status bar em tela cheia (é o que dá os 62px de `env(safe-area-inset-top)`
+    medidos no iPhone 15 Pro), e o iOS aplica um esfumaçado próprio em quem entra
+    nessa faixa. Como a barra da execução é `fixed` no topo, ela mora dentro da
+    faixa e sai borrada; o card, abaixo, sai nítido. Numa aba do Safari nada
+    disso acontece porque esta tag só vale para app instalado na tela inicial.
+
+    Com `black`, o iOS pinta a faixa do relógio e o conteúdo começa abaixo dela:
+    acaba o esfumaçado, e `env(safe-area-inset-top)` passa a 0 — os layouts se
+    ajustam sozinhos, porque todos usam `env()`.
+
+    O custo é o sangramento até o topo: a barra verde de aviso e a barra da
+    execução deixam de pintar sob o relógio. Reverter é trocar esta linha de
+    volta.
+  -->
+  <meta name="apple-mobile-web-app-status-bar-style" content="black" />
   <title>Vitalità</title>
   <meta name="theme-color" content="#0f172a" />
 </head>
