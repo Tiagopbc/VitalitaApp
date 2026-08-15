@@ -16,6 +16,7 @@ import { SpeedInsightsLoader } from './components/SpeedInsightsLoader';
 import { ObservabilityTracker } from './components/ObservabilityTracker';
 import { PushDebugPanel } from './components/PushDebugPanel';
 import { AppCheckDebugPanel } from './components/AppCheckDebugPanel';
+import { StatusBarCap } from './components/common/StatusBarCap';
 import {
     initializeAppCheckMonitoring,
     isAppCheckMonitoringEnabled
@@ -31,6 +32,9 @@ function renderApplication() {
                 <BrowserRouter>
                     <ObservabilityTracker />
                     <App />
+                    {/* Global, e não no AppAuthed: a tela de login também rola
+                        por baixo do relógio. */}
+                    <StatusBarCap />
                     <PushDebugPanel />
                     <AppCheckDebugPanel />
                     <SpeedInsightsLoader />

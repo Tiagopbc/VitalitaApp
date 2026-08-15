@@ -69,7 +69,31 @@ incômodo de repetição aqui é o `duration`, não a dedup. Os comentários de
 Isso reabre `notifyStore` e `TopBanner` (Tarefas 1 e 2) numa tarefa 5a, executada
 antes de fechar a Tarefa 5.
 
-## Emenda 3 — a barra não pinta mais sob o relógio (15/08/2026)
+## Emenda 3 — revertida no mesmo dia; o full-bleed continua valendo
+
+**Leia isto antes da emenda abaixo.** A troca que ela descreve durou algumas
+horas e foi desfeita. O texto original ficou porque o raciocínio explica o
+`StatusBarCap`, que ficou no lugar.
+
+Motivo de desfazer: a tag é lida quando o iOS monta a janela, não a cada
+carregamento — um "Atualizar Agora" faz `skipWaiting` + reload dentro da janela
+já montada, então ela não chegava sem matar o app ou reinstalar o atalho.
+Depender de configuração de instalação é a única categoria de mudança que não
+alcança o usuário sozinha. E `black` custava o full-bleed, que é a premissa do
+plano.
+
+No lugar entrou `src/components/common/StatusBarCap.jsx`: tampa opaca em z-45
+cobrindo a área segura, acima do conteúdo e dos headers grudentos, abaixo da
+`ExecutionTopBar` (z-50) e do `TopBanner` (z-10000). Esconde o conteúdo antes que
+ele entre na faixa esfumaçada, sem tirar o full-bleed da barra de aviso. Como é
+código, chega por atualização normal.
+
+**Portanto: tudo neste plano que descreve a barra alcançando o pixel 0 volta a
+valer.**
+
+---
+
+### Emenda 3 original (revertida) — a barra não pinta mais sob o relógio
 
 Tudo neste plano que descreve a barra alcançando o pixel 0 e a cor cobrindo a
 área do relógio **deixou de valer**. Vale para o objetivo no topo do documento, o
