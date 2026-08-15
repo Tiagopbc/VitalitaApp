@@ -10,24 +10,33 @@
   <link rel="icon" type="image/png" href="/apple-touch-icon.png" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <!--
-    EM TESTE (15/08/2026) — era `black-translucent`.
+    `black-translucent` é a escolha, e ela voltou depois de um dia em `black`.
+    Não troque sem ler isto.
 
     Com `black-translucent` + `viewport-fit=cover`, o conteúdo passa por baixo da
-    status bar em tela cheia (é o que dá os 62px de `env(safe-area-inset-top)`
-    medidos no iPhone 15 Pro), e o iOS aplica um esfumaçado próprio em quem entra
-    nessa faixa. Como a barra da execução é `fixed` no topo, ela mora dentro da
-    faixa e sai borrada; o card, abaixo, sai nítido. Numa aba do Safari nada
-    disso acontece porque esta tag só vale para app instalado na tela inicial.
+    status bar em tela cheia — é o que dá os 62px de `env(safe-area-inset-top)`
+    medidos no iPhone 15 Pro, e o que permite a barra de aviso (`TopBanner`) e a
+    `ExecutionTopBar` pintarem a cor delas sob o relógio.
 
-    Com `black`, o iOS pinta a faixa do relógio e o conteúdo começa abaixo dela:
-    acaba o esfumaçado, e `env(safe-area-inset-top)` passa a 0 — os layouts se
-    ajustam sozinhos, porque todos usam `env()`.
+    O preço: o iOS aplica um esfumaçado próprio no conteúdo que entra nessa
+    faixa. Em 15/08/2026 trocamos para `black` para matar o esfumaçado, e
+    voltamos atrás por dois motivos.
 
-    O custo é o sangramento até o topo: a barra verde de aviso e a barra da
-    execução deixam de pintar sob o relógio. Reverter é trocar esta linha de
-    volta.
+    Primeiro, a tag é lida quando o iOS **monta a janela do app**, não a cada
+    carregamento. O `index.html` chega pelo service worker como todo o resto, mas
+    um "Atualizar Agora" faz `skipWaiting` + reload dentro da janela já montada —
+    então a troca não pegava sem matar o app, ou reinstalar o atalho. Depender de
+    configuração lida na instalação é ruim: é a única categoria de mudança que
+    não chega sozinha ao usuário.
+
+    Segundo, `black` custava o sangramento até o topo, que é a premissa do #62.
+
+    O esfumaçado passou a ser resolvido em código, por `StatusBarCap` — uma
+    tampa opaca que cobre a área segura e esconde o conteúdo antes que ele entre
+    na faixa. Ela fica em z-45, abaixo dos dois elementos que legitimamente
+    pintam ali. Ver `src/components/common/StatusBarCap.jsx`.
   -->
-  <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <title>Vitalità</title>
   <meta name="theme-color" content="#0f172a" />
 </head>
