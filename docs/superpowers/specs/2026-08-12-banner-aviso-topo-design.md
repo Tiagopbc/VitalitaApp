@@ -16,27 +16,37 @@ Substituir o `sonner` por um componente próprio de barra superior, usado por **
 
 Não é o aviso voltando pro topo. A barra pinta de `top: 0` até abaixo da status bar — a cor ocupa a área do relógio e da bateria, e o **conteúdo** (ícone e texto) fica na faixa logo abaixo deles. O que escondia o aviso antigo era ele ser um card curto ancorado a `top-6`, inteiramente dentro da zona da status bar. Referência visual fornecida pelo usuário: banner amarelo full-bleed com o relógio do iOS por cima da cor.
 
-> **Emenda de 15/08/2026 — revertida no mesmo dia. O full-bleed continua valendo.**
+> **Emenda de 15/08/2026 — o full-bleed sob o relógio saiu, em definitivo.**
 >
-> A emenda abaixo descreve uma troca que durou algumas horas e foi desfeita. Está
-> mantida porque o raciocínio dela explica o `StatusBarCap`, que ficou no lugar.
+> Esta seção **não descreve mais o comportamento**. A barra ocupa a largura
+> inteira a partir do topo do conteúdo, mas não pinta sob o relógio.
 >
-> **O que motivou desfazer:** a tag é lida quando o iOS monta a janela do app,
-> não a cada carregamento. Um "Atualizar Agora" faz `skipWaiting` + reload dentro
-> da janela já montada, então a troca não chegava sem matar o app ou reinstalar o
-> atalho — e depender de configuração de instalação é a única categoria de
-> mudança que não alcança o usuário sozinha. Somado a isso, `black` custava
-> justamente o full-bleed que é a premissa deste spec.
+> **Por quê.** Com `black-translucent`, o iOS aplica dois efeitos próprios em
+> quem entra na faixa da status bar: um esfumaçado e um escurecimento — este
+> para o relógio branco continuar legível sobre qualquer cor. Resultado: a barra
+> verde **nunca chegou a aparecer com a cor real ali**, saía com o topo
+> escurecido. O full-bleed era uma promessa que o sistema não entregava.
 >
-> **O que ficou no lugar:** `src/components/common/StatusBarCap.jsx`, uma tampa
-> opaca em z-45 que cobre a área segura e esconde o conteúdo antes que ele entre
-> na faixa esfumaçada. Fica abaixo do `TopBanner` (z-10000), então a barra de
-> aviso continua pintando sob o relógio. Como é código, chega por atualização
-> normal.
+> **Duas tentativas de conviver falharam, ambas verificadas no aparelho:** cinco
+> hipóteses do lado do app testadas com painel de A/B, todas derrubadas; e uma
+> tampa opaca sobre a área segura (`StatusBarCap`, #72), que falhou porque a
+> região afetada não coincide com `env(safe-area-inset-top)` e porque a própria
+> barra de aviso, em z-10000, fica acima de qualquer tampa.
+>
+> A tag passou a `black`: o iOS pinta a faixa e o conteúdo começa abaixo dela.
+> `env(safe-area-inset-top)` vira 0 e o `pt-[env(...)]` do componente vira no-op.
+>
+> **O que se perdeu é menos do que parece** — um full-bleed que já vinha
+> degradado. Tudo o mais neste spec segue valendo.
+>
+> **Ao entregar:** o iOS lê essa tag ao montar a janela do app, não a cada
+> carregamento — um "Atualizar Agora" não a aplica. É preciso matar o app no
+> seletor e reabrir. Custo de uma vez só; todo o resto continua chegando pelo
+> service worker.
 >
 > ---
 >
-> **Emenda original (revertida) — a cor não alcança mais o relógio.**
+> **Emenda anterior (histórica) — a cor não alcança mais o relógio.**
 >
 > O app trocou `apple-mobile-web-app-status-bar-style` de `black-translucent`
 > para `black` (#70). Com isso o conteúdo deixa de passar por baixo da status
