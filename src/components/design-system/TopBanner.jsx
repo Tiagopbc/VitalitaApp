@@ -2,17 +2,20 @@
  * TopBanner.jsx
  * Barra de aviso que desce do topo — o único formato de aviso do app.
  *
- * Ela pinta de `top: 0` até abaixo da status bar (`pt-[env(safe-area-inset-top)]`)
- * e põe o conteúdo na faixa sob o relógio. Isso é o oposto do defeito que #51/#53
- * corrigiram: o aviso antigo era um card curto ancorado a `top-6`, inteiramente
- * dentro da zona da status bar, e sumia sem ser lido.
+ * Ela ocupa a largura inteira a partir do topo do conteúdo do app, com o texto
+ * na primeira linha. Não é o aviso "voltando pro topo": o que sumia atrás da
+ * status bar em #51/#53 era um card curto ancorado a `top-6`, inteiramente
+ * dentro daquela zona. Essa lição continua valendo.
  *
- * Esse full-bleed depende de `apple-mobile-web-app-status-bar-style:
- * black-translucent` (index.html). Em 15/08/2026 a tag foi trocada por `black`
- * durante algumas horas e o full-bleed sumiu junto; foi revertida. O
- * esfumaçado que o iOS aplica nessa faixa é resolvido por `StatusBarCap`, que
- * fica em z-45 — **abaixo** do z-10000 daqui, e é isso que deixa a barra passar
- * por cima da tampa.
+ * O desenho original ia além e pintava até o pixel 0, sob o relógio. Isso saiu
+ * em 15/08/2026, junto com a troca da status bar para `black` (index.html): o
+ * iOS escurecia o topo da barra para manter o relógio legível, então o
+ * full-bleed nunca chegou a aparecer com a cor real. Melhor não prometer o que
+ * o sistema não entrega.
+ *
+ * O `pt-[env(safe-area-inset-top)]` fica: vira no-op com a status bar opaca e
+ * volta a valer sozinho se a tag mudar ou em plataforma onde o inset não seja
+ * zero.
  *
  * `pointer-events-none` no wrapper: sem botão, a barra não recebe toque nenhum,
  * e por isso pode ficar em z-10000 — acima dos modais de z-9999 (NumericKeypad,

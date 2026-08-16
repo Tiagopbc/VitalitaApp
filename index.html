@@ -10,33 +10,38 @@
   <link rel="icon" type="image/png" href="/apple-touch-icon.png" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <!--
-    `black-translucent` é a escolha, e ela voltou depois de um dia em `black`.
-    Não troque sem ler isto.
+    `black`, e desta vez é definitivo. Não volte para `black-translucent`.
 
-    Com `black-translucent` + `viewport-fit=cover`, o conteúdo passa por baixo da
-    status bar em tela cheia — é o que dá os 62px de `env(safe-area-inset-top)`
-    medidos no iPhone 15 Pro, e o que permite a barra de aviso (`TopBanner`) e a
-    `ExecutionTopBar` pintarem a cor delas sob o relógio.
+    Com `black-translucent` o conteúdo passa por baixo da status bar, e o iOS
+    aplica dois efeitos próprios em quem entra nessa faixa: um esfumaçado e um
+    escurecimento (para o relógio branco continuar legível sobre qualquer cor).
+    Não são opcionais e nenhum CSS os desliga.
 
-    O preço: o iOS aplica um esfumaçado próprio no conteúdo que entra nessa
-    faixa. Em 15/08/2026 trocamos para `black` para matar o esfumaçado, e
-    voltamos atrás por dois motivos.
+    Duas tentativas de conviver com isso falharam, ambas verificadas no aparelho:
 
-    Primeiro, a tag é lida quando o iOS **monta a janela do app**, não a cada
-    carregamento. O `index.html` chega pelo service worker como todo o resto, mas
-    um "Atualizar Agora" faz `skipWaiting` + reload dentro da janela já montada —
-    então a troca não pegava sem matar o app, ou reinstalar o atalho. Depender de
-    configuração lida na instalação é ruim: é a única categoria de mudança que
-    não chega sozinha ao usuário.
+    1. Corrigir do lado do app. Cinco hipóteses testadas com painel de A/B —
+       backdrop-filter aninhado, pixel fracionário, camada de composição,
+       suavização de fonte e o gradiente "ambient glow". Todas caíram. Efeito de
+       sistema não se conserta com CSS.
 
-    Segundo, `black` custava o sangramento até o topo, que é a premissa do #62.
+    2. `StatusBarCap`, uma tampa opaca cobrindo a área segura (#72). Falhou por
+       dois motivos: a região afetada não coincide com `env(safe-area-inset-top)`,
+       e a barra de aviso vive em z-10000, acima de qualquer tampa — ela saía com
+       o topo escurecido, ou seja, o full-bleed que a tampa existia para preservar
+       já vinha degradado.
 
-    O esfumaçado passou a ser resolvido em código, por `StatusBarCap` — uma
-    tampa opaca que cobre a área segura e esconde o conteúdo antes que ele entre
-    na faixa. Ela fica em z-45, abaixo dos dois elementos que legitimamente
-    pintam ali. Ver `src/components/common/StatusBarCap.jsx`.
+    Com `black`, o iOS pinta a faixa e o conteúdo começa abaixo dela.
+    `env(safe-area-inset-top)` vira 0 e os layouts se ajustam sozinhos, porque
+    todos usam `env()`.
+
+    ATENÇÃO ao entregar: o iOS lê esta tag ao **montar a janela do app**, não a
+    cada carregamento. Um "Atualizar Agora" faz skipWaiting + reload dentro da
+    janela já montada e NÃO aplica a troca. É preciso matar o app no seletor e
+    reabrir — ou, se nem isso bastar, remover o ícone e adicionar de novo. Custo
+    de uma vez só: é a única categoria de mudança que não chega sozinha, e todo o
+    resto (código, CSS, manifesto, assets) continua chegando pelo service worker.
   -->
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black" />
   <title>Vitalità</title>
   <meta name="theme-color" content="#0f172a" />
 </head>

@@ -427,10 +427,11 @@ function AppAuthedContent() {
             </div>
 
             {/*
-              * A barra pinta de `top: 0` até abaixo da status bar e põe o texto
-              * na faixa sob o relógio. Não é o aviso "voltando pro topo": o que
-              * sumia atrás da status bar em #51/#53 era um card curto ancorado
-              * a `top-6`, inteiramente dentro daquela zona.
+              * Barra de largura inteira a partir do topo do conteúdo. Não é
+              * o aviso "voltando pro topo": o que sumia atrás da status bar em
+              * #51/#53 era um card curto ancorado a `top-6`, dentro daquela
+              * zona. Desde 15/08/2026 o app usa status bar opaca e nada corre
+              * mais sob o relógio — ver o comentário no `TopBanner`.
               *
               * Fica na raiz autenticada de propósito — salvar uma ficha volta
               * pra lista no mesmo tique, e o aviso precisa sobreviver à

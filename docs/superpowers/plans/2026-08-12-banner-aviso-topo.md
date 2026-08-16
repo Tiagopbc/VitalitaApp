@@ -69,57 +69,36 @@ incômodo de repetição aqui é o `duration`, não a dedup. Os comentários de
 Isso reabre `notifyStore` e `TopBanner` (Tarefas 1 e 2) numa tarefa 5a, executada
 antes de fechar a Tarefa 5.
 
-## Emenda 3 — revertida no mesmo dia; o full-bleed continua valendo
+## Emenda 3 — o full-bleed sob o relógio saiu, em definitivo (15/08/2026)
 
-**Leia isto antes da emenda abaixo.** A troca que ela descreve durou algumas
-horas e foi desfeita. O texto original ficou porque o raciocínio explica o
-`StatusBarCap`, que ficou no lugar.
+**Tudo neste plano que descreve a barra alcançando o pixel 0 e a cor cobrindo a
+área do relógio deixou de valer.** Vale para o objetivo no topo, o comentário da
+Tarefa 2 sobre "a cor precisa alcançar o pixel 0", o da Tarefa 3 e a seção de
+verificação.
 
-Motivo de desfazer: a tag é lida quando o iOS monta a janela, não a cada
-carregamento — um "Atualizar Agora" faz `skipWaiting` + reload dentro da janela
-já montada, então ela não chegava sem matar o app ou reinstalar o atalho.
-Depender de configuração de instalação é a única categoria de mudança que não
-alcança o usuário sozinha. E `black` custava o full-bleed, que é a premissa do
-plano.
+Com `apple-mobile-web-app-status-bar-style: black-translucent`, o iOS aplica dois
+efeitos próprios em quem entra na faixa da status bar: um esfumaçado e um
+escurecimento, este para o relógio branco continuar legível sobre qualquer cor.
+Ou seja: **a barra verde nunca chegou a aparecer com a cor real ali** — saía com
+o topo escurecido. O full-bleed era uma promessa que o sistema não entrega.
 
-No lugar entrou `src/components/common/StatusBarCap.jsx`: tampa opaca em z-45
-cobrindo a área segura, acima do conteúdo e dos headers grudentos, abaixo da
-`ExecutionTopBar` (z-50) e do `TopBanner` (z-10000). Esconde o conteúdo antes que
-ele entre na faixa esfumaçada, sem tirar o full-bleed da barra de aviso. Como é
-código, chega por atualização normal.
+Duas tentativas de conviver falharam, ambas verificadas no aparelho:
 
-**Portanto: tudo neste plano que descreve a barra alcançando o pixel 0 volta a
-valer.**
+1. Cinco hipóteses do lado do app, testadas com painel de A/B — backdrop-filter
+   aninhado, pixel fracionário, camada de composição, suavização de fonte e o
+   gradiente "ambient glow". Todas caíram.
+2. `StatusBarCap` (#72), tampa opaca sobre a área segura. Falhou porque a região
+   afetada não coincide com `env(safe-area-inset-top)`, e porque a barra de aviso
+   vive em z-10000 — acima de qualquer tampa. Removida.
 
----
+A tag passou a `black`: o iOS pinta a faixa, o conteúdo começa abaixo,
+`env(safe-area-inset-top)` vira 0 e os layouts se ajustam sozinhos. O
+`pt-[env(...)]` fica nos componentes e vira no-op.
 
-### Emenda 3 original (revertida) — a barra não pinta mais sob o relógio
-
-Tudo neste plano que descreve a barra alcançando o pixel 0 e a cor cobrindo a
-área do relógio **deixou de valer**. Vale para o objetivo no topo do documento, o
-comentário da Tarefa 2 sobre "a cor precisa alcançar o pixel 0", o comentário da
-Tarefa 3 e a seção de verificação.
-
-O app trocou `apple-mobile-web-app-status-bar-style` de `black-translucent` para
-`black` (#70). O conteúdo deixa de passar por baixo da status bar,
-`env(safe-area-inset-top)` passa a **0** em tela cheia, e a barra começa abaixo
-da faixa que o iOS pinta. O `pt-[env(safe-area-inset-top)]` continua no código e
-vira no-op nesse modo, de propósito — volta a valer se a tag mudar.
-
-**Motivo:** com `black-translucent`, o iOS esfumaça o conteúdo que entra na faixa
-da status bar. Isso borrava os botões da `ExecutionTopBar`, que é `fixed` no topo
-e mora dentro da faixa. Antes de chegar aí, cinco hipóteses do lado do app foram
-testadas no aparelho com painel de A/B e todas caíram: `backdrop-filter`
-aninhado, pixel fracionário, camada de composição, suavização de fonte e o véu
-ciano do "ambient glow" — este último era real e foi corrigido em #69, mas era
-outro problema. O efeito é do sistema; nenhum CSS o remove.
-
-Quem localizou foi o usuário, rolando a Home e vendo a saudação borrar ao entrar
-na faixa enquanto a linha logo abaixo ficava nítida — observação que tirou a
-investigação da tela de execução, onde ela estava presa.
-
-**Decisão do usuário**, tomada comparando os dois estados no aparelho: texto
-nítido vale mais que cor de ponta a ponta.
+**Ao entregar:** o iOS lê essa tag ao montar a janela do app. Um "Atualizar
+Agora" faz skipWaiting + reload dentro da janela já montada e não a aplica — é
+preciso matar o app no seletor e reabrir. Custo de uma vez só; código, CSS,
+manifesto e assets continuam chegando pelo service worker normalmente.
 
 ## Estrutura de arquivos
 
