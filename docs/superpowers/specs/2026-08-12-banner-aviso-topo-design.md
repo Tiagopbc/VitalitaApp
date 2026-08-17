@@ -16,37 +16,41 @@ Substituir o `sonner` por um componente próprio de barra superior, usado por **
 
 Não é o aviso voltando pro topo. A barra pinta de `top: 0` até abaixo da status bar — a cor ocupa a área do relógio e da bateria, e o **conteúdo** (ícone e texto) fica na faixa logo abaixo deles. O que escondia o aviso antigo era ele ser um card curto ancorado a `top-6`, inteiramente dentro da zona da status bar. Referência visual fornecida pelo usuário: banner amarelo full-bleed com o relógio do iOS por cima da cor.
 
-> **Emenda de 15/08/2026 — o full-bleed sob o relógio saiu, em definitivo.**
+> **Emenda de 16/08/2026 — o full-bleed vale, e agora aparece de verdade.**
 >
-> Esta seção **não descreve mais o comportamento**. A barra ocupa a largura
-> inteira a partir do topo do conteúdo, mas não pinta sob o relógio.
+> Esta seção continua descrevendo o comportamento. A barra pinta até o pixel 0,
+> com o relógio por cima da cor. Confirmado no iPhone.
 >
-> **Por quê.** Com `black-translucent`, o iOS aplica dois efeitos próprios em
-> quem entra na faixa da status bar: um esfumaçado e um escurecimento — este
-> para o relógio branco continuar legível sobre qualquer cor. Resultado: a barra
-> verde **nunca chegou a aparecer com a cor real ali**, saía com o topo
-> escurecido. O full-bleed era uma promessa que o sistema não entregava.
+> O caminho até aqui passou por uma emenda intermediária, escrita em 15/08 e
+> **errada**, que declarava o full-bleed morto. Ela ficou registrada abaixo
+> porque o raciocínio dela — não o veredito — explica a configuração atual.
 >
-> **Duas tentativas de conviver falharam, ambas verificadas no aparelho:** cinco
-> hipóteses do lado do app testadas com painel de A/B, todas derrubadas; e uma
-> tampa opaca sobre a área segura (`StatusBarCap`, #72), que falhou porque a
-> região afetada não coincide com `env(safe-area-inset-top)` e porque a própria
-> barra de aviso, em z-10000, fica acima de qualquer tampa.
+> **O que estava certo nela:** com `apple-mobile-web-app-status-bar-style:
+> black-translucent`, o iOS aplica dois efeitos em quem entra na faixa da status
+> bar — esfumaçado e escurecimento, este para o relógio branco continuar legível
+> sobre qualquer cor. A barra verde saía com o topo lavado, e o texto da tela
+> borrava ao rolar para cima.
 >
-> A tag passou a `black`: o iOS pinta a faixa e o conteúdo começa abaixo dela.
-> `env(safe-area-inset-top)` vira 0 e o `pt-[env(...)]` do componente vira no-op.
+> **O que estava errado:** concluir que `black` custaria o full-bleed. Não custa.
+> O `viewport-fit=cover` mantém o conteúdo ocupando a tela toda nos dois modos; o
+> que muda é que, com `black`, o iOS assume fundo escuro e **não aplica efeito
+> nenhum**. Resultado: cor cheia até o topo, sem esfumaçado e sem escurecimento.
 >
-> **O que se perdeu é menos do que parece** — um full-bleed que já vinha
-> degradado. Tudo o mais neste spec segue valendo.
+> **Duas tentativas de conviver com `black-translucent` falharam antes**, ambas
+> verificadas no aparelho: cinco hipóteses de CSS testadas com painel de A/B, e
+> uma tampa opaca sobre a área segura (`StatusBarCap`, #72) — que falhou porque a
+> região afetada não coincide com `env(safe-area-inset-top)` e porque a barra de
+> aviso, em z-10000, fica acima de qualquer tampa.
 >
-> **Ao entregar:** o iOS lê essa tag ao montar a janela do app, não a cada
-> carregamento — um "Atualizar Agora" não a aplica. É preciso matar o app no
-> seletor e reabrir. Custo de uma vez só; todo o resto continua chegando pelo
+> **Ao mexer nessa tag:** o iOS a lê ao montar a janela do app. Nem "Atualizar
+> Agora" nem matar o app no seletor bastaram — só pegou removendo o ícone da tela
+> inicial e adicionando de novo pelo Safari. Custo de uma vez só, e restrito às
+> três configurações de janela (status bar, ícone, nome). Todo o resto chega pelo
 > service worker.
 >
 > ---
 >
-> **Emenda anterior (histórica) — a cor não alcança mais o relógio.**
+> **Emenda intermediária (15/08, veredito errado) — a cor não alcança mais o relógio.**
 >
 > O app trocou `apple-mobile-web-app-status-bar-style` de `black-translucent`
 > para `black` (#70). Com isso o conteúdo deixa de passar por baixo da status

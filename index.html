@@ -30,16 +30,23 @@
        o topo escurecido, ou seja, o full-bleed que a tampa existia para preservar
        já vinha degradado.
 
-    Com `black`, o iOS pinta a faixa e o conteúdo começa abaixo dela.
-    `env(safe-area-inset-top)` vira 0 e os layouts se ajustam sozinhos, porque
-    todos usam `env()`.
+    Com `black` o iOS assume fundo escuro e **não aplica efeito nenhum**. O
+    `viewport-fit=cover` mantém o conteúdo ocupando a tela toda nos dois modos e
+    `env(safe-area-inset-top)` continua valendo 62px — ou seja, não se perde o
+    sangramento até o topo. Pelo contrário: é com `black` que a barra de aviso
+    finalmente aparece com a cor cheia sob o relógio, sem o topo lavado. Isso
+    contraria o que estava escrito aqui em 15/08, e foi confirmado no aparelho.
 
     ATENÇÃO ao entregar: o iOS lê esta tag ao **montar a janela do app**, não a
-    cada carregamento. Um "Atualizar Agora" faz skipWaiting + reload dentro da
-    janela já montada e NÃO aplica a troca. É preciso matar o app no seletor e
-    reabrir — ou, se nem isso bastar, remover o ícone e adicionar de novo. Custo
-    de uma vez só: é a única categoria de mudança que não chega sozinha, e todo o
-    resto (código, CSS, manifesto, assets) continua chegando pelo service worker.
+    cada carregamento. Nem "Atualizar Agora" (skipWaiting + reload dentro da
+    janela já montada) nem matar o app no seletor bastaram — na prática, em
+    16/08/2026, só pegou removendo o ícone da tela inicial e adicionando de novo
+    pelo Safari. Avise isso de cara para quem for testar.
+
+    São só três coisas assim, todas configuração de janela lida na instalação:
+    esta tag, o ícone e o nome do atalho. Todo o resto — código, CSS, manifesto,
+    assets, fontes — está no precache do service worker e chega pelo fluxo
+    normal, sem reinstalar nada.
   -->
   <meta name="apple-mobile-web-app-status-bar-style" content="black" />
   <title>Vitalità</title>
