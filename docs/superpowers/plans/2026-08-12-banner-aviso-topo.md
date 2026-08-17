@@ -69,36 +69,40 @@ incômodo de repetição aqui é o `duration`, não a dedup. Os comentários de
 Isso reabre `notifyStore` e `TopBanner` (Tarefas 1 e 2) numa tarefa 5a, executada
 antes de fechar a Tarefa 5.
 
-## Emenda 3 — o full-bleed sob o relógio saiu, em definitivo (15/08/2026)
+## Emenda 3 — o full-bleed vale, e agora aparece de verdade (16/08/2026)
 
-**Tudo neste plano que descreve a barra alcançando o pixel 0 e a cor cobrindo a
-área do relógio deixou de valer.** Vale para o objetivo no topo, o comentário da
-Tarefa 2 sobre "a cor precisa alcançar o pixel 0", o da Tarefa 3 e a seção de
-verificação.
+**Tudo neste plano que descreve a barra alcançando o pixel 0 continua valendo.**
+Confirmado no iPhone: a cor vai até o topo, com o relógio por cima dela.
 
-Com `apple-mobile-web-app-status-bar-style: black-translucent`, o iOS aplica dois
-efeitos próprios em quem entra na faixa da status bar: um esfumaçado e um
-escurecimento, este para o relógio branco continuar legível sobre qualquer cor.
-Ou seja: **a barra verde nunca chegou a aparecer com a cor real ali** — saía com
-o topo escurecido. O full-bleed era uma promessa que o sistema não entrega.
+Houve uma emenda intermediária em 15/08 declarando o contrário. **Ela estava
+errada** e foi substituída por esta. O que ela acertou e o que ela errou:
 
-Duas tentativas de conviver falharam, ambas verificadas no aparelho:
+**Acertou o diagnóstico.** Com `apple-mobile-web-app-status-bar-style:
+black-translucent`, o iOS aplica dois efeitos em quem entra na faixa da status
+bar — esfumaçado e escurecimento, este para o relógio branco continuar legível
+sobre qualquer cor. A barra verde saía com o topo lavado, e o texto da tela
+borrava ao rolar para cima.
+
+**Errou o veredito.** Concluiu que trocar para `black` custaria o full-bleed. Não
+custa: o `viewport-fit=cover` mantém o conteúdo ocupando a tela toda nos dois
+modos, e `env(safe-area-inset-top)` segue valendo 62px. O que muda é que, com
+`black`, o iOS assume fundo escuro e **não aplica efeito nenhum** — cor cheia até
+o topo, sem esfumaçado e sem escurecimento.
+
+Antes de chegar aí, duas abordagens falharam, ambas verificadas no aparelho:
 
 1. Cinco hipóteses do lado do app, testadas com painel de A/B — backdrop-filter
    aninhado, pixel fracionário, camada de composição, suavização de fonte e o
    gradiente "ambient glow". Todas caíram.
 2. `StatusBarCap` (#72), tampa opaca sobre a área segura. Falhou porque a região
    afetada não coincide com `env(safe-area-inset-top)`, e porque a barra de aviso
-   vive em z-10000 — acima de qualquer tampa. Removida.
+   vive em z-10000 — acima de qualquer tampa. Removida em #73.
 
-A tag passou a `black`: o iOS pinta a faixa, o conteúdo começa abaixo,
-`env(safe-area-inset-top)` vira 0 e os layouts se ajustam sozinhos. O
-`pt-[env(...)]` fica nos componentes e vira no-op.
-
-**Ao entregar:** o iOS lê essa tag ao montar a janela do app. Um "Atualizar
-Agora" faz skipWaiting + reload dentro da janela já montada e não a aplica — é
-preciso matar o app no seletor e reabrir. Custo de uma vez só; código, CSS,
-manifesto e assets continuam chegando pelo service worker normalmente.
+**Ao mexer nessa tag:** o iOS a lê ao montar a janela do app. Nem "Atualizar
+Agora" nem matar o app no seletor bastaram — só pegou removendo o ícone da tela
+inicial e adicionando de novo pelo Safari. Custo de uma vez só, restrito às três
+configurações de janela (status bar, ícone, nome). Código, CSS, manifesto e
+assets continuam chegando pelo service worker normalmente.
 
 ## Estrutura de arquivos
 
