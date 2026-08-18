@@ -18,9 +18,25 @@ import { describePushContext } from '../../services/pushDiagnostics';
 export function RestTimer({ initialTime = 90, onComplete, isOpen, onClose, onDurationChange, autoStartTimer, onAutoStartChange }) {
     const [status, setStatus] = useState('idle'); // ocioso, rodando, pausado, completo
     const [timeLeft, setTimeLeft] = useState(initialTime);
-    // Aviso quando o contexto atual não pode receber push (ex.: iOS fora da tela
-    // de início / atalho do Chrome) — orienta o usuário em vez de falhar calado.
-    const [showPushHint, setShowPushHint] = useState(false);
+    /*
+     * Aviso quando o descanso não vai ser anunciado em segundo plano. Dois
+     * gatilhos: o contexto de instalação (iOS fora da tela de início nunca
+     * recebe push) e a falha real do agendamento (backend fora, sem rede,
+     * permissão negada). O segundo é o que evitava passar batido: com o app
+     * suspenso o `setInterval` abaixo congela e NENHUM alerta local dispara,
+     * então um agendamento que falhou significa descanso terminando em
+     * silêncio — o usuário precisa saber para manter a tela aberta.
+     *
+     * Valores: null | 'ios-install' | 'permission' | 'unavailable'.
+     */
+    const [pushHint, setPushHint] = useState(null);
+
+    // 'ios-install' descreve a causa raiz e tem precedência: sem o PWA
+    // instalado nenhum agendamento vai funcionar, então não deixe uma falha
+    // subsequente trocar essa mensagem por uma menos acionável.
+    const applyPushHint = (next) => {
+        setPushHint((prev) => (prev === 'ios-install' ? prev : next));
+    };
 
     // Refs para temporização precisa
     const endTimeRef = useRef(null);
@@ -52,7 +68,7 @@ export function RestTimer({ initialTime = 90, onComplete, isOpen, onClose, onDur
         if (state.pending) {
             const pending = state.pending;
             state.pending = null;
-            pending.then((messageId) => {
+            pending.then(({ messageId }) => {
                 if (messageId) cancelRestPush(messageId);
             });
         }
@@ -70,11 +86,20 @@ export function RestTimer({ initialTime = 90, onComplete, isOpen, onClose, onDur
 
         const request = scheduleRestPush(seconds);
         state.pending = request;
-        request.then((messageId) => {
+        request.then(({ messageId, reason }) => {
             if (state.pending === request) {
                 state.pending = null;
             }
-            if (!messageId) return;
+            if (!messageId) {
+                // 'below-min-delay' é esperado e já filtrado acima; qualquer
+                // outro motivo significa que este descanso não tem aviso em
+                // segundo plano, e calar seria mentir para o usuário.
+                if (reason && reason !== 'below-min-delay') {
+                    applyPushHint(reason === 'permission' ? 'permission' : 'unavailable');
+                }
+                return;
+            }
+            applyPushHint(null);
             if (state.canceled) {
                 cancelRestPush(messageId);
                 return;
@@ -93,12 +118,28 @@ export function RestTimer({ initialTime = 90, onComplete, isOpen, onClose, onDur
                 state.messageId = null;
             }
             if (state.pending) {
-                state.pending.then((messageId) => {
+                state.pending.then(({ messageId }) => {
                     if (messageId) cancelRestPush(messageId);
                 });
             }
         };
     }, []);
+
+    /*
+     * O iOS suspende o AudioContext ao mandar o app para segundo plano e não
+     * o retoma sozinho. Sem isto, sair do app e voltar deixava o bipe de fim
+     * de descanso mudo para sempre — `playRestCompleteSound` desiste quando o
+     * contexto não está 'running', e `primeRestAudio` só era chamado ao abrir
+     * o timer e no play/pause. É idempotente, então repetir não custa.
+     */
+    useEffect(() => {
+        if (!isOpen) return undefined;
+        const onVisibilityChange = () => {
+            if (document.visibilityState === 'visible') primeRestAudio();
+        };
+        document.addEventListener('visibilitychange', onVisibilityChange);
+        return () => document.removeEventListener('visibilitychange', onVisibilityChange);
+    }, [isOpen]);
 
     // Aumentei o raio de 52 para 80
     const radius = 80;
@@ -132,7 +173,7 @@ export function RestTimer({ initialTime = 90, onComplete, isOpen, onClose, onDur
             // No iOS, push só funciona em PWA instalado pela tela de início do
             // Safari. Se o contexto não suporta push, avisa o usuário.
             const ctx = describePushContext();
-            setShowPushHint(ctx.isIOS && ctx.reason === 'ios-not-standalone');
+            setPushHint(ctx.isIOS && ctx.reason === 'ios-not-standalone' ? 'ios-install' : null);
 
             // Only start if explicitly idle (prevents restart on re-renders)
             if (status === 'idle') {
@@ -275,12 +316,33 @@ export function RestTimer({ initialTime = 90, onComplete, isOpen, onClose, onDur
                     </div>
                 </div>
 
-                {/* Aviso: contexto sem push (iOS fora da tela de início) */}
-                {showPushHint && (
-                    <div className="mx-5 mb-2 px-4 py-3 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-200/90 text-xs leading-relaxed">
-                        Para receber o aviso com o app fechado ou a tela bloqueada,
-                        instale pelo <span className="font-semibold">Safari</span>:
-                        toque em Compartilhar → <span className="font-semibold">Adicionar à Tela de Início</span>.
+                {/* Aviso: este descanso não será anunciado em segundo plano */}
+                {pushHint && (
+                    <div
+                        role="status"
+                        className="mx-5 mb-2 px-4 py-3 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-200/90 text-xs leading-relaxed"
+                    >
+                        {pushHint === 'ios-install' && (
+                            <>
+                                Para receber o aviso com o app fechado ou a tela bloqueada,
+                                instale pelo <span className="font-semibold">Safari</span>:
+                                toque em Compartilhar → <span className="font-semibold">Adicionar à Tela de Início</span>.
+                            </>
+                        )}
+                        {pushHint === 'permission' && (
+                            <>
+                                As notificações estão bloqueadas. Libere-as para o Vitalità
+                                nos ajustes do navegador para ser avisado com o app fechado
+                                ou a tela bloqueada.
+                            </>
+                        )}
+                        {pushHint === 'unavailable' && (
+                            <>
+                                Não foi possível agendar o aviso em segundo plano.
+                                <span className="font-semibold"> Mantenha esta tela aberta</span> para
+                                ouvir o alerta no fim do descanso.
+                            </>
+                        )}
                     </div>
                 )}
 
@@ -327,6 +389,7 @@ export function RestTimer({ initialTime = 90, onComplete, isOpen, onClose, onDur
                     <div className="flex items-center gap-5">
                         <button
                             onClick={handlePlayPause}
+                            aria-label={status === 'running' ? 'Pausar descanso' : 'Iniciar descanso'}
                             className={`w-20 h-20 rounded-full flex items-center justify-center text-white transition-all duration-200 shadow-lg hover:scale-105 active:scale-95
                                 ${status === 'running'
                                     ? 'bg-cyan-500 shadow-[0_0_20px_rgba(6,182,212,0.4)]'
@@ -339,6 +402,7 @@ export function RestTimer({ initialTime = 90, onComplete, isOpen, onClose, onDur
 
                         <button
                             onClick={handleReset}
+                            aria-label="Reiniciar descanso"
                             className="w-14 h-14 rounded-full bg-slate-800/80 border border-slate-700 text-slate-400 flex items-center justify-center hover:bg-slate-700 hover:text-white transition-all active:scale-95"
                         >
                             <RotateCcw size={22} />
