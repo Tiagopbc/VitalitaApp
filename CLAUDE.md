@@ -6,6 +6,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Documentação, commits, PRs e comentários deste repositório são em **português**. Commits seguem Conventional Commits (`feat:`, `fix:`, `docs:`, `chore:`).
 
+## Máquina de desenvolvimento
+
+MacBook Pro M3 (Apple Silicon, arm64) com **8 GB de RAM**. Duas consequências práticas:
+
+- Os 8 GB são o limite real ao rodar o emulador do Firestore (JVM, `npm run test:rules`) junto com o Vite e o navegador. Rode as suítes pesadas em série, não em paralelo.
+- Há um Mac disponível, então build para iOS é possível localmente — o que falta para um shell nativo (Capacitor) é só o Apple Developer Program pago. Ver "Sobre virar app nativo".
+
 ## Comandos
 
 O projeto roda em **Node 24 + npm 11** — use um gerenciador que leia o `.nvmrc` e instale com o `npm` que vem junto. Não é preferência de estilo; ver "Armadilhas".
@@ -80,6 +87,20 @@ Ler antes de "consertar" algo que parece quebrado — vários destes já foram d
 **O push de descanso não usa FCM** (é Web Push/VAPID via QStash) **e só é testável em iPhone com a tela bloqueada.** Mexendo nele? **Invoque o skill `push-descanso`**.
 
 **App Check está sem enforcement por decisão.** Ver [docs/app-check.md](docs/app-check.md).
+
+## Sobre virar app nativo
+
+Avaliado em 18/08/2026 e **adiado por decisão** — não reabrir sem motivo novo.
+
+**Expo/React Native está descartado.** Exigiria reescrever as ~11.900 linhas de UI (88 arquivos JSX, 82 com Tailwind). Os DOM components (`'use dom'`) não salvam: a doc da Expo diz que estado global não atravessa engines JS — o que quebra o `WorkoutContext` — hooks de rota não funcionam dentro deles, e a própria Expo recomenda o recurso para telas auxiliares, não para o miolo do app.
+
+**Capacitor é o caminho certo quando fizer sentido.** Empacota o `dist/` numa WKWebView; o código React roda sem alteração. Ganho real: a notificação de descanso vira notificação local no aparelho, apagando ~655 linhas (3 funções em `api/`, `restPushService`, `pushDiagnostics`, `push-sw.js`, `PushDebugPanel`), 4 env vars e a dependência do QStash.
+
+**O que bloqueia hoje:** o Apple Developer Program custa US$ 99/ano. Sem ele, o perfil grátis do Xcode expira em 7 dias e exige reinstalar pelo Mac — bancada de teste, não app de uso. Vale notar que notificação *local* não exige conta paga (não usa o entitlement `aps-environment`); o que exige é a instalação durar.
+
+**Duas pegadinhas para quando for:** `authService.js` usa `signInWithPopup`, que não funciona em webview do Capacitor (precisa de auth nativo via `@capacitor-firebase/authentication`); e a webview no iOS tem origem `capacitor://localhost`, que a restrição de referrer da API key do Firebase pode não aceitar — mesma família do problema de preview da Vercel. Validar isso **antes** de qualquer outra coisa.
+
+**O que não muda:** o app não fica mais rápido nem ganha tela nova. É simplificação de manutenção, não valor para quem treina. Justifica-se por HealthKit, Live Activity no descanso ou presença na App Store — não por si só.
 
 ## Segurança do Firestore
 
