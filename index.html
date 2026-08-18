@@ -41,7 +41,14 @@
     cada carregamento. Nem "Atualizar Agora" (skipWaiting + reload dentro da
     janela já montada) nem matar o app no seletor bastaram — na prática, em
     16/08/2026, só pegou removendo o ícone da tela inicial e adicionando de novo
-    pelo Safari. Avise isso de cara para quem for testar.
+    pelo Safari.
+
+    O app avisa isso sozinho desde 18/08/2026: o vite.config.js extrai daqui uma
+    assinatura das três configurações de janela, e o PwaReinstallNotice compara
+    com a que estava valendo na instalação. Mudou? O usuário recebe o passo a
+    passo. Duas consequências práticas ao mexer nestas tags: não é mais preciso
+    avisar ninguém à mão, e a assinatura muda sozinha — não há número para
+    lembrar de bumpar. Ver src/utils/windowConfig.js.
 
     São só três coisas assim, todas configuração de janela lida na instalação:
     esta tag, o ícone e o nome do atalho. Todo o resto — código, CSS, manifesto,

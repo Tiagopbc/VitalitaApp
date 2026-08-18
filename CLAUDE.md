@@ -6,6 +6,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Documentação, commits, PRs e comentários deste repositório são em **português**. Commits seguem Conventional Commits (`feat:`, `fix:`, `docs:`, `chore:`).
 
+## Máquina de desenvolvimento
+
+MacBook Pro M3 (Apple Silicon, arm64) com **8 GB de RAM**. Duas consequências práticas:
+
+- Os 8 GB são o limite real ao rodar o emulador do Firestore (JVM, `npm run test:rules`) junto com o Vite e o navegador. Rode as suítes pesadas em série, não em paralelo.
+- Há um Mac disponível, então build para iOS é possível localmente — o que falta para um shell nativo (Capacitor) é só o Apple Developer Program pago. Ver "Sobre virar app nativo".
+
 ## Comandos
 
 O projeto roda em **Node 24 + npm 11** — use um gerenciador que leia o `.nvmrc` e instale com o `npm` que vem junto. Não é preferência de estilo; ver "Armadilhas".
@@ -65,6 +72,8 @@ Ler antes de "consertar" algo que parece quebrado — vários destes já foram d
 
 **`VITE_*` é embutida em tempo de build.** Mudar variável na Vercel não tem efeito sem redeploy.
 
+**Três configurações não chegam pelo service worker e exigem reinstalar o app:** o `apple-mobile-web-app-status-bar-style`, o `apple-touch-icon` e o nome do atalho (`apple-mobile-web-app-title`, ou o `<title>`). O iOS as lê ao *montar a janela*, na instalação — nem "Atualizar Agora" nem matar o app aplicam; só remover o ícone da tela de início e adicionar de novo pelo Safari. Todo o resto chega normalmente pelo precache. Desde 18/08/2026 o app avisa sozinho: o `vite.config.js` extrai do `index.html` uma assinatura dessas três coisas e o `PwaReinstallNotice` compara com a que valia na instalação. A assinatura é derivada dos valores reais, então **não há número para lembrar de bumpar** — e editar comentário no `index.html` não dispara aviso falso. A detecção vale da *próxima* mudança em diante: o iOS não expõe o que leu, então quem já está com a janela velha hoje não é avisado. Ver `src/utils/windowConfig.js`.
+
 **`user_stats` recalculado no cliente é intencional, não dívida.** `VITE_ENABLE_SERVER_USER_STATS` fica desligada por padrão para operar em custo zero; com ela desligada o cliente recalcula totais, streaks e conquistas a partir das sessões recentes (fallback em `ProfilePage.jsx` e `publishStats` de `HomeDashboard.jsx`). A Cloud Function existe mas não é lida.
 
 **Nunca importe `firebase/auth` (ou qualquer pacote do Firebase) dinamicamente.** Todo o app importa esses pacotes de forma estática (`src/firebaseAuth.js`, `src/firebaseDb.js`). Um único `await import('firebase/auth')` faz o `manualChunks` do `vite.config.js` emitir o `vendor-firebase-app` com dependência circular, e o app **não passa da tela "Carregando..."** em produção, com `Cannot access 're' before initialization`. Aconteceu em 23/07/2026 e derrubou produção.
@@ -80,6 +89,20 @@ Ler antes de "consertar" algo que parece quebrado — vários destes já foram d
 **O push de descanso não usa FCM** (é Web Push/VAPID via QStash) **e só é testável em iPhone com a tela bloqueada.** Mexendo nele? **Invoque o skill `push-descanso`**.
 
 **App Check está sem enforcement por decisão.** Ver [docs/app-check.md](docs/app-check.md).
+
+## Sobre virar app nativo
+
+Avaliado em 18/08/2026 e **adiado por decisão** — não reabrir sem motivo novo.
+
+**Expo/React Native está descartado.** Exigiria reescrever as ~11.900 linhas de UI (88 arquivos JSX, 82 com Tailwind). Os DOM components (`'use dom'`) não salvam: a doc da Expo diz que estado global não atravessa engines JS — o que quebra o `WorkoutContext` — hooks de rota não funcionam dentro deles, e a própria Expo recomenda o recurso para telas auxiliares, não para o miolo do app.
+
+**Capacitor é o caminho certo quando fizer sentido.** Empacota o `dist/` numa WKWebView; o código React roda sem alteração. Ganho real: a notificação de descanso vira notificação local no aparelho, apagando ~655 linhas (3 funções em `api/`, `restPushService`, `pushDiagnostics`, `push-sw.js`, `PushDebugPanel`), 4 env vars e a dependência do QStash.
+
+**O que bloqueia hoje:** o Apple Developer Program custa US$ 99/ano. Sem ele, o perfil grátis do Xcode expira em 7 dias e exige reinstalar pelo Mac — bancada de teste, não app de uso. Vale notar que notificação *local* não exige conta paga (não usa o entitlement `aps-environment`); o que exige é a instalação durar.
+
+**Duas pegadinhas para quando for:** `authService.js` usa `signInWithPopup`, que não funciona em webview do Capacitor (precisa de auth nativo via `@capacitor-firebase/authentication`); e a webview no iOS tem origem `capacitor://localhost`, que a restrição de referrer da API key do Firebase pode não aceitar — mesma família do problema de preview da Vercel. Validar isso **antes** de qualquer outra coisa.
+
+**O que não muda:** o app não fica mais rápido nem ganha tela nova. É simplificação de manutenção, não valor para quem treina. Justifica-se por HealthKit, Live Activity no descanso ou presença na App Store — não por si só.
 
 ## Segurança do Firestore
 

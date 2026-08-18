@@ -92,24 +92,38 @@ export async function warmRestPushSubscription() {
 }
 
 /**
- * Agenda o push para daqui a `delaySeconds`. Retorna o messageId (para
- * cancelamento) ou null quando indisponível.
+ * Agenda o push para daqui a `delaySeconds`.
+ *
+ * Retorna sempre `{ messageId, reason }`:
+ * - `messageId` string → agendado; guarde para poder cancelar.
+ * - `messageId` null → não agendado, e `reason` diz por quê.
+ *
+ * O `reason` existe porque falhar aqui NÃO é recuperável mais adiante: com o
+ * app em segundo plano o `setInterval` do timer congela e nenhum alerta local
+ * dispara, então este push é o único aviso possível. Se ele não for agendado,
+ * a interface precisa dizer isso ao usuário (ver o banner em RestTimer.jsx)
+ * em vez de deixar o descanso terminar em silêncio.
+ *
+ * Valores de `reason`: 'unsupported' (navegador sem Web Push), 'permission'
+ * (notificação não concedida), 'below-min-delay' (descanso curto demais para
+ * o piso do backend — esperado, não é falha), 'server' (backend ou QStash
+ * recusou) e 'network' (a requisição não completou).
  */
 export async function scheduleRestPush(delaySeconds) {
     if (!isPushSupported()) {
         logPush('schedule:skip', { reason: 'unsupported' });
-        return null;
+        return { messageId: null, reason: 'unsupported' };
     }
     if (Notification.permission !== 'granted') {
         logPush('schedule:skip', { reason: 'permission', permission: Notification.permission });
-        return null;
+        return { messageId: null, reason: 'permission' };
     }
 
     const delay = Math.round(delaySeconds);
     if (!Number.isFinite(delay) || delay < MIN_PUSH_DELAY_SECONDS) {
         // Descanso curto demais para o backend (piso de 5s): só alerta local.
         logPush('schedule:skip', { reason: 'below-min-delay', delay });
-        return null;
+        return { messageId: null, reason: 'below-min-delay' };
     }
 
     try {
@@ -132,18 +146,18 @@ export async function scheduleRestPush(delaySeconds) {
                 error: body?.error || null,
                 qstashStatus: body?.qstashStatus ?? null
             });
-            return null;
+            return { messageId: null, reason: 'server' };
         }
         const data = await response.json().catch(() => null);
         if (data?.messageId) {
             logPush('schedule:ok', { delay, messageId: data.messageId });
-            return data.messageId;
+            return { messageId: data.messageId, reason: null };
         }
         logPush('schedule:fail', { status: response.status, error: 'no-message-id' });
-        return null;
+        return { messageId: null, reason: 'server' };
     } catch (err) {
         logPush('schedule:error', { message: String(err?.message || err) });
-        return null;
+        return { messageId: null, reason: 'network' };
     }
 }
 

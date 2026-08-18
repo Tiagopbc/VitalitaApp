@@ -25,6 +25,7 @@ const loadPrivacyPolicyPage = () => import('./pages/PrivacyPolicyPage');
 const loadTermsOfUsePage = () => import('./pages/TermsOfUsePage');
 const loadBottomNavEnhanced = () => import('./BottomNavEnhanced').then(module => ({ default: module.BottomNavEnhanced }));
 const loadPwaUpdatePrompt = () => import('./components/PwaUpdatePrompt').then(module => ({ default: module.PwaUpdatePrompt }));
+const loadPwaReinstallNotice = () => import('./components/PwaReinstallNotice').then(module => ({ default: module.PwaReinstallNotice }));
 
 const HomeDashboard = React.lazy(loadHomeDashboard);
 const HistoryPage = React.lazy(loadHistoryPage);
@@ -38,6 +39,7 @@ const PrivacyPolicyPage = React.lazy(loadPrivacyPolicyPage);
 const TermsOfUsePage = React.lazy(loadTermsOfUsePage);
 const BottomNavEnhanced = React.lazy(loadBottomNavEnhanced);
 const PwaUpdatePrompt = React.lazy(loadPwaUpdatePrompt);
+const PwaReinstallNotice = React.lazy(loadPwaReinstallNotice);
 
 const NAV_TRANSITIONS_STORAGE_KEY = 'vitalita_nav_transitions_v1';
 
@@ -441,6 +443,14 @@ function AppAuthedContent() {
             {user && (
                 <Suspense fallback={null}>
                     <PwaUpdatePrompt />
+                </Suspense>
+            )}
+
+            {/* Independente do prompt acima: quando este aparece, o código novo
+                já está rodando — o que ficou para trás é a janela instalada. */}
+            {user && (
+                <Suspense fallback={null}>
+                    <PwaReinstallNotice />
                 </Suspense>
             )}
 
