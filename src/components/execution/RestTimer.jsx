@@ -47,16 +47,24 @@ export function RestTimer({ initialTime = 90, onComplete, isOpen, onClose, onDur
      * servidor acontece SEMPRE com o app ativo — ao iniciar/retomar/ajustar o
      * timer — nunca no evento de ir para segundo plano (o iOS congela o JS
      * antes de o pedido completar). Se o usuário sair do app, o push já está
-     * agendado e o sistema entrega na hora certa. Se ficar no app, o push é
-     * cancelado 5s antes do fim (em descansos >= 30s), e os alertas locais
-     * cuidam do aviso — sem notificação duplicada.
+     * agendado e o sistema entrega na hora certa.
+     *
+     * O push NÃO é cancelado ao se aproximar do fim, nem com o app à vista.
+     * Existiu uma janela de 5s que fazia isso para evitar aviso duplicado, e
+     * ela custava caro demais: bastava bloquear a tela dentro desses 5s para
+     * o push já ter sido cancelado e o `setInterval` congelar logo em seguida
+     * — descanso terminando em silêncio absoluto, que é a única falha que não
+     * dá para o usuário contornar. Duplicar é o erro barato, e aqui nem chega
+     * a duplicar de verdade: o alerta local e o push usam a mesma `tag`
+     * ('vitalita-rest-timer'), então o sistema substitui a notificação em vez
+     * de empilhar. O cancelamento segue valendo para pausa, ajuste, fechamento
+     * e desmontagem — nesses casos o descanso deixou de existir.
      *
      * A contabilidade inclui pedidos em voo: se um agendamento resolver
      * depois de um cancelamento (ex.: requisição congelada pelo iOS que
      * resume ao voltar ao app), ele se cancela na hora — nunca fica órfão.
      */
     const pushStateRef = useRef({ messageId: null, pending: null, canceled: false });
-    const lastScheduledSecondsRef = useRef(0);
 
     const cancelScheduledPush = () => {
         const state = pushStateRef.current;
@@ -82,7 +90,6 @@ export function RestTimer({ initialTime = 90, onComplete, isOpen, onClose, onDur
 
         const state = pushStateRef.current;
         state.canceled = false;
-        lastScheduledSecondsRef.current = seconds;
 
         const request = scheduleRestPush(seconds);
         state.pending = request;
@@ -212,17 +219,6 @@ export function RestTimer({ initialTime = 90, onComplete, isOpen, onClose, onDur
                 const remaining = Math.max(0, remainingRaw);
 
                 setTimeLeft(remaining);
-
-                // Com o app visível, o alerta local cobre o fim: cancela o
-                // push com 5s de antecedência (folga que não perde corrida).
-                // Só em descansos >= 30s — em timers curtos a janela comeria
-                // boa parte do tempo útil de sair do app.
-                if (remaining <= 5 && remaining > 0
-                    && lastScheduledSecondsRef.current >= 30
-                    && (pushStateRef.current.messageId || pushStateRef.current.pending)
-                    && document.visibilityState === 'visible') {
-                    cancelScheduledPush();
-                }
 
                 if (remaining <= 0) {
                     setStatus('complete');

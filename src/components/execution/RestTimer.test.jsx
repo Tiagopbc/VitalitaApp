@@ -98,33 +98,26 @@ describe('RestTimer — push de segundo plano', () => {
         expect(cancelRestPush).toHaveBeenCalledWith('msg-1');
     });
 
-    // Com o app à vista o alerta local cobre o fim, então o push é dispensado
-    // com folga para não chegar duplicado.
-    it('cancela o push nos últimos 5s quando o app está visível', async () => {
-        await renderRodando({ initialTime: 90 });
+    /*
+     * Existiu uma janela que cancelava o push nos últimos 5s com o app à
+     * vista, para evitar aviso duplicado. Ela foi removida por decisão: quem
+     * bloqueasse a tela dentro dela ficava sem push E sem alerta local (o
+     * setInterval congela), ou seja, silêncio total — a única falha que o
+     * usuário não tem como contornar. Duplicar é o erro barato, e a `tag`
+     * compartilhada faz o sistema substituir a notificação em vez de empilhar.
+     *
+     * Os três casos abaixo cobrem as condições que a janela testava, agora
+     * todos com o mesmo veredito: o push sobrevive até o fim do descanso.
+     */
+    it.each([
+        ['app visível, descanso longo', 90, 85_500, 'visible'],
+        ['app oculto, descanso longo', 90, 85_500, 'hidden'],
+        ['descanso curto', 20, 15_500, 'visible']
+    ])('não cancela o push ao se aproximar do fim (%s)', async (_caso, inicial, avanco, visibilidade) => {
+        await renderRodando({ initialTime: inicial });
+        setVisibility(visibilidade);
 
-        await act(async () => { await vi.advanceTimersByTimeAsync(85_500); });
-
-        expect(cancelRestPush).toHaveBeenCalledWith('msg-1');
-    });
-
-    // Este é o caso que não pode regredir: com o app oculto o setInterval está
-    // congelado e o push é o ÚNICO aviso possível. Cancelá-lo seria silêncio.
-    it('não cancela o push nos últimos 5s quando o app está oculto', async () => {
-        await renderRodando({ initialTime: 90 });
-        setVisibility('hidden');
-
-        await act(async () => { await vi.advanceTimersByTimeAsync(85_500); });
-
-        expect(cancelRestPush).not.toHaveBeenCalled();
-    });
-
-    // Em descanso curto a janela de 5s comeria boa parte do tempo útil de sair
-    // do app, então ali o push sobrevive até o fim.
-    it('não aplica a janela de 5s em descanso abaixo de 30s', async () => {
-        await renderRodando({ initialTime: 20 });
-
-        await act(async () => { await vi.advanceTimersByTimeAsync(15_500); });
+        await act(async () => { await vi.advanceTimersByTimeAsync(avanco); });
 
         expect(cancelRestPush).not.toHaveBeenCalled();
     });
