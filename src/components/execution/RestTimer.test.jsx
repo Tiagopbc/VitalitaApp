@@ -31,9 +31,9 @@ vi.mock('../../utils/restTimerAlerts', () => ({
 }));
 
 import { RestTimer } from './RestTimer';
-import { scheduleRestPush, cancelRestPush } from '../../services/restPushService';
+import { scheduleRestPush, cancelRestPush, warmRestPushSubscription } from '../../services/restPushService';
 import { describePushContext } from '../../services/pushDiagnostics';
-import { primeRestAudio, playRestCompleteSound } from '../../utils/restTimerAlerts';
+import { primeRestAudio, playRestCompleteSound, ensureNotificationPermission } from '../../utils/restTimerAlerts';
 
 const agendado = (messageId = 'msg-1') => Promise.resolve({ messageId, reason: null });
 const recusado = (reason) => Promise.resolve({ messageId: null, reason });
@@ -67,6 +67,10 @@ describe('RestTimer — push de segundo plano', () => {
         setVisibility('visible');
         scheduleRestPush.mockReturnValue(agendado());
         describePushContext.mockReturnValue({ isIOS: false, reason: null });
+        // Padrão: permissão já concedida antes de abrir o timer. Os casos que
+        // exercitam o prompt sobrescrevem isto.
+        ensureNotificationPermission.mockResolvedValue(true);
+        warmRestPushSubscription.mockResolvedValue(true);
     });
 
     afterEach(() => {
@@ -187,6 +191,10 @@ describe('RestTimer — aviso de falha silenciosa', () => {
         setVisibility('visible');
         scheduleRestPush.mockReturnValue(agendado());
         describePushContext.mockReturnValue({ isIOS: false, reason: null });
+        // Padrão: permissão já concedida antes de abrir o timer. Os casos que
+        // exercitam o prompt sobrescrevem isto.
+        ensureNotificationPermission.mockResolvedValue(true);
+        warmRestPushSubscription.mockResolvedValue(true);
     });
 
     afterEach(() => {
@@ -226,6 +234,72 @@ describe('RestTimer — aviso de falha silenciosa', () => {
         expect(screen.getByRole('status')).toHaveTextContent(/notificações estão bloqueadas/i);
     });
 
+    /*
+     * O timer arranca em paralelo ao prompt de permissão do navegador, então o
+     * primeiro agendamento pode falhar com 'permission' enquanto o usuário
+     * ainda decide. Se ele conceder, o descanso precisa ganhar seu push — e o
+     * aviso de "bloqueadas", que a essa altura virou mentira, precisa sumir.
+     * É o primeiro descanso de quem acabou de instalar: a pior hora para errar.
+     */
+    it('reagenda o push quando a permissão é concedida com o timer já rodando', async () => {
+        let concederPermissao;
+        ensureNotificationPermission.mockReturnValue(new Promise((resolve) => {
+            concederPermissao = resolve;
+        }));
+        scheduleRestPush
+            .mockReturnValueOnce(recusado('permission'))
+            .mockReturnValueOnce(agendado('depois-da-permissao'));
+
+        await renderRodando({ initialTime: 90 });
+        expect(screen.getByRole('status')).toHaveTextContent(/notificações estão bloqueadas/i);
+
+        await act(async () => {
+            concederPermissao(true);
+            await vi.advanceTimersByTimeAsync(0);
+        });
+
+        expect(scheduleRestPush).toHaveBeenCalledTimes(2);
+        expect(screen.queryByRole('status')).not.toBeInTheDocument();
+    });
+
+    /*
+     * Permissão já concedida antes de abrir: o agendamento inicial vale, e
+     * refazê-lo seria uma segunda publicação no QStash à toa.
+     *
+     * O aquecimento da assinatura precisa demorar neste caso, senão o teste
+     * não prova nada: resolvendo na hora, ele termina antes de o timer sequer
+     * começar, e aí nem existe agendamento para duplicar. Em produção a
+     * primeira inscrição no serviço de push leva segundos — é justamente
+     * quando a guarda de motivo faz diferença.
+     */
+    it('não reagenda quando a permissão já estava concedida', async () => {
+        let concluirAquecimento;
+        warmRestPushSubscription.mockReturnValue(new Promise((resolve) => {
+            concluirAquecimento = resolve;
+        }));
+
+        await renderRodando({ initialTime: 90 });
+        expect(scheduleRestPush).toHaveBeenCalledTimes(1);
+
+        await act(async () => {
+            concluirAquecimento(true);
+            await vi.advanceTimersByTimeAsync(0);
+        });
+
+        expect(scheduleRestPush).toHaveBeenCalledTimes(1);
+    });
+
+    // Negou de verdade: o aviso está correto e não há o que reagendar.
+    it('mantém o aviso e não reagenda quando a permissão é negada', async () => {
+        ensureNotificationPermission.mockResolvedValue(false);
+        scheduleRestPush.mockReturnValue(recusado('permission'));
+
+        await renderRodando({ initialTime: 90 });
+
+        expect(scheduleRestPush).toHaveBeenCalledTimes(1);
+        expect(screen.getByRole('status')).toHaveTextContent(/notificações estão bloqueadas/i);
+    });
+
     // 'below-min-delay' é resultado esperado, não falha: avisar aqui treinaria
     // o usuário a ignorar o banner.
     it('fica calado quando o motivo é o descanso ser curto demais', async () => {
@@ -255,6 +329,10 @@ describe('RestTimer — alertas locais', () => {
         setVisibility('visible');
         scheduleRestPush.mockReturnValue(agendado());
         describePushContext.mockReturnValue({ isIOS: false, reason: null });
+        // Padrão: permissão já concedida antes de abrir o timer. Os casos que
+        // exercitam o prompt sobrescrevem isto.
+        ensureNotificationPermission.mockResolvedValue(true);
+        warmRestPushSubscription.mockResolvedValue(true);
     });
 
     afterEach(() => {

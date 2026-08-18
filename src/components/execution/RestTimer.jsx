@@ -70,6 +70,9 @@ export function RestTimer({ initialTime = 90, onComplete, isOpen, onClose, onDur
      */
     const pushStateRef = useRef({ messageId: null, pending: null });
     const requestSeqRef = useRef(0);
+    // Motivo da última recusa, para saber se vale reagendar quando a permissão
+    // de notificação chega depois do timer já ter começado.
+    const lastFailureReasonRef = useRef(null);
 
     const cancelScheduledPush = () => {
         const state = pushStateRef.current;
@@ -103,6 +106,7 @@ export function RestTimer({ initialTime = 90, onComplete, isOpen, onClose, onDur
             }
             state.pending = null;
             if (!messageId) {
+                lastFailureReasonRef.current = reason ?? null;
                 // 'below-min-delay' é esperado e já filtrado acima; qualquer
                 // outro motivo significa que este descanso não tem aviso em
                 // segundo plano, e calar seria mentir para o usuário.
@@ -111,9 +115,21 @@ export function RestTimer({ initialTime = 90, onComplete, isOpen, onClose, onDur
                 }
                 return;
             }
+            lastFailureReasonRef.current = null;
             applyPushHint(null);
             state.messageId = messageId;
         });
+    };
+
+    /**
+     * Reagenda com o tempo que ainda resta. `endTimeRef` só existe enquanto o
+     * timer corre, então pausado ou concluído isto não faz nada — e ler dali,
+     * em vez de `timeLeft`, evita agendar com um valor de closure vencido.
+     */
+    const rescheduleFromRemaining = () => {
+        if (!endTimeRef.current) return;
+        const remaining = Math.round((endTimeRef.current - Date.now()) / 1000);
+        if (remaining > 0) scheduleBackgroundPush(remaining);
     };
 
     // Cancela push pendente (inclusive em voo) ao desmontar. Bumpar o número
@@ -175,7 +191,23 @@ export function RestTimer({ initialTime = 90, onComplete, isOpen, onClose, onDur
             // segundos; aquecida aqui, o agendamento vira uma requisição só).
             primeRestAudio();
             ensureNotificationPermission()
-                .then((granted) => { if (granted) warmRestPushSubscription(); })
+                .then(async (granted) => {
+                    if (!granted) return;
+                    await warmRestPushSubscription();
+                    /*
+                     * O timer arranca em paralelo ao prompt do navegador, então
+                     * o agendamento inicial pode ter tropeçado na permissão que
+                     * o usuário só concedeu agora. Sem refazê-lo, o primeiro
+                     * descanso fica sem push e — pior — com um aviso na tela
+                     * dizendo que as notificações estão bloqueadas, o que a
+                     * essa altura virou mentira. Só reagenda se a recusa foi
+                     * mesmo por permissão: nos outros casos o agendamento
+                     * inicial vale e repetir seria publicar no QStash à toa.
+                     */
+                    if (lastFailureReasonRef.current === 'permission') {
+                        rescheduleFromRemaining();
+                    }
+                })
                 .catch(() => undefined);
 
             // No iOS, push só funciona em PWA instalado pela tela de início do

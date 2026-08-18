@@ -52,6 +52,13 @@ function readWindowConfigSignature(rootUrl) {
 
   const iconHref = attrOf(/<link[^>]*rel="apple-touch-icon"[^>]*>/i, 'href')
 
+  // `apple-mobile-web-app-title` manda no nome do atalho quando existe, e só
+  // na ausência dele o <title> vale. Assinar os dois faria uma mudança de
+  // <title> puramente de SEO — que não altera atalho nenhum — mandar todo
+  // usuário de iPhone reinstalar à toa.
+  const shortcutName = attrOf(/<meta[^>]*apple-mobile-web-app-title[^>]*>/i, 'content')
+    || (html.match(/<title>([^<]*)<\/title>/i)?.[1] ?? '').trim()
+
   const parts = [
     attrOf(/<meta[^>]*apple-mobile-web-app-status-bar-style[^>]*>/i, 'content'),
     iconHref,
@@ -60,9 +67,7 @@ function readWindowConfigSignature(rootUrl) {
     // reinstalar — o iOS guarda a imagem capturada na instalação. Só o href
     // deixaria essa troca passar batido.
     readPublicAssetDigest(rootUrl, iconHref),
-    attrOf(/<meta[^>]*apple-mobile-web-app-title[^>]*>/i, 'content'),
-    // Sem `apple-mobile-web-app-title`, o nome do atalho vem do <title>.
-    (html.match(/<title>([^<]*)<\/title>/i)?.[1] ?? '').trim()
+    shortcutName
   ]
 
   // FNV-1a: estável entre execuções e curto o bastante para caber no log.
