@@ -3,6 +3,7 @@ import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 import { fileURLToPath } from 'node:url'
 import { readFileSync } from 'node:fs'
+import { createHash } from 'node:crypto'
 
 /**
  * Assinatura das configurações de janela: as três coisas que o iOS lê ao
@@ -15,6 +16,24 @@ import { readFileSync } from 'node:fs'
  * que alguém precisa lembrar de bumpar ao mexer numa das tags — reproduziria
  * exatamente a falha silenciosa que esta assinatura existe para eliminar.
  */
+/**
+ * Digest do arquivo servido por um href de `public/`. Vazio quando o href é
+ * externo, ausente ou o arquivo não existe — sem arquivo não há o que somar,
+ * e uma assinatura estável é melhor do que uma que oscila.
+ */
+function readPublicAssetDigest(rootUrl, href) {
+  if (!href || /^(https?:)?\/\//i.test(href)) return ''
+  const relative = href.replace(/^\/+/, '').split(/[?#]/)[0]
+  if (!relative) return ''
+  try {
+    return createHash('sha1')
+      .update(readFileSync(new URL(`public/${relative}`, rootUrl)))
+      .digest('hex')
+  } catch {
+    return ''
+  }
+}
+
 function readWindowConfigSignature(rootUrl) {
   let html = ''
   try {
@@ -31,9 +50,16 @@ function readWindowConfigSignature(rootUrl) {
     return (tag.match(new RegExp(`${attr}\\s*=\\s*"([^"]*)"`, 'i'))?.[1] ?? '').trim()
   }
 
+  const iconHref = attrOf(/<link[^>]*rel="apple-touch-icon"[^>]*>/i, 'href')
+
   const parts = [
     attrOf(/<meta[^>]*apple-mobile-web-app-status-bar-style[^>]*>/i, 'content'),
-    attrOf(/<link[^>]*rel="apple-touch-icon"[^>]*>/i, 'href'),
+    iconHref,
+    // O caminho do ícone quase nunca muda quando o ícone muda: trocar o PNG
+    // mantendo o nome é o fluxo normal, e é exatamente o caso que exige
+    // reinstalar — o iOS guarda a imagem capturada na instalação. Só o href
+    // deixaria essa troca passar batido.
+    readPublicAssetDigest(rootUrl, iconHref),
     attrOf(/<meta[^>]*apple-mobile-web-app-title[^>]*>/i, 'content'),
     // Sem `apple-mobile-web-app-title`, o nome do atalho vem do <title>.
     (html.match(/<title>([^<]*)<\/title>/i)?.[1] ?? '').trim()

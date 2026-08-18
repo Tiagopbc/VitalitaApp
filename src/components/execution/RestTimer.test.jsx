@@ -122,6 +122,42 @@ describe('RestTimer — push de segundo plano', () => {
         expect(cancelRestPush).not.toHaveBeenCalled();
     });
 
+    /*
+     * Dois agendamentos em voo ao mesmo tempo — reiniciar ou ajustar o tempo
+     * logo depois de iniciar. A resposta atrasada do pedido VELHO não pode se
+     * dar por atual: se ela limpar o aviso de falha do pedido novo e gravar o
+     * próprio messageId (que o cancelamento correspondente já derrubou), o
+     * usuário fica sem push vivo E sem o aviso para manter a tela aberta.
+     */
+    it('ignora a resposta atrasada de um agendamento já superado', async () => {
+        let resolverVelho;
+        let resolverNovo;
+        scheduleRestPush
+            .mockReturnValueOnce(new Promise((resolve) => { resolverVelho = resolve; }))
+            .mockReturnValueOnce(new Promise((resolve) => { resolverNovo = resolve; }));
+
+        await renderRodando({ initialTime: 90 });
+        await act(async () => {
+            fireEvent.click(screen.getByRole('button', { name: 'Reiniciar descanso' }));
+        });
+
+        // O pedido novo falha: o aviso precisa aparecer.
+        await act(async () => {
+            resolverNovo({ messageId: null, reason: 'server' });
+            await vi.advanceTimersByTimeAsync(0);
+        });
+        expect(screen.getByRole('status')).toHaveTextContent(/Mantenha esta tela aberta/i);
+
+        // E só então o velho responde com sucesso, tarde demais.
+        await act(async () => {
+            resolverVelho({ messageId: 'velho', reason: null });
+            await vi.advanceTimersByTimeAsync(0);
+        });
+
+        expect(screen.getByRole('status')).toHaveTextContent(/Mantenha esta tela aberta/i);
+        expect(cancelRestPush).toHaveBeenCalledWith('velho');
+    });
+
     // O iOS pode congelar a requisição de agendamento e resolvê-la só quando o
     // app volta — depois de o timer já ter sido pausado. O messageId que chega
     // atrasado precisa se cancelar sozinho, senão dispara um push fantasma.

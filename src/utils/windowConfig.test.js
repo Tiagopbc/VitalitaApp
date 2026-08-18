@@ -32,11 +32,21 @@ function setBuildSignature(signature) {
     vi.stubEnv('VITE_WINDOW_CONFIG_SIGNATURE', signature);
 }
 
+function setUserAgent(ua, { platform = '', maxTouchPoints = 0 } = {}) {
+    Object.defineProperty(window.navigator, 'userAgent', { configurable: true, get: () => ua });
+    Object.defineProperty(window.navigator, 'platform', { configurable: true, get: () => platform });
+    Object.defineProperty(window.navigator, 'maxTouchPoints', { configurable: true, get: () => maxTouchPoints });
+}
+
+const IPHONE_UA = 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15';
+const ANDROID_UA = 'Mozilla/5.0 (Linux; Android 15; Pixel 9) AppleWebKit/537.36 Chrome/130';
+
 describe('windowConfig', () => {
     beforeEach(() => {
         localStorage.clear();
         setStandalone(true);
         setIosStandalone(false);
+        setUserAgent(IPHONE_UA);
         setBuildSignature('aaaa1111');
     });
 
@@ -110,5 +120,43 @@ describe('windowConfig', () => {
         setIosStandalone(true);
 
         expect(isStandaloneWindow()).toBe(true);
+    });
+
+    /*
+     * `(display-mode: standalone)` casa também num PWA instalado de Android,
+     * mas as três tags assinadas são exclusivas do iOS e o passo a passo fala
+     * de Safari e tela de início. Sem esta porta, um usuário de Android
+     * receberia instruções de iPhone para refazer uma instalação que o Chrome
+     * atualiza sozinho.
+     */
+    it('nunca acusa num PWA instalado que não seja iOS', () => {
+        setUserAgent(ANDROID_UA);
+        checkWindowConfig();
+        setBuildSignature('bbbb2222');
+
+        expect(checkWindowConfig().needsReinstall).toBe(false);
+    });
+
+    // O iPadOS moderno se apresenta como Mac; o toque é a pista que sobra.
+    it('trata iPad que se apresenta como Mac com toque como iOS', () => {
+        setUserAgent('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)', {
+            platform: 'MacIntel',
+            maxTouchPoints: 5
+        });
+        checkWindowConfig();
+        setBuildSignature('bbbb2222');
+
+        expect(checkWindowConfig().needsReinstall).toBe(true);
+    });
+
+    it('não confunde um Mac de verdade com iPad', () => {
+        setUserAgent('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)', {
+            platform: 'MacIntel',
+            maxTouchPoints: 0
+        });
+        checkWindowConfig();
+        setBuildSignature('bbbb2222');
+
+        expect(checkWindowConfig().needsReinstall).toBe(false);
     });
 });

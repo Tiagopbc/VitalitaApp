@@ -18,6 +18,7 @@
  * avisado; quem estiver na próxima vez, sim.
  */
 import { safeGetItem, safeSetItem } from './storage';
+import { isIOSDevice } from './platform';
 
 const STORAGE_KEY = 'vitalita:windowConfigSignature';
 
@@ -47,7 +48,13 @@ export function isStandaloneWindow() {
  */
 export function checkWindowConfig() {
     const current = getBuildSignature();
-    if (!current || !isStandaloneWindow()) {
+    // Exige iOS, não só "instalado": `(display-mode: standalone)` também casa
+    // num PWA de Android, mas as três tags assinadas são exclusivas do iOS e o
+    // passo a passo fala de Safari e tela de início. Sem esta porta, um usuário
+    // de Android receberia instruções de iPhone para refazer uma instalação
+    // que não precisa ser refeita — no Android o Chrome relê o manifesto e
+    // atualiza o atalho sozinho.
+    if (!current || !isIOSDevice() || !isStandaloneWindow()) {
         return { needsReinstall: false, signature: current };
     }
 

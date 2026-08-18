@@ -60,25 +60,26 @@ export function RestTimer({ initialTime = 90, onComplete, isOpen, onClose, onDur
      * de empilhar. O cancelamento segue valendo para pausa, ajuste, fechamento
      * e desmontagem — nesses casos o descanso deixou de existir.
      *
-     * A contabilidade inclui pedidos em voo: se um agendamento resolver
-     * depois de um cancelamento (ex.: requisição congelada pelo iOS que
-     * resume ao voltar ao app), ele se cancela na hora — nunca fica órfão.
+     * A contabilidade é por pedido, não por estado compartilhado: cada
+     * agendamento leva um número de série, e só o mais recente pode mexer no
+     * messageId e no aviso. Uma resposta atrasada — de um pedido cancelado ou
+     * superado por outro — se cancela sozinha e não toca em mais nada. Um
+     * booleano `canceled` compartilhado não dava conta: o pedido novo o
+     * religava, e aí a resposta do velho se dava por atual, limpando o aviso
+     * de falha do novo e gravando um messageId que já tinha sido derrubado.
      */
-    const pushStateRef = useRef({ messageId: null, pending: null, canceled: false });
+    const pushStateRef = useRef({ messageId: null, pending: null });
+    const requestSeqRef = useRef(0);
 
     const cancelScheduledPush = () => {
         const state = pushStateRef.current;
-        state.canceled = true;
+        // Invalida tudo que estiver em voo: quem responder depois disto cai no
+        // ramo de pedido superado e se cancela lá, em vez de virar órfão.
+        requestSeqRef.current += 1;
+        state.pending = null;
         if (state.messageId) {
             cancelRestPush(state.messageId);
             state.messageId = null;
-        }
-        if (state.pending) {
-            const pending = state.pending;
-            state.pending = null;
-            pending.then(({ messageId }) => {
-                if (messageId) cancelRestPush(messageId);
-            });
         }
     };
 
@@ -89,14 +90,18 @@ export function RestTimer({ initialTime = 90, onComplete, isOpen, onClose, onDur
         if (!seconds || seconds < MIN_PUSH_DELAY_SECONDS) return;
 
         const state = pushStateRef.current;
-        state.canceled = false;
+        const seq = requestSeqRef.current;
 
         const request = scheduleRestPush(seconds);
         state.pending = request;
         request.then(({ messageId, reason }) => {
-            if (state.pending === request) {
-                state.pending = null;
+            if (seq !== requestSeqRef.current) {
+                // Pedido superado ou cancelado: o que ele agendou morre aqui,
+                // e nada além disso — o estado agora pertence a outro pedido.
+                if (messageId) cancelRestPush(messageId);
+                return;
             }
+            state.pending = null;
             if (!messageId) {
                 // 'below-min-delay' é esperado e já filtrado acima; qualquer
                 // outro motivo significa que este descanso não tem aviso em
@@ -107,27 +112,23 @@ export function RestTimer({ initialTime = 90, onComplete, isOpen, onClose, onDur
                 return;
             }
             applyPushHint(null);
-            if (state.canceled) {
-                cancelRestPush(messageId);
-                return;
-            }
             state.messageId = messageId;
         });
     };
 
-    // Cancela push pendente (inclusive em voo) ao desmontar.
+    // Cancela push pendente (inclusive em voo) ao desmontar. Bumpar o número
+    // de série basta para os pedidos em voo: eles já se cancelam sozinhos no
+    // ramo de pedido superado, sem precisar tocar no estado de um componente
+    // que não existe mais.
     useEffect(() => {
         const state = pushStateRef.current;
+        const seqRef = requestSeqRef;
         return () => {
-            state.canceled = true;
+            seqRef.current += 1;
+            state.pending = null;
             if (state.messageId) {
                 cancelRestPush(state.messageId);
                 state.messageId = null;
-            }
-            if (state.pending) {
-                state.pending.then(({ messageId }) => {
-                    if (messageId) cancelRestPush(messageId);
-                });
             }
         };
     }, []);

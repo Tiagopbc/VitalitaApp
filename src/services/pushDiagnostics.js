@@ -7,6 +7,8 @@
  * quebrar o timer. Roda apenas no contexto da janela (usa localStorage).
  */
 
+import { isIOSDevice } from '../utils/platform';
+
 const STORAGE_KEY = 'vitalita:pushLog';
 const MAX_ENTRIES = 40;
 
@@ -90,9 +92,7 @@ export function describePushContext() {
     }
 
     const ua = navigator.userAgent || '';
-    const isIOS = /iP(hone|ad|od)/.test(ua)
-        // iPadOS moderno se apresenta como Mac com touch.
-        || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    const isIOS = isIOSDevice();
 
     const isStandalone = window.navigator.standalone === true
         || (typeof window.matchMedia === 'function' && window.matchMedia('(display-mode: standalone)').matches);
