@@ -4,7 +4,8 @@ O Vitalita integra o Firebase App Check como uma camada opcional de validacao do
 
 ## Decisao Arquitetural: Monitoramento Sem Enforcement
 
-**Status:** aceita em 14/07/2026.
+**Status:** aceita em 14/07/2026. Reavaliada em 28/08/2026, ja com o criterio de metricas
+atingido, e **mantida** — ver "Avaliacao de 28/08/2026" no fim deste documento.
 
 O App Check e inicializado com reCAPTCHA Enterprise para classificar o trafego, mas Firestore e demais APIs continuam aceitando requisicoes sem token valido. O objetivo atual e conhecer o comportamento dos clientes legitimos antes de considerar qualquer bloqueio.
 
@@ -143,9 +144,55 @@ Enforcement continua fora do escopo atual. Ele so deve ser avaliado quando:
 - houver procedimento de rollback documentado;
 - o uso do provider permanecer dentro da cota sem custo definida para o projeto.
 
-A avaliacao futura nao significa autorizacao para ativar enforcement. A mudanca exige decisao separada, teste em Preview, plano de rollback e aprovacao explicita.
+A avaliacao futura nao significa autorizacao para ativar enforcement. A mudanca exige decisao separada, plano de rollback e aprovacao explicita.
 
 Ativar enforcement antes disso pode bloquear versoes antigas, navegadores legitimos ou o proprio fluxo de treino.
+
+### O teste em Preview nao e exigivel neste projeto
+
+Uma versao anterior desta secao pedia teste em Preview antes de ativar. Isso e impossivel aqui: previews da Vercel nao autenticam nem leem o Firestore, porque o console do Google nao aceita curinga parcial de subdominio na restricao de referrer da API key (ver `CLAUDE.md`). Nao existe ambiente intermediario onde enforcement possa ser exercitado — qualquer ativacao seria direto em producao, tendo o rollback abaixo como unica rede.
+
+Isso nao e detalhe de processo. E parte do custo de ligar, e pesou na avaliacao a seguir.
+
+## Avaliacao de 28/08/2026: Criterio Atingido, Enforcement Nao Ligado
+
+**Status:** decidido nao ligar. Isto nao e pendencia em aberto; reabrir apenas pelos gatilhos no fim desta secao.
+
+Em 28/08/2026 o Cloud Firestore marcava **100% de solicitacoes verificadas e 0% sem verificacao**. O 0% e o numero que interessa: nao existe trafego legitimo que o enforcement bloquearia hoje. A correcao da chave trocada em 07-08/08/2026 resolveu de fato o 0% travado descrito acima.
+
+Quatro dos cinco criterios estao cumpridos:
+
+| Criterio | Situacao |
+| --- | --- |
+| Versao publicada e estavel | Cumprido — cerca de tres semanas desde a correcao |
+| Trafego legitimo verificado | Cumprido — 100% / 0% |
+| Login, sync offline e conclusao de treino no PWA | Cumprido no essencial, durante a validacao do push de 28/08 (ver [validacao-push-descanso-ios.md](validacao-push-descanso-ios.md)); o estado "SALVO LOCALMENTE" sob Modo Aviao exercitou a sincronizacao offline |
+| Rollback documentado | Cumprido — secao seguinte |
+| Provider dentro da cota sem custo | **Nao conferido** — depende do volume no console do reCAPTCHA Enterprise |
+
+Uma ressalva sobre a metrica: o console mostra percentual, nao volume nem janela. Num app de uso pessoal, 100% se apoia em poucas requisicoes. Mas 0% sem verificacao e 0% independentemente do volume, e e disso que o criterio trata.
+
+**Mesmo assim, a decisao e nao ligar.** Criterio atingido significa que a opcao existe, nao que ela compensa.
+
+### Por que nao compensa
+
+**O que o enforcement acrescentaria e pouco.** As `firestore.rules` exigem `signedIn()` e propriedade (`isSelf`, ou `canReadUserData`, que checa dono ou personal vinculado ativo) em todas as colecoes, sem nenhuma leitura publica. Quem tiver a config publica do bundle nao le dado de ninguem: no maximo cria a propria conta e usa o app como usuario, o que e um cadastro, nao um ataque. O risco residual e queimar cota do Firestore para derrubar o app — e o projeto esta no plano Spark, sem faturamento, entao o pior caso e o app parar ate a cota renovar, nao uma fatura.
+
+**O que ele custaria ja foi observado neste projeto.** De 21/07 a 07/08/2026 o App Check passou 18 dias sem emitir um unico token, pelo 403 da chave trocada. Com enforcement desligado, isso foi um numero esquisito no console. Com enforcement ligado, teriam sido 18 dias de app inutilizavel, descobertos na academia. O mesmo padrao vale para a cota: a secao "Protecao de Custo" registra que estourar os 10.000 assessments/mes faz as verificacoes falharem, e que isso nao bloqueia o acesso *porque o enforcement esta desligado*. Ligar converte um evento inofensivo em tranca.
+
+Somado: trocaria-se um risco teorico — abuso sem motivo aparente, contra dados que as rules ja protegem — por um risco concreto e ja observado de perder acesso ao proprio app por falha de infraestrutura de terceiro, sem ambiente de teste intermediario e com um rollback que exige computador e redeploy.
+
+**O monitoramento sozinho ja entregou o valor que tinha.** Foi a metrica que denunciou a chave trocada. Ela continua funcionando sem o lado ruim.
+
+### Gatilhos para reabrir
+
+- o app ganhar usuarios alem do proprietario;
+- uma conta de faturamento ser vinculada ao projeto — a partir dai queimar cota vira dinheiro, e o calculo inverte;
+- alguma API passar a expor leitura sem autenticacao.
+
+### Se um dia for ligar
+
+Apenas no **Cloud Firestore**. O Authentication seguia marcado PRE-LANCAMENTO no console em 28/08/2026, e travar o login com um recurso em beta tranca o dono para fora do proprio app.
 
 ## Rollback
 
