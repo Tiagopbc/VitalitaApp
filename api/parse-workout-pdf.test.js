@@ -143,6 +143,43 @@ describe('/api/parse-workout-pdf', () => {
         expect(res.statusCode).toBe(422);
     });
 
+    describe('recusa do classificador (Opus 5)', () => {
+        it('responde 422 e distingue no log, sem culpar o PDF', async () => {
+            const erro = vi.spyOn(console, 'error').mockImplementation(() => {});
+            // 200 da API, mas sem tool_use: é o formato de uma recusa.
+            createMock.mockResolvedValueOnce({
+                content: [],
+                stop_reason: 'refusal',
+                stop_details: { type: 'refusal', category: 'cyber', explanation: 'motivo' }
+            });
+
+            const res = makeRes();
+            await handler(makeReq(), res);
+
+            expect(res.statusCode).toBe(422);
+            expect(res.body).toEqual({ error: 'ai_refused' });
+            // O status é o mesmo de "PDF ilegível"; quem separa os dois é o log.
+            expect(erro).toHaveBeenCalledWith('pdf_import_recusado', expect.objectContaining({ categoria: 'cyber' }));
+            erro.mockRestore();
+        });
+    });
+
+    describe('forma da requisição', () => {
+        it('manda thinking adaptativo e teto que cabe pensamento + resposta', async () => {
+            createMock.mockResolvedValueOnce(toolResponse);
+            await handler(makeReq(), makeRes());
+
+            const params = createMock.mock.calls[0][0];
+            expect(params.model).toBe('claude-opus-5');
+            // Implícito seria pior: o padrão de thinking muda entre modelos.
+            expect(params.thinking).toEqual({ type: 'adaptive' });
+            // Com thinking ligado, o teto vale para pensamento + resposta.
+            expect(params.max_tokens).toBeGreaterThan(8192);
+            // O que faz a função funcionar: ferramenta forçada.
+            expect(params.tool_choice).toEqual({ type: 'tool', name: 'registrar_treinos' });
+        });
+    });
+
     describe('decomposição de bi-set/tri-set', () => {
         it('quebra "A + B" num bi-set de dois exercícios ligados', async () => {
             createMock.mockResolvedValueOnce(toolResp([{

@@ -17,9 +17,10 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { createRemoteJWKSet, jwtVerify } from 'jose';
 
-// Modelo com suporte nativo a PDF. Opus 4.8 pela precisão de extração —
-// erro de leitura vira série/repetição errada na ficha do aluno.
-const MODEL = 'claude-opus-4-8';
+// Modelo com suporte nativo a PDF. Opus 5 pela precisão de extração — erro de
+// leitura vira série/repetição errada na ficha do aluno — e pelo mesmo preço por
+// token do 4.8 que ele substituiu (US$ 5 / US$ 25 por milhão).
+const MODEL = 'claude-opus-5';
 // ~3,3 MB de PDF em base64. Protege o limite de corpo das funções da Vercel.
 const MAX_PDF_BASE64 = 4_400_000;
 
@@ -225,7 +226,17 @@ export default async function handler(req, res) {
         const client = new Anthropic({ apiKey });
         const message = await client.messages.create({
             model: MODEL,
-            max_tokens: 8192,
+            // Explícito de propósito: o padrão de `thinking` MUDA entre modelos —
+            // no 4.8 omitir significava não pensar, no Opus 5 significa pensar.
+            // Deixar implícito faria o comportamento virar junto com o modelo, em
+            // silêncio. Aqui pensar é desejável: a alternativa (`disabled`) faz o
+            // Opus 5 às vezes escrever a chamada de ferramenta como texto comum,
+            // e esta função depende inteiramente de receber um bloco `tool_use`.
+            thinking: { type: 'adaptive' },
+            // 8192 era justo para a resposta sozinha. O `max_tokens` limita
+            // pensamento + resposta juntos, então uma ficha longa truncaria no
+            // meio agora que o modelo pensa.
+            max_tokens: 16000,
             tools: [WORKOUT_TOOL],
             tool_choice: { type: 'tool', name: WORKOUT_TOOL.name },
             messages: [{
@@ -236,6 +247,20 @@ export default async function handler(req, res) {
                 ]
             }]
         });
+
+        // O Opus 5 pode recusar por classificador de segurança: chega 200, com
+        // `stop_reason: 'refusal'` e nenhum `tool_use`. Sem este ramo viraria um
+        // `parse_failed` genérico, mandando o operador procurar defeito num PDF
+        // que está perfeito. O status segue 422 porque o cliente mapeia por
+        // status, não pelo código do corpo — quem precisa distinguir é o log.
+        if (message?.stop_reason === 'refusal') {
+            console.error('pdf_import_recusado', {
+                categoria: message?.stop_details?.category ?? null,
+                explicacao: message?.stop_details?.explanation ?? null,
+                acao: 'PDF legítimo recusado pelo classificador; reportar à Anthropic se repetir'
+            });
+            return res.status(422).json({ error: 'ai_refused' });
+        }
 
         const toolUse = Array.isArray(message?.content)
             ? message.content.find(c => c.type === 'tool_use' && c.name === WORKOUT_TOOL.name)
