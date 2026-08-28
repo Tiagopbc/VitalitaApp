@@ -86,7 +86,7 @@ Ler antes de "consertar" algo que parece quebrado — vários destes já foram d
 
 **As `firestore.rules` só validam chaves de topo.** Campo *dentro* do array `exercises` não precisa ser liberado; campo novo no **topo** do documento, sim — e aí exige cenário em `tests/security/firestore.rules.test.js`. Ver [docs/security-rules.md](docs/security-rules.md).
 
-**O push de descanso não usa FCM** (é Web Push/VAPID via QStash) **e só é testável em iPhone com a tela bloqueada.** Mexendo nele? **Invoque o skill `push-descanso`**.
+**O push de descanso não usa FCM** (é Web Push/VAPID via QStash) **e só é testável em iPhone com a tela bloqueada.** Mexendo nele? **Invoque o skill `push-descanso`** — e os três comportamentos de 18/08/2026 já foram validados em aparelho em 28/08/2026, com procedimento e método de conferência pelos logs da Vercel em [docs/validacao-push-descanso-ios.md](docs/validacao-push-descanso-ios.md).
 
 **App Check está sem enforcement por decisão.** Ver [docs/app-check.md](docs/app-check.md).
 

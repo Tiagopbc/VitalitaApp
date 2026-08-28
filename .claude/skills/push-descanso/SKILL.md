@@ -28,3 +28,12 @@ chave VAPID privada — existem só nas variáveis de ambiente da Vercel.
 
 **Testar push só vale em iPhone com a tela bloqueada.** No desktop o push aparece
 mesmo com falhas que quebram o fluxo real — ou seja, o desktop mascara defeitos.
+
+O relato de quem testou não distingue "chegou com a tela bloqueada" de "chegou
+com o app aberto" — mas os logs de runtime da Vercel distinguem, pelo formato do
+ciclo. Um `send` **sem `cancel` atrás** significa JS congelado na entrega, ou
+seja, tela realmente bloqueada; um `cancel` 1-2 s depois do `send` significa app
+acordado no fim do descanso, e não prova nada. O procedimento dos testes, as
+pré-condições que produzem falso negativo e a tabela completa de assinaturas
+estão em [docs/validacao-push-descanso-ios.md](../../../docs/validacao-push-descanso-ios.md),
+junto do registro da validação de 28/08/2026.
