@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { achievementsCatalog } from '../../data/achievementsCatalog';
 import { calculateStats, evaluateAchievements, evaluateHistory } from '../../utils/evaluateAchievements';
 import { calculateWeeklyStats } from '../../utils/workoutStats';
@@ -12,7 +12,6 @@ import { userStatsService } from '../../services/userStatsService';
  * Recebe `profile` para reagir à meta semanal e mesclar overrides manuais.
  */
 export function useAchievements(user, profile) {
-    const [achievementsList, setAchievementsList] = useState([]);
     const [stats, setStats] = useState(null);
     const [loadingAchievements, setLoadingAchievements] = useState(true);
     // Armazenar histórico calculado localmente para combinar com o perfil
@@ -73,16 +72,19 @@ export function useAchievements(user, profile) {
         void loadAchievementsData();
     }, [user, profile?.weeklyGoal]); // Recalcular se meta semanal mudar.
 
-    // Reavaliar quando estatísticas ou perfil mudarem
-    useEffect(() => {
-        if (stats && profile) {
-            // Combinar mapa do perfil com mapa calculado (Calculado tem prioridade para corrigir datas antigas, mas perfil pode ter overrides manuais futuros)
-            // Na verdade, calculo histórico é mais preciso para "quando aconteceu a primeira vez".
-            const mergedUnlockedMap = { ...profile.achievements, ...calculatedHistoryMap };
+    // Derivado, não estado: a lista é função pura de estatísticas + perfil +
+    // histórico calculado. Guardá-la em `useState` alimentado por efeito custava
+    // um render a mais a cada mudança e abria espaço para a lista discordar das
+    // suas próprias entradas por um quadro. `useMemo` elimina os dois.
+    const achievementsList = useMemo(() => {
+        if (!stats || !profile) return [];
 
-            const evaluated = evaluateAchievements(achievementsCatalog, stats, mergedUnlockedMap);
-            setAchievementsList(evaluated);
-        }
+        // Calculado tem prioridade sobre o mapa do perfil: o histórico recalculado
+        // é mais preciso para "quando aconteceu a primeira vez", enquanto o perfil
+        // guarda overrides manuais futuros.
+        const mergedUnlockedMap = { ...profile.achievements, ...calculatedHistoryMap };
+
+        return evaluateAchievements(achievementsCatalog, stats, mergedUnlockedMap);
     }, [stats, profile, calculatedHistoryMap]);
 
     return { achievementsList, stats, loadingAchievements };

@@ -71,6 +71,15 @@ export function useProfileData(user) {
                     label: 'Tentar Novamente',
                     onClick: () => {
                         fetchingRef.current = false; // Allow retry
+                        // Auto-referência: a const ainda não existe quando o
+                        // useCallback é montado, e a regra não distingue isso de
+                        // um uso em TDZ. Aqui a chamada é diferida — só acontece
+                        // no clique, muito depois da atribuição. Tentei trocar
+                        // por um ref atualizado em efeito (28/08/2026) e saiu
+                        // pior: rendeu um erro de preserve-manual-memoization no
+                        // useCallback mais um set-state-in-effect novo. Dois
+                        // achados no lugar de um.
+                        // eslint-disable-next-line react-hooks/immutability
                         fetchProfileData();
                     }
                 }
