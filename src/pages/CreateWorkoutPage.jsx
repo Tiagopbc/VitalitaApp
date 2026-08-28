@@ -274,6 +274,11 @@ export default function CreateWorkoutPage({ user }) {
         } else {
             // Adicionar novo
             const exercise = {
+                // `handleAddExercise` só existe como onClick do botão de adicionar,
+                // nunca é chamada em render — a regra não consegue provar isso e
+                // assume o pior. O id continua sendo o timestamp: trocá-lo mudaria o formato
+                // de dado já gravado em workout_templates sem ganho real.
+                // eslint-disable-next-line react-hooks/purity
                 id: Date.now().toString(),
                 ...finalExercise
             };
