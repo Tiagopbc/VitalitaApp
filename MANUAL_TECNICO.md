@@ -202,10 +202,16 @@ público, então pode ser copiado do console sem cuidado especial.
 Com as duas definidas, registre no Firebase Console o token de debug impresso no console do
 navegador. O modo debug só funciona fora de produção.
 
-**Pendente:** o enforcement ainda está desligado — o App Check apenas coleta métricas e não bloqueia
-nada. Só ligue depois de alguns dias com as requisições verificadas perto de 100% no Firebase
-Console → App Check → APIs, e **apenas no Cloud Firestore**. Deixe o Authentication de fora enquanto
-estiver marcado como PRÉ-LANÇAMENTO: travar o login com um recurso em beta tranca você para fora do
+**Decidido, não pendente:** o enforcement está desligado e **assim permanece**. Em 28/08/2026 a
+métrica chegou a 100% de verificadas e 0% sem verificação, ou seja, o critério para *avaliar* foi
+atingido — e a avaliação concluiu que não compensa ligar. O motivo curto: as `firestore.rules` já
+exigem autenticação e propriedade em toda coleção, o projeto está no plano Spark sem faturamento, e
+os 18 dias de 403 do próprio App Check (21/07 a 07/08) mostram na prática o que enforcement ligado
+teria custado — app inutilizável, descoberto na academia. O raciocínio completo e os gatilhos para
+reabrir estão em [docs/app-check.md](docs/app-check.md).
+
+Se um dia for ligar: **apenas no Cloud Firestore**. Deixe o Authentication de fora enquanto estiver
+marcado como PRÉ-LANÇAMENTO — travar o login com um recurso em beta tranca você para fora do
 próprio app.
 
 #### Verificadas em 0% não é falta de uso — é falha

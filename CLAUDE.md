@@ -88,7 +88,7 @@ Ler antes de "consertar" algo que parece quebrado — vários destes já foram d
 
 **O push de descanso não usa FCM** (é Web Push/VAPID via QStash) **e só é testável em iPhone com a tela bloqueada.** Mexendo nele? **Invoque o skill `push-descanso`** — e os três comportamentos de 18/08/2026 já foram validados em aparelho em 28/08/2026, com procedimento e método de conferência pelos logs da Vercel em [docs/validacao-push-descanso-ios.md](docs/validacao-push-descanso-ios.md).
 
-**App Check está sem enforcement por decisão.** Ver [docs/app-check.md](docs/app-check.md).
+**App Check está sem enforcement por decisão — reafirmada em 28/08/2026**, já com a métrica em 100% verificadas. Não é TODO esquecido: ligar trocaria um risco teórico (que as `firestore.rules` já cobrem) por um risco observado de trancar o dono fora do app. Ver [docs/app-check.md](docs/app-check.md).
 
 ## Sobre virar app nativo
 
