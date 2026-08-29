@@ -9,6 +9,11 @@ import { SOURCE_FILTERS } from '../../utils/workoutSourceFilter';
  * um degradê na borda direita avisa que ainda há filtro fora da tela; sem ele
  * "Arquivados" simplesmente não existiria para quem não tentasse arrastar.
  *
+ * O `scroll-px-4` acompanha o `px-4` e não é redundante: sem ele o `snap-start`
+ * alinha o primeiro chip com o início da área de rolagem, o navegador rola os
+ * 16px do padding para compensar e "Todos" encosta na borda do cartão. Com ele
+ * a faixa para em zero e os chips ficam na mesma coluna da lupa da busca.
+ *
  * O contador é decorativo (`aria-hidden`): a lista logo abaixo já é a resposta
  * para leitores de tela, e mantê-lo fora do nome acessível deixa cada chip
  * anunciado só pelo próprio rótulo.
@@ -35,7 +40,7 @@ export function SourceFilterChips({ value, counts, onChange }) {
             <div
                 ref={stripRef}
                 onScroll={syncFade}
-                className="no-scrollbar flex snap-x gap-1.5 overflow-x-auto px-3 py-2.5"
+                className="no-scrollbar flex snap-x scroll-px-4 gap-1.5 overflow-x-auto px-4 py-2.5"
             >
                 {SOURCE_FILTERS.map(({ id, label }) => {
                     const isActive = value === id;
