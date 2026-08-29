@@ -419,4 +419,90 @@ describe('workoutService', () => {
             ]);
         });
     });
+
+    describe('searchExercises', () => {
+        // O cache do catálogo é de módulo e não expira (a coleção é somente-leitura),
+        // então cada caso usa um grupo diferente para não herdar o anterior.
+        const docsOf = (items) => ({
+            docs: items.map(({ id, ...data }) => ({ id, data: () => data }))
+        });
+
+        it('consulta os aliases do catálogo, e não o rótulo da tela', async () => {
+            getDocs.mockResolvedValue(docsOf([
+                { id: 'c1', name: 'Remada Curvada', muscleGroup: 'Meio-das-costas' }
+            ]));
+
+            const results = await workoutService.searchExercises('', 'Costas');
+
+            // "Costas" não existe no catálogo: os exercícios estão sob Dorsais,
+            // Meio-das-costas, Inferior-das-costas e Trapezio.
+            expect(where).toHaveBeenCalledWith(
+                'muscleGroup',
+                'in',
+                expect.arrayContaining(['Costas', 'Dorsais', 'Meio-das-costas', 'Inferior-das-costas', 'Trapezio'])
+            );
+            expect(where).not.toHaveBeenCalledWith('muscleGroup', '==', 'Costas');
+            expect(results).toEqual([
+                { id: 'c1', name: 'Remada Curvada', muscleGroup: 'Meio-das-costas' }
+            ]);
+        });
+
+        it('mantém a busca global por prefixo quando não há grupo selecionado', async () => {
+            getDocs.mockResolvedValue(docsOf([
+                { id: 'c2', name: 'Supino Reto', searchKey: 'supino reto' }
+            ]));
+
+            const results = await workoutService.searchExercises('Supino', null, 15);
+
+            expect(where).toHaveBeenCalledWith('searchKey', '>=', 'supino');
+            expect(where).toHaveBeenCalledWith('searchKey', '<=', 'supino\uf8ff');
+            expect(limit).toHaveBeenCalledWith(15);
+            expect(results).toHaveLength(1);
+        });
+
+        it('reaproveita o cache na segunda busca do mesmo grupo', async () => {
+            getDocs.mockResolvedValue(docsOf([
+                { id: 'c3', name: 'Elevação Pélvica', muscleGroup: 'Gluteos' }
+            ]));
+
+            const first = await workoutService.searchExercises('', 'Glúteos');
+            const second = await workoutService.searchExercises('', 'Glúteos');
+
+            expect(getDocs).toHaveBeenCalledTimes(1);
+            expect(second).toEqual(first);
+        });
+
+        it('filtra por nome no cliente sem corromper o cache do grupo', async () => {
+            getDocs.mockResolvedValue(docsOf([
+                { id: 'c4', name: 'Panturrilha em Pé', muscleGroup: 'Panturrilhas' },
+                { id: 'c5', name: 'Panturrilha Sentado', muscleGroup: 'Panturrilhas' }
+            ]));
+
+            const todos = await workoutService.searchExercises('', 'Panturrilha');
+            expect(todos).toHaveLength(2);
+
+            const filtrados = await workoutService.searchExercises('sentado', 'Panturrilha');
+            expect(filtrados).toHaveLength(1);
+            expect(filtrados[0].id).toBe('c5');
+
+            // A filtragem não pode ter encolhido o que ficou guardado.
+            const dnovo = await workoutService.searchExercises('', 'Panturrilha');
+            expect(dnovo).toHaveLength(2);
+            expect(getDocs).toHaveBeenCalledTimes(1);
+        });
+
+        it('devolve lista vazia e avisa o usuário quando a query falha', async () => {
+            const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+            getDocs.mockRejectedValue(new Error('offline'));
+
+            try {
+                const results = await workoutService.searchExercises('', 'Abdômen');
+
+                expect(results).toEqual([]);
+                expect(notify.error).toHaveBeenCalledWith('Erro ao buscar exercícios. Verifique sua conexão.');
+            } finally {
+                consoleSpy.mockRestore();
+            }
+        });
+    });
 });

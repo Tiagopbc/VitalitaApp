@@ -37,7 +37,7 @@ export function ExerciseCard({ exercise: ex, activeSetIndices, progression, hand
             exerciseId={ex.id}
             setId={activeSet.id}
             exerciseName={ex.name}
-            muscleGroup={ex.muscleFocus?.primary || ex.group || 'Geral'}
+            muscleGroup={ex.muscleGroup || ex.muscleFocus?.primary || ex.group || 'Geral'}
             method={ex.method || "Convencional"}
             repsGoal={repsGoal}
             currentSet={safeIdx + 1}

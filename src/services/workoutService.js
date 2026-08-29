@@ -1,4 +1,5 @@
 import { getFirestoreDeps } from '../firebaseDb';
+import { catalogValuesFor } from '../data/muscleGroups';
 import { sortWorkoutTemplates } from '../utils/workoutTemplateOrder';
 import { notify } from '../utils/notifyStore';
 
@@ -18,6 +19,14 @@ let templatesCache = {
     timestamp: 0
 };
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
+// Catálogo global por grupo muscular. Sem expiração de propósito:
+// `exercises_catalog` é somente-leitura pelas regras, então o conteúdo não muda
+// durante a sessão. Evita reler 100 documentos a cada troca do filtro — e agora
+// que os 10 grupos retornam resultado, a troca acontece muito mais.
+// Não é limpo por `clearCache()`: não tem relação com o usuário logado.
+const catalogByMuscleCache = new Map();
+const CATALOG_GROUP_FETCH_LIMIT = 100;
 
 function mapSessionDoc(doc) {
     return { id: doc.id, ...doc.data() };
@@ -449,32 +458,45 @@ export const workoutService = {
         try {
             const { db, collection, query, where, limit, getDocs } = await getFirestoreDeps();
             const catalogRef = collection(db, 'exercises_catalog');
-            let constraints = [];
             const term = searchTerm ? searchTerm.toLowerCase().trim() : '';
 
             // ESTRATÉGIA:
-            // 1. Se Filtro Muscular ON: Query por Grupo Muscular (Igualdade) -> Filtro por Nome client-side.
+            // 1. Se Filtro Muscular ON: Query por Grupo Muscular -> Filtro por Nome client-side.
             //    Razão: Evita necessidade de Índice Composto (Músculo + ChaveBusca) que quebra se ausente.
             // 2. Se Filtro Muscular OFF: Query por ChaveBusca (Range) -> Busca prefixo padrão.
 
-            if (muscleFilter) {
-                constraints.push(where('muscleGroup', '==', muscleFilter));
-                // fetch more to allow for filtering
-                constraints.push(limit(100)); // Reasonable limit for a single muscle group
-            } else if (term) {
-                // Busca Global (Prefixo)
-                constraints.push(where('searchKey', '>=', term));
-                constraints.push(where('searchKey', '<=', term + '\uf8ff'));
-                constraints.push(limit(limitCount));
-            } else {
-                // Sem filtro, sem termo? Apenas retornar alguns aleatórios ou vazio?
-                // Retornar vazio é mais seguro para evitar leituras enormes, mas se limite for pequeno ok.
-                constraints.push(limit(limitCount));
-            }
+            let results;
 
-            const q = query(catalogRef, ...constraints);
-            const snap = await getDocs(q);
-            let results = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+            if (muscleFilter) {
+                // O catálogo grava o vocabulário do dataset de origem ("Isquiotibiais",
+                // "Meio-das-costas", "Biceps"), não o rótulo desta tela. Comparar por
+                // igualdade só acertava "Peito" e "Ombros"; daí o `in` com os aliases.
+                // Ver src/data/muscleGroups.js.
+                results = catalogByMuscleCache.get(muscleFilter);
+                if (!results) {
+                    const q = query(
+                        catalogRef,
+                        where('muscleGroup', 'in', catalogValuesFor(muscleFilter)),
+                        limit(CATALOG_GROUP_FETCH_LIMIT)
+                    );
+                    const snap = await getDocs(q);
+                    results = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                    catalogByMuscleCache.set(muscleFilter, results);
+                }
+            } else {
+                const constraints = term
+                    // Busca Global (Prefixo)
+                    ? [
+                        where('searchKey', '>=', term),
+                        where('searchKey', '<=', term + '\uf8ff'),
+                        limit(limitCount)
+                    ]
+                    // Sem filtro e sem termo: devolve só alguns, para não varrer o catálogo.
+                    : [limit(limitCount)];
+
+                const snap = await getDocs(query(catalogRef, ...constraints));
+                results = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+            }
 
             // Filtragem no cliente se usamos estratégia de filtro muscular com um termo
             if (muscleFilter && term) {

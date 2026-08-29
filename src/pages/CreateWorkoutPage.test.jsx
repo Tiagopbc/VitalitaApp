@@ -244,4 +244,56 @@ describe('CreateWorkoutPage Integration', () => {
         expect(await screen.findByDisplayValue('Loaded Workout')).toBeInTheDocument();
         expect(await screen.findByText(/Agachamento/i)).toBeInTheDocument();
     });
+
+    it('salva o rótulo da tela quando a sugestão vem com o vocabulário do catálogo', async () => {
+        const { workoutService } = await import('../services/workoutService');
+        workoutService.searchExercises.mockResolvedValue([
+            { id: 'cat-1', name: 'Mesa Flexora', muscleGroup: 'Isquiotibiais' }
+        ]);
+
+        try {
+            render(
+                <MemoryRouter>
+                    <CreateWorkoutPage user={mockUser} />
+                </MemoryRouter>
+            );
+
+            fireEvent.change(screen.getByPlaceholderText(/Ex: Treino A/i), {
+                target: { value: 'Treino B' }
+            });
+
+            fireEvent.click(screen.getByText('Adicionar Exercício'));
+            fireEvent.change(screen.getByPlaceholderText('Digite para buscar...'), {
+                target: { value: 'mesa' }
+            });
+
+            // A sugestão é exibida com o rótulo da tela, não com "Isquiotibiais".
+            const suggestion = await screen.findByText('Mesa Flexora', undefined, { timeout: 2000 });
+            // "Posteriores" também é uma <option> do filtro, então olhamos a
+            // própria linha da sugestão em vez do documento inteiro.
+            expect(suggestion.parentElement).toHaveTextContent('Posteriores');
+            expect(screen.queryByText('Isquiotibiais')).not.toBeInTheDocument();
+
+            fireEvent.click(suggestion);
+            fireEvent.click(screen.getByText('Adicionar'));
+
+            await waitFor(() => {
+                expect(screen.queryByText('Novo Exercício')).not.toBeInTheDocument();
+            });
+
+            fireEvent.click(screen.getByText('Salvar Treino'));
+
+            await waitFor(() => {
+                expect(workoutService.createTemplate).toHaveBeenCalledTimes(1);
+            });
+
+            const [payload] = workoutService.createTemplate.mock.calls[0];
+            expect(payload.exercises[0]).toMatchObject({
+                name: 'Mesa Flexora',
+                muscleGroup: 'Posteriores'
+            });
+        } finally {
+            workoutService.searchExercises.mockResolvedValue([]);
+        }
+    });
 });
