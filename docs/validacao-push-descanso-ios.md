@@ -77,9 +77,17 @@ silencioso por design, mas que aparece no log. É daí que sai a leitura:
 | Formato do ciclo | O que aconteceu |
 | --- | --- |
 | `send` → `cancel` 1-2 s depois | App **acordado** no fim do descanso. Não prova nada sobre tela bloqueada. |
-| `send` **sem `cancel` atrás** | JS congelado na entrega — **é a tela bloqueada**. |
+| `send` **sem `cancel` atrás** | JS congelado ou inalcançável na entrega — **compatível com a tela bloqueada**, mas ver a ressalva abaixo. |
 | `cancel` 1 s **antes** do `send` | Cancelamento perdeu a corrida para o QStash, que já havia despachado. |
 | `schedule` → `cancel`, sem `send` | Descanso fechado, pausado ou ajustado antes do fim. |
+
+**Ressalva: a ausência de `cancel` prova menos do que parece.** Ela prova que o
+JS não rodou *ou* não alcançou o servidor — e tela bloqueada é só uma das
+causas. App encerrado, app em segundo plano e falha de rede produzem a mesma
+assinatura, porque `cancelRestPush` é melhor esforço e engole erro de `fetch`
+por desenho (`src/services/restPushService.js`). Ou seja: o log **corrobora** a
+observação feita no aparelho, não a substitui. Uma validação futura apoiada só
+nos logs pode dar por confirmado um comportamento que ninguém viu acontecer.
 
 O ciclo validado em 28/08/2026 foi `schedule` 15:44:27 → `send` 15:45:05, e o
 evento seguinte só veio 5 min 37 s depois, um `schedule` novo. Nenhum
