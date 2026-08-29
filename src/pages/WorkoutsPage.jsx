@@ -604,9 +604,9 @@ export default function WorkoutsPage({ onNavigateToCreate, onNavigateToWorkout, 
                                                         <ExerciseCard
                                                             key={i}
                                                             name={exercise.name}
-                                                            muscleGroup={exercise.group || 'Geral'}
-                                                            sets={exercise.target ? exercise.target.split('x')[0] : '?'}
-                                                            lastReps={exercise.target || '-'}
+                                                            muscleGroup={exercise.muscleGroup || exercise.group || 'Geral'}
+                                                            sets={exercise.sets || (exercise.target ? exercise.target.split('x')[0] : '?')}
+                                                            lastReps={exercise.reps || exercise.target || '-'}
                                                             lastWeight={null} // We don't have weight in template, only in history
                                                             onPress={() => setEditingExercise({ workoutId: workout.id, index: i, data: exercise })}
                                                         />

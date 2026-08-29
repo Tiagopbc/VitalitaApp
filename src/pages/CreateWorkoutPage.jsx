@@ -12,11 +12,7 @@ import { EmptyState } from '../components/design-system/EmptyState';
 import { PageHeader } from '../components/design-system/PageHeader';
 import { notify } from '../utils/notifyStore';
 import { Reorder, useDragControls } from 'framer-motion';
-
-const muscleGroups = [
-    'Peito', 'Costas', 'Ombros', 'Bíceps', 'Tríceps',
-    'Quadríceps', 'Posteriores', 'Glúteos', 'Panturrilha', 'Abdômen'
-];
+import { MUSCLE_GROUPS, toCanonicalMuscleGroup } from '../data/muscleGroups';
 
 const methods = [
     'Convencional', 'Drop-set', 'Pirâmide Crescente', 'Pirâmide Decrescente',
@@ -250,7 +246,9 @@ export default function CreateWorkoutPage({ user }) {
         setNewExercise(prev => ({
             ...prev,
             name: suggestion.name,
-            muscleGroup: suggestion.muscleGroup || prev.muscleGroup || 'Geral', // Auto-preencher músculo se ausente
+            // O catálogo devolve o vocabulário dele ("Isquiotibiais"); a ficha
+            // guarda sempre o rótulo da tela ("Posteriores").
+            muscleGroup: toCanonicalMuscleGroup(suggestion.muscleGroup) || prev.muscleGroup || 'Geral',
             // Poderia também auto-preencher instruções/notas se quiséssemos
         }));
         setSuggestions([]); // Limpar sugestões
@@ -300,9 +298,9 @@ export default function CreateWorkoutPage({ user }) {
 
         let mappedMuscle = exerciseToEdit.muscleGroup || exerciseToEdit.group || exerciseToEdit.muscleFocus?.primary || '';
 
-        // Tentar corresponder maiúsculas/minúsculas com muscleGroups
-        const exactMatch = muscleGroups.find(m => m.toLowerCase() === mappedMuscle.toLowerCase());
-        if (exactMatch) mappedMuscle = exactMatch;
+        // Normaliza caixa/acento e traduz valor de catálogo salvo em ficha antiga
+        // ("Meio-das-costas" → "Costas"), para o <select> vir pré-selecionado.
+        mappedMuscle = toCanonicalMuscleGroup(mappedMuscle) || mappedMuscle;
 
         setNewExercise({
             muscleGroup: mappedMuscle,
@@ -554,7 +552,7 @@ export default function CreateWorkoutPage({ user }) {
                                     className="w-full rounded-xl border border-slate-600 bg-slate-800/50 text-white px-4 py-3 text-sm outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/50 transition-all appearance-none"
                                 >
                                     <option value="">Todos (Global)</option>
-                                    {muscleGroups.map(g => <option key={g} value={g}>{g}</option>)}
+                                    {MUSCLE_GROUPS.map(g => <option key={g} value={g}>{g}</option>)}
                                 </select>
                             </label>
 
@@ -590,7 +588,7 @@ export default function CreateWorkoutPage({ user }) {
                                             >
                                                 <div className="text-white font-medium text-sm">{s.name}</div>
                                                 <div className="text-[10px] text-cyan-400 flex gap-2">
-                                                    <span>{s.muscleGroup}</span>
+                                                    <span>{toCanonicalMuscleGroup(s.muscleGroup) || s.muscleGroup}</span>
                                                     {s.equipment && <span className="opacity-50">• {s.equipment}</span>}
                                                 </div>
                                             </div>
@@ -683,15 +681,7 @@ export default function CreateWorkoutPage({ user }) {
                                     onClick={() => {
                                         setShowAddExercise(false);
                                         setEditingExerciseId(null);
-                                        setNewExercise({
-                                            muscleGroup: '',
-                                            name: '',
-                                            sets: '3',
-                                            reps: '12',
-                                            method: 'Convencional',
-                                            rest: '',
-                                            notes: ''
-                                        });
+                                        setNewExercise({ ...EMPTY_EXERCISE });
                                     }}
                                     variant="secondary"
                                     fullWidth
