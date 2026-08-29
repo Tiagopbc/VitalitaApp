@@ -159,14 +159,14 @@ npm run test:ui
 
 - O projeto prioriza recursos gratuitos e não depende de serviços pagos para funcionar.
 - Sentry permanece restrito a Preview para validar observabilidade sem coletar dados de uso real.
-- App Check permanece sem enforcement até haver volume e evidência suficientes para bloquear tráfego inválido sem afetar usuários legítimos.
+- App Check permanece sem enforcement **por decisão**, reafirmada em 28/08/2026 já com o critério de tráfego atingido (100% das solicitações verificadas, 0% sem verificação). Não é pendência: ligar trocaria um risco teórico, que as `firestore.rules` já cobrem, por um risco observado de trancar o próprio dono fora do app. Ver [docs/app-check.md](docs/app-check.md).
 - Cloud Functions e estatísticas server-side são opcionais; o cliente mantém fallback compatível com dados existentes.
 - Exclusão completa e automatizada da conta ainda exige uma estratégia de limpeza confiável para documentos relacionados.
 
 ## Próximas evoluções
 
 1. Criar testes E2E autenticados com dados previsíveis no Firebase Emulator.
-2. Acompanhar métricas do App Check antes de qualquer decisão de enforcement.
+2. Revisar mensalmente o volume do reCAPTCHA Enterprise para manter o App Check dentro da cota gratuita.
 3. Publicar source maps privados do Sentry nos builds de Preview.
 4. Implementar exclusão completa da conta e política técnica de retenção.
 5. Executar auditoria de acessibilidade e navegação por teclado.

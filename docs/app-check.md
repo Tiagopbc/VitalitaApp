@@ -176,7 +176,12 @@ Uma ressalva sobre a metrica: o console mostra percentual, nao volume nem janela
 
 ### Por que nao compensa
 
-**O que o enforcement acrescentaria e pouco.** As `firestore.rules` exigem `signedIn()` e propriedade (`isSelf`, ou `canReadUserData`, que checa dono ou personal vinculado ativo) em todas as colecoes, sem nenhuma leitura publica. Quem tiver a config publica do bundle nao le dado de ninguem: no maximo cria a propria conta e usa o app como usuario, o que e um cadastro, nao um ataque. O risco residual e queimar cota do Firestore para derrubar o app — e o projeto esta no plano Spark, sem faturamento, entao o pior caso e o app parar ate a cota renovar, nao uma fatura.
+**O que o enforcement acrescentaria e pouco.** As `firestore.rules` exigem `signedIn()` e propriedade (`isSelf`, ou `canReadUserData`, que checa dono ou personal vinculado ativo) em toda colecao com dado de usuario, e nenhuma leitura e publica — mas "propriedade em todas as colecoes" seria exagero: existem duas leituras abertas a qualquer autenticado, ambas por desenho e nenhuma expondo dado de terceiro.
+
+- `exercises_catalog` (`allow read: if signedIn()`, `allow write: if false`) e catalogo compartilhado e so-leitura, sem dado pessoal.
+- `trainer_invites` deixa qualquer autenticado ler um convite `active` e nao expirado. E necessario: o aluno precisa ler o convite para aceitar, e antes do vinculo existir nao ha de quem ele seja dono. O que o aluno digita nao e o ID do documento (auto-ID do Firestore) e sim o campo `code`, achado por consulta: 8 caracteres sobre alfabeto de 32 simbolos gerado por `crypto.getRandomValues`, com TTL de 7 dias — ~10^12 combinacoes, cada tentativa custando uma leitura da cota do Spark. Nao e enumeravel na pratica, e App Check nao seria o controle disso de qualquer forma.
+
+Fora essas duas, quem tiver a config publica do bundle nao le dado de ninguem: no maximo cria a propria conta e usa o app como usuario, o que e um cadastro, nao um ataque. O risco residual e queimar cota do Firestore para derrubar o app — e o projeto esta no plano Spark, sem faturamento, entao o pior caso e o app parar ate a cota renovar, nao uma fatura.
 
 **O que ele custaria ja foi observado neste projeto.** De 21/07 a 07/08/2026 o App Check passou 18 dias sem emitir um unico token, pelo 403 da chave trocada. Com enforcement desligado, isso foi um numero esquisito no console. Com enforcement ligado, teriam sido 18 dias de app inutilizavel, descobertos na academia. O mesmo padrao vale para a cota: a secao "Protecao de Custo" registra que estourar os 10.000 assessments/mes faz as verificacoes falharem, e que isso nao bloqueia o acesso *porque o enforcement esta desligado*. Ligar converte um evento inofensivo em tranca.
 
