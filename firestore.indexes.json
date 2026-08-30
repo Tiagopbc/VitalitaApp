@@ -83,24 +83,6 @@
       "queryScope": "COLLECTION",
       "fields": [
         {
-          "fieldPath": "code",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "status",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "expiresAt",
-          "order": "ASCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "trainer_invites",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
           "fieldPath": "trainerId",
           "order": "ASCENDING"
         },
