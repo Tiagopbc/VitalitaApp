@@ -179,11 +179,12 @@ service cloud.firestore {
       ];
     }
 
-    function validInviteCreate() {
+    function validInviteCreate(inviteId) {
       return request.resource.data.keys().hasOnly(inviteCreateFields())
         && request.resource.data.keys().hasAll(['trainerId', 'code', 'status', 'createdAt', 'expiresAt'])
         && request.resource.data.trainerId == request.auth.uid
         && request.resource.data.code is string
+        && request.resource.data.code == inviteId
         && request.resource.data.status == 'active'
         && request.resource.data.expiresAt is timestamp
         && request.resource.data.expiresAt > request.time;
@@ -282,7 +283,11 @@ service cloud.firestore {
     }
 
     match /trainer_invites/{inviteId} {
-      allow read: if signedIn() && (
+      // O codigo do convite e o proprio ID do documento, entao resgatar exige
+      // conhecer o codigo. `list` fica restrito ao dono: sem essa separacao uma
+      // query por status/expiresAt devolveria todos os convites ativos, porque o
+      // motor de rules prova o `list` a partir dos filtros da consulta.
+      allow get: if signedIn() && (
         request.auth.uid == resource.data.trainerId ||
         (
           resource.data.status == 'active' &&
@@ -290,7 +295,8 @@ service cloud.firestore {
         ) ||
         request.auth.uid == resource.data.usedBy
       );
-      allow create: if signedIn() && validInviteCreate();
+      allow list: if signedIn() && resource.data.trainerId == request.auth.uid;
+      allow create: if signedIn() && validInviteCreate(inviteId);
       allow update: if signedIn() && (
         validInviteRevoke() ||
         validInviteAccept(inviteId)

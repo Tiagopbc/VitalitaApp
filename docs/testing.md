@@ -34,3 +34,5 @@ Cenários prioritários:
 - Usuário não cria vínculo `trainer_students` em nome de outro aluno.
 - Aluno só cria vínculo se consumir convite ativo no mesmo batch.
 - Convites expirados ou revogados não podem ser usados.
+- Convite exige `code` igual ao ID do documento na criação.
+- Só o personal dono lista `trainer_invites`; terceiro autenticado não enumera convites ativos.

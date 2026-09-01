@@ -111,7 +111,9 @@ Escrita:
 
 ## `trainer_invites/{inviteId}`
 
-Convites revogáveis, expiráveis e de uso único.
+Convites revogáveis, expiráveis e de uso único. **O `inviteId` é o próprio código de
+8 caracteres** (alfabeto `ABCDEFGHJKLMNPQRSTUVWXYZ23456789`), e o campo `code`
+repete esse valor — as rules exigem `code == inviteId` na criação.
 
 Campos:
 
@@ -125,9 +127,10 @@ Campos:
 
 Regras principais:
 
-- Personal cria convite para si mesmo.
+- Personal cria convite para si mesmo, com o código como ID do documento.
 - Personal pode revogar convite ativo.
-- Aluno autenticado pode ler convite ativo e não expirado.
+- Aluno autenticado pode ler (`get`) convite ativo e não expirado — resgatar exige conhecer o código.
+- Só o personal dono pode listar (`list`) a coleção; ver "Por que `get` e `list` são separados" em [security-rules.md](security-rules.md).
 - Ao aceitar, o aluno cria `trainer_students` e atualiza o convite para `expired` no mesmo batch.
 
 ## `user_stats/{userId}`

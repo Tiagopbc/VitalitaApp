@@ -6,17 +6,28 @@ import {
     initializeTestEnvironment
 } from '@firebase/rules-unit-testing';
 import {
+    collection,
     deleteDoc,
     doc,
     getDoc,
+    getDocs,
+    limit,
+    query,
     setDoc,
     Timestamp,
     updateDoc,
+    where,
     writeBatch
 } from 'firebase/firestore';
 
 const PROJECT_ID = 'demo-vitalita-rules';
 const futureDate = Timestamp.fromDate(new Date('2099-01-01T00:00:00.000Z'));
+
+// O `list` so e liberado quando o limite de expiresAt supera o request.time do
+// servidor; um Timestamp.now() do cliente pode ficar atras dele e mascarar a falha.
+function aheadOfServerClock() {
+    return Timestamp.fromMillis(Date.now() + 60_000);
+}
 const pastDate = Timestamp.fromDate(new Date('2020-01-01T00:00:00.000Z'));
 
 let testEnv;
@@ -234,7 +245,7 @@ describe('firestore.rules', () => {
         await seedUser('trainer-1');
 
         const trainerDb = authedDb('trainer-1');
-        await assertSucceeds(setDoc(doc(trainerDb, 'trainer_invites/invite-1'), {
+        await assertSucceeds(setDoc(doc(trainerDb, 'trainer_invites/ABC12345'), {
             trainerId: 'trainer-1',
             code: 'ABC12345',
             status: 'active',
@@ -243,7 +254,7 @@ describe('firestore.rules', () => {
         }));
 
         const studentDb = authedDb('student-1');
-        await assertSucceeds(getDoc(doc(studentDb, 'trainer_invites/invite-1')));
+        await assertSucceeds(getDoc(doc(studentDb, 'trainer_invites/ABC12345')));
 
         const batch = writeBatch(studentDb);
         batch.set(doc(studentDb, 'trainer_students/student-1_trainer-1'), {
@@ -251,9 +262,9 @@ describe('firestore.rules', () => {
             trainerId: 'trainer-1',
             status: 'active',
             linkedAt: Timestamp.now(),
-            inviteId: 'invite-1'
+            inviteId: 'ABC12345'
         });
-        batch.update(doc(studentDb, 'trainer_invites/invite-1'), {
+        batch.update(doc(studentDb, 'trainer_invites/ABC12345'), {
             status: 'expired',
             usedBy: 'student-1',
             usedAt: Timestamp.now()
@@ -265,7 +276,7 @@ describe('firestore.rules', () => {
     it('bloqueia consumo de convite sem criar vinculo correspondente', async () => {
         await seedUser('student-1');
         await seedUser('trainer-1');
-        await seed('trainer_invites/invite-1', {
+        await seed('trainer_invites/ABC12345', {
             trainerId: 'trainer-1',
             code: 'ABC12345',
             status: 'active',
@@ -273,7 +284,7 @@ describe('firestore.rules', () => {
             expiresAt: futureDate
         });
 
-        await assertFails(updateDoc(doc(authedDb('student-1'), 'trainer_invites/invite-1'), {
+        await assertFails(updateDoc(doc(authedDb('student-1'), 'trainer_invites/ABC12345'), {
             status: 'expired',
             usedBy: 'student-1',
             usedAt: Timestamp.now()
@@ -282,7 +293,7 @@ describe('firestore.rules', () => {
 
     it('bloqueia convite expirado e revogacao por terceiro', async () => {
         await seedUser('trainer-1');
-        await seed('trainer_invites/expired-invite', {
+        await seed('trainer_invites/OLD12345', {
             trainerId: 'trainer-1',
             code: 'OLD12345',
             status: 'active',
@@ -290,20 +301,91 @@ describe('firestore.rules', () => {
             expiresAt: pastDate
         });
 
-        await assertFails(getDoc(doc(authedDb('student-1'), 'trainer_invites/expired-invite')));
-        await assertFails(updateDoc(doc(authedDb('student-1'), 'trainer_invites/expired-invite'), {
+        await assertFails(getDoc(doc(authedDb('student-1'), 'trainer_invites/OLD12345')));
+        await assertFails(updateDoc(doc(authedDb('student-1'), 'trainer_invites/OLD12345'), {
             status: 'revoked'
         }));
-        await assertSucceeds(updateDoc(doc(authedDb('trainer-1'), 'trainer_invites/expired-invite'), {
+        await assertSucceeds(updateDoc(doc(authedDb('trainer-1'), 'trainer_invites/OLD12345'), {
             status: 'revoked'
         }));
+    });
+
+    it('exige que o codigo do convite seja o proprio ID do documento', async () => {
+        await seedUser('trainer-1');
+        const trainerDb = authedDb('trainer-1');
+
+        await assertFails(setDoc(doc(trainerDb, 'trainer_invites/invite-1'), {
+            trainerId: 'trainer-1',
+            code: 'ABC12345',
+            status: 'active',
+            createdAt: Timestamp.now(),
+            expiresAt: futureDate
+        }));
+    });
+
+    it('bloqueia enumeracao de convites ativos por quem nao e o dono', async () => {
+        await seedUser('trainer-1');
+        await seed('trainer_invites/ABC12345', {
+            trainerId: 'trainer-1',
+            code: 'ABC12345',
+            status: 'active',
+            createdAt: Timestamp.now(),
+            expiresAt: futureDate
+        });
+
+        const strangerDb = authedDb('stranger-1');
+        const invites = collection(strangerDb, 'trainer_invites');
+
+        // O motor de rules prova o `list` pelos filtros da consulta: com um limite
+        // de expiresAt acima de request.time, `status == 'active' && expiresAt >
+        // request.time` fica provado sem filtrar por code, e a consulta devolveria
+        // todos os convites ativos.
+        await assertFails(getDocs(query(
+            invites,
+            where('status', '==', 'active'),
+            where('expiresAt', '>', aheadOfServerClock())
+        )));
+        await assertFails(getDocs(query(
+            invites,
+            where('code', '==', 'ABC12345'),
+            where('status', '==', 'active'),
+            where('expiresAt', '>', aheadOfServerClock()),
+            limit(1)
+        )));
+        await assertFails(getDocs(invites));
+    });
+
+    it('permite ao personal listar apenas os proprios convites', async () => {
+        await seedUser('trainer-1');
+        await seed('trainer_invites/ABC12345', {
+            trainerId: 'trainer-1',
+            code: 'ABC12345',
+            status: 'active',
+            createdAt: Timestamp.now(),
+            expiresAt: futureDate
+        });
+
+        const trainerDb = authedDb('trainer-1');
+        const invites = collection(trainerDb, 'trainer_invites');
+
+        await assertSucceeds(getDocs(query(
+            invites,
+            where('trainerId', '==', 'trainer-1'),
+            where('status', '==', 'active'),
+            where('expiresAt', '>', aheadOfServerClock())
+        )));
+        await assertFails(getDocs(query(
+            invites,
+            where('trainerId', '==', 'trainer-2'),
+            where('status', '==', 'active')
+        )));
     });
 
     it('bloqueia criacao de vinculo em nome de outro aluno', async () => {
         await seedUser('student-1');
         await seedUser('student-2');
         await seedUser('trainer-1');
-        await seed('trainer_invites/invite-1', {
+        await seed('trainer_invites/ABC12345', {
             trainerId: 'trainer-1',
             code: 'ABC12345',
             status: 'active',
@@ -318,9 +400,9 @@ describe('firestore.rules', () => {
             trainerId: 'trainer-1',
             status: 'active',
             linkedAt: Timestamp.now(),
-            inviteId: 'invite-1'
+            inviteId: 'ABC12345'
         });
-        batch.update(doc(db, 'trainer_invites/invite-1'), {
+        batch.update(doc(db, 'trainer_invites/ABC12345'), {
             status: 'expired',
             usedBy: 'student-1',
             usedAt: Timestamp.now()

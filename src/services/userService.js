@@ -3,6 +3,10 @@ import { getFirestoreDeps } from '../firebaseDb';
 const INVITES_COLLECTION = 'trainer_invites';
 const TRAINER_STUDENTS_COLLECTION = 'trainer_students';
 const INVITE_TTL_DAYS = 7;
+// O codigo do convite e o ID do documento, entao precisa ser um ID valido.
+const INVITE_CODE_PATTERN = /^[A-Z0-9]{8}$/;
+// Colisao de codigo cai em `create` negado pelas rules; sorteia outro e tenta de novo.
+const INVITE_CODE_MAX_ATTEMPTS = 3;
 
 function getInviteExpiryDate() {
     return new Date(Date.now() + INVITE_TTL_DAYS * 24 * 60 * 60 * 1000);
@@ -29,6 +33,23 @@ function toDate(value) {
     if (value instanceof Date) return value;
     if (typeof value.toDate === 'function') return value.toDate();
     return new Date(value);
+}
+
+function normalizeInviteCode(rawCode) {
+    const normalized = rawCode?.trim().toUpperCase();
+    return normalized && INVITE_CODE_PATTERN.test(normalized) ? normalized : null;
+}
+
+/**
+ * Convite so vale se estiver ativo, dentro do prazo e com o codigo no ID do
+ * documento. Convites antigos, criados com ID automatico, caem fora daqui.
+ */
+function isRedeemableInvite(docSnap) {
+    const data = docSnap.data();
+    if (!data || docSnap.id !== data.code) return false;
+    if (data.status !== 'active') return false;
+    const expiresAt = toDate(data.expiresAt);
+    return Boolean(expiresAt) && expiresAt.getTime() > Date.now();
 }
 
 function mapInviteDoc(docSnap) {
@@ -90,43 +111,40 @@ export const userService = {
      * @returns {Promise<void>}
      */
     async linkTrainer(studentId, trainerCode) {
-        const normalizedTrainerCode = trainerCode?.trim();
-        if (!normalizedTrainerCode || normalizedTrainerCode === studentId) {
+        const normalizedCode = normalizeInviteCode(trainerCode);
+        if (!normalizedCode || normalizedCode === studentId) {
             throw new Error("PERSONAL_NOT_FOUND");
         }
 
         const {
             db,
-            collection,
-            query,
-            where,
-            limit,
-            getDocs,
             getDoc,
             doc,
             writeBatch,
-            serverTimestamp,
-            Timestamp
+            serverTimestamp
         } = await getFirestoreDeps();
 
-        const normalizedCode = normalizedTrainerCode.toUpperCase();
-        const inviteQuery = query(
-            collection(db, INVITES_COLLECTION),
-            where('code', '==', normalizedCode),
-            where('status', '==', 'active'),
-            where('expiresAt', '>', Timestamp.now()),
-            limit(1)
-        );
-        const inviteSnap = await getDocs(inviteQuery);
-
-        if (inviteSnap.empty) {
+        // Busca por ID, nao por consulta: o codigo e o proprio ID do documento.
+        // Uma consulta aqui obrigaria as rules a liberar `list` da colecao, o que
+        // deixaria qualquer autenticado enumerar os convites ativos de todo mundo.
+        const inviteDoc = doc(db, INVITES_COLLECTION, normalizedCode);
+        let inviteSnap;
+        try {
+            inviteSnap = await getDoc(inviteDoc);
+        } catch (error) {
+            // As rules negam a leitura de convite inexistente, revogado ou expirado.
+            // Falha de rede continua subindo, para nao virar "convite invalido".
+            if (error?.code !== 'permission-denied') throw error;
             throw new Error("PERSONAL_NOT_FOUND");
         }
 
-        const inviteDoc = inviteSnap.docs[0];
-        const invite = inviteDoc.data();
+        if (!inviteSnap.exists() || !isRedeemableInvite(inviteSnap)) {
+            throw new Error("PERSONAL_NOT_FOUND");
+        }
 
-        if (invite.trainerId === studentId) {
+        const invite = inviteSnap.data();
+
+        if (!invite.trainerId || invite.trainerId === studentId) {
             throw new Error("PERSONAL_NOT_FOUND");
         }
 
@@ -144,10 +162,10 @@ export const userService = {
                 trainerId: invite.trainerId,
                 studentId,
                 status: 'active',
-                inviteId: inviteDoc.id,
+                inviteId: normalizedCode,
                 linkedAt: serverTimestamp()
             });
-            batch.update(inviteDoc.ref, {
+            batch.update(inviteDoc, {
                 status: 'expired',
                 usedBy: studentId,
                 usedAt: serverTimestamp()
@@ -165,17 +183,18 @@ export const userService = {
      * @returns {Promise<Object|null>}
      */
     async getActiveTrainerInvite(trainerId) {
-        const { db, collection, query, where, limit, getDocs, Timestamp } = await getFirestoreDeps();
+        const { db, collection, query, where, getDocs, Timestamp } = await getFirestoreDeps();
         const q = query(
             collection(db, INVITES_COLLECTION),
             where('trainerId', '==', trainerId),
             where('status', '==', 'active'),
-            where('expiresAt', '>', Timestamp.now()),
-            limit(1)
+            where('expiresAt', '>', Timestamp.now())
         );
         const snap = await getDocs(q);
-        if (snap.empty) return null;
-        return mapInviteDoc(snap.docs[0]);
+        // Convite antigo, com ID automatico, nao pode mais ser resgatado: ignorar
+        // aqui faz `ensureActiveTrainerInvite` emitir um substituto e revogar o velho.
+        const redeemable = snap.docs.find(isRedeemableInvite);
+        return redeemable ? mapInviteDoc(redeemable) : null;
     },
 
     /**
@@ -184,7 +203,7 @@ export const userService = {
      * @returns {Promise<Object>}
      */
     async createTrainerInvite(trainerId) {
-        const { db, collection, query, where, getDocs, updateDoc, addDoc, serverTimestamp, Timestamp } = await getFirestoreDeps();
+        const { db, collection, query, where, getDocs, updateDoc, setDoc, doc, serverTimestamp, Timestamp } = await getFirestoreDeps();
         const activeInvitesQuery = query(
             collection(db, INVITES_COLLECTION),
             where('trainerId', '==', trainerId),
@@ -197,15 +216,27 @@ export const userService = {
         ));
 
         const expiresAt = Timestamp.fromDate(getInviteExpiryDate());
-        const docRef = await addDoc(collection(db, INVITES_COLLECTION), {
-            trainerId,
-            code: generateInviteCode(),
-            status: 'active',
-            createdAt: serverTimestamp(),
-            expiresAt
-        });
+        let lastError;
 
-        return this.getTrainerInviteById(docRef.id);
+        // O codigo e o ID do documento. Se o sorteio bater num codigo ja usado, a
+        // escrita vira `update` e as rules negam — basta sortear outro.
+        for (let attempt = 0; attempt < INVITE_CODE_MAX_ATTEMPTS; attempt += 1) {
+            const code = generateInviteCode();
+            try {
+                await setDoc(doc(db, INVITES_COLLECTION, code), {
+                    trainerId,
+                    code,
+                    status: 'active',
+                    createdAt: serverTimestamp(),
+                    expiresAt
+                });
+                return this.getTrainerInviteById(code);
+            } catch (error) {
+                lastError = error;
+            }
+        }
+
+        throw lastError;
     },
 
     /**
