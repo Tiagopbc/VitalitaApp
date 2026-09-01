@@ -15,14 +15,34 @@ A **única funcionalidade paga** do app. Ler antes de mexer no fluxo.
 
 ## Custo e configuração
 
-`api/parse-workout-pdf.js` chama a API da Anthropic (`claude-opus-4-8`) para ler a
-ficha, a ~US$ 0,04 por PDF. Exige três variáveis:
+`api/parse-workout-pdf.js` chama a API da Anthropic (`claude-opus-5`) para ler a
+ficha. O preço por token é o mesmo do `claude-opus-4-8` que ele substituiu
+(US$ 5 / US$ 25 por milhão), mas desde 27/08/2026 o modelo **pensa** — então o
+~US$ 0,04 por PDF herdado da estimativa antiga vale como piso, não como média,
+enquanto não houver medição real. Exige três variáveis:
 
 - `ANTHROPIC_API_KEY` e `FIREBASE_PROJECT_ID` — **servidor**, nunca `VITE_*`.
 - `VITE_ENABLE_PDF_IMPORT=true` — **build**, para exibir o botão. O cliente não
   consegue detectar a config do servidor sem gastar requisição.
 
 Sem elas o botão some ou a função responde 503, sem afetar o resto do app.
+
+## A forma da requisição é proposital — não "conserte"
+
+`thinking: { type: 'adaptive' }` **junto com** `tool_choice` forçado é suportado e
+intencional. A restrição que existe na documentação — só `auto` ou `none` — vale
+para o pensamento **manual** (`thinking: { type: 'enabled' }`), que este código não
+usa. A doc oficial de [forcing tool use](https://platform.claude.com/docs/en/agents-and-tools/tool-use/define-tools)
+diz o contrário para o modo adaptativo: *"Adaptive thinking, including on models
+where thinking is on by default such as Claude Opus 5, supports forced tool use."*
+A única plataforma que exige `disabled` ao lado de escolha forçada é a Amazon
+Bedrock, que não é por onde este projeto fala com a API.
+
+Uma revisão automática (Codex, no PR #82) já alegou o oposto, prevendo 502 em toda
+importação. É falso — e aplicar a sugestão reintroduziria justamente a falha que o
+comentário no código descreve: com o pensamento desligado, o Opus 5 às vezes
+escreve a chamada de ferramenta como texto comum, e a função, que depende de
+receber um bloco `tool_use`, devolve `parse_failed` sem erro nenhum no log.
 
 ## Fronteira de responsabilidade (proposital)
 

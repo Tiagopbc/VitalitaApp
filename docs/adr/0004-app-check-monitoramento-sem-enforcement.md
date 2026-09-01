@@ -75,8 +75,12 @@ defesa em profundidade, não a única barreira.
   testados no PWA, existir plano de rollback documentado, e o uso do
   provider permanecer dentro da cota gratuita.
 - Ativar enforcement é uma **decisão separada**, não uma evolução automática
-  desta — exige teste em Preview e aprovação explícita (ver
-  `docs/app-check.md` §"Critério Para Enforcement Futuro").
+  desta — exige aprovação explícita e o rollback documentado como única rede.
+  Uma versão anterior desta linha exigia teste em Preview; isso não é exigível
+  neste projeto, porque previews da Vercel não autenticam nem leem o Firestore
+  (ver `docs/app-check.md` §"O teste em Preview nao e exigivel neste projeto").
+  A ausência de ambiente intermediário é parte do custo de ligar, não um
+  detalhe de processo.
 - Não vincular Cloud Billing só para viabilizar App Check — se o volume se
   aproximar da cota gratuita, a resposta é remover
   `VITE_FIREBASE_APP_CHECK_SITE_KEY` temporariamente, não pagar por mais
@@ -87,5 +91,8 @@ defesa em profundidade, não a única barreira.
 1. [x] Documentar a decisão (este ADR).
 2. [ ] Revisar mensalmente o volume no console do reCAPTCHA Enterprise
    (checklist já existe em `docs/app-check.md`).
-3. [ ] Reavaliar enforcement quando os critérios acima forem atendidos —
-   como decisão nova, não automática.
+3. [x] Reavaliar enforcement quando os critérios acima forem atendidos —
+   como decisão nova, não automática. **Feito em 28/08/2026: critério de
+   tráfego atingido (100% verificadas / 0% sem verificação) e decidido não
+   ligar.** Não reabrir sem um dos gatilhos listados em `docs/app-check.md`
+   §"Gatilhos para reabrir".
