@@ -105,13 +105,15 @@ export const userService = {
     },
 
     /**
-     * Vincular estudante ao treinador
-     * @param {string} studentId 
-     * @param {string} trainerCode (trainerId)
+     * Vincula o aluno ao personal resgatando um convite pelo código.
+     * @param {string} studentId
+     * @param {string} inviteCode Código de 8 caracteres gerado pelo personal; é o
+     *   próprio ID do documento em `trainer_invites`. Aceita espaços e minúsculas.
      * @returns {Promise<void>}
+     * @throws {Error} PERSONAL_NOT_FOUND, ALREADY_LINKED ou LINK_TRAINER_FAILED
      */
-    async linkTrainer(studentId, trainerCode) {
-        const normalizedCode = normalizeInviteCode(trainerCode);
+    async linkTrainer(studentId, inviteCode) {
+        const normalizedCode = normalizeInviteCode(inviteCode);
         if (!normalizedCode || normalizedCode === studentId) {
             throw new Error("PERSONAL_NOT_FOUND");
         }
