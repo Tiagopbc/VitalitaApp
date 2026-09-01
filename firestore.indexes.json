@@ -51,6 +51,20 @@
       ]
     },
     {
+      "collectionGroup": "workout_sessions",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "userId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "templateId",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
       "collectionGroup": "workout_templates",
       "queryScope": "COLLECTION",
       "fields": [
