@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { getGroupInfo } from '../../utils/exerciseGroups';
 
 function scrollToExercise(targetExerciseId) {
@@ -18,6 +18,18 @@ function scrollToExercise(targetExerciseId) {
 export function useExecutionNavigation({ exercises, focusMode, autoStartTimer, setShowTimer, completeSetAutoFill }) {
     const [currentExerciseIndex, setCurrentExerciseIndex] = useState(0);
     const [activeSetIndices, setActiveSetIndices] = useState({});
+    // Timers de avanço pendentes, cancelados ao desmontar. É um Set, e não um id
+    // só, para que concluir duas séries em menos de 400 ms continue disparando
+    // os dois avanços, como antes.
+    const pendingAdvanceTimers = useRef(new Set());
+
+    useEffect(() => {
+        const timers = pendingAdvanceTimers.current;
+        return () => {
+            timers.forEach(clearTimeout);
+            timers.clear();
+        };
+    }, []);
 
     const handleSetNavigation = (exerciseId, setIndex) => {
         setActiveSetIndices(prev => ({
@@ -68,13 +80,15 @@ export function useExecutionNavigation({ exercises, focusMode, autoStartTimer, s
 
         if (targetIndex !== null) {
             const targetId = exercises[targetIndex].id;
-            setTimeout(() => {
+            const timerId = setTimeout(() => {
+                pendingAdvanceTimers.current.delete(timerId);
                 if (focusMode) {
                     setCurrentExerciseIndex(targetIndex);
                 } else {
                     scrollToExercise(targetId);
                 }
             }, 400); // Pequeno delay para a animação da série concluída
+            pendingAdvanceTimers.current.add(timerId);
         }
     };
 
