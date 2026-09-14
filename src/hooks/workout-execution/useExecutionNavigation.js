@@ -80,14 +80,17 @@ export function useExecutionNavigation({ exercises, focusMode, autoStartTimer, s
 
     // Rolar para o topo quando o Modo Foco é ativado
     useEffect(() => {
-        if (focusMode) {
-            // Força o scroll suave para o topo
-            const forceScroll = () => window.scrollTo({ top: 0, behavior: 'smooth' });
+        if (!focusMode) return undefined;
 
-            forceScroll();
-            // Pequeno delay para garantir que o layout atualizou
-            setTimeout(forceScroll, 300);
-        }
+        // Força o scroll suave para o topo
+        const forceScroll = () => window.scrollTo({ top: 0, behavior: 'smooth' });
+
+        forceScroll();
+        // Pequeno delay para garantir que o layout atualizou. O cleanup cancela o
+        // timer ao desmontar: sem ele, nos testes o callback roda depois de o
+        // jsdom ser desmontado e o Vitest reprova com "window is not defined".
+        const timerId = setTimeout(forceScroll, 300);
+        return () => clearTimeout(timerId);
     }, [focusMode]);
 
     return {
