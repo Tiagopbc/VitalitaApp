@@ -202,7 +202,8 @@ service cloud.firestore {
     }
 
     function validInviteAccept(inviteId) {
-      return resource.data.status == 'active'
+      return resource.data.code == inviteId
+        && resource.data.status == 'active'
         && resource.data.expiresAt > request.time
         && request.resource.data.trainerId == resource.data.trainerId
         && request.resource.data.code == resource.data.code
@@ -287,9 +288,12 @@ service cloud.firestore {
       // conhecer o codigo. `list` fica restrito ao dono: sem essa separacao uma
       // query por status/expiresAt devolveria todos os convites ativos, porque o
       // motor de rules prova o `list` a partir dos filtros da consulta.
+      // `code == inviteId` barra convite legado (ID automatico): quem guardou esse
+      // ID da epoca da enumeracao nao le nem aceita. O dono continua lendo.
       allow get: if signedIn() && (
         request.auth.uid == resource.data.trainerId ||
         (
+          resource.data.code == inviteId &&
           resource.data.status == 'active' &&
           resource.data.expiresAt > request.time
         ) ||
