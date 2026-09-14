@@ -110,7 +110,9 @@ export const userService = {
      * @param {string} inviteCode Código de 8 caracteres gerado pelo personal; é o
      *   próprio ID do documento em `trainer_invites`. Aceita espaços e minúsculas.
      * @returns {Promise<void>}
-     * @throws {Error} PERSONAL_NOT_FOUND, ALREADY_LINKED ou LINK_TRAINER_FAILED
+     * @throws {Error} PERSONAL_NOT_FOUND, ALREADY_LINKED ou LINK_TRAINER_FAILED.
+     *   Falha de infraestrutura nas leituras (ex.: `unavailable` do Firestore) sobe
+     *   como veio, de propósito: não pode virar "convite inválido".
      */
     async linkTrainer(studentId, inviteCode) {
         const normalizedCode = normalizeInviteCode(inviteCode);
@@ -219,10 +221,13 @@ export const userService = {
 
         const expiresAt = Timestamp.fromDate(getInviteExpiryDate());
         let lastError;
+        let createdCode = null;
 
         // O codigo e o ID do documento. Se o sorteio bater num codigo ja usado, a
-        // escrita vira `update` e as rules negam — basta sortear outro.
-        for (let attempt = 0; attempt < INVITE_CODE_MAX_ATTEMPTS; attempt += 1) {
+        // escrita vira `update` e as rules negam — basta sortear outro. Só a
+        // escrita fica no retry: falha na leitura depois de gravar não pode
+        // sortear um segundo convite ativo.
+        for (let attempt = 0; attempt < INVITE_CODE_MAX_ATTEMPTS && !createdCode; attempt += 1) {
             const code = generateInviteCode();
             try {
                 await setDoc(doc(db, INVITES_COLLECTION, code), {
@@ -232,13 +237,14 @@ export const userService = {
                     createdAt: serverTimestamp(),
                     expiresAt
                 });
-                return this.getTrainerInviteById(code);
+                createdCode = code;
             } catch (error) {
                 lastError = error;
             }
         }
 
-        throw lastError;
+        if (!createdCode) throw lastError;
+        return this.getTrainerInviteById(createdCode);
     },
 
     /**
