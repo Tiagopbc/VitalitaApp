@@ -16,7 +16,7 @@ próxima validação ter método em vez de memória.
 | --- | --- | --- |
 | Banner âmbar quando o agendamento falha | ✅ | Banner na tela às 15:12 **sem nenhuma requisição** tendo chegado ao `/api/schedule-rest-push` |
 | Bipe de fim de descanso após segundo plano | ✅ | Confirmado a ouvido, depois de sair e voltar do app |
-| Push entregue com a tela bloqueada | ✅ | `send` às 15:45:05 **sem `cancel` posterior** (ver assinatura abaixo) |
+| Push entregue com a tela bloqueada | ✅ | Tela bloqueada observada no aparelho; log compatível: `send` às 15:45:05 **sem `cancel` posterior** (ver assinatura abaixo) |
 
 O quarto — o `PwaReinstallNotice` — não é validável sob demanda por desenho: a
 detecção só vale da *próxima* mudança de tag de janela em diante. Ver
@@ -64,8 +64,10 @@ verificável abaixo.
 ## Como confirmar por fora: a assinatura nos logs da Vercel
 
 O relato de quem testou não distingue "push chegou com a tela bloqueada" de
-"push chegou com o app aberto". Os logs de runtime da Vercel distinguem, e de
-graça — o formato do ciclo já diz em que estado o aparelho estava.
+"push chegou com o app aberto". Os logs de runtime da Vercel ajudam, e de graça:
+o formato do ciclo descarta o app acordado no fim do descanso e confere que o
+servidor registrou o que foi visto no aparelho. Sozinho, porém, não diz em que
+estado o aparelho estava — ver a ressalva abaixo da tabela.
 
 Consulte os logs de runtime do projeto `vitalitaapp` escopados ao deployment em
 produção. **Os horários são UTC; o local é UTC-3.**
@@ -93,14 +95,19 @@ O ciclo validado em 28/08/2026 foi `schedule` 15:44:27 → `send` 15:45:05, e o
 evento seguinte só veio 5 min 37 s depois, um `schedule` novo. Nenhum
 cancelamento no meio.
 
-Repare que a alternativa óbvia fica descartada pelo próprio formato: se o timer
-tivesse sido fechado antes do fim, o cancelamento teria saído **antes** do
-`send`, como na quarta linha da tabela. Não saiu — logo o descanso estava
-correndo e o aparelho, suspenso.
+O log mostra, então, que nenhum cancelamento chegou ao servidor — nem antes do
+`send`, como na quarta linha da tabela, nem depois dele. Isso é compatível com
+tela bloqueada, mas também com app encerrado, em segundo plano ou sem rede. O
+que desempata é a observação no aparelho: a tela estava bloqueada durante o
+descanso.
 
 ## Limite honesto
 
-Os logs provam que a notificação foi despachada e que o JS do app estava
-congelado naquele instante. Eles **não** provam que ela apareceu visualmente na
-tela bloqueada — essa metade continua sendo observação humana. O que o método
-elimina é a parte que a memória erra: em que estado o aparelho estava.
+Os logs provam duas coisas: que a notificação foi despachada e que nenhum
+cancelamento bem-sucedido chegou ao servidor. Eles **não** provam em que estado o
+aparelho estava — tela bloqueada, app encerrado, segundo plano e falha de rede
+deixam o mesmo rastro — nem que a notificação apareceu na tela bloqueada. As duas
+metades continuam sendo observação no aparelho. O que o log acrescenta é
+descartar o app acordado no fim do descanso (`send` seguido de `cancel`) e dar
+horário exato para conferir o que foi visto. Uma validação futura só vale com a
+observação registrada junto dos logs.

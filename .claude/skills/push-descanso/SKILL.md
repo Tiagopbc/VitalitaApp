@@ -30,10 +30,12 @@ chave VAPID privada — existem só nas variáveis de ambiente da Vercel.
 mesmo com falhas que quebram o fluxo real — ou seja, o desktop mascara defeitos.
 
 O relato de quem testou não distingue "chegou com a tela bloqueada" de "chegou
-com o app aberto" — mas os logs de runtime da Vercel distinguem, pelo formato do
-ciclo. Um `send` **sem `cancel` atrás** significa JS congelado na entrega, ou
-seja, tela realmente bloqueada; um `cancel` 1-2 s depois do `send` significa app
-acordado no fim do descanso, e não prova nada. O procedimento dos testes, as
+com o app aberto", e os logs de runtime da Vercel só resolvem metade. Um `cancel`
+1-2 s depois do `send` significa app acordado no fim do descanso, e invalida o
+teste. Um `send` **sem `cancel` atrás** é compatível com tela bloqueada, mas app
+encerrado, segundo plano e falha de rede deixam o mesmo rastro — `cancelRestPush`
+engole erro de `fetch` por desenho. O estado do aparelho vem da observação; o log
+só confere. O procedimento dos testes, as
 pré-condições que produzem falso negativo e a tabela completa de assinaturas
 estão em [docs/validacao-push-descanso-ios.md](../../../docs/validacao-push-descanso-ios.md),
 junto do registro da validação de 28/08/2026.

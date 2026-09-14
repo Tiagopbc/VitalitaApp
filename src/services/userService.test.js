@@ -351,6 +351,17 @@ describe('userService', () => {
             expect(result.code).toBe('NEWCODE1');
         });
 
+        it('nao sorteia outro convite quando a leitura falha depois de gravar', async () => {
+            getDocs.mockResolvedValueOnce({ docs: [] });
+            setDoc.mockResolvedValueOnce();
+            getDoc.mockRejectedValueOnce(Object.assign(new Error('offline'), { code: 'unavailable' }));
+
+            await expect(userService.createTrainerInvite('trainer-1'))
+                .rejects.toThrow('offline');
+            // Um segundo setDoc deixaria dois convites ativos para o mesmo personal.
+            expect(setDoc).toHaveBeenCalledTimes(1);
+        });
+
         it('propaga o erro quando todas as tentativas de codigo falham', async () => {
             getDocs.mockResolvedValueOnce({ docs: [] });
             // `Once` em cada tentativa: um mockRejectedValue fixo vazaria para os
