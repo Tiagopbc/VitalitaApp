@@ -296,4 +296,52 @@ describe('CreateWorkoutPage Integration', () => {
             workoutService.searchExercises.mockResolvedValue([]);
         }
     });
+
+    it('mantém o grupo do catálogo quando ele não tem rótulo equivalente na tela', async () => {
+        const { workoutService } = await import('../services/workoutService');
+        // `scripts/import_exercises.js` grava qualquer `primaryMuscles[0]`, então o
+        // catálogo tem grupos fora dos 10 da tela. Antes caíam em "Geral".
+        workoutService.searchExercises.mockResolvedValue([
+            { id: 'cat-2', name: 'Rosca Punho', muscleGroup: 'Antebracos' }
+        ]);
+
+        try {
+            render(
+                <MemoryRouter>
+                    <CreateWorkoutPage user={mockUser} />
+                </MemoryRouter>
+            );
+
+            fireEvent.change(screen.getByPlaceholderText(/Ex: Treino A/i), {
+                target: { value: 'Treino C' }
+            });
+
+            fireEvent.click(screen.getByText('Adicionar Exercício'));
+            fireEvent.change(screen.getByPlaceholderText('Digite para buscar...'), {
+                target: { value: 'rosca' }
+            });
+
+            const suggestion = await screen.findByText('Rosca Punho', undefined, { timeout: 2000 });
+            fireEvent.click(suggestion);
+            fireEvent.click(screen.getByText('Adicionar'));
+
+            await waitFor(() => {
+                expect(screen.queryByText('Novo Exercício')).not.toBeInTheDocument();
+            });
+
+            fireEvent.click(screen.getByText('Salvar Treino'));
+
+            await waitFor(() => {
+                expect(workoutService.createTemplate).toHaveBeenCalledTimes(1);
+            });
+
+            const [payload] = workoutService.createTemplate.mock.calls[0];
+            expect(payload.exercises[0]).toMatchObject({
+                name: 'Rosca Punho',
+                muscleGroup: 'Antebracos'
+            });
+        } finally {
+            workoutService.searchExercises.mockResolvedValue([]);
+        }
+    });
 });
