@@ -247,8 +247,9 @@ export default function CreateWorkoutPage({ user }) {
             ...prev,
             name: suggestion.name,
             // O catálogo devolve o vocabulário dele ("Isquiotibiais"); a ficha
-            // guarda sempre o rótulo da tela ("Posteriores").
-            muscleGroup: toCanonicalMuscleGroup(suggestion.muscleGroup) || prev.muscleGroup || 'Geral',
+            // guarda o rótulo da tela ("Posteriores") quando ele existe. Grupo sem
+            // equivalente ("Antebracos") fica como veio, igual à edição e à lista.
+            muscleGroup: toCanonicalMuscleGroup(suggestion.muscleGroup) || suggestion.muscleGroup || prev.muscleGroup || 'Geral',
             // Poderia também auto-preencher instruções/notas se quiséssemos
         }));
         setSuggestions([]); // Limpar sugestões
