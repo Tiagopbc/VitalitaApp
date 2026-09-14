@@ -323,6 +323,45 @@ describe('firestore.rules', () => {
         }));
     });
 
+    it('bloqueia leitura e aceite de convite legado com ID automatico', async () => {
+        await seedUser('student-1');
+        await seedUser('trainer-1');
+        // Formato anterior ao PR #86: ID automatico e `code` como campo. Quem
+        // guardou o ID da epoca da enumeracao nao pode ler nem consumir o convite.
+        await seed('trainer_invites/legacyAutoId01', {
+            trainerId: 'trainer-1',
+            code: 'ABC12345',
+            status: 'active',
+            createdAt: Timestamp.now(),
+            expiresAt: futureDate
+        });
+
+        const studentDb = authedDb('student-1');
+        await assertFails(getDoc(doc(studentDb, 'trainer_invites/legacyAutoId01')));
+
+        const batch = writeBatch(studentDb);
+        batch.set(doc(studentDb, 'trainer_students/student-1_trainer-1'), {
+            studentId: 'student-1',
+            trainerId: 'trainer-1',
+            status: 'active',
+            linkedAt: Timestamp.now(),
+            inviteId: 'legacyAutoId01'
+        });
+        batch.update(doc(studentDb, 'trainer_invites/legacyAutoId01'), {
+            status: 'expired',
+            usedBy: 'student-1',
+            usedAt: Timestamp.now()
+        });
+        await assertFails(batch.commit());
+
+        // O dono ainda enxerga e revoga o proprio convite legado.
+        const trainerDb = authedDb('trainer-1');
+        await assertSucceeds(getDoc(doc(trainerDb, 'trainer_invites/legacyAutoId01')));
+        await assertSucceeds(updateDoc(doc(trainerDb, 'trainer_invites/legacyAutoId01'), {
+            status: 'revoked'
+        }));
+    });
+
     it('bloqueia enumeracao de convites ativos por quem nao e o dono', async () => {
         await seedUser('trainer-1');
         await seed('trainer_invites/ABC12345', {

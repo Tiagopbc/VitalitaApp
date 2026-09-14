@@ -51,8 +51,8 @@ códigos, um autenticado qualquer queimava o convite de outro aluno (o aceite gr
 
 Hoje as duas operações são separadas:
 
-- `allow get`: dono, ou convite ativo e não expirado, ou quem já usou. Resgatar exige
-  **conhecer o código**, que é o ID — 32⁸ ≈ 1,1 × 10¹² combinações.
+- `allow get`: dono, ou convite ativo, não expirado e com `code == inviteId`, ou quem já
+  usou. Resgatar exige **conhecer o código**, que é o ID — 32⁸ ≈ 1,1 × 10¹² combinações.
 - `allow list`: só `resource.data.trainerId == request.auth.uid`. Toda consulta à
   coleção precisa filtrar por `trainerId`, o que cobre `getActiveTrainerInvite`,
   `createTrainerInvite` e a exportação LGPD.
@@ -68,6 +68,15 @@ Convites antigos têm ID automático e não podem mais ser resgatados. Não há 
 o TTL é de 7 dias e cada personal tem no máximo um convite ativo. `getActiveTrainerInvite`
 ignora convite cujo `code` não bate com o ID do documento, então `ensureActiveTrainerInvite`
 emite um substituto e revoga o antigo na primeira vez que o personal abre o painel.
+
+Até 14/09/2026 essa garantia morava só no cliente (`isRedeemableInvite`): as rules
+exigiam `code == inviteId` na criação, mas não no `get` nem no aceite. Quem tivesse
+guardado o ID automático de um convite na época da enumeração ainda podia lê-lo e
+consumi-lo com um cliente próprio. A janela real se fechou sozinha — as rules do #86
+foram publicadas em 31/08/2026 e o último convite legado venceu até 07/09 —, mas a
+invariante agora está nas rules: o `get` de terceiro e o `validInviteAccept` exigem
+`resource.data.code == inviteId`. O dono continua lendo e revogando o próprio convite
+legado. Cenário: `bloqueia leitura e aceite de convite legado com ID automatico`.
 
 ## Checklist ao Alterar Rules
 
