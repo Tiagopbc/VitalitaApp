@@ -113,7 +113,7 @@ Escrita:
 
 Convites revogáveis, expiráveis e de uso único. **O `inviteId` é o próprio código de
 8 caracteres** (alfabeto `ABCDEFGHJKLMNPQRSTUVWXYZ23456789`), e o campo `code`
-repete esse valor — as rules exigem `code == inviteId` na criação.
+repete esse valor — as rules exigem `code == inviteId` na criação, na leitura por terceiro e no aceite.
 
 Campos:
 
