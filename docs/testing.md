@@ -12,7 +12,6 @@ npm run build
 ## Estado Atual
 
 - Vitest cobre serviços, páginas principais, contexto de treino e utilitários.
-- Cypress possui um fluxo feliz em `cypress/e2e`.
 - O CI executa lint, Vitest, build e coverage em pull requests para `main`.
 - `tests/security/firestore.rules.test.js` roda contra o Firebase Emulator.
 

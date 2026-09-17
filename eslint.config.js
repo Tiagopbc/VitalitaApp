@@ -4,14 +4,12 @@ import reactHooks from 'eslint-plugin-react-hooks'
 import reactRefresh from 'eslint-plugin-react-refresh'
 import { defineConfig, globalIgnores } from 'eslint/config'
 
-import pluginCypress from 'eslint-plugin-cypress/flat'
 import pluginReact from 'eslint-plugin-react'
 
 export default defineConfig([
   // '.claude/**' porque padrões de flat config são ancorados na raiz: 'dist' e
   // 'dev-dist' não alcançam as cópias dentro de .claude/worktrees/<branch>/.
   globalIgnores(['dist', 'dev-dist', 'coverage', '.claude/**']),
-  pluginCypress.configs.recommended,
   pluginReact.configs.flat.recommended,
   {
     files: ['**/*.{js,jsx}'],
