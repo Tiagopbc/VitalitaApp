@@ -9,6 +9,7 @@ escolhas que, sem isso, só existem como "armadilha" espalhada no CLAUDE.md.
 | [0002](0002-web-push-vapid-qstash-sem-fcm.md) | Push de descanso via Web Push/VAPID + QStash, sem FCM | Accepted |
 | [0003](0003-user-stats-client-side-por-custo.md) | `user_stats` client-side por padrão, agregação server-side opcional | Accepted |
 | [0004](0004-app-check-monitoramento-sem-enforcement.md) | App Check em monitoramento, sem enforcement | Accepted |
+| [0005](0005-sem-e2e-por-enquanto.md) | Sem testes E2E por enquanto; Cypress removido | Accepted |
 
 ## Quando criar um ADR novo
 
