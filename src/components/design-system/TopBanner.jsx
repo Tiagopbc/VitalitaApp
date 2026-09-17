@@ -18,8 +18,8 @@
  * o que o impede. Não troque a tag achando que recupera alguma coisa.
  *
  * `pointer-events-none` no wrapper: sem botão, a barra não recebe toque nenhum,
- * e por isso pode ficar em z-10000 — acima dos modais de z-9999 (NumericKeypad,
- * PremiumAlert) — sem risco de roubar um toque. Só o botão de ação, quando
+ * e por isso pode ficar em z-10000 — acima do NumericKeypad, que é o modal mais
+ * alto do app (z-9999) — sem risco de roubar um toque. Só o botão de ação, quando
  * existe, volta a `pointer-events-auto`.
  *
  * O timer do auto-dismiss mora no `notifyStore`, não aqui: as regras de tempo
