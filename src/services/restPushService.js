@@ -23,7 +23,7 @@ function urlBase64ToUint8Array(base64String) {
     return Uint8Array.from(rawData, (char) => char.charCodeAt(0));
 }
 
-export function isPushSupported() {
+function isPushSupported() {
     return typeof window !== 'undefined'
         && 'serviceWorker' in navigator
         && 'PushManager' in window

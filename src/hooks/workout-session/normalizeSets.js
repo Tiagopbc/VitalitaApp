@@ -58,7 +58,7 @@ export function seedCascadingDrops(method, reps, weight, weightMode) {
     });
 }
 
-export function normalizeSets(exSets, exReps, exTarget) {
+function normalizeSets(exSets, exReps, exTarget) {
     let count = 3;
     if (exSets) {
         const parsed = Number(exSets);

@@ -63,7 +63,7 @@ export function repMaxTable(oneRepMax) {
 }
 
 export const DEFAULT_BAR_WEIGHT = 20;
-export const DEFAULT_PLATES = [25, 20, 15, 10, 5, 2.5, 1.25];
+const DEFAULT_PLATES = [25, 20, 15, 10, 5, 2.5, 1.25];
 
 /**
  * Calcula as anilhas por lado para atingir a carga alvo.
