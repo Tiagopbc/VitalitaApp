@@ -32,6 +32,9 @@ jobs:
       - name: Run Lint
         run: npm run lint
 
+      - name: Run Knip
+        run: npm run knip
+
       - name: Run Vitest
         run: npm test -- --run
 

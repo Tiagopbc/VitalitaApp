@@ -1,0 +1,29 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "workspaces": {
+    ".": {
+      "entry": [
+        "api/*.js",
+        "public/push-sw.js",
+        "tests/security/**/*.test.js",
+        "vite.visualizer.config.js",
+        "vitest.rules.config.js"
+      ],
+      "project": [
+        "src/**/*.{js,jsx,css}",
+        "api/**/*.js",
+        "tests/**/*.js"
+      ]
+    },
+    "functions": {
+      "entry": [
+        "test/**/*.test.js"
+      ],
+      "project": [
+        "src/**/*.js",
+        "scripts/**/*.js",
+        "test/**/*.js"
+      ]
+    }
+  }
+}

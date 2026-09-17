@@ -2,7 +2,7 @@
  * Utility helper to safely interact with localStorage,
  * preventing crashes in SSR or environments where storage is disabled/unsupported.
  */
-export function hasStorage() {
+function hasStorage() {
     if (typeof window === 'undefined') return false;
     try {
         const testKey = '__storage_test__';

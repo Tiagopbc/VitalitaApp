@@ -18,7 +18,7 @@ export function getStoredTheme() {
     return stored === THEMES.light ? THEMES.light : THEMES.dark;
 }
 
-export function applyTheme(theme) {
+function applyTheme(theme) {
     if (typeof document === 'undefined') return;
     const root = document.documentElement;
     if (theme === THEMES.light) {
