@@ -17,6 +17,22 @@ As regras do Firestore priorizam integridade dos dados do aluno e controle do v�
 - Personal pode ler histórico, mas não alterar cargas, repetições, conclusão de séries ou deletar sessão.
 - Templates podem ser criados/editados por aluno dono ou personal vinculado.
 
+## Tipos no perfil (`users`)
+
+As rules checam o tipo de `weeklyGoal` (número), `email` (texto) e `weight`/`height`/`age`
+(número ou texto) — **só nas chaves que a escrita toca**: no create, as presentes; no update,
+as que mudaram (`affectedKeys`). Duas razões, ambas observadas no código:
+
+- `weight`, `height` e `age` saem do `EditProfileModal` como **texto**, porque o
+  `<input type="number">` devolve string. Exigir número travaria o salvar do perfil.
+- Perfil antigo pode ter `weeklyGoal` em texto (o `HomeDashboard` ainda faz `parseInt`).
+  Checar o documento inteiro faria o `setActiveWorkout`, que roda a cada início de treino,
+  falhar para essas contas.
+
+O e-mail do perfil **não** é amarrado a `request.auth.token.email`: o perfil deixa editar o
+e-mail, então amarrar só no create não protegeria nada, e amarrar no update tiraria uma
+função do app. Fica para decidir junto com o que o `TrainerDashboard` mostra ao personal.
+
 ## Limite Conhecido
 
 O fluxo de convite agora usa `trainer_invites` com código revogável, expiração e consumo em batch. Ainda falta mover criação, aceite e revogação para Cloud Functions para ganhar auditoria centralizada, rate limit e prevenção mais forte contra abuso.
