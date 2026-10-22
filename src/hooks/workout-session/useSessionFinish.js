@@ -5,7 +5,7 @@ import {
     removeSessionBackup,
     SESSION_SYNC_STATES
 } from '../../services/sessions/sessionRecoveryService';
-import { generateId } from './normalizeSets';
+import { generateId } from '../../utils/ids';
 
 export function useSessionFinish({
     workoutId,

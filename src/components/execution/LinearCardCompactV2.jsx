@@ -2,10 +2,8 @@ import React, { useState, memo, useRef } from 'react';
 import { Minus, Plus, CheckCircle2, Info, Check, ArrowRight, Scale, LayoutList, Target, ArrowDown, TrendingUp, AlertTriangle } from 'lucide-react';
 import { NumericKeypad } from '../common/NumericKeypad';
 import { GroupRoundNotice } from './GroupRoundNotice';
+import { generateId } from '../../utils/ids';
 
-function generateId() {
-    return Math.random().toString(36).substr(2, 9);
-}
 
 export const LinearCardCompactV2 = memo(function LinearCardCompactV2({
     exerciseId,

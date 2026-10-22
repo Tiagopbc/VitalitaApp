@@ -4,17 +4,14 @@
  * compartilhado entre HomeDashboard e ProfilePage.
  */
 
+import { toDate } from './firestoreDate';
+
 export function calculateWeeklyStats(sessions, currentWeeklyGoal = 4) {
     const now = new Date();
     const startOfCurrentWeek = getStartOfWeek(now);
     const getSessionDate = (session) => {
         const raw = session?.date || session?.completedAt || session?.completedAtClient || session?.createdAt || session?.timestamp;
-        if (!raw) return null;
-        if (typeof raw.toDate === 'function') return raw.toDate();
-        if (raw instanceof Date) return raw;
-        if (typeof raw === 'string' || typeof raw === 'number') return new Date(raw);
-        if (raw.seconds) return new Date(raw.seconds * 1000);
-        return null;
+        return toDate(raw);
     };
 
     const thisWeekSessions = sessions.filter(s => {

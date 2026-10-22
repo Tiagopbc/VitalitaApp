@@ -1,6 +1,4 @@
-export function generateId() {
-    return Math.random().toString(36).substr(2, 9);
-}
+import { generateId } from '../../utils/ids';
 
 // Métodos em cascata cuja execução acontece em reduções encadeadas dentro da MESMA série.
 // Bi-set fica de fora de propósito: é agrupamento entre exercícios (groupId), não redução.

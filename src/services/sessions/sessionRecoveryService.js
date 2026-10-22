@@ -1,4 +1,5 @@
 import { safeGetJSON, safeRemoveItem, safeSetJSON } from '../../utils/storage';
+import { toMillis } from '../../utils/firestoreDate';
 
 export const SESSION_SYNC_STATES = {
     idle: 'idle',
@@ -43,26 +44,9 @@ export function removeSessionBackup(backupKey) {
     safeRemoveItem(backupKey);
 }
 
-function getTimestampMs(raw) {
-    if (!raw) return 0;
-    if (raw instanceof Date) return Number.isNaN(raw.getTime()) ? 0 : raw.getTime();
-    if (typeof raw === 'number') return Number.isFinite(raw) ? raw : 0;
-    if (typeof raw === 'string') {
-        const parsed = Date.parse(raw);
-        return Number.isNaN(parsed) ? 0 : parsed;
-    }
-    if (typeof raw.toMillis === 'function') return raw.toMillis();
-    if (typeof raw.toDate === 'function') {
-        const date = raw.toDate();
-        return date instanceof Date && !Number.isNaN(date.getTime()) ? date.getTime() : 0;
-    }
-    if (typeof raw.seconds === 'number') return raw.seconds * 1000;
-    return 0;
-}
-
 function getAdjustedElapsed(elapsed, savedTimestamp) {
     const baseElapsed = Number(elapsed) || 0;
-    const timestampMs = getTimestampMs(savedTimestamp);
+    const timestampMs = toMillis(savedTimestamp);
     if (!timestampMs) return baseElapsed;
 
     const diff = Math.floor((Date.now() - timestampMs) / 1000);
@@ -164,8 +148,8 @@ export function chooseSessionRecoverySource({ cloudData, localBackupData }) {
     const hasLocal = Boolean(localBackupData?.exercises);
     if (!hasCloud && !hasLocal) return null;
 
-    const cloudTimestampMs = getTimestampMs(cloudData?.updatedAt);
-    const localTimestampMs = getTimestampMs(localBackupData?.timestamp);
+    const cloudTimestampMs = toMillis(cloudData?.updatedAt);
+    const localTimestampMs = toMillis(localBackupData?.timestamp);
     const cloudElapsed = hasCloud ? getAdjustedElapsed(cloudData.elapsedSeconds || 0, cloudTimestampMs) : 0;
     const localElapsed = hasLocal ? getAdjustedElapsed(localBackupData.elapsedSeconds || 0, localTimestampMs) : 0;
     const cloudCandidate = hasCloud

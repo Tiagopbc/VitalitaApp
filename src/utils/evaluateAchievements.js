@@ -2,6 +2,7 @@
 // evaluateAchievements.js
 
 import { createExerciseMaxTracker, normalizeExerciseName } from './exerciseName';
+import { toDate } from './firestoreDate';
 
 /**
  * Conquista já registrada em `unlockedMap` continua desbloqueada mesmo que o
@@ -57,13 +58,9 @@ function format(a, value) {
 
 function getSessionDate(session) {
     const raw = session?.completedAt || session?.completedAtClient || session?.date || session?.createdAt || session?.timestamp;
-    if (!raw) return new Date(0);
-    if (typeof raw.toDate === 'function') return raw.toDate();
-    if (raw instanceof Date) return raw;
-    if (typeof raw === 'object' && typeof raw.seconds === 'number') return new Date(raw.seconds * 1000);
-
-    const parsed = new Date(raw);
-    return Number.isNaN(parsed.getTime()) ? new Date(0) : parsed;
+    // Fallback é new Date(0), não null: estas datas entram direto em ordenação
+    // e comparação de streak, onde null quebraria a conta.
+    return toDate(raw) || new Date(0);
 }
 
 /**

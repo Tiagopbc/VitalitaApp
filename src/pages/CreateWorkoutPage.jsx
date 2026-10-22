@@ -35,6 +35,7 @@ const EMPTY_EXERCISE = {
 
 import { workoutService } from '../services/workoutService';
 import { importWorkoutFromPdf, isPdfImportEnabled } from '../services/workoutPdfImport';
+import { generateId } from '../utils/ids';
 
 function ReorderableExerciseItem({ ex, index, handleEditExercise, removeExercise, groupBadge, canLink, isLinkedToPrev, onToggleLink }) {
     const dragControls = useDragControls();
@@ -198,7 +199,7 @@ export default function CreateWorkoutPage({ user }) {
         if (exercises.some(ex => !ex.id)) {
             setExercises(prev => prev.map(ex => ({
                 ...ex,
-                id: ex.id || Math.random().toString(36).substr(2, 9)
+                id: ex.id || generateId()
             })));
         }
     }, [exercises]);
