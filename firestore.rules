@@ -71,6 +71,26 @@ service cloud.firestore {
       ];
     }
 
+    // Tipos checados so nas chaves que a escrita toca (`keys`): no create, todas
+    // as presentes; no update, as que mudaram. Perfil antigo com weeklyGoal em
+    // texto continua aceitando o setActiveWorkout de todo inicio de treino.
+    // weight/height/age aceitam string porque o input type="number" do
+    // EditProfileModal grava o texto digitado — barrar string travaria o perfil.
+    function userKeyIs(keys, campo, tipo) {
+      return !keys.hasAny([campo])
+        || (tipo == 'number' && request.resource.data[campo] is number)
+        || (tipo == 'string' && request.resource.data[campo] is string)
+        || (tipo == 'scalar' && (request.resource.data[campo] is number || request.resource.data[campo] is string));
+    }
+
+    function validUserTypes(keys) {
+      return userKeyIs(keys, 'weeklyGoal', 'number')
+        && userKeyIs(keys, 'email', 'string')
+        && userKeyIs(keys, 'weight', 'scalar')
+        && userKeyIs(keys, 'height', 'scalar')
+        && userKeyIs(keys, 'age', 'scalar');
+    }
+
     function templateCreateFields() {
       return [
         'userId',
@@ -235,9 +255,11 @@ service cloud.firestore {
     match /users/{userId} {
       allow read: if canReadUserData(userId);
       allow create: if isSelf(userId)
-        && request.resource.data.keys().hasOnly(userCreateFields());
+        && request.resource.data.keys().hasOnly(userCreateFields())
+        && validUserTypes(request.resource.data.keys());
       allow update: if isSelf(userId)
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(userMutableFields());
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(userMutableFields())
+        && validUserTypes(request.resource.data.diff(resource.data).affectedKeys());
       allow delete: if false;
     }
 
@@ -327,10 +349,6 @@ service cloud.firestore {
     match /user_stats/{userId} {
       allow read: if canReadUserData(userId);
       allow write: if false;
-    }
-
-    match /audit_logs/{logId} {
-      allow read, write: if false;
     }
 
     match /{document=**} {

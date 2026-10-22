@@ -162,6 +162,112 @@ describe('firestore.rules', () => {
         await assertSucceeds(getDoc(doc(authedDb('trainer-1'), 'users/student-1')));
     });
 
+    /** Espelha o que ProfilePage.handleSave grava: o input type="number" devolve string. */
+    function profileSavePayload(userId) {
+        return {
+            displayName: userId,
+            email: `${userId}@example.com`,
+            weight: '80.5',
+            height: '178',
+            age: '',
+            gender: 'male',
+            goal: 'hypertrophy',
+            weeklyGoal: 4,
+            achievements: {},
+            updatedAt: new Date().toISOString()
+        };
+    }
+
+    it('aceita o perfil com o payload real do app, na criacao e na edicao', async () => {
+        const db = authedDb('student-1');
+
+        // Sem documento, o setDoc com merge do updateUserProfile cai no create.
+        await assertSucceeds(setDoc(doc(db, 'users/student-1'), profileSavePayload('student-1'), { merge: true }));
+        await assertSucceeds(setDoc(doc(db, 'users/student-1'), {
+            ...profileSavePayload('student-1'),
+            weight: '82',
+            weeklyGoal: 5
+        }, { merge: true }));
+    });
+
+    it('nao trava perfil antigo com weeklyGoal em texto enquanto o campo nao muda', async () => {
+        await seedUser('student-1', { weeklyGoal: '4', weight: '80' });
+        const db = authedDb('student-1');
+
+        // userService.setActiveWorkout: roda ao iniciar todo treino.
+        await assertSucceeds(setDoc(doc(db, 'users/student-1'), {
+            activeWorkoutId: 'template-1',
+            lastActiveAt: serverTimestamp()
+        }, { merge: true }));
+        await assertSucceeds(setDoc(doc(db, 'users/student-1'), {
+            ...profileSavePayload('student-1'),
+            weeklyGoal: '4'
+        }, { merge: true }));
+    });
+
+    it('bloqueia campo do perfil com tipo errado', async () => {
+        await seedUser('student-1');
+        const db = authedDb('student-1');
+
+        await assertFails(updateDoc(doc(db, 'users/student-1'), { weeklyGoal: '5' }));
+        await assertFails(updateDoc(doc(db, 'users/student-1'), { weight: { kg: 80 } }));
+        await assertFails(updateDoc(doc(db, 'users/student-1'), { height: ['178'] }));
+        await assertFails(updateDoc(doc(db, 'users/student-1'), { age: true }));
+        await assertFails(updateDoc(doc(db, 'users/student-1'), { email: 42 }));
+
+        await assertFails(setDoc(doc(authedDb('student-2'), 'users/student-2'), {
+            ...profileSavePayload('student-2'),
+            weeklyGoal: 'quatro'
+        }));
+    });
+
+    it('active_workouts: o dono le e escreve, terceiro nao', async () => {
+        const payload = {
+            userId: 'student-1',
+            templateId: 'template-1',
+            elapsedSeconds: 120,
+            exercises: [],
+            updatedAt: Timestamp.now()
+        };
+        const ownerDb = authedDb('student-1');
+
+        await assertSucceeds(setDoc(doc(ownerDb, 'active_workouts/student-1'), payload));
+        await assertSucceeds(getDoc(doc(ownerDb, 'active_workouts/student-1')));
+        await assertSucceeds(updateDoc(doc(ownerDb, 'active_workouts/student-1'), { elapsedSeconds: 180 }));
+        await assertFails(setDoc(doc(ownerDb, 'active_workouts/student-1'), { ...payload, extra: true }));
+        await assertFails(setDoc(doc(ownerDb, 'active_workouts/student-1'), { ...payload, userId: 'student-2' }));
+
+        const strangerDb = authedDb('stranger-1');
+        await assertFails(getDoc(doc(strangerDb, 'active_workouts/student-1')));
+        await assertFails(setDoc(doc(strangerDb, 'active_workouts/student-1'), payload));
+        await assertFails(deleteDoc(doc(strangerDb, 'active_workouts/student-1')));
+
+        await assertSucceeds(deleteDoc(doc(ownerDb, 'active_workouts/student-1')));
+    });
+
+    it('exercises_catalog: leitura para autenticado, escrita para ninguem', async () => {
+        await seed('exercises_catalog/supino', { name: 'Supino', group: 'Peito' });
+        const db = authedDb('student-1');
+
+        await assertSucceeds(getDocs(collection(db, 'exercises_catalog')));
+        await assertSucceeds(getDoc(doc(db, 'exercises_catalog/supino')));
+        await assertFails(getDocs(collection(guestDb(), 'exercises_catalog')));
+        await assertFails(setDoc(doc(db, 'exercises_catalog/novo'), { name: 'Novo' }));
+        await assertFails(updateDoc(doc(db, 'exercises_catalog/supino'), { name: 'Outro' }));
+    });
+
+    it('nega por padrao qualquer colecao sem regra propria', async () => {
+        await seed('colecao_qualquer/doc-1', { valor: 1 });
+        await seed('audit_logs/log-1', { acao: 'teste' });
+        const db = authedDb('student-1');
+
+        await assertFails(getDoc(doc(db, 'colecao_qualquer/doc-1')));
+        await assertFails(setDoc(doc(db, 'colecao_qualquer/doc-2'), { valor: 2 }));
+        await assertFails(getDoc(doc(db, 'audit_logs/log-1')));
+        await assertFails(setDoc(doc(db, 'audit_logs/log-2'), { acao: 'teste' }));
+        await assertFails(getDoc(doc(db, 'users/student-1/subcolecao/doc-1')));
+    });
+
     it('controla criacao de templates para aluno e personal vinculado', async () => {
         await seedUser('student-1');
         await seedUser('trainer-1');
