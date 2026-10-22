@@ -3,7 +3,13 @@
  * Agenda no QStash a entrega do push de fim de descanso.
  * Corpo: { subscription: PushSubscriptionJSON, delaySeconds: number }
  * Resposta: { messageId } — usado para cancelar se o timer for pausado/ajustado.
+ *
+ * Exige `Authorization: Bearer <idToken>` do Firebase. Sem isso qualquer cliente
+ * HTTP publicaria no QStash usando o PUSH_INTERNAL_SECRET do projeto e faria o
+ * servidor entregar notificação assinada com a VAPID do Vitalità — a chave
+ * pública está no bundle, então forjar a inscrição é trivial.
  */
+import { requireFirebaseUser } from './_lib/firebaseToken';
 // Base do QStash — IMPORTANTE: é específica por REGIÃO. `qstash.upstash.io`
 // aponta para eu-central-1; se a conta/token forem de outra região (ex.:
 // us-east-1) o publish falha com 404 "user not found in this region". Defina
@@ -29,6 +35,8 @@ export default async function handler(req, res) {
     if (req.method !== 'POST') {
         return res.status(405).json({ error: 'method_not_allowed' });
     }
+
+    if (!await requireFirebaseUser(req, res)) return undefined;
 
     const token = process.env.QSTASH_TOKEN;
     const baseUrl = process.env.VITALITA_BASE_URL;

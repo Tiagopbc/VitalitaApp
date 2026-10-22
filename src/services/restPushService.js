@@ -8,6 +8,7 @@
  * iOS: push só funciona com o app instalado na tela de início (iOS 16.4+).
  */
 import { logPush } from './pushDiagnostics';
+import { auth } from '../firebaseAuth';
 
 // Chave pública VAPID (par gerado para o projeto; a privada fica só na Vercel).
 const VAPID_PUBLIC_KEY = 'BKWPJhj3txwL6uTei-NeO6IgJYD-9NvRvhvnnhBXgTko8z2xqfr2DXvTfkNhNAc5fDmV0jkFKhyPPyMktslDiRg';
@@ -15,6 +16,25 @@ const VAPID_PUBLIC_KEY = 'BKWPJhj3txwL6uTei-NeO6IgJYD-9NvRvhvnnhBXgTko8z2xqfr2DX
 // Piso do delay: precisa bater com MIN_DELAY_SECONDS em api/schedule-rest-push.js.
 // Abaixo disso o servidor rejeita (400) e o timer cai só nos alertas locais.
 export const MIN_PUSH_DELAY_SECONDS = 5;
+
+/**
+ * Token do usuário logado para os endpoints de push.
+ *
+ * Importação estática do `firebaseAuth` de propósito: um `await import` de
+ * qualquer pacote do Firebase quebra o chunking em produção (ver CLAUDE.md).
+ *
+ * Devolve `null` sem sessão — aí o agendamento é pulado e o timer cai nos
+ * alertas locais, que é o mesmo caminho de quando o push não é suportado.
+ */
+async function getAuthHeader() {
+    try {
+        const token = await auth.currentUser?.getIdToken();
+        return token ? { Authorization: `Bearer ${token}` } : null;
+    } catch {
+        return null;
+    }
+}
+
 
 function urlBase64ToUint8Array(base64String) {
     const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
@@ -128,9 +148,14 @@ export async function scheduleRestPush(delaySeconds) {
 
     try {
         const subscription = await getPushSubscription();
+        const authHeader = await getAuthHeader();
+        if (!authHeader) {
+            logPush('schedule:sem-sessao');
+            return null;
+        }
         const response = await fetch('/api/schedule-rest-push', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'application/json', ...authHeader },
             body: JSON.stringify({
                 subscription: subscription.toJSON(),
                 delaySeconds: delay
@@ -167,9 +192,14 @@ export async function scheduleRestPush(delaySeconds) {
 export async function cancelRestPush(messageId) {
     if (!messageId) return;
     try {
+        const authHeader = await getAuthHeader();
+        if (!authHeader) {
+            logPush('cancel:sem-sessao', { messageId });
+            return;
+        }
         await fetch('/api/cancel-rest-push', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'application/json', ...authHeader },
             body: JSON.stringify({ messageId }),
             keepalive: true
         });
