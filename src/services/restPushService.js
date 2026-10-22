@@ -23,8 +23,8 @@ export const MIN_PUSH_DELAY_SECONDS = 5;
  * Importação estática do `firebaseAuth` de propósito: um `await import` de
  * qualquer pacote do Firebase quebra o chunking em produção (ver CLAUDE.md).
  *
- * Devolve `null` sem sessão — aí o agendamento é pulado e o timer cai nos
- * alertas locais, que é o mesmo caminho de quando o push não é suportado.
+ * Devolve `null` sem sessão. Quem chama traduz isso para o formato
+ * `{ messageId, reason }` que o RestTimer espera.
  */
 async function getAuthHeader() {
     try {
@@ -126,8 +126,13 @@ export async function warmRestPushSubscription() {
  *
  * Valores de `reason`: 'unsupported' (navegador sem Web Push), 'permission'
  * (notificação não concedida), 'below-min-delay' (descanso curto demais para
- * o piso do backend — esperado, não é falha), 'server' (backend ou QStash
- * recusou) e 'network' (a requisição não completou).
+ * o piso do backend — esperado, não é falha), 'no-session' (sem usuário logado,
+ * e os endpoints exigem ID token), 'server' (backend ou QStash recusou) e
+ * 'network' (a requisição não completou).
+ *
+ * Todo caminho devolve `{ messageId, reason }`. O RestTimer desestrutura o
+ * resultado sem `catch`, então devolver outra coisa lança TypeError dentro do
+ * `then` e deixa o pedido pendente para sempre.
  */
 export async function scheduleRestPush(delaySeconds) {
     if (!isPushSupported()) {
@@ -150,8 +155,8 @@ export async function scheduleRestPush(delaySeconds) {
         const subscription = await getPushSubscription();
         const authHeader = await getAuthHeader();
         if (!authHeader) {
-            logPush('schedule:sem-sessao');
-            return null;
+            logPush('schedule:skip', { reason: 'no-session' });
+            return { messageId: null, reason: 'no-session' };
         }
         const response = await fetch('/api/schedule-rest-push', {
             method: 'POST',
