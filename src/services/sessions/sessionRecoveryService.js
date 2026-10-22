@@ -43,7 +43,7 @@ export function removeSessionBackup(backupKey) {
     safeRemoveItem(backupKey);
 }
 
-export function getTimestampMs(raw) {
+function getTimestampMs(raw) {
     if (!raw) return 0;
     if (raw instanceof Date) return Number.isNaN(raw.getTime()) ? 0 : raw.getTime();
     if (typeof raw === 'number') return Number.isFinite(raw) ? raw : 0;
@@ -60,7 +60,7 @@ export function getTimestampMs(raw) {
     return 0;
 }
 
-export function getAdjustedElapsed(elapsed, savedTimestamp) {
+function getAdjustedElapsed(elapsed, savedTimestamp) {
     const baseElapsed = Number(elapsed) || 0;
     const timestampMs = getTimestampMs(savedTimestamp);
     if (!timestampMs) return baseElapsed;

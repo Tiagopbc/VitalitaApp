@@ -22,6 +22,7 @@ npm run dev              # Vite em http://localhost:5175 (porta FIXA, ver "Porta
 npm run build            # build de produção em dist/
 npm run preview          # serve o build em http://localhost:4173 (porta fixa)
 npm run lint             # ESLint — o CI reprova por lint
+npm run knip             # código morto — o CI reprova se sobrar arquivo/export sem uso
 npm test -- --run        # Vitest sem watch (`npm test` sozinho fica em watch)
 npm run test:rules       # regras do Firestore no emulador — exige Java 21
 npm run test:coverage
@@ -35,10 +36,10 @@ npm test -- --run src/services/workoutService.test.js
 npm test -- --run -t "nome do caso"
 ```
 
-Antes de commitar, rode a mesma sequência do CI — ele executa lint, Vitest, **testes das Functions**, regras do Firestore, build e coverage. A suíte de `functions/` tem `package.json` e `vitest.config.js` próprios e é fácil de esquecer:
+Antes de commitar, rode a mesma sequência do CI — ele executa lint, knip, Vitest, **testes das Functions**, regras do Firestore, build e coverage. A suíte de `functions/` tem `package.json` e `vitest.config.js` próprios e é fácil de esquecer:
 
 ```bash
-npm run lint && npm test -- --run && npm --prefix functions test && npm run build
+npm run lint && npm run knip && npm test -- --run && npm --prefix functions test && npm run build
 ```
 
 Vitest tem duas configurações: `vitest.config.js` (jsdom; cobre `src/**` e `api/**`, alias `@` → `src/`) e `vitest.rules.config.js` (node; só `tests/security/`, sem paralelismo).

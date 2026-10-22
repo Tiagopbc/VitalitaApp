@@ -748,4 +748,3 @@ export function HomeDashboard({
     );
 }
 
-export default HomeDashboard;

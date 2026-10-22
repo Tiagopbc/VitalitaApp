@@ -9,7 +9,7 @@ function getDisplayOrder(template) {
         : null;
 }
 
-export function compareWorkoutTemplates(a, b) {
+function compareWorkoutTemplates(a, b) {
     if (Boolean(a?.isArchived) !== Boolean(b?.isArchived)) {
         return a?.isArchived ? 1 : -1;
     }

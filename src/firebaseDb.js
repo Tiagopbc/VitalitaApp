@@ -8,7 +8,7 @@ import { app } from "./firebaseApp";
 let firestorePromise;
 let dbPromise;
 
-export function loadFirestore() {
+function loadFirestore() {
     if (!firestorePromise) {
         firestorePromise = import('firebase/firestore');
     }
