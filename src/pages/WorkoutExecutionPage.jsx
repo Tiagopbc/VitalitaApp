@@ -419,7 +419,7 @@ export function WorkoutExecutionPage({ user }) {
                                         'SALVANDO...'
                                     ) : (
                                         <>
-                                            <CheckCircle2 size={18} strokeWidth={3} className="text-white/90" />
+                                            <CheckCircle2 size={18} strokeWidth={3} />
                                             FINALIZAR TREINO
                                         </>
                                     )}

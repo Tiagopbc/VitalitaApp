@@ -8,6 +8,7 @@
  * iOS: push só funciona com o app instalado na tela de início (iOS 16.4+).
  */
 import { logPush } from './pushDiagnostics';
+import { auth } from '../firebaseAuth';
 
 // Chave pública VAPID (par gerado para o projeto; a privada fica só na Vercel).
 const VAPID_PUBLIC_KEY = 'BKWPJhj3txwL6uTei-NeO6IgJYD-9NvRvhvnnhBXgTko8z2xqfr2DXvTfkNhNAc5fDmV0jkFKhyPPyMktslDiRg';
@@ -15,6 +16,25 @@ const VAPID_PUBLIC_KEY = 'BKWPJhj3txwL6uTei-NeO6IgJYD-9NvRvhvnnhBXgTko8z2xqfr2DX
 // Piso do delay: precisa bater com MIN_DELAY_SECONDS em api/schedule-rest-push.js.
 // Abaixo disso o servidor rejeita (400) e o timer cai só nos alertas locais.
 export const MIN_PUSH_DELAY_SECONDS = 5;
+
+/**
+ * Token do usuário logado para os endpoints de push.
+ *
+ * Importação estática do `firebaseAuth` de propósito: um `await import` de
+ * qualquer pacote do Firebase quebra o chunking em produção (ver CLAUDE.md).
+ *
+ * Devolve `null` sem sessão. Quem chama traduz isso para o formato
+ * `{ messageId, reason }` que o RestTimer espera.
+ */
+async function getAuthHeader() {
+    try {
+        const token = await auth.currentUser?.getIdToken();
+        return token ? { Authorization: `Bearer ${token}` } : null;
+    } catch {
+        return null;
+    }
+}
+
 
 function urlBase64ToUint8Array(base64String) {
     const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
@@ -106,8 +126,13 @@ export async function warmRestPushSubscription() {
  *
  * Valores de `reason`: 'unsupported' (navegador sem Web Push), 'permission'
  * (notificação não concedida), 'below-min-delay' (descanso curto demais para
- * o piso do backend — esperado, não é falha), 'server' (backend ou QStash
- * recusou) e 'network' (a requisição não completou).
+ * o piso do backend — esperado, não é falha), 'no-session' (sem usuário logado,
+ * e os endpoints exigem ID token), 'server' (backend ou QStash recusou) e
+ * 'network' (a requisição não completou).
+ *
+ * Todo caminho devolve `{ messageId, reason }`. O RestTimer desestrutura o
+ * resultado sem `catch`, então devolver outra coisa lança TypeError dentro do
+ * `then` e deixa o pedido pendente para sempre.
  */
 export async function scheduleRestPush(delaySeconds) {
     if (!isPushSupported()) {
@@ -128,9 +153,14 @@ export async function scheduleRestPush(delaySeconds) {
 
     try {
         const subscription = await getPushSubscription();
+        const authHeader = await getAuthHeader();
+        if (!authHeader) {
+            logPush('schedule:skip', { reason: 'no-session' });
+            return { messageId: null, reason: 'no-session' };
+        }
         const response = await fetch('/api/schedule-rest-push', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'application/json', ...authHeader },
             body: JSON.stringify({
                 subscription: subscription.toJSON(),
                 delaySeconds: delay
@@ -167,9 +197,14 @@ export async function scheduleRestPush(delaySeconds) {
 export async function cancelRestPush(messageId) {
     if (!messageId) return;
     try {
+        const authHeader = await getAuthHeader();
+        if (!authHeader) {
+            logPush('cancel:sem-sessao', { messageId });
+            return;
+        }
         await fetch('/api/cancel-rest-push', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'application/json', ...authHeader },
             body: JSON.stringify({ messageId }),
             keepalive: true
         });

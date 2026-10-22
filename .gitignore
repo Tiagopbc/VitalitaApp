@@ -44,3 +44,6 @@ output/
 .env*.local
 
 .superpowers/
+
+# Credencial de conta de serviço do Firebase: nunca entra em commit
+serviceAccountKey.json

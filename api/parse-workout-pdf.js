@@ -15,7 +15,7 @@
  * `groupedWithPrevious` — o cliente converte isso no `groupId` que liga a dupla.
  */
 import Anthropic from '@anthropic-ai/sdk';
-import { createRemoteJWKSet, jwtVerify } from 'jose';
+import { verifyFirebaseToken } from './_lib/firebaseToken';
 
 // Modelo com suporte nativo a PDF. Opus 5 pela precisão de extração — erro de
 // leitura vira série/repetição errada na ficha do aluno — e pelo mesmo preço por
@@ -85,30 +85,6 @@ const PROMPT = [
     '- Não invente exercícios que não estejam no documento.'
 ].join('\n');
 
-let jwksCache;
-function getJwks() {
-    if (!jwksCache) {
-        jwksCache = createRemoteJWKSet(
-            new URL('https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com')
-        );
-    }
-    return jwksCache;
-}
-
-async function verifyFirebaseToken(authHeader, projectId) {
-    if (typeof authHeader !== 'string' || !authHeader.startsWith('Bearer ')) return null;
-    const token = authHeader.slice(7).trim();
-    if (!token) return null;
-    try {
-        const { payload } = await jwtVerify(token, getJwks(), {
-            issuer: `https://securetoken.google.com/${projectId}`,
-            audience: projectId
-        });
-        return payload.sub ? payload : null;
-    } catch {
-        return null;
-    }
-}
 
 /**
  * Identifica falta de saldo/problema de cobrança na Anthropic.

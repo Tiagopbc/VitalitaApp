@@ -5,26 +5,12 @@
  * expandindo drop sets). Aceita pesos com vírgula decimal.
  */
 
+import { sessionVolumeLoad } from './volumeLoad';
+
 export function computeSessionStats({ exercises, elapsedSeconds, templateName }) {
     const completedExercisesCount = exercises.filter(ex => ex.sets.every(s => s.completed)).length;
 
-    const volumeLoad = exercises.reduce((acc, ex) => {
-        return acc + ex.sets.reduce((sAcc, s) => {
-            if (!s.completed) return sAcc;
-            if (s.drops && s.drops.length > 0) {
-                return sAcc + s.drops.reduce((dAcc, d) => {
-                    const dw = parseFloat((d.weight || '').toString().replace(',', '.')) || 0;
-                    const dr = parseFloat((d.reps || '').toString().replace(',', '.')) || 0;
-                    return dAcc + (dw * dr);
-                }, 0);
-            }
-            const weightStr = (s.weight || '').toString().replace(',', '.');
-            const repsStr = (s.reps || '').toString().replace(',', '.');
-            const w = parseFloat(weightStr) || 0;
-            const r = parseFloat(repsStr) || 0;
-            return sAcc + (w * r);
-        }, 0);
-    }, 0);
+    const volumeLoad = sessionVolumeLoad(exercises);
 
     return {
         templateName: templateName || 'Treino Personalizado',

@@ -1,5 +1,11 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+
+vi.mock('./_lib/firebaseToken', () => ({
+    requireFirebaseUser: vi.fn()
+}));
+
 import handler from './schedule-rest-push';
+import { requireFirebaseUser } from './_lib/firebaseToken';
 
 function makeRes() {
     const res = {
@@ -27,6 +33,7 @@ describe('/api/schedule-rest-push', () => {
         process.env.QSTASH_TOKEN = 'token-teste';
         process.env.VITALITA_BASE_URL = 'https://vitalita.vercel.app';
         process.env.PUSH_INTERNAL_SECRET = 'segredo-teste';
+        requireFirebaseUser.mockResolvedValue({ sub: 'uid-123' });
         vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
             ok: true,
             status: 200,
@@ -36,6 +43,7 @@ describe('/api/schedule-rest-push', () => {
 
     afterEach(() => {
         vi.unstubAllGlobals();
+        vi.clearAllMocks();
         delete process.env.QSTASH_TOKEN;
         delete process.env.VITALITA_BASE_URL;
         delete process.env.PUSH_INTERNAL_SECRET;
@@ -46,6 +54,42 @@ describe('/api/schedule-rest-push', () => {
         const res = makeRes();
         await handler({ method: 'GET' }, res);
         expect(res.statusCode).toBe(405);
+    });
+
+    // Sem autenticação, qualquer cliente HTTP publicaria no QStash usando o
+    // segredo interno do projeto e faria o servidor entregar notificação
+    // assinada com a VAPID do Vitalità.
+    it('exige usuário autenticado antes de publicar no QStash', async () => {
+        requireFirebaseUser.mockImplementation(async (_r, res) => {
+            res.status(401).json({ error: 'unauthorized' });
+            return null;
+        });
+        const res = makeRes();
+
+        await handler({
+            method: 'POST',
+            headers: {},
+            body: { subscription: validSubscription, delaySeconds: 60 }
+        }, res);
+
+        expect(res.statusCode).toBe(401);
+        expect(globalThis.fetch).not.toHaveBeenCalled();
+    });
+
+    it('verifica a autenticação antes de validar a inscrição', async () => {
+        requireFirebaseUser.mockImplementation(async (_r, res) => {
+            res.status(401).json({ error: 'unauthorized' });
+            return null;
+        });
+        const res = makeRes();
+
+        await handler({
+            method: 'POST',
+            headers: {},
+            body: { subscription: { lixo: true }, delaySeconds: 60 }
+        }, res);
+
+        expect(res.statusCode).toBe(401);
     });
 
     it('responde 503 sem configuração', async () => {

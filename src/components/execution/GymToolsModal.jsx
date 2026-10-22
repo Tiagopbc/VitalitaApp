@@ -13,12 +13,10 @@ import {
     parseDecimal,
     DEFAULT_BAR_WEIGHT
 } from '../../utils/strengthMath';
+import { formatKg } from '../../utils/formatKg';
 
 const inputClasses = 'w-full bg-slate-800/80 border border-slate-700 rounded-xl px-4 py-3 text-white text-lg font-bold text-center outline-none focus:border-cyan-500/60 transition-colors';
 
-function formatKg(value) {
-    return `${value.toLocaleString('pt-BR', { maximumFractionDigits: 2 })} kg`;
-}
 
 function OneRepMaxTab({ initialWeight, initialReps }) {
     const [weight, setWeight] = useState(initialWeight || '');
@@ -57,10 +55,10 @@ function OneRepMaxTab({ initialWeight, initialReps }) {
                 <>
                     <div className="bg-slate-800/60 border border-slate-700/60 rounded-2xl p-4 text-center">
                         <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">1RM estimado</span>
-                        <span className="text-3xl font-heading font-bold text-cyan-400">{formatKg(estimate.oneRepMax)}</span>
+                        <span className="text-3xl font-heading font-bold text-cyan-400">{formatKg(estimate.oneRepMax)} kg</span>
                         <div className="flex justify-center gap-4 mt-2 text-[11px] text-slate-500">
-                            <span>Epley: {formatKg(estimate.epley)}</span>
-                            <span>Brzycki: {formatKg(estimate.brzycki)}</span>
+                            <span>Epley: {formatKg(estimate.epley)} kg</span>
+                            <span>Brzycki: {formatKg(estimate.brzycki)} kg</span>
                         </div>
                         {!estimate.reliable && (
                             <p className="text-[11px] text-amber-400/90 mt-2">
@@ -157,12 +155,12 @@ function PlateCalculatorTab({ initialWeight }) {
                     </div>
 
                     <div className="text-sm text-slate-300">
-                        Total montado: <span className="font-bold text-white">{formatKg(result.achievedWeight)}</span>
+                        Total montado: <span className="font-bold text-white">{formatKg(result.achievedWeight)} kg</span>
                     </div>
 
                     {result.remainder > 0 && (
                         <p className="text-[11px] text-amber-400/90">
-                            Faltam {formatKg(result.remainder)} para a carga exata com as anilhas padrão (1,25 a 25 kg).
+                            Faltam {formatKg(result.remainder)} kg para a carga exata com as anilhas padrão (1,25 a 25 kg).
                         </p>
                     )}
                 </div>

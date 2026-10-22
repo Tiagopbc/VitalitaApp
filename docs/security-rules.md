@@ -84,3 +84,19 @@ legado. Cenário: `bloqueia leitura e aceite de convite legado com ID automatico
 - Atualizar `docs/firestore-model.md` quando coleções/campos mudarem.
 - Atualizar `firestore.indexes.json` quando uma query nova exigir índice composto.
 - Adicionar ou atualizar teste em `tests/security/firestore.rules.test.js`.
+
+## Sessões amarradas ao relógio do servidor
+
+`workout_sessions` exige `completedAt == request.time` na criação. Antes a regra
+pedia só a *presença* do campo, então dava para antedatar ou pós-datar uma
+sessão — e `completedAt` é o que alimenta o streak e as conquistas, que são
+calculados no cliente por decisão (ADR-0003).
+
+A igualdade vale porque os dois caminhos de escrita usam `serverTimestamp()`:
+`hooks/workout-session/useSessionFinish.js` para treino de força e
+`services/workoutService.js` em `saveCardioSession` para cardio. Qualquer
+caminho novo precisa fazer o mesmo, ou a escrita é negada.
+
+Os campos numéricos (`elapsedSeconds`, `durationMin`, `distanceKm`, `calories`)
+e de lista (`exercises`) passaram a ter checagem de **tipo**, não de faixa: o
+objetivo é barrar dado corrompido, não validar regra de negócio na rule.

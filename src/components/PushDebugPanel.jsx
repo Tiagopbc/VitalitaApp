@@ -10,35 +10,10 @@
  */
 import React, { useEffect, useState } from 'react';
 import { getPushLog, clearPushLog, describePushContext } from '../services/pushDiagnostics';
-
-const FLAG_KEY = 'vitalita:pushDebug';
-
-/**
- * Habilitado por `?debug=push`. A flag é "grudenta" (localStorage): sobrevive a
- * redirects de auth (ex.: /login), à navegação entre rotas e — importante — à
- * instalação na tela de início (o PWA standalone abre sem barra de endereço,
- * então não dá para redigitar `?debug=push`). `?debug=off` desliga.
- */
-function isEnabled() {
-    if (typeof window === 'undefined') return false;
-    try {
-        const param = new URLSearchParams(window.location.search).get('debug');
-        if (param === 'push') {
-            localStorage.setItem(FLAG_KEY, '1');
-            return true;
-        }
-        if (param === 'off') {
-            localStorage.removeItem(FLAG_KEY);
-            return false;
-        }
-        return localStorage.getItem(FLAG_KEY) === '1';
-    } catch {
-        return false;
-    }
-}
+import { useDebugPanelFlag } from '../hooks/useDebugPanelFlag';
 
 export function PushDebugPanel() {
-    const [enabled, setEnabled] = useState(isEnabled);
+    const [enabled, disable] = useDebugPanelFlag('push');
     const [log, setLog] = useState([]);
     const [ctx, setCtx] = useState(null);
 
@@ -52,11 +27,6 @@ export function PushDebugPanel() {
         const id = setInterval(refresh, 1000);
         return () => clearInterval(id);
     }, [enabled]);
-
-    const disable = () => {
-        try { localStorage.removeItem(FLAG_KEY); } catch { /* sem storage */ }
-        setEnabled(false);
-    };
 
     if (!enabled) return null;
 

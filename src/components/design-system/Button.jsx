@@ -85,7 +85,10 @@ export const Button = ({
         'outline-primary-strong': 'bg-cyan-500/15 border-2 border-cyan-500/80 text-cyan-300 shadow-[0_0_14px_rgba(6,182,212,0.25)] hover:bg-cyan-500/25 hover:border-cyan-400',
 
         // SUCESSO: Gradiente esmeralda — celebração/conclusão (finalizar treino, PR)
-        success: 'bg-[radial-gradient(circle_at_top_left,#34d399_0%,#10b981_42%,#059669_100%)] border border-emerald-500/80 text-[#fff] shadow-[0_8px_20px_rgba(16,185,129,0.4)] hover:shadow-[0_12px_30px_rgba(16,185,129,0.5)]',
+        // Texto escuro, não branco: sobre este gradiente o branco fica em 2,54:1 no
+        // meio, abaixo do mínimo de 4,5:1 do WCAG AA. O slate-900 fica em 4,74:1 no
+        // ponto mais escuro do gradiente e 9,29:1 no mais claro.
+        success: 'bg-[radial-gradient(circle_at_top_left,#34d399_0%,#10b981_42%,#059669_100%)] border border-emerald-500/80 text-slate-900 shadow-[0_8px_20px_rgba(16,185,129,0.4)] hover:shadow-[0_12px_30px_rgba(16,185,129,0.5)]',
     };
 
     // Combinar classes

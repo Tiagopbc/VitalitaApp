@@ -6,6 +6,7 @@ import {
     SESSION_SYNC_STATES
 } from '../../services/sessions/sessionRecoveryService';
 import { generateId } from '../../utils/ids';
+import { workoutService } from '../../services/workoutService';
 
 export function useSessionFinish({
     workoutId,
@@ -24,7 +25,7 @@ export function useSessionFinish({
         setSaving(true);
         setSyncState(SESSION_SYNC_STATES.finishing);
         try {
-            const { db, collection, addDoc, serverTimestamp, doc, setDoc } = await getFirestoreDeps();
+            const { db, collection, addDoc, serverTimestamp } = await getFirestoreDeps();
             const minutes = Math.floor(finalElapsed / 60);
             const now = new Date();
 
@@ -59,11 +60,7 @@ export function useSessionFinish({
                 await activeSessionService.remove(profileId);
             }
 
-            await setDoc(
-                doc(db, 'workout_templates', workoutId),
-                { lastPerformed: serverTimestamp() },
-                { merge: true }
-            );
+            await workoutService.markTemplatePerformed(workoutId);
 
             setSyncState(SESSION_SYNC_STATES.finished);
             return true;

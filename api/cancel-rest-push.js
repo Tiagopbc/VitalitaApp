@@ -2,13 +2,23 @@
  * /api/cancel-rest-push
  * Cancela uma entrega agendada no QStash (timer pausado, ajustado ou
  * concluído em primeiro plano). Corpo: { messageId }.
+ *
+ * Exige `Authorization: Bearer <idToken>` do Firebase. Sem isso o endpoint é um
+ * proxy anônimo para o `DELETE /v2/messages/{id}` do QStash com o token do
+ * servidor — quem tivesse ou adivinhasse um `messageId` cancelaria a entrega de
+ * outra pessoa.
  */
+import { requireFirebaseUser } from './_lib/firebaseToken';
 const QSTASH_MESSAGES_URL = 'https://qstash.upstash.io/v2/messages/';
 
 export default async function handler(req, res) {
     if (req.method !== 'POST') {
         return res.status(405).json({ error: 'method_not_allowed' });
     }
+
+    // Antes de qualquer validação de corpo: não vale dar pista sobre o formato
+    // do messageId a quem nem está autenticado.
+    if (!await requireFirebaseUser(req, res)) return undefined;
 
     const token = process.env.QSTASH_TOKEN;
     if (!token) {
