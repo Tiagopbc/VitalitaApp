@@ -153,10 +153,26 @@ service cloud.firestore {
       ];
     }
 
+    function sessionNumberOk(campo) {
+      return !(campo in request.resource.data) || request.resource.data[campo] is number;
+    }
+
     function validSessionCreate() {
       return request.resource.data.keys().hasOnly(sessionCreateFields())
         && request.resource.data.keys().hasAll(['userId', 'completedAt'])
-        && request.resource.data.userId == request.auth.uid;
+        && request.resource.data.userId == request.auth.uid
+        // Amarra a data ao relógio do servidor. Os dois caminhos de escrita
+        // (useSessionFinish e workoutService.saveCardioSession) usam
+        // serverTimestamp(), então a igualdade vale. Sem isto dá para antedatar
+        // uma sessão e inventar sequência de treinos — `completedAt` alimenta
+        // streak e conquistas.
+        && request.resource.data.completedAt == request.time
+        && sessionNumberOk('elapsedSeconds')
+        && sessionNumberOk('durationMin')
+        && sessionNumberOk('distanceKm')
+        && sessionNumberOk('calories')
+        && (!('exercises' in request.resource.data) || request.resource.data.exercises is list)
+        && (!('isCardio' in request.resource.data) || request.resource.data.isCardio is bool);
     }
 
     function activeWorkoutFields() {

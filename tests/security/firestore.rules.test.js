@@ -8,6 +8,7 @@ import {
 import {
     collection,
     deleteDoc,
+    serverTimestamp,
     doc,
     getDoc,
     getDocs,
@@ -92,8 +93,29 @@ function sessionPayload(userId) {
                 sets: [{ id: 'set-1', weight: '80', reps: '10', completed: true }]
             }
         ],
-        createdAt: Timestamp.now(),
-        completedAt: Timestamp.now()
+        createdAt: serverTimestamp(),
+        completedAt: serverTimestamp(),
+        completedAtClient: new Date().toISOString()
+    };
+}
+
+/** Espelha o payload de workoutService.saveCardioSession. */
+function cardioPayload(userId) {
+    return {
+        userId,
+        isCardio: true,
+        workoutName: 'Cardio: Corrida',
+        activityType: 'Corrida',
+        durationMin: 30,
+        distanceKm: 5.2,
+        intensity: 'moderada',
+        calories: 320,
+        notes: '',
+        createdAt: serverTimestamp(),
+        completedAt: serverTimestamp(),
+        completedAtClient: new Date().toISOString(),
+        exercises: [],
+        results: {}
     };
 }
 
@@ -205,6 +227,73 @@ describe('firestore.rules', () => {
         }));
 
         await assertFails(deleteDoc(doc(authedDb('trainer-1'), 'workout_sessions/session-1')));
+    });
+
+    it('aceita sessao de forca e de cardio com o payload real do app', async () => {
+        await seedUser('student-1');
+        const db = authedDb('student-1');
+
+        await assertSucceeds(setDoc(doc(db, 'workout_sessions/forca-1'), sessionPayload('student-1')));
+        await assertSucceeds(setDoc(doc(db, 'workout_sessions/cardio-1'), cardioPayload('student-1')));
+    });
+
+    // completedAt alimenta streak e conquistas. Sem amarrar ao relogio do
+    // servidor, da para forjar a data e inventar sequencia de treinos.
+    it('bloqueia sessao com completedAt forjado', async () => {
+        await seedUser('student-1');
+        const db = authedDb('student-1');
+
+        await assertFails(setDoc(doc(db, 'workout_sessions/antedatada'), {
+            ...sessionPayload('student-1'),
+            completedAt: pastDate
+        }));
+        await assertFails(setDoc(doc(db, 'workout_sessions/pos-datada'), {
+            ...sessionPayload('student-1'),
+            completedAt: futureDate
+        }));
+        await assertFails(setDoc(doc(db, 'workout_sessions/agora-do-cliente'), {
+            ...sessionPayload('student-1'),
+            completedAt: Timestamp.now()
+        }));
+    });
+
+    it('bloqueia campo numerico da sessao com tipo errado', async () => {
+        await seedUser('student-1');
+        const db = authedDb('student-1');
+
+        await assertFails(setDoc(doc(db, 'workout_sessions/elapsed-texto'), {
+            ...sessionPayload('student-1'),
+            elapsedSeconds: 'muito tempo'
+        }));
+        await assertFails(setDoc(doc(db, 'workout_sessions/exercicios-nao-lista'), {
+            ...sessionPayload('student-1'),
+            exercises: 'nao sou lista'
+        }));
+        await assertFails(setDoc(doc(db, 'workout_sessions/cardio-texto'), {
+            ...cardioPayload('student-1'),
+            durationMin: '30'
+        }));
+    });
+
+    it('permite editar notes da sessao, e nada alem disso', async () => {
+        await seedUser('student-1');
+        await seed('workout_sessions/sessao-1', {
+            userId: 'student-1',
+            templateId: 'template-1',
+            templateName: 'Treino A',
+            workoutName: 'Treino A',
+            duration: '45min',
+            elapsedSeconds: 2700,
+            exercises: [],
+            createdAt: Timestamp.now(),
+            completedAt: Timestamp.now()
+        });
+        const db = authedDb('student-1');
+
+        await assertSucceeds(updateDoc(doc(db, 'workout_sessions/sessao-1'), { notes: 'peguei pesado' }));
+        await assertFails(updateDoc(doc(db, 'workout_sessions/sessao-1'), { elapsedSeconds: 99999 }));
+        await assertFails(updateDoc(doc(db, 'workout_sessions/sessao-1'), { completedAt: pastDate }));
+        await assertFails(updateDoc(doc(authedDb('stranger-1'), 'workout_sessions/sessao-1'), { notes: 'nao sou eu' }));
     });
 
     it('permite leitura de user_stats para dono e personal vinculado, mas bloqueia escrita do cliente', async () => {

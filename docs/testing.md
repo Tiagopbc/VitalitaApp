@@ -37,3 +37,7 @@ Cenários prioritários:
 - Convites expirados ou revogados não podem ser usados.
 - Convite exige `code` igual ao ID do documento na criação.
 - Só o personal dono lista `trainer_invites`; terceiro autenticado não enumera convites ativos.
+- Sessão de força e de cardio com o payload real do app são aceitas.
+- Sessão com `completedAt` forjado (antedatado, pós-datado ou do relógio do cliente) é negada.
+- Campo numérico ou de lista com tipo errado na sessão é negado.
+- `notes` da sessão é editável pelo dono; qualquer outro campo, não.
