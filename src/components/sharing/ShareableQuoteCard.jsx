@@ -1,4 +1,5 @@
 import React, { forwardRef, useEffect } from 'react';
+import { applyGlow, resetShadow, drawImageCover, loadImagesThenDraw, displayNameOf } from './canvasHelpers';
 
 const shareCardBgSrc = '/bg-share-dumbbells.jpg';
 
@@ -10,7 +11,7 @@ export const ShareableQuoteCard = forwardRef(({ quote, isVisible = false, userNa
     const text = parts[0] ? `"${parts[0]}"` : '';
     const author = parts[1] ? `— ${parts[1]}` : '';
 
-    const displayName = (userName || 'Atleta').toString().trim() || 'Atleta';
+    const displayName = displayNameOf(userName);
     const cyanAccent = '#22d3ee';
 
     // Resolução visual: 400x711 | Resolução interna (Instagram Story): 1080x1920
@@ -32,47 +33,16 @@ export const ShareableQuoteCard = forwardRef(({ quote, isVisible = false, userNa
 
         const img = new Image();
         const logoImg = new Image();
-        img.crossOrigin = 'anonymous'; 
-        logoImg.crossOrigin = 'anonymous'; 
 
-        let imagesLoaded = 0;
-        const checkReady = () => {
-            imagesLoaded++;
-            if (imagesLoaded === 2) drawCanvas();
-        };
 
-        const fallbackReady = () => {
-            imagesLoaded++;
-            if (imagesLoaded === 2) drawCanvas();
-        };
-
-        img.onload = checkReady;
-        img.onerror = fallbackReady;
-        logoImg.onload = checkReady;
-        logoImg.onerror = fallbackReady;
         
-        img.src = shareCardBgSrc;
-        logoImg.src = '/pwa-512x512.png'; 
 
         const drawCanvas = () => {
             // 1. FUNDO EXTERNO ESCURO
             ctx.fillStyle = '#0a0f1d'; // Azul bem escuro
             ctx.fillRect(0, 0, canvasWidth, canvasHeight);
 
-            // FUNÇÃO AUXILIAR PARA COR E SOMBRA
-            const applyGlow = (color, blurClass, offsetClass) => {
-                ctx.fillStyle = color;
-                ctx.shadowColor = blurClass;
-                ctx.shadowBlur = offsetClass.blur || 0;
-                ctx.shadowOffsetY = offsetClass.y || 0;
-                ctx.shadowOffsetX = 0;
-            };
 
-            const resetShadow = () => {
-                ctx.shadowColor = 'transparent';
-                ctx.shadowBlur = 0;
-                ctx.shadowOffsetY = 0;
-            };
 
             // 2. O CARD FLUTUANTE CENTRAL
             const cardX = 80;
@@ -88,13 +58,7 @@ export const ShareableQuoteCard = forwardRef(({ quote, isVisible = false, userNa
             ctx.clip();
             
             // Desenha a imagem dos halteres dentro do card
-            const scale = Math.max(canvasWidth / img.width, canvasHeight / img.height);
-            const dx = (canvasWidth / 2) - (img.width / 2) * scale;
-            const dy = (canvasHeight / 2) - (img.height / 2) * scale;
-            if (img.width > 0) {
-                // Clareia um pouco a imagem para o centro
-                ctx.drawImage(img, dx, dy, img.width * scale, img.height * scale);
-            }
+            drawImageCover(ctx, img, canvasWidth, canvasHeight);
 
             // Gradiente para escurecer as pontas do card
             const cardGradient = ctx.createLinearGradient(0, cardY, 0, cardY + cardH);
@@ -140,17 +104,17 @@ export const ShareableQuoteCard = forwardRef(({ quote, isVisible = false, userNa
             }
 
             const appNameY = logoY + logoSize + 50;
-            applyGlow('#ffffff', 'rgba(0,0,0,0.8)', { blur: 10, y: 4 });
+            applyGlow(ctx, '#ffffff', 'rgba(0,0,0,0.8)', { blur: 10, y: 4 });
             ctx.font = '900 52px "Outfit", "Inter", sans-serif';
             if (ctx.letterSpacing !== undefined) ctx.letterSpacing = "6px";
             ctx.fillText('VITALITÀ', (canvasWidth / 2) + 3, appNameY);
             if (ctx.letterSpacing !== undefined) ctx.letterSpacing = "0px";
-            resetShadow();
+            resetShadow(ctx);
 
             // 5. FRASE
             const textY = canvasHeight / 2 - 40;
             ctx.font = 'italic 500 58px "Inter", sans-serif'; 
-            applyGlow('#ffffff', 'rgba(0,0,0,0.9)', { blur: 15, y: 4 });
+            applyGlow(ctx, '#ffffff', 'rgba(0,0,0,0.9)', { blur: 15, y: 4 });
             
             const wrapText = (context, textToWrap, x, y, maxWidth, lineHeight) => {
                 const cleanText = textToWrap.replace(/^"|"$/g, '').replace(/^“|”$/g, '');
@@ -181,18 +145,18 @@ export const ShareableQuoteCard = forwardRef(({ quote, isVisible = false, userNa
             };
 
             const nextY = wrapText(ctx, text, canvasWidth / 2, textY, cardW - 140, 80);
-            resetShadow();
+            resetShadow(ctx);
 
             // 6. AUTOR
             if (author) {
                 const cleanAuthor = author.replace(/^—\s*/, ''); 
                 const authorY = nextY + 30;
-                applyGlow('#cbd5e1', 'rgba(0,0,0,0.9)', { blur: 10, y: 4 });
+                applyGlow(ctx, '#cbd5e1', 'rgba(0,0,0,0.9)', { blur: 10, y: 4 });
                 ctx.font = '500 34px "Inter", sans-serif';
                 if (ctx.letterSpacing !== undefined) ctx.letterSpacing = "3px";
                 ctx.fillText(cleanAuthor.toUpperCase(), canvasWidth / 2, authorY);
                 if (ctx.letterSpacing !== undefined) ctx.letterSpacing = "0px";
-                resetShadow();
+                resetShadow(ctx);
             }
 
             // 7. CÁPSULA "DOSE DE MOTIVAÇÃO" (Movidada para baixo)
@@ -211,24 +175,29 @@ export const ShareableQuoteCard = forwardRef(({ quote, isVisible = false, userNa
             ctx.lineWidth = 1.5;
             ctx.stroke();
 
-            applyGlow('#94a3b8', 'rgba(0,0,0,0)', { blur: 0, y: 0 });
+            applyGlow(ctx, '#94a3b8', 'rgba(0,0,0,0)', { blur: 0, y: 0 });
             ctx.fillText(labelText, canvasWidth / 2, labelY + 2);
-            resetShadow();
+            resetShadow(ctx);
 
             // 8. RODAPÉ (Sem placa metálica)
             const footerY = cardY + cardH - 120;
             
             // Texto do Rodapé
-            applyGlow('#cbd5e1', 'rgba(0,0,0,0.8)', { blur: 10, y: 4 });
+            applyGlow(ctx, '#cbd5e1', 'rgba(0,0,0,0.8)', { blur: 10, y: 4 });
             ctx.font = '500 32px "Inter", sans-serif'; 
             ctx.fillText(`Mindset de:`, canvasWidth / 2, footerY - 45);
             
             // Nome do atleta brilhando em branco e maior
-            applyGlow('#ffffff', 'rgba(0,0,0,0.9)', { blur: 15, y: 4 });
+            applyGlow(ctx, '#ffffff', 'rgba(0,0,0,0.9)', { blur: 15, y: 4 });
             ctx.font = '800 56px "Outfit", "Inter", sans-serif';
             ctx.fillText(displayName, canvasWidth / 2, footerY + 15);
-            resetShadow();
+            resetShadow(ctx);
         };
+
+        loadImagesThenDraw(
+            [[img, shareCardBgSrc], [logoImg, '/pwa-512x512.png']],
+            drawCanvas
+        );
 
     }, [quote, text, author, displayName, cyanAccent, ref]);
 

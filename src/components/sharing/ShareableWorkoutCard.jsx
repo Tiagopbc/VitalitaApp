@@ -1,4 +1,5 @@
 import React, { forwardRef, useEffect } from 'react';
+import { applyGlow, resetShadow, drawImageCover, loadImagesThenDraw, displayNameOf } from './canvasHelpers';
 
 // Fundo limpo sem elementos pré-renderizados
 const shareCardBgSrc = '/bg-share-dumbbells.jpg';
@@ -26,7 +27,7 @@ export const ShareableWorkoutCard = forwardRef(({ session, isVisible = false, us
     } else {
         volumeFontSize = 220;
     }
-    const displayName = (userName || 'Atleta').toString().trim() || 'Atleta';
+    const displayName = displayNameOf(userName);
     const templateLabel = session ? (session.templateName || 'Treino Personalizado').toString() : '';
     const templateParts = templateLabel.split(/\s[-–—]\s/);
     const templateTitle = (templateParts[0] || templateLabel).trim();
@@ -52,56 +53,19 @@ export const ShareableWorkoutCard = forwardRef(({ session, isVisible = false, us
 
         const img = new Image();
         const logoImg = new Image();
-        img.crossOrigin = 'anonymous'; 
-        logoImg.crossOrigin = 'anonymous'; 
 
-        let imagesLoaded = 0;
-        const checkReady = () => {
-            imagesLoaded++;
-            if (imagesLoaded === 2) drawCanvas();
-        };
 
-        const fallbackReady = () => {
-            // Em caso de erro numa imagem, ainda tentamos desenhar para não travar no fundo preto
-            imagesLoaded++;
-            if (imagesLoaded === 2) drawCanvas();
-        };
-
-        img.onload = checkReady;
-        img.onerror = fallbackReady;
-        logoImg.onload = checkReady;
-        logoImg.onerror = fallbackReady;
         
-        img.src = shareCardBgSrc;
-        logoImg.src = '/pwa-512x512.png'; // Usando o icone do PWA que normalmente tem fundo transparente
 
         const drawCanvas = () => {
             // Desenha a imagem cobrindo o canvas
-            const scale = Math.max(canvasWidth / img.width, canvasHeight / img.height);
-            const dx = (canvasWidth / 2) - (img.width / 2) * scale;
-            const dy = (canvasHeight / 2) - (img.height / 2) * scale;
-            if (img.width > 0) {
-                ctx.drawImage(img, dx, dy, img.width * scale, img.height * scale);
-            }
+            drawImageCover(ctx, img, canvasWidth, canvasHeight);
 
             // Escurecer sutilmente o fundo para os textos destacarem mais
             ctx.fillStyle = 'rgba(2, 6, 23, 0.2)';
             ctx.fillRect(0, 0, canvasWidth, canvasHeight);
 
-            // FUNÇÃO AUXILIAR PARA COR E SOMBRA
-            const applyGlow = (color, blurClass, offsetClass) => {
-                ctx.fillStyle = color;
-                ctx.shadowColor = blurClass;
-                ctx.shadowBlur = offsetClass.blur || 0;
-                ctx.shadowOffsetY = offsetClass.y || 0;
-                ctx.shadowOffsetX = 0;
-            };
 
-            const resetShadow = () => {
-                ctx.shadowColor = 'transparent';
-                ctx.shadowBlur = 0;
-                ctx.shadowOffsetY = 0;
-            };
 
             ctx.textBaseline = 'middle';
             ctx.textAlign = 'center';
@@ -133,23 +97,23 @@ export const ShareableWorkoutCard = forwardRef(({ session, isVisible = false, us
             ctx.roundRect((canvasWidth / 2) - (labelWidth / 2), labelY - (labelHeight / 2), labelWidth, labelHeight, 27);
             ctx.stroke();
 
-            applyGlow('#e2f8ff', 'rgba(0,0,0,0.5)', { blur: 4, y: 2 });
+            applyGlow(ctx, '#e2f8ff', 'rgba(0,0,0,0.5)', { blur: 4, y: 2 });
             ctx.fillText(labelText, canvasWidth / 2, labelY);
-            resetShadow();
+            resetShadow(ctx);
 
             // 3. NOME DO ATLETA
             const nameY = 415;
-            applyGlow('#ffffff', 'rgba(0,0,0,0.7)', { blur: 12, y: 4 });
+            applyGlow(ctx, '#ffffff', 'rgba(0,0,0,0.7)', { blur: 12, y: 4 });
             ctx.font = '800 48px "Outfit", "Inter", sans-serif'; 
             ctx.fillText(displayName, canvasWidth / 2, nameY);
-            resetShadow();
+            resetShadow(ctx);
 
             // 4. VOLUME GIGANTE
             const volumeY = 800;
-            applyGlow('#ffffff', 'rgba(0,0,0,0.6)', { blur: 20, y: 8 });
+            applyGlow(ctx, '#ffffff', 'rgba(0,0,0,0.6)', { blur: 20, y: 8 });
             ctx.font = `900 ${volumeFontSize}px "Outfit", "Inter", sans-serif`;
             ctx.fillText(volumeValue, canvasWidth / 2, volumeY);
-            resetShadow();
+            resetShadow(ctx);
 
             // 5. KILOS (Texto Vazado)
             const kilosY = 1040;
@@ -162,29 +126,29 @@ export const ShareableWorkoutCard = forwardRef(({ session, isVisible = false, us
             ctx.strokeText('KILOS', canvasWidth / 2, kilosY);
             ctx.fillStyle = 'rgba(255, 255, 255, 0.05)';
             ctx.fillText('KILOS', canvasWidth / 2, kilosY);
-            resetShadow();
+            resetShadow(ctx);
 
             // 6. VOLUME EMPILHADO
             const subtitleVolY = 1250;
-            applyGlow('#94a3b8', 'rgba(0,0,0,0.6)', { blur: 4, y: 2 });
+            applyGlow(ctx, '#94a3b8', 'rgba(0,0,0,0.6)', { blur: 4, y: 2 });
             ctx.font = '600 38px "Inter", sans-serif';
             ctx.fillText('VOLUME EMPILHADO', canvasWidth / 2, subtitleVolY);
-            resetShadow();
+            resetShadow(ctx);
 
             // 7. TÍTULO DO TREINO
             const titleY = 1520;
-            applyGlow(cyanAccent, 'rgba(0,0,0,0.8)', { blur: 8, y: 4 });
+            applyGlow(ctx, cyanAccent, 'rgba(0,0,0,0.8)', { blur: 8, y: 4 });
             ctx.font = '800 56px "Outfit", "Inter", sans-serif';
             ctx.fillText(templateTitle, canvasWidth / 2, titleY);
-            resetShadow();
+            resetShadow(ctx);
 
             // 8. SUBTÍTULO DO TREINO
             if (templateSubtitle) {
                 const subTitleY = 1600;
-                applyGlow('#94a3b8', 'rgba(0,0,0,0.65)', { blur: 4, y: 2 });
+                applyGlow(ctx, '#94a3b8', 'rgba(0,0,0,0.65)', { blur: 4, y: 2 });
                 ctx.font = '600 41px "Inter", sans-serif';
                 ctx.fillText(templateSubtitle, canvasWidth / 2, subTitleY);
-                resetShadow();
+                resetShadow(ctx);
             }
 
             // 9. CÁPSULAS DE TEMPO E EXERCÍCIOS
@@ -208,14 +172,19 @@ export const ShareableWorkoutCard = forwardRef(({ session, isVisible = false, us
                 ctx.fill();
                 ctx.stroke();
 
-                applyGlow('#f8fafc', 'rgba(0,0,0,0.65)', { blur: 4, y: 2 });
+                applyGlow(ctx, '#f8fafc', 'rgba(0,0,0,0.65)', { blur: 4, y: 2 });
                 ctx.fillText(text, x, y);
-                resetShadow();
+                resetShadow(ctx);
             };
 
             drawPill(leftX, capsY, session.duration);
             drawPill(rightX, capsY, `${session.exercisesCount} EXERCÍCIOS`);
         };
+
+        loadImagesThenDraw(
+            [[img, shareCardBgSrc], [logoImg, '/pwa-512x512.png']],
+            drawCanvas
+        );
 
     }, [session, displayName, volumeValue, volumeFontSize, templateTitle, templateSubtitle, cyanAccent, ref]);
 
