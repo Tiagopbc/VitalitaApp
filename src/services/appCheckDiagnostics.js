@@ -12,6 +12,8 @@
  * quebrar o boot do app. Roda apenas no contexto da janela (usa localStorage).
  */
 
+import { safeParseJSON } from '../utils/safeParseJSON';
+
 const STATUS_KEY = 'vitalita:appCheckStatus';
 const LOG_KEY = 'vitalita:appCheckLog';
 const MAX_ENTRIES = 20;
@@ -20,21 +22,12 @@ function hasStorage() {
     return typeof window !== 'undefined' && typeof localStorage !== 'undefined';
 }
 
-function safeParse(raw, fallback) {
-    try {
-        const parsed = JSON.parse(raw);
-        return parsed ?? fallback;
-    } catch {
-        return fallback;
-    }
-}
-
 /** Estado da última verificação, ou `null` se nunca houve uma. */
 export function getAppCheckStatus() {
     if (!hasStorage()) return null;
     try {
         const raw = localStorage.getItem(STATUS_KEY);
-        return raw ? safeParse(raw, null) : null;
+        return raw ? safeParseJSON(raw, null) : null;
     } catch {
         return null;
     }
@@ -44,7 +37,7 @@ export function getAppCheckStatus() {
 export function getAppCheckLog() {
     if (!hasStorage()) return [];
     try {
-        const parsed = safeParse(localStorage.getItem(LOG_KEY), []);
+        const parsed = safeParseJSON(localStorage.getItem(LOG_KEY), []);
         return Array.isArray(parsed) ? parsed : [];
     } catch {
         return [];

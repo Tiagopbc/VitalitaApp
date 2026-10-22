@@ -197,7 +197,7 @@ export function HistoryAnalyticsSection({
                                     <p className="text-slate-500 text-sm">Carregando gráfico...</p>
                                 </div>
                             }>
-                                <EvolutionChart data={chartData} range={chartRange} />
+                                <EvolutionChart data={chartData} />
                             </React.Suspense>
                         </div>
                     )}

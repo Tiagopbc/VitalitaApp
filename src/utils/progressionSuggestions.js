@@ -5,8 +5,9 @@
  * consolidar a atual ou intervir na estagnação (deload/troca de método).
  */
 import { parseDecimal, estimateOneRepMax } from './strengthMath';
+import { formatKg } from './formatKg';
 
-const formatKg = (value) => value.toLocaleString('pt-BR', { maximumFractionDigits: 2 });
+
 
 /**
  * Interpreta a meta de repetições ("8-12", "12", "10 a 12") como {min, max}.

@@ -3,6 +3,7 @@ import { X, Calendar, Clock, Dumbbell, TrendingUp, Notebook, Share2, Activity, N
 import { ShareableWorkoutCard } from '../sharing/ShareableWorkoutCard';
 import { notify } from '../../utils/notifyStore';
 import { waitWithTimeout } from '../../utils/waitWithTimeout';
+import { sessionVolumeLoad } from '../../utils/volumeLoad';
 
 export function WorkoutDetailsModal({ session, onClose, user }) {
     const shareCardRef = useRef(null);
@@ -37,31 +38,7 @@ export function WorkoutDetailsModal({ session, onClose, user }) {
 
     const exercises = getExercises();
 
-    const volumeLoad = exercises.reduce((acc, ex) => {
-        let exVolume = 0;
-        if (ex.sets && Array.isArray(ex.sets)) {
-            exVolume = ex.sets.reduce((sAcc, s) => {
-                if (!s.completed) return sAcc;
-                if (s.drops && s.drops.length > 0) {
-                    return sAcc + s.drops.reduce((dAcc, d) => {
-                        const dw = parseFloat((d.weight || '').toString().replace(',', '.')) || 0;
-                        const dr = parseFloat((d.reps || '').toString().replace(',', '.')) || 0;
-                        return dAcc + (dw * dr);
-                    }, 0);
-                }
-                const weightStr = (s.weight || '').toString().replace(',', '.');
-                const repsStr = (s.reps || '').toString().replace(',', '.');
-                const w = parseFloat(weightStr) || 0;
-                const r = parseFloat(repsStr) || 0;
-                return sAcc + (w * r);
-            }, 0);
-        } else if (ex.weight && ex.reps) {
-            const w = parseFloat((ex.weight || '').toString().replace(',', '.')) || 0;
-            const r = parseFloat((ex.reps || '').toString().replace(',', '.')) || 0;
-            exVolume = w * r;
-        }
-        return acc + exVolume;
-    }, 0);
+    const volumeLoad = sessionVolumeLoad(exercises);
 
     const sessionData = {
         templateName: session.templateName || session.workoutName || 'Treino Realizado',

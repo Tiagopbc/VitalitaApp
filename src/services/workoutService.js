@@ -514,6 +514,34 @@ export const workoutService = {
     },
 
     /**
+     * Marca a ficha como executada agora.
+     *
+     * Mora aqui, e não no hook que finaliza a sessão, porque toda escrita em
+     * `workout_templates` passa por este serviço — é o caminho único que a
+     * criação manual, a biblioteca de modelos e a importação por PDF usam.
+     *
+     * Falha de propósito em silêncio: o treino já foi salvo quando isto roda, e
+     * perder o carimbo de "último treino" não justifica mostrar erro a quem
+     * acabou de terminar.
+     *
+     * @param {string} templateId
+     * @returns {Promise<void>}
+     */
+    async markTemplatePerformed(templateId) {
+        if (!templateId) return;
+        try {
+            const { db, doc, setDoc, serverTimestamp } = await getFirestoreDeps();
+            await setDoc(
+                doc(db, TEMPLATES_COLLECTION, templateId),
+                { lastPerformed: serverTimestamp() },
+                { merge: true }
+            );
+        } catch (err) {
+            console.error('Error marking template as performed:', err);
+        }
+    },
+
+    /**
      * Salva uma sessão manual de Cardio no histórico do usuário.
      * @param {string} userId
      * @param {Object} cardioData

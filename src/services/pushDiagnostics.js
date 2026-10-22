@@ -8,17 +8,15 @@
  */
 
 import { isIOSDevice } from '../utils/platform';
+import { safeParseJSON } from '../utils/safeParseJSON';
 
 const STORAGE_KEY = 'vitalita:pushLog';
 const MAX_ENTRIES = 40;
 
-function safeParse(raw) {
-    try {
-        const parsed = JSON.parse(raw);
-        return Array.isArray(parsed) ? parsed : [];
-    } catch {
-        return [];
-    }
+/** O log é sempre lista: conteúdo de outra forma vira lista vazia. */
+function lerLog(bruto) {
+    const parsed = safeParseJSON(bruto, []);
+    return Array.isArray(parsed) ? parsed : [];
 }
 
 /**
@@ -29,7 +27,7 @@ function safeParse(raw) {
 export function logPush(stage, detail) {
     if (typeof window === 'undefined' || typeof localStorage === 'undefined') return;
     try {
-        const log = safeParse(localStorage.getItem(STORAGE_KEY));
+        const log = lerLog(localStorage.getItem(STORAGE_KEY));
         log.push({
             t: new Date().toISOString(),
             stage,
@@ -47,7 +45,7 @@ export function logPush(stage, detail) {
 /** Retorna os eventos registrados (mais antigo → mais recente). */
 export function getPushLog() {
     if (typeof window === 'undefined' || typeof localStorage === 'undefined') return [];
-    return safeParse(localStorage.getItem(STORAGE_KEY));
+    return lerLog(localStorage.getItem(STORAGE_KEY));
 }
 
 /**
