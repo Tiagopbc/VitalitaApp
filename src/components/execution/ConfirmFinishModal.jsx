@@ -24,7 +24,7 @@ export function ConfirmFinishModal({ onClose, onConfirm }) {
                     <Button
                         onClick={onConfirm}
                         variant="success"
-                        className="flex-1 h-10 bg-green-500/10 text-green-400 border border-green-500/30 hover:bg-green-500/20 shadow-none hover:shadow-none"
+                        className="flex-1 h-10"
                     >
                         Confirmar
                     </Button>
