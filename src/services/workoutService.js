@@ -2,6 +2,7 @@ import { getFirestoreDeps } from '../firebaseDb';
 import { catalogValuesFor } from '../data/muscleGroups';
 import { sortWorkoutTemplates } from '../utils/workoutTemplateOrder';
 import { notify } from '../utils/notifyStore';
+import { toMillis } from '../utils/firestoreDate';
 
 const TEMPLATES_COLLECTION = 'workout_templates';
 const SESSIONS_COLLECTION = 'workout_sessions';
@@ -34,13 +35,7 @@ function mapSessionDoc(doc) {
 
 function getSessionTimestampMs(session) {
     const raw = session?.completedAt || session?.completedAtClient || session?.date || session?.createdAt || session?.timestamp;
-    if (!raw) return 0;
-    if (typeof raw.toDate === 'function') return raw.toDate().getTime();
-    if (raw instanceof Date) return raw.getTime();
-    if (typeof raw === 'object' && typeof raw.seconds === 'number') return raw.seconds * 1000;
-
-    const parsed = new Date(raw).getTime();
-    return Number.isNaN(parsed) ? 0 : parsed;
+    return toMillis(raw);
 }
 
 function sortSessionsByMostRecent(sessions) {

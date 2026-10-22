@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { generateId } from './normalizeSets';
+import { generateId } from '../../utils/ids';
 
 export function useSessionExerciseActions(setExercises) {
     const updateExerciseSet = useCallback((exId, setId, field, val) => {

@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react';
 import { X, Calendar, Clock, Dumbbell, TrendingUp, Notebook, Share2, Activity, Navigation, Flame } from 'lucide-react';
 import { ShareableWorkoutCard } from '../sharing/ShareableWorkoutCard';
 import { notify } from '../../utils/notifyStore';
+import { waitWithTimeout } from '../../utils/waitWithTimeout';
 
 export function WorkoutDetailsModal({ session, onClose, user }) {
     const shareCardRef = useRef(null);
@@ -83,17 +84,6 @@ export function WorkoutDetailsModal({ session, onClose, user }) {
 
         setSharing(true);
         try {
-            const waitWithTimeout = async (promise, timeoutMs = 2000) => {
-                try {
-                    await Promise.race([
-                        promise,
-                        new Promise(resolve => setTimeout(resolve, timeoutMs))
-                    ]);
-                } catch {
-                    // Ignora erros de fonte
-                }
-            };
-
             await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
             if (document.fonts && document.fonts.ready) {
                 await waitWithTimeout(document.fonts.ready, 2000);

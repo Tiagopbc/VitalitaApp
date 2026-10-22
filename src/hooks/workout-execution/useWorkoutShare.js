@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { preloadImage } from '../../utils/imagePreload';
 import { canvasToJpegBlob } from '../../utils/shareWorkoutImage';
 import { loadShareableWorkoutCard } from '../../components/execution/shareableWorkoutCardLoader';
+import { waitWithTimeout } from '../../utils/waitWithTimeout';
 
 const shareCardBgSrc = '/bg-share-dumbbells.jpg';
 
@@ -65,17 +66,6 @@ export function useWorkoutShare({ templateName, setError }) {
         setSharing(true);
         try {
             // Wait for render and font load (with safety timeouts to avoid hangs)
-            const waitWithTimeout = async (promise, timeoutMs = 2000) => {
-                try {
-                    await Promise.race([
-                        promise,
-                        new Promise(resolve => setTimeout(resolve, timeoutMs))
-                    ]);
-                } catch {
-                    // Ignore font/image load errors and proceed
-                }
-            };
-
             await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
             if (document.fonts && document.fonts.ready) {
                 await waitWithTimeout(document.fonts.ready, 2000);

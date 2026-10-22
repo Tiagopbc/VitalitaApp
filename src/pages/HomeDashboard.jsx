@@ -42,6 +42,8 @@ import { achievementsCatalog } from '../data/achievementsCatalog';
 import { evaluateAchievements, calculateStats } from '../utils/evaluateAchievements';
 import { AddCardioModal } from '../components/AddCardioModal';
 import { notify } from '../utils/notifyStore';
+import { toDate } from '../utils/firestoreDate';
+import { waitWithTimeout } from '../utils/waitWithTimeout';
 
 const HOME_DASHBOARD_CACHE_VERSION = 1;
 
@@ -94,24 +96,6 @@ function getHomeDashboardCacheKey(userId) {
     return `home_dashboard_snapshot_v${HOME_DASHBOARD_CACHE_VERSION}_${userId}`;
 }
 
-function parseToDate(raw) {
-    if (!raw) return null;
-    if (raw instanceof Date) return isNaN(raw.getTime()) ? null : raw;
-    if (typeof raw.toDate === 'function') {
-        const converted = raw.toDate();
-        return converted instanceof Date && !isNaN(converted.getTime()) ? converted : null;
-    }
-    if (raw && typeof raw === 'object' && typeof raw.seconds === 'number') {
-        const fromSeconds = new Date(raw.seconds * 1000);
-        return isNaN(fromSeconds.getTime()) ? null : fromSeconds;
-    }
-    if (typeof raw === 'string' || typeof raw === 'number') {
-        const parsed = new Date(raw);
-        return isNaN(parsed.getTime()) ? null : parsed;
-    }
-    return null;
-}
-
 function serializeStatsForCache(stats) {
     if (!stats || typeof stats !== 'object') return null;
     const serializeDay = (day) => ({
@@ -128,7 +112,7 @@ function serializeStatsForCache(stats) {
 function deserializeStatsFromCache(cachedStats) {
     if (!cachedStats || typeof cachedStats !== 'object') return null;
     const deserializeDay = (day) => {
-        const fullDate = parseToDate(day?.fullDate);
+        const fullDate = toDate(day?.fullDate);
         return {
             ...day,
             fullDate: fullDate || day?.fullDate || null
@@ -143,7 +127,7 @@ function deserializeStatsFromCache(cachedStats) {
 
 function serializeLatestSessionForCache(session) {
     if (!session || typeof session !== 'object') return null;
-    const sessionDate = parseToDate(session.date || session.completedAtClient || session.completedAt || session.timestamp);
+    const sessionDate = toDate(session.date || session.completedAtClient || session.completedAt || session.timestamp);
     return {
         ...session,
         date: sessionDate ? sessionDate.toISOString() : null
@@ -152,7 +136,7 @@ function serializeLatestSessionForCache(session) {
 
 function deserializeLatestSessionFromCache(session) {
     if (!session || typeof session !== 'object') return null;
-    const parsedDate = parseToDate(session.date || session.completedAtClient || session.completedAt || session.timestamp);
+    const parsedDate = toDate(session.date || session.completedAtClient || session.completedAt || session.timestamp);
     return {
         ...session,
         date: parsedDate || new Date()
@@ -232,17 +216,6 @@ export function HomeDashboard({
 
         setSharingQuote(true);
         try {
-            const waitWithTimeout = async (promise, timeoutMs = 2000) => {
-                try {
-                    await Promise.race([
-                        promise,
-                        new Promise(resolve => setTimeout(resolve, timeoutMs))
-                    ]);
-                } catch {
-                    // ignora erros
-                }
-            };
-
             await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
             if (document.fonts && document.fonts.ready) {
                 await waitWithTimeout(document.fonts.ready, 2000);
@@ -442,7 +415,7 @@ export function HomeDashboard({
                         // Lógica defensiva para parse de data
                         try {
                             const raw = d.completedAtClient || d.completedAt || d.date || d.createdAt || d.timestamp;
-                            const parsedDate = parseToDate(raw);
+                            const parsedDate = toDate(raw);
                             if (parsedDate) dateObj = parsedDate;
                         } catch (e) { console.warn("Date parsing error", d.id, e); }
 

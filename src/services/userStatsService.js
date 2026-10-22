@@ -1,23 +1,10 @@
 import { getFirestoreDeps } from '../firebaseDb';
+import { toDate } from '../utils/firestoreDate';
 
 const USER_STATS_COLLECTION = 'user_stats';
 
 export function isServerUserStatsEnabled() {
     return import.meta.env.VITE_ENABLE_SERVER_USER_STATS === 'true';
-}
-
-function normalizeTimestamp(value) {
-    if (!value) return null;
-    if (value instanceof Date) return value;
-    if (typeof value.toDate === 'function') return value.toDate();
-    if (typeof value === 'object' && typeof value.seconds === 'number') {
-        return new Date(value.seconds * 1000);
-    }
-    if (typeof value === 'string' || typeof value === 'number') {
-        const parsed = new Date(value);
-        return Number.isNaN(parsed.getTime()) ? null : parsed;
-    }
-    return null;
 }
 
 export function normalizeUserStats(data) {
@@ -41,8 +28,8 @@ export function normalizeUserStats(data) {
         currentWeeklyStreak: Number(data.currentWeeklyStreak ?? data.currentStreak) || 0,
         longestWeeklyStreak: Number(data.longestWeeklyStreak ?? data.longestStreak) || 0,
         currentDailyStreak: Number(data.currentDailyStreak ?? achievementStats.currentStreakDays) || 0,
-        lastWorkoutAt: normalizeTimestamp(data.lastWorkoutAt) || normalizeTimestamp(data.lastWorkoutAtISO),
-        updatedAt: normalizeTimestamp(data.updatedAt),
+        lastWorkoutAt: toDate(data.lastWorkoutAt) || toDate(data.lastWorkoutAtISO),
+        updatedAt: toDate(data.updatedAt),
         achievementStats: {
             ...achievementStats,
             totalWorkouts: Number(achievementStats.totalWorkouts ?? data.totalWorkouts) || 0,

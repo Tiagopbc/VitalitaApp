@@ -1,4 +1,5 @@
 import { getFirestoreDeps } from '../firebaseDb';
+import { toDate } from '../utils/firestoreDate';
 
 const INVITES_COLLECTION = 'trainer_invites';
 const TRAINER_STUDENTS_COLLECTION = 'trainer_students';
@@ -26,13 +27,6 @@ function generateInviteCode() {
     }
 
     return Array.from(bytes, byte => alphabet[byte % alphabet.length]).join('');
-}
-
-function toDate(value) {
-    if (!value) return null;
-    if (value instanceof Date) return value;
-    if (typeof value.toDate === 'function') return value.toDate();
-    return new Date(value);
 }
 
 function normalizeInviteCode(rawCode) {
