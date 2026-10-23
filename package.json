@@ -27,7 +27,7 @@
     "framer-motion": "^12.29.0",
     "html-to-image": "^1.11.13",
     "jose": "^6.2.13",
-    "lucide-react": "^0.562.0",
+    "lucide-react": "^1.60.0",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
     "react-router-dom": "^7.18.4",
