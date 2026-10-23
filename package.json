@@ -51,7 +51,7 @@
     "jsdom": "^27.4.0",
     "knip": "^6.42.1",
     "postcss": "^8.5.31",
-    "rollup-plugin-visualizer": "^6.0.5",
+    "rollup-plugin-visualizer": "^7.1.1",
     "tailwindcss": "^4.1.18",
     "vite": "^7.2.2",
     "vite-plugin-pwa": "^1.2.0",
