@@ -28,6 +28,17 @@ jobs:
 
       - name: Install Functions Dependencies
         run: npm ci --prefix functions
+
+      # Raiz em `critical`, não `high`: o @firebase/firestore fixa
+      # @grpc/grpc-js em ~1.9.0 até na versão mais nova, e os avisos high
+      # do grpc-js (GHSA-m9gg-hp2v-232j, GHSA-f596-whhp-79r4) são do lado
+      # servidor do gRPC — o bundle do navegador nem usa o grpc-js. Voltar
+      # para `high` quando o Firebase subir a dependência.
+      - name: Audit Dependencies
+        run: npm audit --omit=dev --audit-level=critical
+
+      - name: Audit Functions Dependencies
+        run: npm audit --omit=dev --audit-level=high --prefix functions
         
       - name: Run Lint
         run: npm run lint
