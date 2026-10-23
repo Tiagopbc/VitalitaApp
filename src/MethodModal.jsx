@@ -34,6 +34,7 @@ export default function MethodModal({ methodName, onClose }) {
                 {/* Botão Fechar */}
                 <button
                     onClick={onClose}
+                    aria-label="Fechar"
                     className="absolute top-4 right-4 p-2 rounded-full bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700 transition-all border border-slate-700"
                 >
                     <X size={16} />

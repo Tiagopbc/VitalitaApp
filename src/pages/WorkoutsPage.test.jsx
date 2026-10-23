@@ -237,4 +237,9 @@ describe('WorkoutsPage', () => {
             ]);
         });
     });
+
+    it('a busca tem nome acessível', async () => {
+        await renderPage();
+        expect(screen.getByRole('textbox', { name: 'Buscar treinos' })).toBeInTheDocument();
+    });
 });

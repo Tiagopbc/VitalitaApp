@@ -77,9 +77,10 @@ export function HistoryAnalyticsSection({
                         {searchMode === 'template' ? (
                             <div className="min-w-0 max-w-full space-y-3 animate-in fade-in zoom-in-95 duration-300">
                                 <div className="flex flex-col gap-1.5">
-                                    <label className="text-xs font-bold text-slate-400 uppercase ml-1">Rotina</label>
+                                    <label htmlFor="history-template" className="text-xs font-bold text-slate-400 uppercase ml-1">Rotina</label>
                                     <div className="min-w-0 max-w-full overflow-hidden rounded-xl [contain:inline-size]">
                                         <select
+                                            id="history-template"
                                             value={selectedTemplate}
                                             onChange={(e) => onTemplateChange(e.target.value)}
                                             className="block w-full min-w-0 max-w-full truncate overflow-hidden rounded-xl border border-slate-800 bg-slate-950 px-4 py-3 text-base text-white outline-none transition-colors focus:border-cyan-500"
@@ -102,9 +103,10 @@ export function HistoryAnalyticsSection({
                                 </div>
 
                                 <div className="flex flex-col gap-1.5">
-                                    <label className="text-xs font-bold text-slate-400 uppercase ml-1">Exercício</label>
+                                    <label htmlFor="history-exercise" className="text-xs font-bold text-slate-400 uppercase ml-1">Exercício</label>
                                     <div className="min-w-0 max-w-full overflow-hidden rounded-xl [contain:inline-size]">
                                         <select
+                                            id="history-exercise"
                                             value={selectedExercise}
                                             onChange={(e) => onExerciseChange(e.target.value)}
                                             disabled={!selectedTemplate}
@@ -121,8 +123,9 @@ export function HistoryAnalyticsSection({
                         ) : (
                             <div className="space-y-3 animate-in fade-in zoom-in-95 duration-300">
                                 <div className="flex flex-col gap-1.5">
-                                    <label className="text-xs font-bold text-slate-400 uppercase ml-1">Palavra-chave do Exercício</label>
+                                    <label htmlFor="history-global-search" className="text-xs font-bold text-slate-400 uppercase ml-1">Palavra-chave do Exercício</label>
                                     <input
+                                        id="history-global-search"
                                         type="text"
                                         value={globalSearchTerm}
                                         onChange={(e) => onGlobalSearchChange(e.target.value)}

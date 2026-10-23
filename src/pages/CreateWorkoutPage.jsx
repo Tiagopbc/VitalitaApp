@@ -533,6 +533,7 @@ export default function CreateWorkoutPage({ user }) {
                                 {editingExerciseId ? 'Editar Exercício' : 'Novo Exercício'}
                             </h4>
                             <button
+                                aria-label="Fechar"
                                 onClick={() => {
                                     setShowAddExercise(false);
                                     setEditingExerciseId(null);

@@ -12,8 +12,9 @@ export function LinkTrainerModal({ inviteCode, linking, onInviteCodeChange, onCo
                 <h2 className="text-lg font-bold text-white mb-4">Vincular Personal</h2>
                 <div className="space-y-4">
                     <div>
-                        <label className="text-xs text-slate-300 font-bold uppercase">Código de convite</label>
+                        <label htmlFor="trainer-invite-code" className="text-xs text-slate-300 font-bold uppercase">Código de convite</label>
                         <input
+                            id="trainer-invite-code"
                             type="text"
                             className="w-full bg-slate-950 border border-slate-600 rounded-xl px-4 py-3 text-white mt-1 focus:border-cyan-500 outline-none font-mono text-sm placeholder:text-slate-500"
                             placeholder="Cole o código recebido..."

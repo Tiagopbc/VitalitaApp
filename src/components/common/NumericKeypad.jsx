@@ -55,7 +55,7 @@ export function NumericKeypad({ isOpen, onClose, onConfirm, initialValue = '', t
                 {/* Cabeçalho / Display */}
                 <div className="flex justify-between items-center mb-6 px-2">
                     <span className="text-slate-400 text-sm font-bold uppercase tracking-wider">{title}</span>
-                    <button onClick={onClose} className="p-2 bg-slate-800/50 rounded-full text-slate-400 hover:text-white hover:bg-slate-800 transition-colors">
+                    <button onClick={onClose} aria-label="Fechar" className="p-2 bg-slate-800/50 rounded-full text-slate-400 hover:text-white hover:bg-slate-800 transition-colors">
                         <X size={20} />
                     </button>
                 </div>
@@ -96,6 +96,7 @@ export function NumericKeypad({ isOpen, onClose, onConfirm, initialValue = '', t
 
                     <button
                         onClick={() => handlePress('backspace')}
+                        aria-label="Apagar"
                         className="h-[72px] rounded-2xl bg-slate-900 border border-slate-800 hover:bg-red-500/20 hover:text-red-400 hover:border-red-500/30 active:scale-95 transition-all flex items-center justify-center text-slate-400"
                     >
                         <Delete size={28} />

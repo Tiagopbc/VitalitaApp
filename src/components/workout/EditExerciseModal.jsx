@@ -37,6 +37,7 @@ export function EditExerciseModal({ exercise, onClose, onSave }) {
                             whileHover={{ scale: 1.1, rotate: 90 }}
                             whileTap={{ scale: 0.9 }}
                             onClick={onClose}
+                            aria-label="Fechar"
                             className="w-10 h-10 flex items-center justify-center bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors"
                         >
                             <Plus size={24} className="text-slate-400 rotate-45" />
@@ -47,10 +48,11 @@ export function EditExerciseModal({ exercise, onClose, onSave }) {
                     <div className="space-y-5">
                         {/* Nome do Exercício */}
                         <div>
-                            <label className="block text-sm font-medium text-white mb-2">
+                            <label htmlFor="edit-exercise-name" className="block text-sm font-medium text-white mb-2">
                                 Nome do Exercício
                             </label>
                             <input
+                                id="edit-exercise-name"
                                 type="text"
                                 defaultValue={exercise.data.name}
                                 className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white placeholder:text-slate-500 focus:border-cyan-500 focus:outline-none transition-colors"
@@ -60,10 +62,11 @@ export function EditExerciseModal({ exercise, onClose, onSave }) {
 
                         {/* Grupo Muscular */}
                         <div>
-                            <label className="block text-sm font-medium text-white mb-2">
+                            <label htmlFor="edit-exercise-muscle" className="block text-sm font-medium text-white mb-2">
                                 Grupo Muscular
                             </label>
                             <input
+                                id="edit-exercise-muscle"
                                 type="text"
                                 defaultValue={exercise.data.muscleGroup}
                                 className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white placeholder:text-slate-500 focus:border-cyan-500 focus:outline-none transition-colors"
@@ -75,10 +78,11 @@ export function EditExerciseModal({ exercise, onClose, onSave }) {
                         <div className="grid grid-cols-3 gap-3">
                             {/* Peso */}
                             <div>
-                                <label className="block text-sm font-medium text-white mb-2">
+                                <label htmlFor="edit-exercise-weight" className="block text-sm font-medium text-white mb-2">
                                     Peso (kg)
                                 </label>
                                 <input
+                                    id="edit-exercise-weight"
                                     type="number"
                                     defaultValue={exercise.data.lastWeight}
                                     className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white placeholder:text-slate-500 focus:border-cyan-500 focus:outline-none transition-colors"
@@ -88,10 +92,11 @@ export function EditExerciseModal({ exercise, onClose, onSave }) {
 
                             {/* Reps */}
                             <div>
-                                <label className="block text-sm font-medium text-white mb-2">
+                                <label htmlFor="edit-exercise-reps" className="block text-sm font-medium text-white mb-2">
                                     Reps
                                 </label>
                                 <input
+                                    id="edit-exercise-reps"
                                     type="number"
                                     defaultValue={exercise.data.lastReps}
                                     className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white placeholder:text-slate-500 focus:border-cyan-500 focus:outline-none transition-colors"
@@ -101,10 +106,11 @@ export function EditExerciseModal({ exercise, onClose, onSave }) {
 
                             {/* Sets */}
                             <div>
-                                <label className="block text-sm font-medium text-white mb-2">
+                                <label htmlFor="edit-exercise-sets" className="block text-sm font-medium text-white mb-2">
                                     Sets
                                 </label>
                                 <input
+                                    id="edit-exercise-sets"
                                     type="number"
                                     defaultValue={exercise.data.sets}
                                     className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white placeholder:text-slate-500 focus:border-cyan-500 focus:outline-none transition-colors"
@@ -115,11 +121,12 @@ export function EditExerciseModal({ exercise, onClose, onSave }) {
 
                         {/* Recorde Pessoal (opcional) */}
                         <div>
-                            <label className="block text-sm font-medium text-white mb-2">
+                            <label htmlFor="edit-exercise-pr" className="block text-sm font-medium text-white mb-2">
                                 Recorde Pessoal (kg)
                                 <span className="text-slate-500 ml-1">(opcional)</span>
                             </label>
                             <input
+                                id="edit-exercise-pr"
                                 type="number"
                                 defaultValue={exercise.data.personalRecord}
                                 className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white placeholder:text-slate-500 focus:border-cyan-500 focus:outline-none transition-colors"
