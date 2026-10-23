@@ -1,0 +1,30 @@
+# Majors pendentes entram um por vez, cada um no seu PR — o agrupamento abaixo
+# junta só minor e patch. PR de npm que mexe no lockfile precisa ter sido gerado
+# com npm 11 (ver "Node 24 + npm 11" no CLAUDE.md).
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      minor-e-patch:
+        update-types: [minor, patch]
+
+  - package-ecosystem: npm
+    directory: /functions
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      minor-e-patch:
+        update-types: [minor, patch]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      minor-e-patch:
+        update-types: [minor, patch]
