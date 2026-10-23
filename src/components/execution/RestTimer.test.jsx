@@ -363,4 +363,10 @@ describe('RestTimer — alertas locais', () => {
 
         expect(playRestCompleteSound).toHaveBeenCalled();
     });
+
+    it('os ajustes de tempo têm nome acessível', async () => {
+        await renderRodando();
+        expect(screen.getByRole('button', { name: 'Diminuir 10 segundos' })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'Aumentar 10 segundos' })).toBeInTheDocument();
+    });
 });

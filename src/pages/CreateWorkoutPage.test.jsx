@@ -344,4 +344,15 @@ describe('CreateWorkoutPage Integration', () => {
             workoutService.searchExercises.mockResolvedValue([]);
         }
     });
+
+    it('o fechar do modal de exercício tem nome acessível', () => {
+        render(
+            <MemoryRouter>
+                <CreateWorkoutPage user={mockUser} />
+            </MemoryRouter>
+        );
+
+        fireEvent.click(screen.getByText('Adicionar Exercício'));
+        expect(screen.getByRole('button', { name: 'Fechar' })).toBeInTheDocument();
+    });
 });

@@ -335,16 +335,16 @@ export const LinearCardCompactV2 = memo(function LinearCardCompactV2({
                                         <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider truncate flex-1 text-center">
                                             {isPerSideL ? `LADO • TOT: ${item.weight||"0"}` : 'PESO (TOT)'}
                                         </span>
-                                        <button onClick={() => toggleLocalWeightMode(index)} className={`p-1.5 rounded-full ${isPerSideL ? 'bg-purple-500/20 text-purple-400' : 'bg-slate-800 text-slate-500'}`}><Scale size={13} /></button>
+                                        <button onClick={() => toggleLocalWeightMode(index)} aria-label="Alternar peso por lado" className={`p-1.5 rounded-full ${isPerSideL ? 'bg-purple-500/20 text-purple-400' : 'bg-slate-800 text-slate-500'}`}><Scale size={13} /></button>
                                     </div>
                                     <div className={`bg-[#0f172a] border ${isPerSideL?'border-purple-500/50 shadow-[0_0_10px_rgba(168,85,247,0.1)]': (index > 0 ? 'border-cyan-500/30' : 'border-slate-800')} rounded-[24px] p-1 md:p-1.5 flex items-center justify-between relative h-[56px] md:h-[64px]`}>
-                                        <button onClick={() => decrementWeight(index)} className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-slate-800/50 border border-slate-700 text-slate-400 flex items-center justify-center hover:bg-slate-800"><Minus className="w-[18px] md:w-5" strokeWidth={2.5} /></button>
+                                        <button onClick={() => decrementWeight(index)} aria-label="Diminuir peso" className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-slate-800/50 border border-slate-700 text-slate-400 flex items-center justify-center hover:bg-slate-800"><Minus className="w-[18px] md:w-5" strokeWidth={2.5} /></button>
                                         <div className="flex-1 flex flex-col items-center justify-center cursor-pointer active:scale-95 text-center" onClick={() => openKeypad('weight', index)}>
                                             <div className={`text-xl md:text-2xl font-bold leading-none tracking-tight ${!formattedDisplay || formattedDisplay === '0' ? 'text-slate-400' : isPerSideL ? 'text-purple-400' : (index>0?'text-white':'text-white')}`}>
                                                 {formattedDisplay}
                                             </div>
                                         </div>
-                                        <button onClick={() => incrementWeight(index)} className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-cyan-500/10 border border-cyan-500/50 text-cyan-400 flex items-center justify-center"><Plus className="w-[18px] md:w-5" strokeWidth={2.5} /></button>
+                                        <button onClick={() => incrementWeight(index)} aria-label="Aumentar peso" className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-cyan-500/10 border border-cyan-500/50 text-cyan-400 flex items-center justify-center"><Plus className="w-[18px] md:w-5" strokeWidth={2.5} /></button>
                                         {index === 0 && !item.weight && suggestedWeight && (
                                             <div className="absolute top-1 left-1/2 -translate-x-1/2 -mt-1 opacity-0 group-hover:opacity-100 pointer-events-none"><span className="text-[9px] text-slate-300 bg-slate-800/90 px-1.5 rounded border border-slate-700">Hist: {suggestedWeight}</span></div>
                                         )}
@@ -354,17 +354,17 @@ export const LinearCardCompactV2 = memo(function LinearCardCompactV2({
                                     <div className="flex items-center justify-between h-8 px-2">
                                         <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider text-center flex-1">Repetições</span>
                                         {index > 0 && (
-                                            <button onClick={() => handleRemoveDrop(index)} className="p-1.5 text-slate-500 hover:text-red-400"><Minus size={13}/></button>
+                                            <button onClick={() => handleRemoveDrop(index)} aria-label="Remover redução" className="p-1.5 text-slate-500 hover:text-red-400"><Minus size={13}/></button>
                                         )}
                                     </div>
                                     <div className={`bg-[#0f172a] border ${index>0?'border-slate-800':'border-slate-800'} rounded-[24px] p-1 md:p-1.5 flex items-center justify-between h-[56px] md:h-[64px]`}>
-                                        <button onClick={() => decrementReps(index)} className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-slate-800/50 border border-slate-700 text-slate-400 flex items-center justify-center hover:bg-slate-800"><Minus className="w-[18px] md:w-5" strokeWidth={2.5} /></button>
+                                        <button onClick={() => decrementReps(index)} aria-label="Diminuir repetições" className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-slate-800/50 border border-slate-700 text-slate-400 flex items-center justify-center hover:bg-slate-800"><Minus className="w-[18px] md:w-5" strokeWidth={2.5} /></button>
                                         <div className="flex-1 flex flex-col items-center justify-center cursor-pointer active:scale-95" onClick={() => openKeypad('reps', index)}>
                                             <div className={`text-xl md:text-2xl font-bold leading-none tracking-tight ${!item.reps && (index===0?suggestedReps:null) ? 'text-slate-400' : 'text-white'}`}>
                                                 {item.reps || (index===0?suggestedReps:null) || "0"}
                                             </div>
                                         </div>
-                                        <button onClick={() => incrementReps(index)} className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-cyan-500/10 border border-cyan-500/50 text-cyan-400 flex items-center justify-center"><Plus className="w-[18px] md:w-5" strokeWidth={2.5} /></button>
+                                        <button onClick={() => incrementReps(index)} aria-label="Aumentar repetições" className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-cyan-500/10 border border-cyan-500/50 text-cyan-400 flex items-center justify-center"><Plus className="w-[18px] md:w-5" strokeWidth={2.5} /></button>
                                     </div>
                                 </div>
                             </div>
@@ -384,7 +384,7 @@ export const LinearCardCompactV2 = memo(function LinearCardCompactV2({
             </button>
 
             <div className="pt-2">
-                <input type="text" value={observation || ''} onChange={(e) => onUpdateNotes(exerciseId, e.target.value)} placeholder="Adicionar observação..." className="w-full bg-transparent border-b border-slate-700/50 text-xs text-slate-300 py-3 focus:border-cyan-500/50 focus:text-slate-200 outline-none transition-colors placeholder:text-slate-500" />
+                <input type="text" value={observation || ''} onChange={(e) => onUpdateNotes(exerciseId, e.target.value)} aria-label="Observação" placeholder="Adicionar observação..." className="w-full bg-transparent border-b border-slate-700/50 text-xs text-slate-300 py-3 focus:border-cyan-500/50 focus:text-slate-200 outline-none transition-colors placeholder:text-slate-500" />
             </div>
 
             <NumericKeypad isOpen={keypadOpen} onClose={() => setKeypadOpen(false)} onConfirm={handleKeypadConfirm} initialValue={numpadInitial} title={numpadTitle} />

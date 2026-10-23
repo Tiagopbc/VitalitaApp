@@ -318,6 +318,7 @@ export function TrainerDashboard({ user, onBack, onNavigateToCreateWorkout }) {
                     <input
                         type="text"
                         placeholder="Buscar aluno por nome..."
+                        aria-label="Buscar aluno"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         className="relative w-full bg-[#0f172a] border border-slate-800 rounded-2xl px-5 py-4 text-white focus:outline-none focus:border-cyan-500/50 shadow-xl transition-all placeholder:text-slate-600 font-medium"
@@ -398,6 +399,7 @@ export function TrainerDashboard({ user, onBack, onNavigateToCreateWorkout }) {
                         {/* Header com gradiente sutil */}
                         <div className="p-6 pb-2 relative flex flex-col items-center text-center">
                             <button
+                                aria-label="Fechar"
                                 onClick={() => setShowInviteModal(false)}
                                 className="absolute top-4 right-4 p-2 text-slate-400 hover:text-white hover:bg-white/10 rounded-full transition-colors"
                             >

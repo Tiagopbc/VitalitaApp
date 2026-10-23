@@ -181,4 +181,19 @@ describe('TrainerDashboard', () => {
             expect(userService.unlinkTrainer).toHaveBeenCalledWith('student-1', 'trainer-1');
         });
     });
+
+    it('a busca e o fechar do convite têm nome acessível', async () => {
+        render(
+            <TrainerDashboard
+                user={mockUser}
+                onBack={vi.fn()}
+                onNavigateToCreateWorkout={vi.fn()}
+            />
+        );
+
+        expect(screen.getByRole('textbox', { name: 'Buscar aluno' })).toBeInTheDocument();
+
+        fireEvent.click(screen.getByRole('button', { name: 'Convidar Aluno' }));
+        expect(screen.getByRole('button', { name: 'Fechar' })).toBeInTheDocument();
+    });
 });

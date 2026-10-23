@@ -442,6 +442,7 @@ export function RestTimer({ initialTime = 90, onComplete, isOpen, onClose, onDur
                     <div className="flex items-center gap-3 bg-[#0f172a] p-1.5 rounded-2xl border border-slate-800/60 shadow-inner">
                         <button
                             onClick={() => adjustTime(-10)}
+                            aria-label="Diminuir 10 segundos"
                             className="w-10 h-10 rounded-xl bg-slate-800/50 flex items-center justify-center text-slate-400 hover:bg-slate-700 hover:text-white transition-all active:scale-95"
                         >
                             <Minus size={18} />
@@ -451,6 +452,7 @@ export function RestTimer({ initialTime = 90, onComplete, isOpen, onClose, onDur
                         </span>
                         <button
                             onClick={() => adjustTime(10)}
+                            aria-label="Aumentar 10 segundos"
                             className="w-10 h-10 rounded-xl bg-slate-800/50 flex items-center justify-center text-slate-400 hover:bg-slate-700 hover:text-white transition-all active:scale-95"
                         >
                             <Plus size={18} />

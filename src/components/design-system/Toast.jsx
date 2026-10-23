@@ -45,6 +45,7 @@ export function Toast({ message, type = 'error', onClose, duration = 3000 }) {
             <span className="font-bold text-sm">{message}</span>
             <button
                 onClick={onClose}
+                aria-label="Fechar"
                 className="ml-2 p-1 rounded-full hover:bg-white/20 transition-colors"
             >
                 <X size={16} />

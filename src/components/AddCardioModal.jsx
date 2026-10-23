@@ -65,6 +65,7 @@ export function AddCardioModal({ isOpen, onClose, user }) {
                     </div>
                     <button 
                         onClick={onClose}
+                        aria-label="Fechar"
                         className="p-2 rounded-full hover:bg-slate-800 text-slate-400 hover:text-white transition-colors relative z-10"
                     >
                         <X size={20} />
@@ -97,10 +98,11 @@ export function AddCardioModal({ isOpen, onClose, user }) {
                     {/* Quick Metrics */}
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <label className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                            <label htmlFor="cardio-duration" className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
                                 <Clock size={14} className="text-blue-400" /> Duração (min) <span className="text-cyan-500">*</span>
                             </label>
                             <input 
+                                id="cardio-duration"
                                 type="number" 
                                 value={durationMin}
                                 onChange={e => setDurationMin(e.target.value)}
@@ -109,10 +111,11 @@ export function AddCardioModal({ isOpen, onClose, user }) {
                             />
                         </div>
                         <div className="space-y-2">
-                            <label className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                            <label htmlFor="cardio-distance" className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
                                 <Navigation size={14} className="text-indigo-400" /> Distância (km)
                             </label>
                             <input 
+                                id="cardio-distance"
                                 type="number" 
                                 step="0.1"
                                 value={distanceKm}
@@ -146,10 +149,11 @@ export function AddCardioModal({ isOpen, onClose, user }) {
                     {/* Calories & Notes */}
                     <div className="space-y-4 pt-2">
                         <div className="space-y-2">
-                            <label className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                            <label htmlFor="cardio-calories" className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
                                 <Flame size={14} className="text-orange-400" /> Calorias Queimadas
                             </label>
                             <input 
+                                id="cardio-calories"
                                 type="number" 
                                 value={calories}
                                 onChange={e => setCalories(e.target.value)}
@@ -159,10 +163,11 @@ export function AddCardioModal({ isOpen, onClose, user }) {
                         </div>
 
                         <div className="space-y-2">
-                            <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                            <label htmlFor="cardio-notes" className="text-xs font-bold text-slate-400 uppercase tracking-wider">
                                 Anotações
                             </label>
                             <textarea 
+                                id="cardio-notes"
                                 value={notes}
                                 onChange={e => setNotes(e.target.value)}
                                 placeholder="Como foi o treino? (Opcional)"

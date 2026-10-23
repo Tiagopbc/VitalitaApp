@@ -11,6 +11,7 @@ export function EditProfileModal({ profile, saving, onClose, onChange, onSave, o
             <div className="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-md p-6 relative" onClick={e => e.stopPropagation()}>
                 <button
                     onClick={onClose}
+                    aria-label="Fechar"
                     className="absolute top-4 right-4 text-slate-500 hover:text-white"
                 >
                     <X size={20} />
@@ -20,8 +21,9 @@ export function EditProfileModal({ profile, saving, onClose, onChange, onSave, o
 
                 <div className="space-y-4">
                     <div>
-                        <label className="block text-xs font-medium text-slate-400 mb-1.5">Nome Completo</label>
+                        <label htmlFor="profile-name" className="block text-xs font-medium text-slate-400 mb-1.5">Nome Completo</label>
                         <input
+                            id="profile-name"
                             type="text"
                             name="displayName"
                             value={profile.displayName}
@@ -33,8 +35,9 @@ export function EditProfileModal({ profile, saving, onClose, onChange, onSave, o
 
                     {/* Email */}
                     <div>
-                        <label className="block text-xs font-medium text-slate-400 mb-1.5">Email</label>
+                        <label htmlFor="profile-email" className="block text-xs font-medium text-slate-400 mb-1.5">Email</label>
                         <input
+                            id="profile-email"
                             type="email"
                             name="email"
                             value={profile.email}
@@ -47,8 +50,9 @@ export function EditProfileModal({ profile, saving, onClose, onChange, onSave, o
                     <div className="grid grid-cols-2 gap-4">
                         {/* Weight */}
                         <div>
-                            <label className="block text-xs font-medium text-slate-400 mb-1.5">Peso (kg)</label>
+                            <label htmlFor="profile-weight" className="block text-xs font-medium text-slate-400 mb-1.5">Peso (kg)</label>
                             <input
+                                id="profile-weight"
                                 type="number"
                                 name="weight"
                                 value={profile.weight}
@@ -59,8 +63,9 @@ export function EditProfileModal({ profile, saving, onClose, onChange, onSave, o
                         </div>
                         {/* Height */}
                         <div>
-                            <label className="block text-xs font-medium text-slate-400 mb-1.5">Altura (cm)</label>
+                            <label htmlFor="profile-height" className="block text-xs font-medium text-slate-400 mb-1.5">Altura (cm)</label>
                             <input
+                                id="profile-height"
                                 type="number"
                                 name="height"
                                 value={profile.height}
@@ -74,8 +79,9 @@ export function EditProfileModal({ profile, saving, onClose, onChange, onSave, o
                     <div className="grid grid-cols-2 gap-4">
                         {/* Age */}
                         <div>
-                            <label className="block text-xs font-medium text-slate-400 mb-1.5">Idade</label>
+                            <label htmlFor="profile-age" className="block text-xs font-medium text-slate-400 mb-1.5">Idade</label>
                             <input
+                                id="profile-age"
                                 type="number"
                                 name="age"
                                 value={profile.age}
@@ -90,6 +96,7 @@ export function EditProfileModal({ profile, saving, onClose, onChange, onSave, o
                             <div className="flex items-center gap-3 bg-slate-950 border border-slate-800 rounded-xl px-4 py-2">
                                 <button
                                     onClick={() => onWeeklyGoalDelta(-1)}
+                                    aria-label="Diminuir meta semanal"
                                     className="w-8 h-8 flex items-center justify-center bg-slate-800 rounded-lg text-slate-400 hover:text-white"
                                 >
                                     <Minus size={16} />
@@ -97,6 +104,7 @@ export function EditProfileModal({ profile, saving, onClose, onChange, onSave, o
                                 <span className="flex-1 text-center font-bold text-white">{profile.weeklyGoal}</span>
                                 <button
                                     onClick={() => onWeeklyGoalDelta(1)}
+                                    aria-label="Aumentar meta semanal"
                                     className="w-8 h-8 flex items-center justify-center bg-slate-800 rounded-lg text-slate-400 hover:text-white"
                                 >
                                     <Plus size={16} />

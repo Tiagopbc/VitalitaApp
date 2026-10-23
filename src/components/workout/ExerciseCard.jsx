@@ -64,6 +64,7 @@ export function ExerciseCard({
                     <motion.button
                         whileHover={{ scale: 1.1 }}
                         whileTap={{ scale: 0.9 }}
+                        aria-label="Mais opções"
                         onClick={(e) => {
                             e.stopPropagation();
                             // Lidar com mais opções

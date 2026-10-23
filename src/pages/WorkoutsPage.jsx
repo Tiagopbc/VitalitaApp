@@ -410,6 +410,7 @@ export default function WorkoutsPage({ onNavigateToCreate, onNavigateToWorkout, 
                             <input
                                 type="text"
                                 value={searchQuery}
+                                aria-label="Buscar treinos"
                                 onChange={(e) => setSearchQuery(e.target.value)}
                                 placeholder="Buscar por nome ou músculo..."
                                 className="w-full pl-12 pr-4 py-4 bg-transparent border-none text-white placeholder:text-slate-500 focus:ring-1 focus:ring-cyan-500 rounded-3xl transition-colors"

@@ -139,6 +139,7 @@ export function WorkoutDetailsModal({ session, onClose, user }) {
                         </div>
                     </div>
                     <button
+                        aria-label="Fechar"
                         onClick={onClose}
                         className="p-2 -mr-2 text-slate-400 hover:text-white hover:bg-slate-800/50 rounded-full transition-colors"
                     >
