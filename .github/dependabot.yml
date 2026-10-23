@@ -1,23 +1,33 @@
-# Majors pendentes entram um por vez, cada um no seu PR — o agrupamento abaixo
+# Majors pendentes entram um por vez, cada um no seu PR — o grupo minor-e-patch
 # junta só minor e patch. PR de npm que mexe no lockfile precisa ter sido gerado
 # com npm 11 (ver "Node 24 + npm 11" no CLAUDE.md).
 version: 2
 updates:
+  # Raiz e functions/ numa entrada só: com `directories`, um grupo vira um PR
+  # único que atualiza os dois diretórios. É o que os pares abaixo precisam.
   - package-ecosystem: npm
-    directory: /
+    directories:
+      - /
+      - /functions
     schedule:
       interval: weekly
-    open-pull-requests-limit: 5
+    open-pull-requests-limit: 10
     groups:
-      minor-e-patch:
-        update-types: [minor, patch]
-
-  - package-ecosystem: npm
-    directory: /functions
-    schedule:
-      interval: weekly
-    open-pull-requests-limit: 5
-    groups:
+      # Pares que não sobem separados. Ficam antes do minor-e-patch porque o
+      # Dependabot põe cada dependência no primeiro grupo que casar.
+      #
+      # firebase-functions 6 aceita firebase-admin só até a 13 (peer
+      # dependency): o bump isolado do admin quebra o `npm ci` com ERESOLVE.
+      firebase-functions-e-admin:
+        patterns:
+          - firebase-admin
+          - firebase-functions
+      # Raiz e functions/ rodam o mesmo Vitest desde o D12; o coverage-v8
+      # exige a mesma versão do vitest.
+      vitest:
+        patterns:
+          - vitest
+          - "@vitest/*"
       minor-e-patch:
         update-types: [minor, patch]
 
