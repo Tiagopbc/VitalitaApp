@@ -33,7 +33,7 @@ vi.mock('../../utils/restTimerAlerts', () => ({
 import { RestTimer } from './RestTimer';
 import { scheduleRestPush, cancelRestPush, warmRestPushSubscription } from '../../services/restPushService';
 import { describePushContext } from '../../services/pushDiagnostics';
-import { primeRestAudio, playRestCompleteSound, ensureNotificationPermission } from '../../utils/restTimerAlerts';
+import { primeRestAudio, playRestCompleteSound, ensureNotificationPermission, notifyRestComplete } from '../../utils/restTimerAlerts';
 
 const agendado = (messageId = 'msg-1') => Promise.resolve({ messageId, reason: null });
 const recusado = (reason) => Promise.resolve({ messageId: null, reason });
@@ -107,8 +107,7 @@ describe('RestTimer — push de segundo plano', () => {
      * vista, para evitar aviso duplicado. Ela foi removida por decisão: quem
      * bloqueasse a tela dentro dela ficava sem push E sem alerta local (o
      * setInterval congela), ou seja, silêncio total — a única falha que o
-     * usuário não tem como contornar. Duplicar é o erro barato, e a `tag`
-     * compartilhada faz o sistema substituir a notificação em vez de empilhar.
+     * usuário não tem como contornar.
      *
      * Os três casos abaixo cobrem as condições que a janela testava, agora
      * todos com o mesmo veredito: o push sobrevive até o fim do descanso.
@@ -362,6 +361,47 @@ describe('RestTimer — alertas locais', () => {
         await act(async () => { await vi.advanceTimersByTimeAsync(20_100); });
 
         expect(playRestCompleteSound).toHaveBeenCalled();
+    });
+
+    /*
+     * Fora da tela, com push agendado, o push é o único aviso. O iOS ignora a
+     * `tag` (WebKit 258922), então somar o alerta local empilha duas
+     * notificações. E o push não pode ser cancelado aqui: o timer local acaba
+     * antes do horário agendado no QStash, e cancelar sem o alerta local seria
+     * descanso terminando em silêncio.
+     */
+    it('fora da tela, com push agendado, deixa o aviso só com o push', async () => {
+        const { unmount } = await renderRodando({ initialTime: 20 });
+        setVisibility('hidden');
+
+        await act(async () => { await vi.advanceTimersByTimeAsync(20_100); });
+        unmount();
+
+        expect(notifyRestComplete).not.toHaveBeenCalled();
+        expect(cancelRestPush).not.toHaveBeenCalled();
+    });
+
+    // Sem push garantido, o alerta local é o único aviso possível.
+    it.each([
+        ['recusado pelo servidor', () => recusado('server')],
+        ['sem resposta até o fim do descanso', () => new Promise(() => {})]
+    ])('fora da tela, com agendamento %s, dispara o alerta local', async (_caso, agendamento) => {
+        scheduleRestPush.mockImplementation(agendamento);
+        await renderRodando({ initialTime: 20 });
+        setVisibility('hidden');
+
+        await act(async () => { await vi.advanceTimersByTimeAsync(20_100); });
+
+        expect(notifyRestComplete).toHaveBeenCalledTimes(1);
+    });
+
+    it('com o app à vista, não dispara alerta local e cancela o push pendente', async () => {
+        await renderRodando({ initialTime: 20 });
+
+        await act(async () => { await vi.advanceTimersByTimeAsync(20_100); });
+
+        expect(notifyRestComplete).not.toHaveBeenCalled();
+        expect(cancelRestPush).toHaveBeenCalledWith('msg-1');
     });
 
     it('os ajustes de tempo têm nome acessível', async () => {
