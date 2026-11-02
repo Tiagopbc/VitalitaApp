@@ -54,11 +54,14 @@ export function RestTimer({ initialTime = 90, onComplete, isOpen, onClose, onDur
      * ela custava caro demais: bastava bloquear a tela dentro desses 5s para
      * o push já ter sido cancelado e o `setInterval` congelar logo em seguida
      * — descanso terminando em silêncio absoluto, que é a única falha que não
-     * dá para o usuário contornar. Duplicar é o erro barato, e aqui nem chega
-     * a duplicar de verdade: o alerta local e o push usam a mesma `tag`
-     * ('vitalita-rest-timer'), então o sistema substitui a notificação em vez
-     * de empilhar. O cancelamento segue valendo para pausa, ajuste, fechamento
-     * e desmontagem — nesses casos o descanso deixou de existir.
+     * dá para o usuário contornar. O cancelamento segue valendo para pausa,
+     * ajuste, fechamento e desmontagem — nesses casos o descanso deixou de
+     * existir.
+     *
+     * A `tag` compartilhada entre push e alerta local não evita duplicata no
+     * iOS, que a ignora e empilha as duas notificações (WebKit 258922). Quem
+     * evita é o fim do descanso fora da tela, que só usa o alerta local se não
+     * houver push agendado.
      *
      * A contabilidade é por pedido, não por estado compartilhado: cada
      * agendamento leva um número de série, e só o mais recente pode mexer no
@@ -258,9 +261,17 @@ export function RestTimer({ initialTime = 90, onComplete, isOpen, onClose, onDur
                     vibrate([200, 100, 200, 100, 200]);
                     playRestCompleteSound();
                     // Com o app em segundo plano/tela bloqueada, o alerta visível
-                    // é a notificação do sistema.
+                    // é a notificação do sistema: o push, se foi agendado, e o
+                    // alerta local só na falta dele. Soltar o messageId impede o
+                    // efeito de status de cancelar o push: o timer local acaba
+                    // antes do horário agendado no QStash, então cancelar aqui
+                    // tiraria o único aviso.
                     if (document.visibilityState === 'hidden') {
-                        notifyRestComplete();
+                        if (pushStateRef.current.messageId) {
+                            pushStateRef.current.messageId = null;
+                        } else {
+                            notifyRestComplete();
+                        }
                     }
                     clearInterval(intervalRef.current);
                     endTimeRef.current = null;
