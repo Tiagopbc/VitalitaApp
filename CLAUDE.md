@@ -81,6 +81,8 @@ Ler antes de "consertar" algo que parece quebrado — vários destes já foram d
 
 **Build de produção só é verificado rodando o bundle, com as flags de produção ligadas.** `npm run build` prova que compila, não que executa — e um `npm run preview` sem as `VITE_*` de produção pode esconder o bug, porque o Rollup remove por tree-shaking o código que a flag desliga. Foi assim que a quebra acima escapou. Para reproduzir o build real: `VITE_ENABLE_PDF_IMPORT=true npm run build && npm run preview` e abra http://localhost:4173.
 
+**Import relativo em `api/` precisa de extensão.** As funções rodam em Node puro e o projeto é ESM: `./_lib/firebaseToken` sem `.js` passa no Vitest, que resolve pelo Vite, e derruba a função em produção com `ERR_MODULE_NOT_FOUND` antes da primeira linha. Do #119 (22/10/2026) até a correção, isso deixou fora do ar o agendamento e o cancelamento do push de descanso e a importação por PDF, com o CI verde. No app, o sintoma é o banner âmbar "Não foi possível agendar o aviso em segundo plano". `api/imports-esm.test.js` carrega cada função em Node de verdade para isso não voltar.
+
 **A importação por PDF é a única funcionalidade paga e tem armadilhas próprias** (custo por requisição, três env vars, decomposição de bi-sets, fila de revisão). Mexendo em `api/parse-workout-pdf.js`, `workoutPdfImport.js` ou no botão de importar treino? **Invoque o skill `importacao-pdf-treino`** antes.
 
 **Toda escrita em `workout_templates` passa por `workoutService`.** `createTemplate`/`updateTemplate` são o caminho único usado pela criação manual, pela biblioteca de modelos (`src/data/starterWorkouts.js`) e pela importação por PDF. Não volte a chamar `addDoc` direto numa página.

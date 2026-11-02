@@ -8,7 +8,7 @@
  * servidor — quem tivesse ou adivinhasse um `messageId` cancelaria a entrega de
  * outra pessoa.
  */
-import { requireFirebaseUser } from './_lib/firebaseToken';
+import { requireFirebaseUser } from './_lib/firebaseToken.js';
 const QSTASH_MESSAGES_URL = 'https://qstash.upstash.io/v2/messages/';
 
 export default async function handler(req, res) {
