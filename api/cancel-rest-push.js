@@ -9,7 +9,9 @@
  * outra pessoa.
  */
 import { requireFirebaseUser } from './_lib/firebaseToken.js';
-const QSTASH_MESSAGES_URL = 'https://qstash.upstash.io/v2/messages/';
+// Mesma base de schedule-rest-push.js: a mensagem só existe na região que a
+// publicou, então o cancelamento precisa ir para o mesmo QSTASH_URL.
+const DEFAULT_QSTASH_BASE = 'https://qstash.upstash.io';
 
 export default async function handler(req, res) {
     if (req.method !== 'POST') {
@@ -30,8 +32,10 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: 'invalid_message_id' });
     }
 
+    const qstashBase = (process.env.QSTASH_URL || DEFAULT_QSTASH_BASE).replace(/\/+$/, '');
+
     try {
-        const response = await fetch(QSTASH_MESSAGES_URL + encodeURIComponent(messageId), {
+        const response = await fetch(`${qstashBase}/v2/messages/${encodeURIComponent(messageId)}`, {
             method: 'DELETE',
             headers: { Authorization: `Bearer ${token}` }
         });

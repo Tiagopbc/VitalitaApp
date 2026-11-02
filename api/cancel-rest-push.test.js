@@ -31,6 +31,7 @@ describe('/api/cancel-rest-push', () => {
         vi.unstubAllGlobals();
         vi.clearAllMocks();
         delete process.env.QSTASH_TOKEN;
+        delete process.env.QSTASH_URL;
     });
 
     it('rejeita métodos diferentes de POST', async () => {
@@ -92,6 +93,36 @@ describe('/api/cancel-rest-push', () => {
         );
         expect(res.statusCode).toBe(200);
         expect(res.body).toEqual({ ok: true });
+    });
+
+    it('usa o endpoint padrão quando QSTASH_URL não está definido', async () => {
+        const res = makeRes();
+        await handler(req({ messageId: 'msg_1' }), res);
+
+        const [url, options] = globalThis.fetch.mock.calls[0];
+        expect(url).toBe('https://qstash.upstash.io/v2/messages/msg_1');
+        expect(options.method).toBe('DELETE');
+    });
+
+    // A mensagem só existe na região que a publicou: cancelar em outra não tem
+    // efeito, e um 404 ali passaria por "já entregue" (ver o caso abaixo).
+    it('cancela no endpoint da região quando QSTASH_URL está definido', async () => {
+        process.env.QSTASH_URL = 'https://qstash-us-east-1.upstash.io';
+        const res = makeRes();
+        await handler(req({ messageId: 'msg_1' }), res);
+
+        const [url, options] = globalThis.fetch.mock.calls[0];
+        expect(url).toBe('https://qstash-us-east-1.upstash.io/v2/messages/msg_1');
+        expect(options.method).toBe('DELETE');
+    });
+
+    it('não duplica a barra quando QSTASH_URL termina com barra', async () => {
+        process.env.QSTASH_URL = 'https://qstash-us-east-1.upstash.io/';
+        const res = makeRes();
+        await handler(req({ messageId: 'msg_1' }), res);
+
+        const [url] = globalThis.fetch.mock.calls[0];
+        expect(url).toBe('https://qstash-us-east-1.upstash.io/v2/messages/msg_1');
     });
 
     // 404 do QStash significa entrega já feita ou já cancelada.
