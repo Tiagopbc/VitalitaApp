@@ -9,7 +9,7 @@
  * servidor entregar notificação assinada com a VAPID do Vitalità — a chave
  * pública está no bundle, então forjar a inscrição é trivial.
  */
-import { requireFirebaseUser } from './_lib/firebaseToken';
+import { requireFirebaseUser } from './_lib/firebaseToken.js';
 // Base do QStash — IMPORTANTE: é específica por REGIÃO. `qstash.upstash.io`
 // aponta para eu-central-1; se a conta/token forem de outra região (ex.:
 // us-east-1) o publish falha com 404 "user not found in this region". Defina

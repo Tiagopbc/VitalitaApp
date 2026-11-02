@@ -15,7 +15,7 @@
  * `groupedWithPrevious` — o cliente converte isso no `groupId` que liga a dupla.
  */
 import Anthropic from '@anthropic-ai/sdk';
-import { verifyFirebaseToken } from './_lib/firebaseToken';
+import { verifyFirebaseToken } from './_lib/firebaseToken.js';
 
 // Modelo com suporte nativo a PDF. Opus 5 pela precisão de extração — erro de
 // leitura vira série/repetição errada na ficha do aluno — e pelo mesmo preço por
