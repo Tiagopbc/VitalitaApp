@@ -54,3 +54,27 @@ describe('vercel.json: login com Google no próprio domínio (#149)', () => {
         }
     });
 });
+
+// O service worker do PWA responde toda navegação com o index.html
+// (navigateFallback). Sem excluir /__/auth/, a janela do login e o iframe do
+// Firebase recebem o app no lugar do handler, antes de a requisição chegar
+// ao rewrite acima — e o login com Google quebra para quem já tem o PWA.
+describe('vite.config.js: service worker não intercepta /__/auth/ (#149)', () => {
+    const vite = fs.readFileSync(path.join(raiz, 'vite.config.js'), 'utf8');
+    const lista = vite.match(/navigateFallbackDenylist:\s*\[([^\]]*)\]/);
+
+    it('declara uma lista de exclusão no fallback de navegação', () => {
+        expect(lista, 'navigateFallbackDenylist ausente no bloco workbox').not.toBeNull();
+    });
+
+    it('a lista exclui as rotas do Firebase Auth e deixa as do app no fallback', () => {
+        const padroes = [...lista[1].matchAll(/\/((?:\\\/|[^/])+)\/([a-z]*)/g)].map(([, corpo, flags]) => new RegExp(corpo, flags));
+        const excluida = (caminho) => padroes.some((re) => re.test(caminho));
+        expect(excluida('/__/auth/handler')).toBe(true);
+        expect(excluida('/__/auth/iframe')).toBe(true);
+        expect(excluida('/')).toBe(false);
+        expect(excluida('/history')).toBe(false);
+        expect(excluida('/workout/abc')).toBe(false);
+    });
+});
+
