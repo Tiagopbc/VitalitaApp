@@ -19,7 +19,7 @@ description: >-
 | `method` | Rótulo **informativo**, escolhido pelo usuário no formulário ("Bi-set", "Drop-set", "Convencional") | **Nada** para bi-set/tri-set/circuito. Só `Drop-set`, `Rest-Pause` e `Cluster set` têm efeito (semeiam reduções em `normalizeSets.js`). |
 | `groupId` | Vínculo entre exercícios **consecutivos**, criado pelo botão de corrente ou pela importação de PDF | **Tudo**: `useExecutionNavigation` chama `getGroupInfo` e, com base nele, alterna os exercícios a cada série e adia o descanso até o fim da volta. |
 
-O próprio código diz isso, em `src/pages/CreateWorkoutPage.jsx`:
+O próprio código diz isso, em `src/hooks/create-workout/useExerciseEditor.js` (a regra pura que decide quando sugerir está em `exerciseList.js`, `bisetPartnerToSuggest`):
 
 ```js
 // Método "Bi-set" sozinho é só informativo; o que muda a execução é o
