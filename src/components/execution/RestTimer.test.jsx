@@ -428,3 +428,48 @@ describe('RestTimer — alertas locais', () => {
         expect(screen.getByRole('button', { name: 'Aumentar 10 segundos' })).toBeInTheDocument();
     });
 });
+
+
+describe('RestTimer — iniciar ao concluir série', () => {
+    beforeEach(() => {
+        vi.clearAllMocks();
+        vi.useFakeTimers();
+        setVisibility('visible');
+        scheduleRestPush.mockReturnValue(agendado());
+        describePushContext.mockReturnValue({ isIOS: false, reason: null });
+        ensureNotificationPermission.mockResolvedValue(true);
+        warmRestPushSubscription.mockResolvedValue(true);
+    });
+
+    afterEach(() => {
+        vi.useRealTimers();
+        setVisibility('visible');
+    });
+
+    // A opção fica junto do título, antes do anel e dos controles do descanso.
+    it('mostra a caixa logo abaixo do título, antes dos controles', async () => {
+        await renderRodando({ autoStartTimer: true, onAutoStartChange: vi.fn() });
+
+        const titulo = screen.getByText('Tempo de Descanso');
+        const caixa = screen.getByRole('checkbox', { name: 'Iniciar timer ao concluir série' });
+        const controle = screen.getByRole('button', { name: /Pausar descanso|Iniciar descanso/ });
+
+        expect(titulo.compareDocumentPosition(caixa) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+        expect(caixa.compareDocumentPosition(controle) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    });
+
+    it('a caixa continua ligando e desligando a opção', async () => {
+        const onAutoStartChange = vi.fn();
+        await renderRodando({ autoStartTimer: true, onAutoStartChange });
+
+        const caixa = screen.getByRole('checkbox', { name: 'Iniciar timer ao concluir série' });
+        expect(caixa).toBeChecked();
+        fireEvent.click(caixa);
+        expect(onAutoStartChange).toHaveBeenCalledWith(false);
+    });
+
+    it('sem quem controle a opção, a caixa não aparece', async () => {
+        await renderRodando();
+        expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
+    });
+});

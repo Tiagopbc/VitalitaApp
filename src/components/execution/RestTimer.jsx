@@ -355,11 +355,39 @@ export function RestTimer({ initialTime = 90, onComplete, isOpen, onClose, onDur
                 onClick={e => e.stopPropagation()}>
 
                 {/* Cabeçalho */}
-                <div className="pt-8 pb-4">
+                <div className="pt-8 pb-4 flex flex-col items-center gap-3">
                     <div className="flex items-center gap-2 text-white/90">
                         <Timer size={16} className="text-cyan-400" />
                         <span className="text-sm font-medium tracking-wide">Tempo de Descanso</span>
                     </div>
+
+                    {/* Checkbox Auto-Start: junto do título, antes do anel e dos controles */}
+                    {onAutoStartChange !== undefined && (
+                        <label className="flex items-center gap-3 cursor-pointer group">
+                            <div className="relative flex items-center justify-center">
+                                <input 
+                                    type="checkbox" 
+                                    className="peer appearance-none w-5 h-5 border-2 border-slate-700 rounded md:rounded bg-slate-800/50 checked:bg-cyan-500 checked:border-cyan-500 transition-all cursor-pointer"
+                                    checked={autoStartTimer}
+                                    onChange={(e) => onAutoStartChange(e.target.checked)}
+                                />
+                                <svg 
+                                    className="absolute w-3 h-3 text-[#020617] opacity-0 peer-checked:opacity-100 transition-opacity pointer-events-none" 
+                                    viewBox="0 0 24 24" 
+                                    fill="none" 
+                                    stroke="currentColor" 
+                                    strokeWidth="4" 
+                                    strokeLinecap="round" 
+                                    strokeLinejoin="round"
+                                >
+                                    <polyline points="20 6 9 17 4 12" />
+                                </svg>
+                            </div>
+                            <span className="text-xs font-semibold text-slate-400 group-hover:text-slate-300 transition-colors select-none">
+                                Iniciar timer ao concluir série
+                            </span>
+                        </label>
+                    )}
                 </div>
 
                 {/* Aviso: este descanso não será anunciado em segundo plano */}
@@ -475,34 +503,6 @@ export function RestTimer({ initialTime = 90, onComplete, isOpen, onClose, onDur
                             <Plus size={18} />
                         </button>
                     </div>
-
-                    {/* Checkbox Auto-Start */}
-                    {onAutoStartChange !== undefined && (
-                        <label className="flex items-center gap-3 cursor-pointer group mt-2">
-                            <div className="relative flex items-center justify-center">
-                                <input 
-                                    type="checkbox" 
-                                    className="peer appearance-none w-5 h-5 border-2 border-slate-700 rounded md:rounded bg-slate-800/50 checked:bg-cyan-500 checked:border-cyan-500 transition-all cursor-pointer"
-                                    checked={autoStartTimer}
-                                    onChange={(e) => onAutoStartChange(e.target.checked)}
-                                />
-                                <svg 
-                                    className="absolute w-3 h-3 text-[#020617] opacity-0 peer-checked:opacity-100 transition-opacity pointer-events-none" 
-                                    viewBox="0 0 24 24" 
-                                    fill="none" 
-                                    stroke="currentColor" 
-                                    strokeWidth="4" 
-                                    strokeLinecap="round" 
-                                    strokeLinejoin="round"
-                                >
-                                    <polyline points="20 6 9 17 4 12" />
-                                </svg>
-                            </div>
-                            <span className="text-xs font-semibold text-slate-400 group-hover:text-slate-300 transition-colors select-none">
-                                Iniciar timer ao concluir série
-                            </span>
-                        </label>
-                    )}
 
                     {/* Botão Fechar */}
                     <button
