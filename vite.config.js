@@ -163,8 +163,6 @@ export default defineConfig(({ mode }) => {
           if (packageId.startsWith('firebase/app') || packageId.startsWith('@firebase/app')) return 'vendor-firebase-app'
           if (packageId.startsWith('firebase/auth') || packageId.startsWith('@firebase/auth')) return 'vendor-firebase-auth'
           if (packageId.startsWith('firebase/firestore') || packageId.startsWith('@firebase/firestore')) return 'vendor-firebase-firestore'
-          if (packageId.startsWith('recharts/')) return 'vendor-recharts'
-          if (packageId.startsWith('victory-vendor/') || packageId.startsWith('d3-')) return 'vendor-chart-vendor'
           if (packageId.startsWith('lucide-react/')) return 'vendor-lucide'
 
           return undefined
