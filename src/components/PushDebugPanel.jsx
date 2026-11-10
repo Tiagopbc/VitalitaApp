@@ -6,19 +6,17 @@
  *
  * Oculto por padrão: abre com `?debug=push` na URL e fecha no ✕ (ou com
  * `?debug=off`). Sem afordância visível em produção — o painel só aparece para
- * quem souber o parâmetro.
+ * quem souber o parâmetro. Quem lê a flag e carrega este arquivo sob demanda é
+ * o `DebugPanels`; aqui só chega `onClose`.
  */
 import React, { useEffect, useState } from 'react';
 import { getPushLog, clearPushLog, describePushContext } from '../services/pushDiagnostics';
-import { useDebugPanelFlag } from '../hooks/useDebugPanelFlag';
 
-export function PushDebugPanel() {
-    const [enabled, disable] = useDebugPanelFlag('push');
+export function PushDebugPanel({ onClose }) {
     const [log, setLog] = useState([]);
     const [ctx, setCtx] = useState(null);
 
     useEffect(() => {
-        if (!enabled) return undefined;
         const refresh = () => {
             setLog(getPushLog());
             setCtx(describePushContext());
@@ -26,9 +24,7 @@ export function PushDebugPanel() {
         refresh();
         const id = setInterval(refresh, 1000);
         return () => clearInterval(id);
-    }, [enabled]);
-
-    if (!enabled) return null;
+    }, []);
 
     const box = {
         position: 'fixed',
@@ -58,7 +54,7 @@ export function PushDebugPanel() {
                         limpar
                     </button>
                     <button
-                        onClick={disable}
+                        onClick={onClose}
                         aria-label="Fechar diagnóstico"
                         style={{ background: '#1e293b', color: '#e2e8f0', border: '1px solid #334155', borderRadius: 6, padding: '2px 10px' }}
                     >

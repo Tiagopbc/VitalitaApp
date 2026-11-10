@@ -7,10 +7,10 @@
  *
  * Oculto por padrão: abre com `?debug=appcheck` na URL e fecha no ✕ (ou com
  * `?debug=off`, que desliga também o painel de push). Sem afordância visível em
- * produção — o painel só aparece para quem souber o parâmetro.
+ * produção — o painel só aparece para quem souber o parâmetro. Quem lê a flag e
+ * carrega este arquivo sob demanda é o `DebugPanels`; aqui só chega `onClose`.
  */
 import React, { useEffect, useState } from 'react';
-import { useDebugPanelFlag } from '../hooks/useDebugPanelFlag';
 import { getAppCheckLog, getAppCheckStatus, clearAppCheckLog } from '../services/appCheckDiagnostics';
 import { isAppCheckMonitoringEnabled } from '../services/appCheckService';
 
@@ -35,13 +35,11 @@ function describeState(status) {
     return { label: `falhando (${status.code || 'sem código'})`, color: '#fca5a5', mostraHorario: true };
 }
 
-export function AppCheckDebugPanel() {
-    const [enabled, disable] = useDebugPanelFlag('appcheck');
+export function AppCheckDebugPanel({ onClose }) {
     const [status, setStatus] = useState(null);
     const [log, setLog] = useState([]);
 
     useEffect(() => {
-        if (!enabled) return undefined;
         const refresh = () => {
             setStatus(getAppCheckStatus());
             setLog(getAppCheckLog());
@@ -49,9 +47,7 @@ export function AppCheckDebugPanel() {
         refresh();
         const id = setInterval(refresh, 1000);
         return () => clearInterval(id);
-    }, [enabled]);
-
-    if (!enabled) return null;
+    }, []);
 
     const state = describeState(status);
 
@@ -87,7 +83,7 @@ export function AppCheckDebugPanel() {
                     <button onClick={() => { clearAppCheckLog(); setLog([]); }} style={button}>
                         limpar
                     </button>
-                    <button onClick={disable} aria-label="Fechar diagnóstico" style={{ ...button, padding: '2px 10px' }}>
+                    <button onClick={onClose} aria-label="Fechar diagnóstico" style={{ ...button, padding: '2px 10px' }}>
                         ✕
                     </button>
                 </div>
