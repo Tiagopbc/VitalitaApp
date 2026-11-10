@@ -10,7 +10,6 @@
 
 **Aplicação:** [vitalita.vercel.app](https://vitalita.vercel.app)
 
-**Case técnico:** [docs/portfolio-case-study.md](docs/portfolio-case-study.md)
 **Arquitetura:** [docs/architecture.md](docs/architecture.md)
 
 ## Sobre o projeto
@@ -150,7 +149,6 @@ npm run test:ui
 | [Observabilidade](docs/observability.md) | Sanitização e política Preview-only |
 | [App Check](docs/app-check.md) | Configuração monitorada e decisão de enforcement |
 | [Testes](docs/testing.md) | Estratégia e comandos de validação |
-| [Case de portfólio](docs/portfolio-case-study.md) | Problema, evolução e resultados |
 
 ## Decisões e limitações atuais
 
