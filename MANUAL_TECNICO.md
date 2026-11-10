@@ -138,7 +138,8 @@ equivalente reaparecer, a resposta é conferir as restrições — não gerar um
 
 O que **de fato** precisa ficar fora do repositório são os segredos de servidor: a chave privada
 VAPID, o token do QStash e a `ANTHROPIC_API_KEY` (ver §7.4), todos definidos apenas nas variáveis
-de ambiente da Vercel.
+de ambiente da Vercel. A lista completa das variáveis de servidor, com o papel de cada uma, está
+no fim do `.env.example` — comentada, porque elas nunca vão para esse arquivo.
 
 ### 7.2. Restrições da Browser key
 

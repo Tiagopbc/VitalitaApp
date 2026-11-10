@@ -1,5 +1,7 @@
 # Barra de aviso descendo do topo — plano de implementação
 
+> **Entregue** no PR #62 (mesclado em 13/08/2026). Mantido como registro histórico; o código atual pode ter mudado depois.
+
 > **Para agentes:** SUB-SKILL OBRIGATÓRIA: use `superpowers:subagent-driven-development` (recomendado) ou `superpowers:executing-plans` para executar tarefa por tarefa. Os passos usam checkbox (`- [ ]`) para acompanhamento.
 
 **Objetivo:** substituir o toast do `sonner` por uma barra própria que desce do topo, full-bleed, usada por todos os avisos do app — e passar a confirmar o salvamento de ficha no caminho normal.

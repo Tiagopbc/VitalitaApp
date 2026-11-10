@@ -1,5 +1,7 @@
 # Reposicionar BI-SET e "Salvo agora" no Modo Foco — Implementation Plan
 
+> **Entregue** no PR #47 (mesclado em 30/07/2026). Mantido como registro histórico; o código atual pode ter mudado depois.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Desafogar a área acima do stepper ANTERIOR/PRÓXIMO no Modo Foco da tela de execução de treino, removendo o badge BI-SET duplicado e reposicionando "Cancelar treino" + status de sincronização numa linha própria, com mais respiro e botões de navegação com traço mais forte.

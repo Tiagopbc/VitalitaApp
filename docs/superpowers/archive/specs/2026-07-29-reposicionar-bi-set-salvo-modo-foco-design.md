@@ -1,5 +1,7 @@
 # Reposicionar badge BI-SET e status de sync no Modo Foco
 
+> **Entregue** no PR #47 (mesclado em 30/07/2026). Mantido como registro histórico; o código atual pode ter mudado depois.
+
 ## Problema
 
 Na tela de execução de treino, com o **Modo Foco** ativo, a linha entre a barra superior e o card do exercício fica apertada: o badge "SALVO AGORA" (ou outro estado de `SyncStatusBadge`) e o indicador de grupo "🔗 BI-SET" disputam espaço com o stepper ANTERIOR / "X de Y" / PRÓXIMO. Isso deixa a área visualmente poluída e aumenta o risco de toque errado.
