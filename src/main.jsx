@@ -14,8 +14,7 @@ import { initTheme } from './utils/theme';
 import { initPushDiagnostics } from './services/pushDiagnostics';
 import { SpeedInsightsLoader } from './components/SpeedInsightsLoader';
 import { ObservabilityTracker } from './components/ObservabilityTracker';
-import { PushDebugPanel } from './components/PushDebugPanel';
-import { AppCheckDebugPanel } from './components/AppCheckDebugPanel';
+import { DebugPanels } from './components/DebugPanels';
 import {
     initializeAppCheckMonitoring,
     isAppCheckMonitoringEnabled
@@ -31,8 +30,7 @@ function renderApplication() {
                 <BrowserRouter>
                     <ObservabilityTracker />
                     <App />
-                    <PushDebugPanel />
-                    <AppCheckDebugPanel />
+                    <DebugPanels />
                     <SpeedInsightsLoader />
                 </BrowserRouter>
             </AuthProvider>
