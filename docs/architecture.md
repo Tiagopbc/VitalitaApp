@@ -25,8 +25,8 @@ O Vitalità é um PWA em React/Vite com Firebase Authentication e Cloud Firestor
 
 ## Pontos de Evolução
 
-- Quebrar as páginas grandes (`WorkoutExecutionPage.jsx`, `ProfilePage.jsx`, `LoginPage.jsx`) em subcomponentes e hooks menores, seguindo o padrão orquestrador + sub-hooks já adotado em `useWorkoutSession`. Diretórios previstos: `src/components/auth/`, `src/components/profile/`, `src/hooks/profile/`, `src/hooks/workout-execution/`.
-- Migrar convites e ações sensíveis para Cloud Functions.
+- As quatro páginas de 700+ linhas viraram orquestradores na revisão geral 2026-09 (D16–D19). Ainda passam de ~300 linhas `TrainerDashboard.jsx` (472), `WorkoutExecutionPage.jsx` (437) e `LoginPage.jsx` (376): quando forem tocadas, seguir o mesmo formato, com `src/hooks/<página>/` e `src/components/<página>/`.
+- Convites e demais ações sensíveis seguem protegidos pelas `firestore.rules`. Mover qualquer um para servidor exige ADR novo: o projeto não tem Cloud Functions (ADR-0001, ADR-0006).
 - Expandir a classificação de erros do Firestore e alertas operacionais do Sentry.
 
 ## Referências

@@ -1,5 +1,7 @@
 # Barra de aviso descendo do topo, no lugar do toast do sonner
 
+> **Entregue** no PR #62 (mesclado em 13/08/2026). Mantido como registro histórico; o código atual pode ter mudado depois.
+
 ## Problema
 
 O aviso de confirmação do app hoje é um toast do `sonner` ancorado a `42vh`, que cai opticamente no centro da tela (`AppAuthed.jsx:459`). Esse posicionamento foi a solução de #51/#53 para um defeito real: ancorado no topo, o aviso ficava atrás da status bar do iPhone e o usuário o via sumir sem ler.
