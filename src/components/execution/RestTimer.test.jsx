@@ -319,6 +319,24 @@ describe('RestTimer — aviso de falha silenciosa', () => {
 
         expect(screen.getByRole('status')).toHaveTextContent(/Adicionar à Tela de Início/i);
     });
+
+    // O aviso descreve o agendamento DESTE descanso: ao reabrir o timer, a
+    // falha do descanso anterior não pode aparecer antes do novo agendamento.
+    it('ao reabrir, não mostra o aviso da falha do descanso anterior', async () => {
+        scheduleRestPush.mockReturnValue(recusado('server'));
+        const { rerender } = await renderRodando();
+        expect(screen.getByRole('status')).toHaveTextContent(/Mantenha esta tela aberta/i);
+
+        rerender(<RestTimer initialTime={90} isOpen={false} onComplete={vi.fn()} onClose={vi.fn()} />);
+        await act(async () => { await vi.advanceTimersByTimeAsync(0); });
+
+        // O novo agendamento fica pendente: o que aparecer agora é resto do anterior.
+        scheduleRestPush.mockReturnValue(new Promise(() => {}));
+        rerender(<RestTimer initialTime={90} isOpen onComplete={vi.fn()} onClose={vi.fn()} />);
+        await act(async () => { await vi.advanceTimersByTimeAsync(0); });
+
+        expect(screen.queryByRole('status')).not.toBeInTheDocument();
+    });
 });
 
 describe('RestTimer — alertas locais', () => {

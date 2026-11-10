@@ -125,10 +125,10 @@ function AppAuthedContent() {
 
     // Verificar Status de Treinador
     useEffect(() => {
-        if (!userId) {
-            setIsTrainer(false);
-            return;
-        }
+        // Sem usuário não há o que buscar. O status volta a falso no cleanup da
+        // execução anterior (logout ou troca de usuário), e não no corpo do
+        // efeito: setState síncrono em efeito dispara render em cascata.
+        if (!userId) return undefined;
 
         async function checkTrainerStatus() {
             try {
@@ -141,6 +141,7 @@ function AppAuthedContent() {
         }
 
         checkTrainerStatus();
+        return () => setIsTrainer(false);
     }, [userId]);
 
     useEffect(() => {

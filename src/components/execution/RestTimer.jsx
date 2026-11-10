@@ -3,7 +3,7 @@
  * Modal de cronômetro de descanso interativo com indicador de progresso circular.
  * Suporta play/pause, ajuste de tempo e conclusão em segundo plano (via diferença de timestamp).
  */
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Play, Pause, RotateCcw, X, Minus, Plus, Timer } from 'lucide-react';
 import { createPortal } from 'react-dom';
 import {
@@ -29,13 +29,22 @@ export function RestTimer({ initialTime = 90, onComplete, isOpen, onClose, onDur
      *
      * Valores: null | 'ios-install' | 'permission' | 'unavailable'.
      */
-    const [pushHint, setPushHint] = useState(null);
+    const [failureHint, setFailureHint] = useState(null);
+
+    // No iOS, push só funciona em PWA instalado pela tela de início do
+    // Safari. É fato do ambiente, então é derivado (antes era setState no
+    // efeito de abertura).
+    const needsIosInstall = useMemo(() => {
+        const ctx = describePushContext();
+        return ctx.isIOS && ctx.reason === 'ios-not-standalone';
+    }, []);
 
     // 'ios-install' descreve a causa raiz e tem precedência: sem o PWA
     // instalado nenhum agendamento vai funcionar, então não deixe uma falha
     // subsequente trocar essa mensagem por uma menos acionável.
+    const pushHint = needsIosInstall ? 'ios-install' : failureHint;
     const applyPushHint = (next) => {
-        setPushHint((prev) => (prev === 'ios-install' ? prev : next));
+        setFailureHint(next);
     };
 
     // Refs para temporização precisa
@@ -213,11 +222,6 @@ export function RestTimer({ initialTime = 90, onComplete, isOpen, onClose, onDur
                 })
                 .catch(() => undefined);
 
-            // No iOS, push só funciona em PWA instalado pela tela de início do
-            // Safari. Se o contexto não suporta push, avisa o usuário.
-            const ctx = describePushContext();
-            setPushHint(ctx.isIOS && ctx.reason === 'ios-not-standalone' ? 'ios-install' : null);
-
             // Only start if explicitly idle (prevents restart on re-renders)
             if (status === 'idle') {
                 setTimeout(() => {
@@ -230,6 +234,8 @@ export function RestTimer({ initialTime = 90, onComplete, isOpen, onClose, onDur
             setTimeout(() => {
                 setStatus('idle');
                 setTimeLeft(initialTime);
+                // O aviso é do agendamento deste descanso: não sobra para o próximo.
+                setFailureHint(null);
                 if (intervalRef.current) clearInterval(intervalRef.current);
             }, 0);
         }

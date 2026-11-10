@@ -80,8 +80,13 @@ export function TrainerDashboard({ user, onBack, onNavigateToCreateWorkout }) {
 
     useEffect(() => {
         if (!user) return;
-        fetchStudents();
-        fetchInviteCode();
+        // As duas buscas começam ligando estados de carregamento; disparadas
+        // numa microtarefa, isso não acontece no corpo síncrono do efeito (sem
+        // render em cascata). O atraso é de uma microtarefa, invisível na tela.
+        Promise.resolve().then(() => {
+            fetchStudents();
+            fetchInviteCode();
+        });
     }, [user, fetchStudents, fetchInviteCode]);
 
 
