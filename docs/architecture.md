@@ -9,7 +9,7 @@ O Vitalità é um PWA em React/Vite com Firebase Authentication e Cloud Firestor
 - `src/context/WorkoutContext.jsx`: estado global de treino ativo e redirecionamento para execução.
 - `src/pages/`: telas de produto, incluindo dashboard, treinos, histórico, perfil e personal.
 - `src/services/`: acesso a Firebase e regras de negócio compartilhadas. Sessão de treino é fatiada em `src/services/sessions/` (recuperação, sessão ativa).
-- `src/hooks/`: lógica reutilizável de execução de treino, timer e sessão. `useWorkoutSession` é um orquestrador fino que compõe sub-hooks em `src/hooks/workout-session/` (carregamento, sincronização, ações de série, finalização). O mesmo formato vale para `src/hooks/history/` (diário, filtros, cache da busca global e histórico por exercício), que a `HistoryPage` compõe.
+- `src/hooks/`: lógica reutilizável de execução de treino, timer e sessão. `useWorkoutSession` é um orquestrador fino que compõe sub-hooks em `src/hooks/workout-session/` (carregamento, sincronização, ações de série, finalização). O mesmo formato vale para `src/hooks/history/` (diário, filtros, cache da busca global e histórico por exercício), que a `HistoryPage` compõe, e para `src/hooks/home/` (dados e estatísticas, cache local, compartilhamento da frase), que a `HomeDashboard` compõe.
 - `src/components/`: componentes de UI, navegação, execução, histórico, conquistas e compartilhamento. A raiz de `src/` fica só com o boot do app (`main.jsx`, `App.jsx`, `AppAuthed.jsx`, Firebase, Sentry e CSS global).
 - `src/utils/`: helpers puros de estatísticas, storage seguro e performance.
 
@@ -17,7 +17,7 @@ O Vitalità é um PWA em React/Vite com Firebase Authentication e Cloud Firestor
 
 - Firebase Auth gerencia identidade.
 - Firestore guarda perfis, templates, sessões, vínculos aluno-personal e sessão ativa.
-- Totais, streaks e conquistas são calculados no cliente a partir das sessões recentes (`publishStats` em `HomeDashboard.jsx` e `hooks/profile/useAchievements.js`, com os utilitários puros de `src/utils/`). O agregado `user_stats` e a Cloud Function que o escrevia foram removidos em 11/2026 (ADR-0006); não há Cloud Functions no projeto.
+- Totais, streaks e conquistas são calculados no cliente a partir das sessões recentes (`publishStats` em `hooks/home/useHomeDashboardData.js` e `hooks/profile/useAchievements.js`, com os utilitários puros de `src/utils/`). O agregado `user_stats` e a Cloud Function que o escrevia foram removidos em 11/2026 (ADR-0006); não há Cloud Functions no projeto.
 - Firestore offline persistence fica em `src/firebaseDb.js`.
 - Regras e índices são versionados na raiz do projeto.
 - Observabilidade opcional fica em `src/services/observabilityService.js`, com Sentry carregado sob demanda e sanitização em `src/utils/observability.js`.
