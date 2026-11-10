@@ -40,7 +40,7 @@ vi.mock('../services/userService', () => ({
 }));
 
 // Mock Auth Context
-vi.mock('../AuthContext', () => ({
+vi.mock('./AuthContext', () => ({
     useAuth: () => ({ user: { uid: 'user123', displayName: 'Test User' } })
 }));
 

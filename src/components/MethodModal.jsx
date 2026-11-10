@@ -1,6 +1,6 @@
 import React from 'react';
 import { X, TrendingDown, TrendingUp, Grid, Link2, Focus, AlertTriangle, Repeat, Heart } from 'lucide-react';
-import { trainingMethods } from './data/trainingMethods';
+import { trainingMethods } from '../data/trainingMethods';
 
 const iconMap = {
     'TrendingDown': TrendingDown,

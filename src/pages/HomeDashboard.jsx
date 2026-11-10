@@ -28,7 +28,7 @@ import {
     Share2,
     Activity
 } from 'lucide-react';
-import { StreakWeeklyGoalHybrid } from '../StreakWeeklyGoalHybrid';
+import { StreakWeeklyGoalHybrid } from '../components/StreakWeeklyGoalHybrid';
 import { getFirestoreDeps } from '../firebaseDb';
 import { ShareableQuoteCard } from '../components/sharing/ShareableQuoteCard';
 import { calculateWeeklyStats } from '../utils/workoutStats';

@@ -3,7 +3,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getFirestoreDeps } from '../firebaseDb';
-import { useAuth } from '../AuthContext';
+import { useAuth } from './AuthContext';
 
 const WorkoutContext = createContext();
 
