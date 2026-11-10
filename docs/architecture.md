@@ -9,7 +9,7 @@ O Vitalità é um PWA em React/Vite com Firebase Authentication e Cloud Firestor
 - `src/context/WorkoutContext.jsx`: estado global de treino ativo e redirecionamento para execução.
 - `src/pages/`: telas de produto, incluindo dashboard, treinos, histórico, perfil e personal.
 - `src/services/`: acesso a Firebase e regras de negócio compartilhadas. Sessão de treino é fatiada em `src/services/sessions/` (recuperação, sessão ativa).
-- `src/hooks/`: lógica reutilizável de execução de treino, timer e sessão. `useWorkoutSession` é um orquestrador fino que compõe sub-hooks em `src/hooks/workout-session/` (carregamento, sincronização, ações de série, finalização).
+- `src/hooks/`: lógica reutilizável de execução de treino, timer e sessão. `useWorkoutSession` é um orquestrador fino que compõe sub-hooks em `src/hooks/workout-session/` (carregamento, sincronização, ações de série, finalização). O mesmo formato vale para `src/hooks/history/` (diário, filtros, cache da busca global e histórico por exercício), que a `HistoryPage` compõe.
 - `src/components/`: componentes de UI, navegação, execução, histórico, conquistas e compartilhamento. A raiz de `src/` fica só com o boot do app (`main.jsx`, `App.jsx`, `AppAuthed.jsx`, Firebase, Sentry e CSS global).
 - `src/utils/`: helpers puros de estatísticas, storage seguro e performance.
 
