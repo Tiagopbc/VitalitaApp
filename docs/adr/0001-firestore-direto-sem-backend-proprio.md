@@ -25,9 +25,9 @@ apenas quatro funções serverless na Vercel (`api/`) para os fluxos que não
 podem rodar no cliente: `parse-workout-pdf.js` para a importação de treino
 por PDF (chama a API da Anthropic), e `schedule-rest-push.js`,
 `send-rest-push.js` e `cancel-rest-push.js` para o push de descanso
-(agendamento, envio e cancelamento via QStash). Uma Cloud Function opcional
-(`functions/`) recalcula `user_stats`, mas está desligada por padrão (ver
-[ADR-0003](0003-user-stats-client-side-por-custo.md)).
+(agendamento, envio e cancelamento via QStash). Não há Cloud Functions: a que
+recalculava `user_stats` foi removida (ver
+[ADR-0006](0006-remocao-user-stats-servidor.md)).
 
 ## Opções consideradas
 
@@ -83,8 +83,8 @@ essas funções mínimas e sem virar um backend de fato.
   de API para centralizar essa validação.
 - Regra de negócio que dependa de ver múltiplos documentos de forma
   consistente (ex.: agregação confiável de estatísticas) não cabe em
-  `firestore.rules` e empurra para Cloud Function — como já aconteceu com
-  `user_stats`.
+  `firestore.rules` e empurraria para uma Cloud Function — caminho que o
+  projeto já tentou e desfez por custo (ver ADR-0006).
 - Sem backend próprio, não há lugar natural para rate limiting, auditoria
   centralizada ou lógica sensível — é a limitação conhecida documentada em
   `docs/security-rules.md` para o fluxo de convites aluno-personal.

@@ -33,7 +33,6 @@ import { getFirestoreDeps } from '../firebaseDb';
 import { ShareableQuoteCard } from '../components/sharing/ShareableQuoteCard';
 import { calculateWeeklyStats } from '../utils/workoutStats';
 import { SESSION_LIMITS, workoutService } from '../services/workoutService';
-import { userStatsService } from '../services/userStatsService';
 import { Button } from '../components/design-system/Button';
 import { EmptyState } from '../components/design-system/EmptyState';
 import { SectionHeader } from '../components/design-system/SectionHeader';
@@ -330,42 +329,24 @@ export function HomeDashboard({
     useEffect(() => {
         let unsubscribeTemplates = null;
         let unsubscribeSessions = null;
-        let unsubscribeUserStats = null;
 
         async function fetchData() {
             if (!user) return;
             let effectiveGoal = 4;
-            let serverStatsSnapshot = null;
             let latestSessionsSnapshot = [];
             let latestRecentStats = calculateWeeklyStats([], effectiveGoal);
             let recentSessionCount = 0;
 
             const publishStats = () => {
-                if (serverStatsSnapshot) {
-                    setStats({
-                        ...latestRecentStats,
-                        currentStreak: serverStatsSnapshot.currentWeeklyStreak,
-                        bestStreak: serverStatsSnapshot.longestWeeklyStreak,
-                        weeklyGoal: serverStatsSnapshot.weeklyGoal || latestRecentStats.weeklyGoal,
-                        completedThisWeek: serverStatsSnapshot.weeklyCompleted,
-                        totalSessions: serverStatsSnapshot.totalWorkouts,
-                        statsSource: 'user_stats',
-                        userStatsUpdatedAt: serverStatsSnapshot.updatedAt
-                    });
-                    return;
-                }
-
                 setStats({
                     ...latestRecentStats,
-                    totalSessions: recentSessionCount,
-                    statsSource: 'recent_sessions'
+                    totalSessions: recentSessionCount
                 });
             };
 
             const publishNextAchievement = () => {
-                const fullStats = serverStatsSnapshot?.achievementStats || calculateStats(latestSessionsSnapshot);
-                const unlockedMap = serverStatsSnapshot?.achievements || {};
-                const allAchievements = evaluateAchievements(achievementsCatalog, fullStats, unlockedMap);
+                const fullStats = calculateStats(latestSessionsSnapshot);
+                const allAchievements = evaluateAchievements(achievementsCatalog, fullStats, {});
                 const locked = allAchievements.filter(a => !a.isUnlocked);
 
                 locked.sort((a, b) => b.progressRatio - a.progressRatio);
@@ -395,19 +376,7 @@ export function HomeDashboard({
                 setLoadingTemplates(false);
             }
 
-            // B. Agregado server-side: totais, streaks e conquistas sem leitura vitalícia no cliente.
-            try {
-                unsubscribeUserStats = await userStatsService.subscribeToUserStats(user.uid, (serverStats) => {
-                    serverStatsSnapshot = serverStats;
-                    publishStats();
-                    publishNextAchievement();
-                    if (serverStats) setLoadingStats(false);
-                });
-            } catch (err) {
-                console.error("User stats subscription error:", err);
-            }
-
-            // C. Inscrever-se apenas no histórico recente para manter o calendário leve.
+            // B. Inscrever-se apenas no histórico recente para manter o calendário leve.
             try {
                 unsubscribeSessions = await workoutService.subscribeToRecentSessions(user.uid, (data) => {
                     const sessions = data.map(d => {
@@ -454,7 +423,6 @@ export function HomeDashboard({
         return () => {
             if (unsubscribeTemplates) unsubscribeTemplates();
             if (unsubscribeSessions) unsubscribeSessions();
-            if (unsubscribeUserStats) unsubscribeUserStats();
         };
     }, [user]);
 

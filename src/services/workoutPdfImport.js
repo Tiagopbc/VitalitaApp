@@ -12,9 +12,8 @@ const MAX_PDF_BYTES = 3 * 1024 * 1024;
 
 /**
  * A feature depende de configuração de servidor (`ANTHROPIC_API_KEY`), que o cliente
- * não tem como inspecionar sem gastar uma requisição. Usamos a mesma convenção de
- * flag do projeto (ver `VITE_ENABLE_SERVER_USER_STATS`) para não exibir um botão que
- * só falharia ao ser clicado em ambientes sem a chave configurada.
+ * não tem como inspecionar sem gastar uma requisição. Uma flag `VITE_*` de build
+ * evita exibir um botão que só falharia ao ser clicado em ambientes sem a chave.
  */
 export function isPdfImportEnabled() {
     return import.meta.env.VITE_ENABLE_PDF_IMPORT === 'true';

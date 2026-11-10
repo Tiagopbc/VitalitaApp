@@ -3,12 +3,11 @@ import { achievementsCatalog } from '../../data/achievementsCatalog';
 import { calculateStats, evaluateAchievements, evaluateHistory } from '../../utils/evaluateAchievements';
 import { calculateWeeklyStats } from '../../utils/workoutStats';
 import { SESSION_LIMITS, workoutService } from '../../services/workoutService';
-import { userStatsService } from '../../services/userStatsService';
 
 /**
- * Carrega estatísticas e conquistas com estratégia server-first e fallback
- * client-side (`user_stats` ausente → cálculo a partir das sessões recentes),
- * reavaliando a lista quando estatísticas ou perfil mudam.
+ * Carrega estatísticas e conquistas calculadas no cliente a partir das sessões
+ * recentes (única fonte desde o ADR-0006), reavaliando a lista quando
+ * estatísticas ou perfil mudam.
  * Recebe `profile` para reagir à meta semanal e mesclar overrides manuais.
  */
 export function useAchievements(user, profile) {
@@ -24,27 +23,7 @@ export function useAchievements(user, profile) {
         async function loadAchievementsData() {
             setLoadingAchievements(true);
             try {
-                const serverStats = await userStatsService.getUserStats(user.uid);
-                if (serverStats) {
-                    const achievementStats = serverStats.achievementStats || {};
-                    setStats({
-                        ...achievementStats,
-                        totalWorkouts: serverStats.totalWorkouts,
-                        totalTonnageKg: serverStats.totalTonnageKg,
-                        totalSets: serverStats.totalSets,
-                        totalReps: serverStats.totalReps,
-                        prsCount: serverStats.prsCount,
-                        distinctExercises: serverStats.distinctExercises,
-                        exerciseMaxes: achievementStats.exerciseMaxes || serverStats.exerciseMaxes || {},
-                        weeklyStreak: serverStats.currentWeeklyStreak,
-                        weeklyBestStreak: serverStats.longestWeeklyStreak,
-                        weeklyGoal: serverStats.weeklyGoal
-                    });
-                    setCalculatedHistoryMap(serverStats.achievements || {});
-                    return;
-                }
-
-                // 1. Fallback temporário enquanto a function ainda não criou user_stats.
+                // 1. Janela recente de sessões (limite em SESSION_LIMITS.profileStats).
                 const sessions = await workoutService.getRecentSessions(user.uid, SESSION_LIMITS.profileStats);
 
                 // 2. Calcular Estatísticas

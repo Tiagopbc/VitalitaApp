@@ -21,33 +21,17 @@ Os limites ficam centralizados em `SESSION_LIMITS` no `workoutService`:
 ## Comportamento por tela
 
 - HomeDashboard: assina somente as sessões recentes, em vez de observar todo o histórico.
-- HomeDashboard: prefere `user_stats` para totais, streaks e próxima conquista quando o agregado existe.
 - HistoryPage/Diário: usa paginação com `getHistory`.
 - HistoryPage/Evolução global: carrega uma página recente e permite carregar mais histórico sob demanda.
-- ProfilePage: prefere `user_stats` para estatísticas e conquistas; usa janela recente apenas como fallback.
+- ProfilePage: calcula estatísticas e conquistas a partir da janela recente (`profileStats`).
 
-## Agregados `user_stats`
+## Agregados `user_stats` (removidos)
 
-`user_stats/{userId}` é escrito por Cloud Functions quando uma sessão é criada em
-`workout_sessions`. As regras bloqueiam escrita do cliente, então totais vitalícios,
-streaks e conquistas deixam de depender de cálculo confiável no navegador.
-
-No modo Spark/custo zero, `VITE_ENABLE_SERVER_USER_STATS` deve ficar `false`.
-Assim, HomeDashboard e ProfilePage ignoram o agregado server-side e usam o fallback
-de sessões recentes. A estrutura de `user_stats` permanece documentada como evolução
-profissional opcional para um futuro deploy em Blaze.
-
-Campos usados pelo app:
-
-- `totalWorkouts`
-- `totalTonnageKg` / `totalVolume`
-- `totalSets`, `totalReps`, `prsCount`, `distinctExercises`
-- `currentWeeklyStreak`, `longestWeeklyStreak`, `weeklyCompleted`, `weeklyGoal`
-- `currentDailyStreak`, `longestDailyStreak`
-- `achievementStats`
-- `achievements`
+A coleção e a Cloud Function que a escrevia saíram em 11/2026 (ADR-0006). Totais
+vitalícios, streaks e conquistas são calculados no cliente sobre a janela recente;
+o custo é proporcional aos limites acima, não ao histórico inteiro.
 
 ## Próxima evolução
 
-- Rodar backfill administrativo documentado em `docs/user-stats-backfill.md`.
-- Evoluir o rebuild para atualização incremental quando o volume por usuário justificar reduzir leituras server-side.
+- Se o volume por usuário crescer além dos limites acima, reavaliar um agregado
+  incremental — com ADR novo.

@@ -143,26 +143,9 @@ Dados:
 - `usedBy`
 - `usedAt`
 
-### `user_stats/{userId}`
+### `user_stats/{userId}` (descontinuada)
 
-Finalidade:
-
-- Evitar leituras grandes de histórico no cliente.
-- Servir dados rápidos para dashboard, perfil e conquistas.
-
-Dados:
-
-- Totais de treinos, cardio, volume, séries, reps e recordes.
-- Streaks diários e semanais.
-- Meta semanal e completados na semana.
-- Máximas por exercício.
-- Estado de conquistas.
-- `lastWorkoutAt`, `updatedAt`, `schemaVersion`, `source`.
-
-Escrita:
-
-- Apenas backend/rotina administrativa.
-- Cliente lê e usa fallback recente quando o agregado ainda não existe.
+Coleção removida em 11/2026 (ADR-0006): o app não lê nem escreve nela e as regras negam acesso. Documentos criados antes disso podem persistir até uma limpeza administrativa; o conteúdo era derivado de `workout_sessions` (totais, streaks, conquistas), sem dado novo sobre a pessoa.
 
 ## Exportação de Dados
 
@@ -177,7 +160,6 @@ Escopo mínimo:
 - Sessão ativa em `active_workouts/{userId}`, se existir.
 - Vínculos em `trainer_students` em que o usuário seja aluno ou personal.
 - Convites em `trainer_invites` criados pelo usuário, quando ele for personal.
-- Agregado em `user_stats/{userId}`.
 
 Observações:
 
@@ -196,7 +178,7 @@ Sem Cloud Functions pagas, a exclusão completa deve ser tratada com cuidado:
 3. Excluir histórico em `workout_sessions`.
 4. Excluir vínculo como aluno em `trainer_students`.
 5. Revogar convites criados pelo usuário como personal.
-6. Excluir `user_stats/{userId}`.
+6. Excluir `user_stats/{userId}`, se houver documento antigo (coleção descontinuada; só por rotina administrativa, o cliente não tem acesso).
 7. Excluir `users/{userId}`.
 8. Excluir conta no Firebase Auth.
 

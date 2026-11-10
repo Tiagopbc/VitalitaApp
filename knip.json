@@ -14,16 +14,6 @@
         "api/**/*.js",
         "tests/**/*.js"
       ]
-    },
-    "functions": {
-      "entry": [
-        "test/**/*.test.js"
-      ],
-      "project": [
-        "src/**/*.js",
-        "scripts/**/*.js",
-        "test/**/*.js"
-      ]
     }
   }
 }

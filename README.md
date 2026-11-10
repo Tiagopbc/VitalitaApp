@@ -62,7 +62,7 @@ As regras do Firestore validam propriedade, vínculo entre aluno e personal, cam
 
 ### Performance e previsibilidade de custo
 
-Históricos usam paginação e consultas indexadas. Estatísticas consolidadas podem ser lidas de `user_stats`, com fallback local para dados legados, evitando que o dashboard dependa de leituras completas do histórico.
+Históricos usam paginação e consultas indexadas. Totais, streaks e conquistas são calculados no cliente a partir de uma janela recente de sessões, sem leituras completas do histórico.
 
 ### Privacidade por padrão
 
@@ -70,7 +70,7 @@ A observabilidade sanitiza eventos e não associa identidade do usuário. O Sent
 
 ### Qualidade automatizada
 
-O pipeline valida aplicação, regras de segurança e código opcional de Functions. Dependências são instaladas com lockfile, e o build de produção faz parte de toda revisão.
+O pipeline valida aplicação e regras de segurança. Dependências são instaladas com lockfile, e o build de produção faz parte de toda revisão.
 
 ## Arquitetura
 
@@ -81,13 +81,12 @@ flowchart LR
     UI --> LOCAL[Storage local e recuperação de sessão]
     UI -. Preview .-> SENTRY[Sentry]
     UI -. Atestado .-> CHECK[Firebase App Check]
-    FUNCTIONS[Cloud Functions opcionais] --> DB
     CI[GitHub Actions] --> TESTS[Vitest + Firestore Emulator]
     TESTS --> BUILD[Build de produção]
     BUILD --> VERCEL[Vercel]
 ```
 
-O frontend é organizado por páginas, componentes, hooks e serviços de domínio. As integrações externas são inicializadas de forma defensiva: a ausência de Sentry, App Check ou Functions não impede o funcionamento principal do aplicativo.
+O frontend é organizado por páginas, componentes, hooks e serviços de domínio. As integrações externas são inicializadas de forma defensiva: a ausência de Sentry ou App Check não impede o funcionamento principal do aplicativo.
 
 ## Stack
 
@@ -150,8 +149,6 @@ npm run test:ui
 | [Privacidade e LGPD](docs/privacy-lgpd.md) | Mapa de dados, retenção e direitos |
 | [Observabilidade](docs/observability.md) | Sanitização e política Preview-only |
 | [App Check](docs/app-check.md) | Configuração monitorada e decisão de enforcement |
-| [Deploy de Functions](docs/functions-deploy.md) | Procedimento opcional para estatísticas server-side |
-| [Backfill de estatísticas](docs/user-stats-backfill.md) | Reconstrução administrativa de `user_stats` |
 | [Testes](docs/testing.md) | Estratégia e comandos de validação |
 | [Case de portfólio](docs/portfolio-case-study.md) | Problema, evolução e resultados |
 
@@ -160,7 +157,7 @@ npm run test:ui
 - O projeto prioriza recursos gratuitos e não depende de serviços pagos para funcionar.
 - Sentry permanece restrito a Preview para validar observabilidade sem coletar dados de uso real.
 - App Check permanece sem enforcement **por decisão**, reafirmada em 28/08/2026 já com o critério de tráfego atingido (100% das solicitações verificadas, 0% sem verificação). Não é pendência: ligar trocaria um risco teórico, que as `firestore.rules` já cobrem, por um risco observado de trancar o próprio dono fora do app. Ver [docs/app-check.md](docs/app-check.md).
-- Cloud Functions e estatísticas server-side são opcionais; o cliente mantém fallback compatível com dados existentes.
+- Não há Cloud Functions: estatísticas são calculadas no cliente (ADR-0006).
 - Exclusão completa e automatizada da conta ainda exige uma estratégia de limpeza confiável para documentos relacionados.
 
 ## Próximas evoluções

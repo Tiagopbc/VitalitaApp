@@ -36,10 +36,6 @@ describe('privacyExportService', () => {
             'active_workouts/user-1': makeDoc('user-1', {
                 userId: 'user-1',
                 updatedAt: makeTimestamp('2026-07-07T11:00:00.000Z')
-            }),
-            'user_stats/user-1': makeDoc('user-1', {
-                totalWorkouts: 2,
-                updatedAt: makeTimestamp('2026-07-07T12:00:00.000Z')
             })
         };
 
@@ -98,7 +94,7 @@ describe('privacyExportService', () => {
             displayName: 'Tiago'
         });
 
-        expect(payload.schemaVersion).toBe(1);
+        expect(payload.schemaVersion).toBe(2);
         expect(payload.user).toMatchObject({
             uid: 'user-1',
             email: 'tiago@example.com',
@@ -109,7 +105,10 @@ describe('privacyExportService', () => {
         expect(payload.data.workoutSessions.map(session => session.id)).toEqual(['session-new', 'session-old']);
         expect(payload.data.trainerStudentLinks.asStudent).toHaveLength(1);
         expect(payload.data.trainerInvites).toHaveLength(1);
-        expect(payload.data.userStats.totalWorkouts).toBe(2);
+        // `user_stats` saiu do modelo (ADR-0006): a exportação não lê nem inclui o agregado.
+        expect(payload.data).not.toHaveProperty('userStats');
+        const deps = await getFirestoreDeps.mock.results[0].value;
+        expect(deps.getDoc).not.toHaveBeenCalledWith('user_stats/user-1');
     });
 
     it('requires an authenticated user', async () => {

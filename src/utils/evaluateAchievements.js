@@ -390,7 +390,6 @@ export async function checkNewAchievements(userId, currentSessionData, workoutSe
 
     try {
         // 1. Prefer a bounded recent window to keep post-workout evaluation fast.
-        // A future user_stats aggregate can make lifetime achievements exact without full reads.
         const allSessions = typeof workoutServiceInstance.getRecentSessions === 'function'
             ? await workoutServiceInstance.getRecentSessions(userId, 300)
             : await workoutServiceInstance.getAllSessions(userId);

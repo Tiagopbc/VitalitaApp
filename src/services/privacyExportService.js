@@ -1,7 +1,8 @@
 import { getFirestoreDeps } from '../firebaseDb';
 import { PRIVACY_POLICY_VERSION, TERMS_OF_USE_VERSION } from '../constants/legal';
 
-const EXPORT_SCHEMA_VERSION = 1;
+// 2: `userStats` saiu do payload (ADR-0006).
+const EXPORT_SCHEMA_VERSION = 2;
 
 function toSerializable(value) {
     if (value == null) return value;
@@ -60,8 +61,7 @@ export const privacyExportService = {
             activeWorkout,
             studentLinks,
             trainerLinks,
-            trainerInvites,
-            userStats
+            trainerInvites
         ] = await Promise.all([
             getDocData(deps, 'users', userId),
             getCollectionByField(deps, 'workout_templates', 'userId', userId),
@@ -69,8 +69,7 @@ export const privacyExportService = {
             getDocData(deps, 'active_workouts', userId),
             getCollectionByField(deps, 'trainer_students', 'studentId', userId),
             getCollectionByField(deps, 'trainer_students', 'trainerId', userId),
-            getCollectionByField(deps, 'trainer_invites', 'trainerId', userId),
-            getDocData(deps, 'user_stats', userId)
+            getCollectionByField(deps, 'trainer_invites', 'trainerId', userId)
         ]);
 
         return {
@@ -94,8 +93,7 @@ export const privacyExportService = {
                     asStudent: sortByTimestampDesc(studentLinks, 'linkedAt'),
                     asTrainer: sortByTimestampDesc(trainerLinks, 'linkedAt')
                 },
-                trainerInvites: sortByTimestampDesc(trainerInvites, 'createdAt'),
-                userStats
+                trainerInvites: sortByTimestampDesc(trainerInvites, 'createdAt')
             }
         };
     },
