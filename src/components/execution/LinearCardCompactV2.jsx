@@ -304,7 +304,7 @@ export const LinearCardCompactV2 = memo(function LinearCardCompactV2({
                     const isCompleted = completedSets[idx];
                     const isActive = currentSet === setNum && !isCompleted;
                     return (
-                        <div key={idx} className={`flex-1 h-8 rounded-full transition-all duration-300 relative flex items-center justify-center text-xs font-extrabold select-none ${isCompleted ? 'bg-emerald-900/40 border border-emerald-500/50 text-emerald-400' : isActive ? 'bg-blue-600/20 border border-blue-500 text-blue-400' : 'bg-slate-800/40 border border-slate-700/50 text-slate-400'}`} style={isActive ? { boxShadow: '0 0 15px rgba(59,130,246,0.3)' } : {}}>
+                        <div key={idx} className={`flex-1 h-8 rounded-full transition-all duration-300 relative flex items-center justify-center text-xs font-bold select-none ${isCompleted ? 'bg-emerald-900/40 border border-emerald-500/50 text-emerald-400' : isActive ? 'bg-blue-600/20 border border-blue-500 text-blue-400' : 'bg-slate-800/40 border border-slate-700/50 text-slate-400'}`} style={isActive ? { boxShadow: '0 0 15px rgba(59,130,246,0.3)' } : {}}>
                             {isCompleted ? <Check size={16} strokeWidth={3} /> : setNum}
                         </div>
                     );
