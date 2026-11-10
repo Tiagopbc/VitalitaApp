@@ -85,13 +85,16 @@ A correção é servir o handler do próprio domínio do app:
 - As rotas `/__/auth/*` usam `X-Frame-Options: SAMEORIGIN`; o resto do app segue em `DENY`. O
   SDK carrega `/__/auth/iframe` num iframe oculto do próprio app, e `DENY` bloqueia até iframe
   da mesma origem.
+- O service worker do PWA exclui `/__/auth/` do fallback de navegação
+  (`navigateFallbackDenylist` no `vite.config.js`). Sem isso ele responderia a janela do login e
+  o iframe com o `index.html` antes de a requisição chegar à Vercel.
 - `VITE_FIREBASE_AUTH_DOMAIN` na Vercel (produção) aponta para o domínio do app. É `VITE_*`:
   trocar exige redeploy.
 - O cliente OAuth do Google no Google Cloud precisa listar
   `https://<domínio-do-app>/__/auth/handler` em "URIs de redirecionamento autorizados", e o
   domínio precisa estar em Firebase → Authentication → Authorized domains.
 
-`api/vercel-json.test.js` segura o rewrite e o cabeçalho. Em desenvolvimento o `.env.local`
+`api/vercel-json.test.js` segura o rewrite, o cabeçalho e a exclusão no service worker. Em desenvolvimento o `.env.local`
 continua com o `firebaseapp.com`. Login por e-mail e senha não passa por nada disso.
 
 ### 4.2. Execução de Treino (`WorkoutContext` & `useWorkout`)

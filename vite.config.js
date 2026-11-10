@@ -102,7 +102,13 @@ export default defineConfig(({ mode }) => {
       registerType: 'prompt',
       workbox: {
         mode: pwaWorkboxMode,
-        importScripts: ['push-sw.js']
+        importScripts: ['push-sw.js'],
+        // O login com Google abre /__/auth/handler e /__/auth/iframe no próprio
+        // domínio (a Vercel repassa ao Firebase, ver vercel.json e #149). Sem esta
+        // exclusão o service worker responderia essas navegações com o
+        // index.html antes de chegarem à Vercel, e o login quebraria para quem
+        // já tem o PWA instalado.
+        navigateFallbackDenylist: [/^\/__\/auth\//]
       },
       devOptions: {
         enabled: mode === 'development'
