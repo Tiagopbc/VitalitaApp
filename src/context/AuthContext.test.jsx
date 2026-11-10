@@ -2,9 +2,9 @@ import React, { useEffect } from 'react';
 import { render, screen, act, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { AuthProvider, useAuth } from './AuthContext';
-import { authService } from './services/authService';
+import { authService } from '../services/authService';
 
-vi.mock('./services/authService', () => ({
+vi.mock('../services/authService', () => ({
     authService: {
         subscribe: vi.fn(),
         logout: vi.fn()

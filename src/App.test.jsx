@@ -9,7 +9,7 @@ import React from 'react';
 // Mock AuthContext
 const mockUseAuth = vi.fn();
 const mockLogout = vi.fn();
-vi.mock('./AuthContext', () => ({
+vi.mock('./context/AuthContext', () => ({
     useAuth: () => mockUseAuth(),
     AuthProvider: ({ children }) => <div>{children}</div>
 }));
@@ -31,8 +31,8 @@ vi.mock('./services/userService', () => ({
 // Mock Child Components to isolate App logic
 vi.mock('./pages/HomeDashboard', () => ({ HomeDashboard: () => <div>Mocked Home Dashboard</div> }));
 vi.mock('./pages/LoginPage', () => ({ default: () => <div>Mocked Login Page</div> }));
-vi.mock('./DesktopSidebar', () => ({ DesktopSidebar: () => <div>Sidebar</div> }));
-vi.mock('./BottomNavEnhanced', () => ({ BottomNavEnhanced: () => <div>BottomNav</div> }));
+vi.mock('./components/navigation/DesktopSidebar', () => ({ DesktopSidebar: () => <div>Sidebar</div> }));
+vi.mock('./components/navigation/BottomNavEnhanced', () => ({ BottomNavEnhanced: () => <div>BottomNav</div> }));
 vi.mock('./components/PwaUpdatePrompt', () => ({ PwaUpdatePrompt: () => null }));
 
 describe('App Smoke Test', () => {

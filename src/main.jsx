@@ -8,7 +8,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import App from './App';
-import { AuthProvider } from './AuthContext';
+import { AuthProvider } from './context/AuthContext';
 import './index.css';
 import { initTheme } from './utils/theme';
 import { initPushDiagnostics } from './services/pushDiagnostics';

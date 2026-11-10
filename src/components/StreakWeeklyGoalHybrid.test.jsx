@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { describe, it, expect } from 'vitest';
-import { StreakWeeklyGoalHybrid } from '../StreakWeeklyGoalHybrid';
+import { StreakWeeklyGoalHybrid } from './StreakWeeklyGoalHybrid';
 import React from 'react';
 
 describe('StreakWeeklyGoalHybrid Component', () => {

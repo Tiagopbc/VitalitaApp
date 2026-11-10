@@ -65,7 +65,7 @@ vi.mock('../components/execution/RestTimer', () => ({
     RestTimer: () => <div>Timer</div>
 }));
 
-vi.mock('../MethodModal', () => ({
+vi.mock('../components/MethodModal', () => ({
     default: () => <div>MethodModal</div>
 }));
 

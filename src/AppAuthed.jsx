@@ -4,9 +4,9 @@
  */
 import React, { useEffect, useMemo, useState, Suspense, useCallback } from 'react';
 import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
-import { DesktopSidebar } from './DesktopSidebar';
+import { DesktopSidebar } from './components/navigation/DesktopSidebar';
 import { ProtectedRoute } from './components/ProtectedRoute';
-import { useAuth } from './AuthContext';
+import { useAuth } from './context/AuthContext';
 import { WorkoutProvider, useWorkout } from './context/WorkoutContext';
 import { MotionPreferences } from './components/common/MotionPreferences';
 import { TopBanner } from './components/design-system/TopBanner';
@@ -23,7 +23,7 @@ const loadWorkoutExecutionPage = () => import('./pages/WorkoutExecutionPage').th
 const loadTrainerDashboard = () => import('./pages/TrainerDashboard').then(module => ({ default: module.TrainerDashboard }));
 const loadPrivacyPolicyPage = () => import('./pages/PrivacyPolicyPage');
 const loadTermsOfUsePage = () => import('./pages/TermsOfUsePage');
-const loadBottomNavEnhanced = () => import('./BottomNavEnhanced').then(module => ({ default: module.BottomNavEnhanced }));
+const loadBottomNavEnhanced = () => import('./components/navigation/BottomNavEnhanced').then(module => ({ default: module.BottomNavEnhanced }));
 const loadPwaUpdatePrompt = () => import('./components/PwaUpdatePrompt').then(module => ({ default: module.PwaUpdatePrompt }));
 const loadPwaReinstallNotice = () => import('./components/PwaReinstallNotice').then(module => ({ default: module.PwaReinstallNotice }));
 

@@ -47,8 +47,8 @@ Vitest tem duas configurações: `vitest.config.js` (jsdom; cobre `src/**` e `ap
 
 PWA em React 19 + Vite, com Firebase Auth e Cloud Firestore direto do cliente. Não há servidor próprio além de três funções serverless na Vercel (`api/`) para push. Detalhes em [docs/architecture.md](docs/architecture.md) e [MANUAL_TECNICO.md](MANUAL_TECNICO.md).
 
-- `src/AppAuthed.jsx` — árvore de rotas autenticadas e preload de telas.
-- `src/context/WorkoutContext.jsx` — treino ativo, persistência e detecção de sessão fantasma.
+- `src/AppAuthed.jsx` — árvore de rotas autenticadas e preload de telas. A raiz de `src/` é só isso, `App.jsx`, `main.jsx`, a inicialização do Firebase e do Sentry e o CSS global; componente e contexto moram em `src/components/` e `src/context/` (`src/estrutura.test.js` garante).
+- `src/context/AuthContext.jsx` — usuário autenticado e perfil; `src/context/WorkoutContext.jsx` — treino ativo, persistência e detecção de sessão fantasma.
 - `src/services/` — todo acesso a Firebase e regra de negócio compartilhada.
 - `src/utils/` — helpers puros (estatísticas, storage, observabilidade).
 

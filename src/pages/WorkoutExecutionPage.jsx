@@ -11,7 +11,7 @@ import { useWorkout } from '../context/WorkoutContext';
 import { CheckCircle2 } from 'lucide-react';
 import { RestTimer } from '../components/execution/RestTimer';
 import { Button } from '../components/design-system/Button';
-import MethodModal from '../MethodModal';
+import MethodModal from '../components/MethodModal';
 import { SessionConflictDialog } from '../components/execution/SessionConflictDialog';
 import { Toast } from '../components/design-system/Toast';
 import { SyncStatusBadge } from '../components/design-system/SyncStatusBadge';

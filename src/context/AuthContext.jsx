@@ -19,7 +19,7 @@ export function AuthProvider({ children }) {
 
         const initAuth = async () => {
             try {
-                const { authService } = await import('./services/authService');
+                const { authService } = await import('../services/authService');
                 if (!isMounted) return;
                 unsubscribe = authService.subscribe((firebaseUser) => {
                     setUser(firebaseUser || null);
@@ -41,7 +41,7 @@ export function AuthProvider({ children }) {
 
     const logout = async () => {
         try {
-            const { authService } = await import('./services/authService');
+            const { authService } = await import('../services/authService');
             await authService.logout();
             localStorage.removeItem('activeWorkoutId');
         } catch (err) {
