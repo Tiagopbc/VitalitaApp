@@ -92,7 +92,7 @@ O frontend é organizado por páginas, componentes, hooks e serviços de domíni
 | Camada | Tecnologias |
 | --- | --- |
 | Interface | React 19, React Router, Tailwind CSS 4, Framer Motion |
-| Visualização | Recharts com carregamento sob demanda |
+| Visualização | Gráfico de evolução em SVG próprio, sem biblioteca |
 | Backend gerenciado | Firebase Authentication e Cloud Firestore |
 | Segurança | Firestore Rules, Emulator Suite, App Check |
 | Observabilidade | Sentry em Preview e Vercel Speed Insights |
