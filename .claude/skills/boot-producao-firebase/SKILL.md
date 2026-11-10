@@ -28,7 +28,7 @@ têm — ver `vite.config.js`), e nenhum outro módulo importa
 `firebase/app-check` de forma estática. Sem chunk manual e sem mistura de
 estilo, não há como se repetir a dependência circular. App Check é
 carregado sob demanda de propósito — é o padrão de "integração defensiva"
-do projeto (Sentry, App Check e Cloud Functions só inicializam quando
+do projeto (Sentry e App Check só inicializam quando
 configurados, e falha nunca bloqueia boot).
 
 ## Por que isso quebra o boot

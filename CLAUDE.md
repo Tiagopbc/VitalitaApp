@@ -26,7 +26,6 @@ npm run knip             # código morto — o CI reprova se sobrar arquivo/expo
 npm test -- --run        # Vitest sem watch (`npm test` sozinho fica em watch)
 npm run test:rules       # regras do Firestore no emulador — exige Java 21
 npm run test:coverage
-npm --prefix functions test   # suíte das Cloud Functions, separada
 ```
 
 Um teste isolado:
@@ -36,10 +35,10 @@ npm test -- --run src/services/workoutService.test.js
 npm test -- --run -t "nome do caso"
 ```
 
-Antes de commitar, rode a mesma sequência do CI — ele executa lint, knip, Vitest, **testes das Functions**, regras do Firestore, build e coverage. A suíte de `functions/` tem `package.json` e `vitest.config.js` próprios e é fácil de esquecer:
+Antes de commitar, rode a mesma sequência do CI — ele executa lint, knip, Vitest, regras do Firestore, build e coverage:
 
 ```bash
-npm run lint && npm run knip && npm test -- --run && npm --prefix functions test && npm run build
+npm run lint && npm run knip && npm test -- --run && npm run build
 ```
 
 Vitest tem duas configurações: `vitest.config.js` (jsdom; cobre `src/**` e `api/**`, alias `@` → `src/`) e `vitest.rules.config.js` (node; só `tests/security/`, sem paralelismo).
@@ -55,13 +54,13 @@ PWA em React 19 + Vite, com Firebase Auth e Cloud Firestore direto do cliente. N
 
 **Padrão orquestrador + sub-hooks.** Hooks grandes são um orquestrador fino compondo sub-hooks num diretório irmão: `useWorkoutSession.js` compõe `hooks/workout-session/*` (loader, sync, ações de série, finalização). O mesmo vale para `services/sessions/`, `hooks/workout-execution/` e `hooks/profile/`. Ao quebrar página ou hook grande, siga esse formato em vez de criar um arquivo novo solto.
 
-**Integrações são defensivas.** Sentry, App Check e Cloud Functions são todos opcionais e inicializados sob demanda; falha em qualquer um deles nunca pode impedir o boot do app.
+**Integrações são defensivas.** Sentry e App Check são opcionais e inicializados sob demanda; falha em qualquer um deles nunca pode impedir o boot do app.
 
 ## Armadilhas específicas deste projeto
 
 Ler antes de "consertar" algo que parece quebrado — vários destes já foram decisões conscientes.
 
-**Node 24 + npm 11 é requisito do lockfile, não preferência.** Desde 04/08/2026 tudo aponta para o 24: `.nvmrc`, `engines.node: "24.x"`, `packageManager: npm@11.17.0`, `node-version: 24` no `ci.yml` e `runtime: nodejs24` no `firebase.json` — que é o runtime mais alto que o `firebase-tools` 15.x oferece, então subir o Node do projeto depende do Google primeiro. Historicamente o npm 10 e o npm 11 discordavam sobre 14 entradas aninhadas do `package-lock.json` (subárvore de proxy do `puppeteer-core`, transitiva do `lighthouse`) e cada um era coerente consigo mesmo; o que quebrava era **escritor e leitor em majors diferentes**, e só aparecia no CI, que usa `npm ci` (estrito) e falha com `EUSAGE / Missing: proxy-agent@... from lock file`. Foi a causa do incidente de 23/07/2026, quando o CI ainda rodava Node 22. Essa subárvore saiu do lock em 17/09/2026, junto com o `lighthouse` — mas **a regra continua valendo, agora por um motivo mais duro**: medido na mesma data, o npm 10 nem resolve mais a árvore deste `package.json`, quebrando com `Cannot read properties of null (reading 'edgesOut')` antes de escrever qualquer lock. Minor e patch do npm são inofensivos, e `npm ci` é seguro em qualquer versão — ele instala a partir do lock e nunca escreve nele. Ao subir o Node major no futuro, regere o lockfile **no mesmo commit** que muda o `ci.yml`.
+**Node 24 + npm 11 é requisito do lockfile, não preferência.** Desde 04/08/2026 tudo aponta para o 24: `.nvmrc`, `engines.node: "24.x"`, `packageManager: npm@11.17.0` e `node-version: 24` no `ci.yml`. Historicamente o npm 10 e o npm 11 discordavam sobre 14 entradas aninhadas do `package-lock.json` (subárvore de proxy do `puppeteer-core`, transitiva do `lighthouse`) e cada um era coerente consigo mesmo; o que quebrava era **escritor e leitor em majors diferentes**, e só aparecia no CI, que usa `npm ci` (estrito) e falha com `EUSAGE / Missing: proxy-agent@... from lock file`. Foi a causa do incidente de 23/07/2026, quando o CI ainda rodava Node 22. Essa subárvore saiu do lock em 17/09/2026, junto com o `lighthouse` — mas **a regra continua valendo, agora por um motivo mais duro**: medido na mesma data, o npm 10 nem resolve mais a árvore deste `package.json`, quebrando com `Cannot read properties of null (reading 'edgesOut')` antes de escrever qualquer lock. Minor e patch do npm são inofensivos, e `npm ci` é seguro em qualquer versão — ele instala a partir do lock e nunca escreve nele. Ao subir o Node major no futuro, regere o lockfile **no mesmo commit** que muda o `ci.yml`.
 
 **Gerenciador de versão de Node só vale em shell interativo.** O hook do `fnm`/`nvm` mora no `~/.zshrc`, que não é sourceado em shell não-interativo — então comandos rodados por agente ou script caem no Node do sistema, não no do `.nvmrc`. Confira com `node -v` antes de concluir que a máquina está na versão errada, e use `fnm exec --using=24 -- <comando>` quando a versão importar de verdade.
 
@@ -75,7 +74,7 @@ Ler antes de "consertar" algo que parece quebrado — vários destes já foram d
 
 **Três configurações não chegam pelo service worker e exigem reinstalar o app:** o `apple-mobile-web-app-status-bar-style`, o `apple-touch-icon` e o nome do atalho (`apple-mobile-web-app-title`, ou o `<title>`). O iOS as lê ao *montar a janela*, na instalação — nem "Atualizar Agora" nem matar o app aplicam; só remover o ícone da tela de início e adicionar de novo pelo Safari. Todo o resto chega normalmente pelo precache. Desde 18/08/2026 o app avisa sozinho: o `vite.config.js` extrai do `index.html` uma assinatura dessas três coisas e o `PwaReinstallNotice` compara com a que valia na instalação. A assinatura é derivada dos valores reais, então **não há número para lembrar de bumpar** — e editar comentário no `index.html` não dispara aviso falso. A detecção vale da *próxima* mudança em diante: o iOS não expõe o que leu, então quem já está com a janela velha hoje não é avisado. Ver `src/utils/windowConfig.js`.
 
-**`user_stats` recalculado no cliente é intencional, não dívida.** `VITE_ENABLE_SERVER_USER_STATS` fica desligada por padrão para operar em custo zero; com ela desligada o cliente recalcula totais, streaks e conquistas a partir das sessões recentes (fallback em `ProfilePage.jsx` e `publishStats` de `HomeDashboard.jsx`). A Cloud Function existe mas não é lida.
+**`user_stats` não existe mais no servidor.** A Cloud Function que recalculava o agregado, a flag `VITE_ENABLE_SERVER_USER_STATS` e o `userStatsService` foram removidos em 09/11/2026 (ADR-0006). Totais, streaks e conquistas são calculados no cliente a partir das sessões recentes (`publishStats` em `HomeDashboard.jsx` e `hooks/profile/useAchievements.js`), e essa é a única fonte. Não recrie a coleção nem a leitura dela sem ADR novo.
 
 **Nunca importe `firebase/auth` (ou qualquer pacote do Firebase) dinamicamente.** Todo o app importa esses pacotes de forma estática (`src/firebaseAuth.js`, `src/firebaseDb.js`). Um único `await import('firebase/auth')` faz o `manualChunks` do `vite.config.js` emitir o `vendor-firebase-app` com dependência circular, e o app **não passa da tela "Carregando..."** em produção, com `Cannot access 're' before initialization`. Aconteceu em 23/07/2026 e derrubou produção.
 
@@ -91,7 +90,7 @@ Ler antes de "consertar" algo que parece quebrado — vários destes já foram d
 
 **O push de descanso não usa FCM** (é Web Push/VAPID via QStash) **e só é testável em iPhone com a tela bloqueada.** Mexendo nele? **Invoque o skill `push-descanso`** — e os três comportamentos de 18/08/2026 já foram validados em aparelho em 28/08/2026, com procedimento e método de conferência pelos logs da Vercel em [docs/validacao-push-descanso-ios.md](docs/validacao-push-descanso-ios.md).
 
-**Majors de dependência entram um por vez, pelos PRs do Dependabot** (`.github/dependabot.yml`: raiz, `functions/` e Actions, semanal, minor e patch agrupados num PR só). Levantado em 22/10/2026, há major pendente em `lucide-react`, `framer-motion`, `firebase`, `vite`, `vitest`, `eslint`, `@sentry/react`, `@vercel/speed-insights`, `vite-plugin-pwa`, `@anthropic-ai/sdk`, `firebase-admin` e `firebase-functions`, entre outros — nenhum entra junto com outro, e só depois do milestone "Revisão geral 2026-09". O lockfile de um PR do Dependabot **precisa ser regenerado com npm 11** se ele vier gerado por outro major (ver "Node 24 + npm 11"). O CI roda `npm audit --omit=dev` em `high` para `functions/` e em `critical` para a raiz: o `@firebase/firestore` fixa `@grpc/grpc-js` em `~1.9.0` até na versão mais nova, e os avisos *high* do grpc-js são do lado servidor do gRPC, que o bundle do navegador nem usa. Voltar a raiz para `high` quando o Firebase subir essa dependência.
+**Majors de dependência entram um por vez, pelos PRs do Dependabot** (`.github/dependabot.yml`: raiz e Actions, semanal, minor e patch agrupados num PR só). Levantado em 22/10/2026, há major pendente em `lucide-react`, `framer-motion`, `firebase`, `vite`, `vitest`, `eslint`, `@sentry/react`, `@vercel/speed-insights`, `vite-plugin-pwa`, `@anthropic-ai/sdk`, entre outros — nenhum entra junto com outro, e só depois do milestone "Revisão geral 2026-09". O lockfile de um PR do Dependabot **precisa ser regenerado com npm 11** se ele vier gerado por outro major (ver "Node 24 + npm 11"). O CI roda `npm audit --omit=dev` em `critical`: o `@firebase/firestore` fixa `@grpc/grpc-js` em `~1.9.0` até na versão mais nova, e os avisos *high* do grpc-js são do lado servidor do gRPC, que o bundle do navegador nem usa. Voltar para `high` quando o Firebase subir essa dependência.
 
 **App Check está sem enforcement por decisão — reafirmada em 28/08/2026**, já com a métrica em 100% verificadas. Não é TODO esquecido: ligar trocaria um risco teórico (que as `firestore.rules` já cobrem) por um risco observado de trancar o dono fora do app. Ver [docs/app-check.md](docs/app-check.md).
 

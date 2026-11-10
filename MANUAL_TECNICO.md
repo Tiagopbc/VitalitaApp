@@ -288,7 +288,7 @@ Duas armadilhas ao validar:
 
 `api/parse-workout-pdf.js` lê um PDF de ficha com a API da Anthropic (modelo `claude-opus-4-8`) e
 devolve os exercícios em JSON. **É a única funcionalidade paga do projeto** — as demais operam em
-custo zero por decisão (ver `user_stats` recalculado no cliente).
+custo zero por decisão (ver ADR-0001 e ADR-0006).
 
 Três variáveis na Vercel, todas obrigatórias para a feature funcionar:
 
@@ -300,7 +300,7 @@ Três variáveis na Vercel, todas obrigatórias para a feature funcionar:
 
 A flag de build existe porque o cliente **não tem como descobrir** se o servidor tem a chave sem
 gastar uma requisição. Sem ela, o botão apareceria em qualquer ambiente e só falharia ao ser
-clicado. Mesma convenção do `VITE_ENABLE_SERVER_USER_STATS`.
+clicado.
 
 **Degradação em duas camadas:** com a flag desligada o botão nem aparece; se a flag estiver ligada
 mas faltar uma das variáveis de servidor, a função responde `503` e o cliente exibe "Importação por

@@ -4,7 +4,6 @@ import ProfilePage from './ProfilePage';
 import { useAuth } from '../AuthContext';
 import { userService } from '../services/userService';
 import { workoutService } from '../services/workoutService';
-import { userStatsService } from '../services/userStatsService';
 
 // Mocks
 vi.mock('../AuthContext');
@@ -17,12 +16,6 @@ vi.mock('../services/workoutService', () => ({
     },
     workoutService: {
         getRecentSessions: vi.fn()
-    }
-}));
-
-vi.mock('../services/userStatsService', () => ({
-    userStatsService: {
-        getUserStats: vi.fn()
     }
 }));
 
@@ -85,7 +78,6 @@ describe('ProfilePage Integration', () => {
         userService.linkTrainer.mockResolvedValue({});
 
         // Mock workoutService sessions return
-        userStatsService.getUserStats.mockResolvedValue(null);
         workoutService.getRecentSessions.mockResolvedValue(mockSessions);
     });
 

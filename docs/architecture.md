@@ -16,7 +16,7 @@ O Vitalità é um PWA em React/Vite com Firebase Authentication e Cloud Firestor
 
 - Firebase Auth gerencia identidade.
 - Firestore guarda perfis, templates, sessões, vínculos aluno-personal e sessão ativa.
-- Agregados de `user_stats/{userId}` são opcionais e controlados pela flag `VITE_ENABLE_SERVER_USER_STATS` (`src/services/userStatsService.js`), desligada por padrão para operar em custo zero. Com a flag desligada, existe uma Cloud Function (`rebuildUserStatsOnSessionCreated` em `functions/`) que pode atualizar `user_stats`, mas o cliente não a lê: os totais, streaks e conquistas são recalculados no cliente a partir das sessões recentes (fallback em `ProfilePage.jsx` e no `publishStats` de `HomeDashboard.jsx`, usando os utilitários puros de `src/utils/`). É uma decisão consciente de custo, não uma pendência.
+- Totais, streaks e conquistas são calculados no cliente a partir das sessões recentes (`publishStats` em `HomeDashboard.jsx` e `hooks/profile/useAchievements.js`, com os utilitários puros de `src/utils/`). O agregado `user_stats` e a Cloud Function que o escrevia foram removidos em 11/2026 (ADR-0006); não há Cloud Functions no projeto.
 - Firestore offline persistence fica em `src/firebaseDb.js`.
 - Regras e índices são versionados na raiz do projeto.
 - Observabilidade opcional fica em `src/services/observabilityService.js`, com Sentry carregado sob demanda e sanitização em `src/utils/observability.js`.
@@ -25,7 +25,6 @@ O Vitalità é um PWA em React/Vite com Firebase Authentication e Cloud Firestor
 ## Pontos de Evolução
 
 - Quebrar as páginas grandes (`WorkoutExecutionPage.jsx`, `ProfilePage.jsx`, `LoginPage.jsx`) em subcomponentes e hooks menores, seguindo o padrão orquestrador + sub-hooks já adotado em `useWorkoutSession`. Diretórios previstos: `src/components/auth/`, `src/components/profile/`, `src/hooks/profile/`, `src/hooks/workout-execution/`.
-- Criar atualização incremental para agregados em `user_stats` (hoje o cálculo client-side é integral), como pré-requisito para ligar `VITE_ENABLE_SERVER_USER_STATS` sem regressão de custo.
 - Migrar convites e ações sensíveis para Cloud Functions.
 - Expandir a classificação de erros do Firestore e alertas operacionais do Sentry.
 
@@ -33,10 +32,8 @@ O Vitalità é um PWA em React/Vite com Firebase Authentication e Cloud Firestor
 
 - `docs/adr/` — decisões arquiteturais com trade-offs (ADRs)
 - `docs/firestore-model.md`
-- `docs/functions-deploy.md`
 - `docs/security-rules.md`
 - `docs/performance-data.md`
-- `docs/user-stats-backfill.md`
 - `docs/testing.md`
 - `docs/observability.md`
 - `docs/app-check.md`

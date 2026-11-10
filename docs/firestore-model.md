@@ -133,41 +133,6 @@ Regras principais:
 - Só o personal dono pode listar (`list`) a coleção; ver "Por que `get` e `list` são separados" em [security-rules.md](security-rules.md).
 - Ao aceitar, o aluno cria `trainer_students` e atualiza o convite para `expired` no mesmo batch.
 
-## `user_stats/{userId}`
+## `user_stats/{userId}` (descontinuada)
 
-Agregados server-side para performance, streaks e conquistas. O front end pode ler,
-mas nao pode escrever nesta coleção.
-
-Campos principais:
-
-- `userId`
-- `schemaVersion`
-- `source`
-- `totalWorkouts`
-- `strengthWorkouts`
-- `cardioWorkouts`
-- `currentStreak`
-- `longestStreak`
-- `currentWeeklyStreak`
-- `longestWeeklyStreak`
-- `currentDailyStreak`
-- `longestDailyStreak`
-- `weeklyGoal`
-- `weeklyCompleted`
-- `totalVolume`
-- `totalTonnageKg`
-- `monthlyVolume`
-- `totalSets`
-- `totalReps`
-- `prsCount`
-- `distinctExercises`
-- `exerciseMaxes`
-- `achievementStats`
-- `achievements`
-- `lastWorkoutAt`
-- `updatedAt`
-
-Atualização:
-
-- Cloud Functions atualiza o documento quando uma sessão em `workout_sessions` é criada.
-- O cliente usa fallback temporário para uma janela recente se o agregado ainda não existir.
+Coleção removida do modelo em 11/2026 (ADR-0006). As regras negam leitura e escrita para todos; documentos antigos podem existir em produção, mas nenhum caminho do app os lê. Totais, streaks e conquistas são calculados no cliente a partir das sessões recentes.

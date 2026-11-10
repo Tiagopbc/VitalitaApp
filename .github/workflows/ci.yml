@@ -19,15 +19,9 @@ jobs:
         with:
           node-version: 24
           cache: 'npm'
-          cache-dependency-path: |
-            package-lock.json
-            functions/package-lock.json
           
       - name: Install Dependencies
         run: npm ci
-
-      - name: Install Functions Dependencies
-        run: npm ci --prefix functions
 
       # Raiz em `critical`, não `high`: o @firebase/firestore fixa
       # @grpc/grpc-js em ~1.9.0 até na versão mais nova, e os avisos high
@@ -37,9 +31,6 @@ jobs:
       - name: Audit Dependencies
         run: npm audit --omit=dev --audit-level=critical
 
-      - name: Audit Functions Dependencies
-        run: npm audit --omit=dev --audit-level=high --prefix functions
-        
       - name: Run Lint
         run: npm run lint
 
@@ -48,9 +39,6 @@ jobs:
 
       - name: Run Vitest
         run: npm test -- --run
-
-      - name: Run Functions Tests
-        run: npm --prefix functions test
 
       - name: Set up Java for Firebase Emulator
         uses: actions/setup-java@v6

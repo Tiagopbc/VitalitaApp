@@ -5,10 +5,6 @@
  * Variações de grafia do mesmo exercício ("Leg Press 45°", "leg press 45")
  * viravam chaves distintas em `exerciseMaxes` — duplicando as Melhores Marcas
  * e inflando `distinctExercises` e `prsCount`.
- *
- * ESPELHO: functions/src/exerciseName.js repete `normalizeExerciseName` e
- * `createExerciseMaxTracker` porque functions/ é um pacote separado (o deploy
- * leva só aquela pasta). Alterou aqui, altere lá.
  */
 
 // Marcas de acento combinantes, expostas pelo normalize('NFD').

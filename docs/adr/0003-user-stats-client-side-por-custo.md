@@ -1,6 +1,6 @@
 # ADR-0003: `user_stats` recalculado no cliente por padrão, agregação server-side opcional
 
-**Status:** Accepted
+**Status:** Superseded por [ADR-0006](0006-remocao-user-stats-servidor.md) em 2026-11-09
 **Date:** 2026-07-03 (Cloud Function de agregação adicionada nesta data; decisão de mantê-la desligada por padrão registrada retroativamente em 2026-07-29)
 **Deciders:** Tiago Cavalcanti
 
