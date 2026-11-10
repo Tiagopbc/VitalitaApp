@@ -115,7 +115,7 @@ export function StreakWeeklyGoalHybrid({
                         </div>
 
                         {/* Número de Sequência Gigante - MUDANÇA DE TAMANHO DE FONTE PRESERVADA */}
-                        <h1 className="text-4xl sm:text-4xl font-black text-white tracking-tighter leading-none drop-shadow-2xl relative z-10">
+                        <h1 className="text-4xl sm:text-4xl font-bold text-white tracking-tighter leading-none drop-shadow-2xl relative z-10">
                             {currentStreak}
                         </h1>
                         <p className="text-[10px] sm:text-xs font-bold text-slate-500 uppercase tracking-[0.25em] mt-3">
@@ -138,7 +138,7 @@ export function StreakWeeklyGoalHybrid({
                                 </div>
                                 <span className="text-sm font-bold text-slate-200">Meta da semana</span>
                             </div>
-                            <span className="text-sm font-extrabold text-white bg-slate-800/50 px-2 py-0.5 rounded-md border border-white/5">
+                            <span className="text-sm font-bold text-white bg-slate-800/50 px-2 py-0.5 rounded-md border border-white/5">
                                 {displayPercent}%
                             </span>
                         </div>

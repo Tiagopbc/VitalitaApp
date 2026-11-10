@@ -122,7 +122,7 @@ export const VitalitaGlassCard = forwardRef(({ achievement, className = '' }, re
                     </h2>
 
                     {/* Descrição em Slate-400 (Cinza Neutro) */}
-                    <p className="text-sm font-light leading-relaxed text-slate-400">
+                    <p className="text-sm font-normal leading-relaxed text-slate-400">
                         {description}
                     </p>
                 </div>
