@@ -11,9 +11,17 @@ O ADR-0003 decidiu que o cliente recalcula totais, streaks e conquistas a
 partir das sessões recentes, e que o agregado `user_stats/{userId}` escrito
 pela Cloud Function `rebuildUserStatsOnSessionCreated` ficaria como opção
 desligada (`VITE_ENABLE_SERVER_USER_STATS=false`). O próprio ADR registrou,
-na revisão de 2026-07-29, que a function é um trigger incondicional: rodava a
-cada sessão salva, lia até 2.000 sessões do usuário e reescrevia um documento
-que nenhuma tela lia.
+na revisão de 2026-07-29, que a function é um trigger incondicional e que,
+implantada, rodaria a cada sessão salva, lendo até 2.000 sessões do usuário
+para reescrever um documento que nenhuma tela lia.
+
+**Correção de 2026-11-10, no fechamento deste ADR:** a function **nunca
+esteve implantada**. A API do Cloud Functions está desligada no projeto
+(`firebase functions:list` devolve `SERVICE_DISABLED`), e a variável
+`VITE_ENABLE_SERVER_USER_STATS` nunca existiu na Vercel. O custo por sessão
+que o ADR-0003 e a primeira versão deste texto davam como pago era
+hipotético. A decisão de remover continua de pé pelos outros motivos abaixo:
+o código existia sem uso e cobrava manutenção.
 
 Na revisão de reduções de 2026-11-09, o estado era:
 
@@ -21,7 +29,7 @@ Na revisão de reduções de 2026-11-09, o estado era:
   passos no CI, uma entrada no Dependabot e dois documentos de operação;
 - `userStatsService.js` e dois ramos no cliente (`HomeDashboard.jsx`,
   `useAchievements.js`) para um caminho que a flag nunca ligou;
-- custo de leitura no Firestore pago a cada treino, sem retorno.
+- um deploy que nunca aconteceu, documentado como se estivesse em produção.
 
 ## Decisão
 
@@ -39,10 +47,10 @@ Remover o caminho server-side por inteiro:
   `knip.json`, `docs/functions-deploy.md`, `docs/user-stats-backfill.md` e o
   skill `user-stats-cliente`.
 
-Fora do repositório: apagar a function implantada
-(`firebase functions:delete rebuildUserStatsOnSessionCreated`) e a variável
-na Vercel. Documentos antigos em `user_stats` podem persistir até uma limpeza
-administrativa; nenhum caminho do app os lê.
+Fora do repositório não havia nada a apagar (ver a correção acima). Se
+algum documento existir em `user_stats`, veio do script de backfill rodado à
+mão; pode persistir até uma limpeza administrativa, nenhum caminho do app o
+lê.
 
 ## Opções consideradas
 
@@ -51,7 +59,7 @@ administrativa; nenhum caminho do app os lê.
 | Dimensão | Avaliação |
 |---|---|
 | Complexidade | Cai: um workspace npm a menos, CI com três passos a menos, uma flag a menos |
-| Custo | Zera a execução por sessão e as leituras de até 2.000 documentos por treino |
+| Custo | Nenhum em produção (a function não estava implantada); zera o custo de manutenção |
 | Escalabilidade | Igual à de hoje: o cliente já era a única fonte exibida |
 | Reversibilidade | O código fica no histórico do git; voltar exige ADR novo |
 
@@ -82,6 +90,7 @@ sessões se a function falhar ou atrasar.
 ## Action Items
 
 1. [x] Remover código, configuração e documentação (este PR).
-2. [ ] Apagar a function implantada e a variável na Vercel (Tiago).
-3. [ ] Fechar o PR do Dependabot `functions/firebase-functions-e-admin`, que
-   ficou sem diretório.
+2. [x] Conferir produção: API do Cloud Functions desligada, variável
+   inexistente na Vercel — nada a apagar (2026-11-10).
+3. [x] Fechar o PR #134 do Dependabot (`functions/firebase-functions-e-admin`),
+   que ficou sem diretório (2026-11-10).
