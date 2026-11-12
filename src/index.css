@@ -398,3 +398,29 @@
     transition: transform 900ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
+/*
+ * Fundos da tela de login (e de cadastro e recuperação de senha, que usam o
+ * mesmo contêiner). Antes eram gradientes escuros no style da LoginPage e não
+ * mudavam de tema: no claro, o texto, que inverte, ficava escuro sobre escuro.
+ * Os valores escuros abaixo são os mesmos de antes (loginTema.test.jsx).
+ */
+.vit-auth-bg {
+    background: radial-gradient(circle at top, #020617 0%, #000 55%);
+}
+.vit-auth-card {
+    background:
+        radial-gradient(circle at top left, rgba(59, 130, 246, 0.25), transparent 55%),
+        radial-gradient(circle at top right, rgba(14, 165, 233, 0.2), transparent 60%),
+        linear-gradient(135deg, #020617 0%, #000 70%);
+}
+:root[data-theme="light"] .vit-auth-bg {
+    background: radial-gradient(circle at top, #ffffff 0%, #e2e8f0 70%);
+}
+:root[data-theme="light"] .vit-auth-card {
+    background:
+        radial-gradient(circle at top left, rgba(59, 130, 246, 0.1), transparent 55%),
+        radial-gradient(circle at top right, rgba(14, 165, 233, 0.08), transparent 60%),
+        linear-gradient(135deg, #ffffff 0%, #f8fafc 70%);
+    box-shadow: var(--vit-shadow-card);
+}
+

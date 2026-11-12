@@ -47,12 +47,7 @@ export default function LoginPage() {
     }
 
     return (
-        <div
-            className="min-h-screen flex flex-col items-center justify-center px-6 py-8 text-text-primary"
-            style={{
-                background: 'radial-gradient(circle at top, #020617 0%, #000 55%)'
-            }}
-        >
+        <div className="vit-auth-bg min-h-screen flex flex-col items-center justify-center px-6 py-8 text-text-primary">
             <div className="w-full max-w-[1120px] flex flex-col items-center transform -translate-y-3">
                 <header className="text-center mb-8 flex flex-col items-center">
                     <h1 className="text-2xl font-bold tracking-widest uppercase text-white mb-1.5">VITALITÀ</h1>
@@ -61,14 +56,9 @@ export default function LoginPage() {
                     </p>
                 </header>
 
-                <div className="w-full max-w-[420px] border-[0.75px] border-slate-900/90 rounded-lg shadow-soft p-6 mx-auto box-border"
-                    style={{
-                        background: `
-                            radial-gradient(circle at top left, rgba(59, 130, 246, 0.25), transparent 55%),
-                            radial-gradient(circle at top right, rgba(14, 165, 233, 0.2), transparent 60%),
-                            linear-gradient(135deg, #020617 0%, #000 70%)`
-                    }}
-                >
+                {/* Fundos da página e do cartão: classes vit-auth-* no index.css, com
+                    versão clara (antes, gradientes escuros fixos no style). */}
+                <div className="vit-auth-card w-full max-w-[420px] border-[0.75px] border-slate-900/90 rounded-lg shadow-soft p-6 mx-auto box-border">
                     {view === 'login' ? (
                         <LoginForm
                             loginEmail={login.loginEmail}
