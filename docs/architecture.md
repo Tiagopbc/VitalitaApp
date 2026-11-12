@@ -25,7 +25,7 @@ O Vitalità é um PWA em React/Vite com Firebase Authentication e Cloud Firestor
 
 ## Pontos de Evolução
 
-- As quatro páginas de 700+ linhas viraram orquestradores na revisão geral 2026-09 (D16–D19). Ainda passam de ~300 linhas `TrainerDashboard.jsx` (472), `WorkoutExecutionPage.jsx` (437) e `LoginPage.jsx` (376): quando forem tocadas, seguir o mesmo formato, com `src/hooks/<página>/` e `src/components/<página>/`.
+- As quatro páginas de 700+ linhas viraram orquestradores na revisão geral 2026-09 (D16–D19). A `LoginPage` seguiu o mesmo caminho em 11/2026 (`src/hooks/login/`). Ainda passam de ~300 linhas `TrainerDashboard.jsx` (477) e `WorkoutExecutionPage.jsx` (437): quando forem tocadas, seguir o mesmo formato, com `src/hooks/<página>/` e `src/components/<página>/`.
 - Convites e demais ações sensíveis seguem protegidos pelas `firestore.rules`. Mover qualquer um para servidor exige ADR novo: o projeto não tem Cloud Functions (ADR-0001, ADR-0006).
 - Expandir a classificação de erros do Firestore e alertas operacionais do Sentry.
 
