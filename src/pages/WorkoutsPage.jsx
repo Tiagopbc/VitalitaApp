@@ -9,7 +9,6 @@
  * exercício em edição, a grade e os modais.
  */
 import React, { useState } from 'react';
-import { AnimatePresence } from 'framer-motion';
 import { Plus, Search, Sparkles } from 'lucide-react';
 import { Button } from '../components/design-system/Button';
 import { EmptyState } from '../components/design-system/EmptyState';
@@ -23,6 +22,7 @@ import { useWorkoutFilters } from '../hooks/workouts/useWorkoutFilters';
 import { useCardMenu } from '../hooks/workouts/useCardMenu';
 import { useWorkoutOrdering } from '../hooks/workouts/useWorkoutOrdering';
 import { useWorkoutActions } from '../hooks/workouts/useWorkoutActions';
+import { usePresence } from '../hooks/usePresence';
 
 const EditExerciseModal = React.lazy(() => import('../components/workout/EditExerciseModal').then(module => ({ default: module.EditExerciseModal })));
 
@@ -35,6 +35,12 @@ export default function WorkoutsPage({ onNavigateToCreate, onNavigateToWorkout, 
     const [selectedWorkout, setSelectedWorkout] = useState(null); // ID of expanded workout
     const [editingExercise, setEditingExercise] = useState(null); // { workoutId, index, data }
     const [isAddCardioOpen, setIsAddCardioOpen] = useState(false);
+
+    // O modal de exercício sai animado: usePresence o mantém montado durante a
+    // saída, e `shownExercise` guarda os dados que já foram limpos ao fechar.
+    const editPresence = usePresence(Boolean(editingExercise), 200);
+    const [shownExercise, setShownExercise] = useState(editingExercise);
+    if (editingExercise && editingExercise !== shownExercise) setShownExercise(editingExercise);
 
     const ordering = useWorkoutOrdering({
         workouts,
@@ -140,24 +146,23 @@ export default function WorkoutsPage({ onNavigateToCreate, onNavigateToWorkout, 
             </div>
 
             {/* --- Edit Modal --- */}
-            <AnimatePresence>
-                {editingExercise && (
-                    <React.Suspense fallback={
-                        <div className="fixed inset-0 z-50 flex items-center justify-center">
-                            <div className="h-12 w-12 rounded-full border-2 border-cyan-500/30 border-t-cyan-400 animate-spin" />
-                        </div>
-                    }>
-                        <EditExerciseModal
-                            exercise={editingExercise}
-                            onClose={() => setEditingExercise(null)}
-                            onSave={() => {
+            {editPresence.mounted && shownExercise && (
+                <React.Suspense fallback={
+                    <div className="fixed inset-0 z-50 flex items-center justify-center">
+                        <div className="h-12 w-12 rounded-full border-2 border-cyan-500/30 border-t-cyan-400 animate-spin" />
+                    </div>
+                }>
+                    <EditExerciseModal
+                        exercise={shownExercise}
+                        leaving={editPresence.leaving}
+                        onClose={() => setEditingExercise(null)}
+                        onSave={() => {
 
-                                // Update logic here
-                            }}
-                        />
-                    </React.Suspense>
-                )}
-            </AnimatePresence>
+                            // Update logic here
+                        }}
+                    />
+                </React.Suspense>
+            )}
 
             <AddCardioModal
                 isOpen={isAddCardioOpen}

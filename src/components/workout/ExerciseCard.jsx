@@ -1,4 +1,3 @@
-import { motion } from 'framer-motion';
 import { TrendingUp, MoreVertical, ChevronRight } from 'lucide-react';
 
 export function ExerciseCard({
@@ -13,11 +12,9 @@ export function ExerciseCard({
     const hasProgress = lastWeight && personalRecord && lastWeight >= personalRecord;
 
     return (
-        <motion.div
-            whileHover={{ x: 4 }}
-            whileTap={{ scale: 0.98 }}
+        <div
             onClick={onPress}
-            className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-4 hover:border-cyan-500/30 transition-all cursor-pointer group"
+            className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-4 hover:border-cyan-500/30 hover:translate-x-1 active:scale-[0.98] transition-all cursor-pointer group"
         >
             <div className="flex items-center gap-4">
                 {/* Info do Exercício */}
@@ -25,14 +22,10 @@ export function ExerciseCard({
                     <div className="flex items-center gap-2 mb-1">
                         <h3 className="text-sm font-semibold text-white truncate uppercase">{name}</h3>
                         {hasProgress && (
-                            <motion.div
-                                initial={{ scale: 0 }}
-                                animate={{ scale: 1 }}
-                                className="flex items-center gap-1 px-2 py-0.5 bg-yellow-500/20 rounded-full border border-yellow-500/30"
-                            >
+                            <div className="vit-scale-in flex items-center gap-1 px-2 py-0.5 bg-yellow-500/20 rounded-full border border-yellow-500/30">
                                 <TrendingUp size={12} className="text-yellow-400" />
                                 <span className="text-xs font-bold text-yellow-400">PR!</span>
-                            </motion.div>
+                            </div>
                         )}
                     </div>
 
@@ -61,18 +54,17 @@ export function ExerciseCard({
 
                 {/* Ações */}
                 <div className="flex items-center gap-2">
-                    <motion.button
-                        whileHover={{ scale: 1.1 }}
-                        whileTap={{ scale: 0.9 }}
+                    <button
+                        type="button"
                         aria-label="Mais opções"
                         onClick={(e) => {
                             e.stopPropagation();
                             // Lidar com mais opções
                         }}
-                        className="p-2 hover:bg-white/5 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
+                        className="p-2 hover:bg-white/5 hover:scale-110 active:scale-90 rounded-lg transition opacity-0 group-hover:opacity-100"
                     >
                         <MoreVertical size={18} className="text-slate-400" />
-                    </motion.button>
+                    </button>
 
                     <ChevronRight
                         size={20}
@@ -80,6 +72,6 @@ export function ExerciseCard({
                     />
                 </div>
             </div>
-        </motion.div>
+        </div>
     );
 }

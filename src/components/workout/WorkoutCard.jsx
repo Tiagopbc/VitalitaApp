@@ -6,7 +6,6 @@
  * WorkoutsPage (D19); o estado vem dos hooks em src/hooks/workouts/.
  */
 import React from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
 import {
     Archive,
     ArchiveRestore,
@@ -23,6 +22,7 @@ import {
 import { Button } from '../design-system/Button';
 import { PremiumCard } from '../design-system/PremiumCard';
 import { isCopyName } from '../../utils/workoutCopyName';
+import { usePresence } from '../../hooks/usePresence';
 
 const ExerciseCard = React.lazy(() => import('./ExerciseCard').then(module => ({ default: module.ExerciseCard })));
 
@@ -42,6 +42,10 @@ export function WorkoutCard({
     onToggleExpand,
     onEditExercise
 }) {
+    // Sanfona da lista de exercícios: entra e sai em CSS (.vit-expand e
+    // .vit-collapse); usePresence segura a montagem durante a saída.
+    const exercisesPanel = usePresence(!isOrganizing && isSelected, 250);
+
     return (
         <PremiumCard
             style={{ animationDelay: `${idx * 100}ms` }}
@@ -191,14 +195,9 @@ export function WorkoutCard({
             )}
 
             {/* --- Expandable List (Accordion) --- */}
-            <AnimatePresence>
-                {!isOrganizing && isSelected && (
-                    <motion.div
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: 'auto', opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        className="overflow-hidden"
-                    >
+            {exercisesPanel.mounted && (
+                <div className={exercisesPanel.leaving ? 'vit-collapse' : 'vit-expand'}>
+                    <div className="min-h-0 overflow-hidden">
                         <div className="pt-4 mt-4 border-t border-slate-800 space-y-2">
                             {/* Real Exercises List */}
                             {workout.exercises && workout.exercises.length > 0 ? (
@@ -226,9 +225,9 @@ export function WorkoutCard({
                             )}
                             {/* Note: In real app, we would map `workout.exercises` if detailed. */}
                         </div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
+                    </div>
+                </div>
+            )}
         </PremiumCard>
     );
 }
