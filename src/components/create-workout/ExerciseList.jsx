@@ -11,6 +11,7 @@ import { Button } from '../design-system/Button';
 import { EmptyState } from '../design-system/EmptyState';
 import { groupBadgesByIndex } from '../../hooks/create-workout/exerciseList';
 import { ReorderableExerciseItem } from './ReorderableExerciseItem';
+import { MotionPreferences } from '../common/MotionPreferences';
 
 export function ExerciseList({ exercises, showAddExercise, onReorder, onAddFirst, onEdit, onRemove, onToggleLink }) {
     const badgeByIndex = groupBadgesByIndex(exercises);
@@ -39,26 +40,28 @@ export function ExerciseList({ exercises, showAddExercise, onReorder, onAddFirst
                     className="py-8"
                 />
             ) : (
-                <Reorder.Group
-                    axis="y"
-                    values={exercises}
-                    onReorder={onReorder}
-                    className="space-y-3"
-                >
-                    {exercises.map((ex, index) => (
-                        <ReorderableExerciseItem
-                            key={ex.id}
-                            ex={ex}
-                            index={index}
-                            handleEditExercise={onEdit}
-                            removeExercise={onRemove}
-                            groupBadge={badgeByIndex[index] || null}
-                            canLink={index > 0}
-                            isLinkedToPrev={index > 0 && !!ex.groupId && ex.groupId === exercises[index - 1]?.groupId}
-                            onToggleLink={onToggleLink}
-                        />
-                    ))}
-                </Reorder.Group>
+                <MotionPreferences>
+                    <Reorder.Group
+                        axis="y"
+                        values={exercises}
+                        onReorder={onReorder}
+                        className="space-y-3"
+                    >
+                        {exercises.map((ex, index) => (
+                            <ReorderableExerciseItem
+                                key={ex.id}
+                                ex={ex}
+                                index={index}
+                                handleEditExercise={onEdit}
+                                removeExercise={onRemove}
+                                groupBadge={badgeByIndex[index] || null}
+                                canLink={index > 0}
+                                isLinkedToPrev={index > 0 && !!ex.groupId && ex.groupId === exercises[index - 1]?.groupId}
+                                onToggleLink={onToggleLink}
+                            />
+                        ))}
+                    </Reorder.Group>
+                </MotionPreferences>
             )}
         </div>
     );

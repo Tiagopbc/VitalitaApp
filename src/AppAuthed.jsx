@@ -8,7 +8,6 @@ import { DesktopSidebar } from './components/navigation/DesktopSidebar';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { useAuth } from './context/AuthContext';
 import { WorkoutProvider, useWorkout } from './context/WorkoutContext';
-import { MotionPreferences } from './components/common/MotionPreferences';
 import { TopBanner } from './components/design-system/TopBanner';
 import { safeGetItem, safeRemoveItem, safeGetJSON, safeSetJSON } from './utils/storage';
 
@@ -474,10 +473,8 @@ function AppAuthedContent() {
 
 export default function AppAuthed() {
     return (
-        <MotionPreferences>
-            <WorkoutProvider>
-                <AppAuthedContent />
-            </WorkoutProvider>
-        </MotionPreferences>
+        <WorkoutProvider>
+            <AppAuthedContent />
+        </WorkoutProvider>
     );
 }

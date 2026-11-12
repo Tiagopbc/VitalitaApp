@@ -1,15 +1,23 @@
 /**
  * BottomNavEnhanced.jsx
- * Barra de navegação inferior premium com animações fluidas (Framer Motion),
- * efeito glassmorphism e feedback tátil.
+ * Barra de navegação inferior com efeito glassmorphism e feedback tátil.
+ *
+ * As animações são CSS desde o R06 (antes, framer-motion, que entrava no bundle
+ * do boot só por esta barra e mais dois componentes). O indicador da aba ativa
+ * é um elemento só, que desliza até o botão ativo: a posição é lida do botão e
+ * aplicada direto no estilo, num layout effect, sem estado React no meio.
  */
-import React, { useState } from 'react';
-import { motion } from 'framer-motion'; // Actually used in lines 94, 134, 148. Wait, lint said unused?
+import React, { useLayoutEffect, useRef, useState } from 'react';
 import { Home, Dumbbell, Plus, History, User } from 'lucide-react';
+
+// Curva com leve passada do ponto, no lugar das molas do framer-motion.
+const SPRING = 'cubic-bezier(0.34, 1.4, 0.64, 1)';
 
 
 export function BottomNavEnhanced({ activeTab, onTabChange }) {
     const [pressedTab, setPressedTab] = useState(null);
+    const indicatorRef = useRef(null);
+    const tabRefs = useRef({});
 
     const tabs = [
         {
@@ -40,6 +48,43 @@ export function BottomNavEnhanced({ activeTab, onTabChange }) {
         }
     ];
 
+    // A Home é o botão central, com destaque próprio: lá o indicador some.
+    const indicatorTab = tabs.some(tab => tab.id === activeTab && !tab.isSpecial) ? activeTab : null;
+
+    useLayoutEffect(() => {
+        const indicator = indicatorRef.current;
+        if (!indicator) return undefined;
+
+        const place = (animate) => {
+            const button = indicatorTab ? tabRefs.current[indicatorTab] : null;
+            if (!button) {
+                indicator.style.opacity = '0';
+                indicator.dataset.placed = '';
+                return;
+            }
+            // Desliza só se já estava visível; vindo da Home, aparece no lugar.
+            const slide = animate && indicator.dataset.placed === '1';
+            indicator.style.transition = slide ? `transform 380ms ${SPRING}, width 380ms ${SPRING}` : 'none';
+            indicator.style.width = `${button.offsetWidth}px`;
+            indicator.style.height = `${button.offsetHeight}px`;
+            indicator.style.transform = `translate(${button.offsetLeft}px, ${button.offsetTop}px)`;
+            indicator.style.opacity = '1';
+            indicator.dataset.placed = '1';
+        };
+
+        place(true);
+        // A largura dos botões depende do rótulo: medido antes de a fonte
+        // carregar, o indicador sairia 1 px maior. Reposiciona quando ela chega.
+        let ativo = true;
+        document.fonts?.ready.then(() => { if (ativo) place(false); });
+        const onResize = () => place(false);
+        window.addEventListener('resize', onResize);
+        return () => {
+            ativo = false;
+            window.removeEventListener('resize', onResize);
+        };
+    }, [indicatorTab]);
+
     const handlePress = (tabId) => {
         setPressedTab(tabId);
         setTimeout(() => setPressedTab(null), 150);
@@ -67,6 +112,21 @@ export function BottomNavEnhanced({ activeTab, onTabChange }) {
                     WebkitBackdropFilter: 'blur(40px) saturate(180%)'
                 }}
             >
+                {/* Indicador da aba ativa (desliza entre as abas) */}
+                <div
+                    ref={indicatorRef}
+                    data-testid="active-tab-indicator"
+                    data-tab={indicatorTab ?? ''}
+                    data-visible={indicatorTab ? 'true' : 'false'}
+                    aria-hidden="true"
+                    className="absolute left-0 top-0 rounded-[18px] z-0 opacity-0 pointer-events-none"
+                    style={{
+                        background: 'rgba(6, 182, 212, 0.1)',
+                        backdropFilter: 'blur(8px)',
+                        border: '1px solid rgba(255, 255, 255, 0.1)',
+                    }}
+                />
+
                 {/* Noise Texture Overlay */}
                 <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=%220 0 200 200%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cfilter id=%22noiseFilter%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%220.65%22 numOctaves=%223%22 stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect width=%22100%25%22 height=%22100%25%22 filter=%22url(%23noiseFilter)%22/%3E%3C/svg%3E")' }}></div>
 
@@ -103,15 +163,12 @@ export function BottomNavEnhanced({ activeTab, onTabChange }) {
                                     <span className="pulse-ring" />
                                     <span className="pulse-ring pulse-ring--delay" />
                                 </div>
-                                <motion.div
+                                <div
                                     className="flex items-center justify-center relative z-20"
-                                    initial={false}
-                                    animate={{
-                                        scale: fabScale,
-                                        boxShadow: fabShadow
-                                    }}
-                                    transition={{ type: "spring", stiffness: 400, damping: 17 }}
                                     style={{
+                                        transform: `scale(${fabScale})`,
+                                        boxShadow: fabShadow,
+                                        transition: `transform 220ms ${SPRING}, box-shadow 220ms ease-out`,
                                         width: '44px',
                                         height: '44px',
                                         borderRadius: '22px',
@@ -121,7 +178,7 @@ export function BottomNavEnhanced({ activeTab, onTabChange }) {
                                     }}
                                 >
                                     <Icon size={24} className="text-cyan-400" strokeWidth={1.5} />
-                                </motion.div>
+                                </div>
                             </button>
                         );
                     }
@@ -131,6 +188,7 @@ export function BottomNavEnhanced({ activeTab, onTabChange }) {
                         <button
                             key={tab.id}
                             type="button"
+                            ref={(el) => { tabRefs.current[tab.id] = el; }}
                             onClick={() => handlePress(tab.id)}
                             onTouchStart={() => setPressedTab(tab.id)}
                             onTouchEnd={() => setPressedTab(null)}
@@ -141,36 +199,19 @@ export function BottomNavEnhanced({ activeTab, onTabChange }) {
                                 minWidth: '56px'
                             }}
                         >
-                            {/* Sliding Active Indicator */}
-                            {isActive && (
-                                <motion.div
-                                    layoutId="activeTabIndicator"
-                                    className="absolute inset-0 rounded-[18px] z-0"
-                                    initial={false}
-                                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                                    style={{
-                                        background: 'rgba(6, 182, 212, 0.1)',
-                                        backdropFilter: 'blur(8px)',
-                                        border: '1px solid rgba(255, 255, 255, 0.1)',
-                                    }}
-                                />
-                            )}
-
                             <div className="relative z-10 flex flex-col items-center gap-0.5">
-                                <motion.div
-                                    initial={false}
-                                    animate={{
-                                        scale: isActive ? 1.1 : 1,
-                                        y: isActive ? -2 : 0
+                                <div
+                                    style={{
+                                        transform: isActive ? 'translateY(-2px) scale(1.1)' : 'none',
+                                        transition: `transform 260ms ${SPRING}`
                                     }}
-                                    transition={{ type: "spring", stiffness: 500, damping: 25 }}
                                 >
                                     <Icon
                                         size={21}
                                         strokeWidth={isActive ? 2.5 : 2}
                                         className={`transition-colors duration-300 ${isActive ? 'text-cyan-400' : 'text-slate-400'}`}
                                     />
-                                </motion.div>
+                                </div>
 
                                 <span className={`text-[9px] font-medium transition-colors duration-300 ${isActive ? 'text-cyan-400' : 'text-slate-500'}`}>
                                     {tab.label}
