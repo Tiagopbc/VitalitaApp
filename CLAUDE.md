@@ -52,7 +52,7 @@ PWA em React 19 + Vite, com Firebase Auth e Cloud Firestore direto do cliente. N
 - `src/services/` — todo acesso a Firebase e regra de negócio compartilhada.
 - `src/utils/` — helpers puros (estatísticas, storage, observabilidade).
 
-**Padrão orquestrador + sub-hooks.** Hooks grandes são um orquestrador fino compondo sub-hooks num diretório irmão: `useWorkoutSession.js` compõe `hooks/workout-session/*` (loader, sync, ações de série, finalização). O mesmo vale para `services/sessions/`, `hooks/workout-execution/`, `hooks/profile/` e para as quatro páginas quebradas na revisão geral: `HistoryPage` (`hooks/history/`), `HomeDashboard` (`hooks/home/`), `CreateWorkoutPage` (`hooks/create-workout/`) e `WorkoutsPage` (`hooks/workouts/`), cada uma com os componentes em `components/<página>/`. Ao quebrar página ou hook grande, siga esse formato em vez de criar um arquivo novo solto.
+**Padrão orquestrador + sub-hooks.** Hooks grandes são um orquestrador fino compondo sub-hooks num diretório irmão: `useWorkoutSession.js` compõe `hooks/workout-session/*` (loader, sync, ações de série, finalização). O mesmo vale para `services/sessions/`, `hooks/workout-execution/`, `hooks/profile/` e para as quatro páginas quebradas na revisão geral: `HistoryPage` (`hooks/history/`), `HomeDashboard` (`hooks/home/`), `CreateWorkoutPage` (`hooks/create-workout/`) e `WorkoutsPage` (`hooks/workouts/`), cada uma com os componentes em `components/<página>/` — e a `LoginPage` (`hooks/login/`, UI em `components/auth/`). Ao quebrar página ou hook grande, siga esse formato em vez de criar um arquivo novo solto.
 
 **Integrações são defensivas.** Sentry e App Check são opcionais e inicializados sob demanda; falha em qualquer um deles nunca pode impedir o boot do app.
 
