@@ -147,7 +147,7 @@ export function EditExerciseModal({ exercise, onClose, onSave, leaving = false }
                                     onSave && onSave(exercise);
                                     onClose();
                                 }}
-                                className="flex-1 px-4 py-3 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-xl text-white font-bold text-center"
+                                className="flex-1 px-4 py-3 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-xl text-on-color font-bold text-center"
                             >
                                 Salvar Alterações
                             </Button>

@@ -30,8 +30,8 @@ export function ProfileHeaderCard({
                 <div className="relative shrink-0">
                     <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-linear-to-br from-[#2998FF] to-[#1E6BFF] flex items-center justify-center text-2xl sm:text-3xl shadow-xl shadow-blue-500/20 ring-4 ring-slate-900 z-10 relative">
                         {profile.displayName && profile.displayName.length > 0
-                            ? <span className="font-bold text-white">{profile.displayName.substring(0, 2).toUpperCase()}</span>
-                            : <User size={32} className="text-white" />
+                            ? <span className="font-bold text-on-color">{profile.displayName.substring(0, 2).toUpperCase()}</span>
+                            : <User size={32} className="text-on-color" />
                         }
                     </div>
                     {/* Distintivo de Nível - Sobreposição Inferior */}

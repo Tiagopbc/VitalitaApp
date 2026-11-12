@@ -91,7 +91,7 @@ export function TopBanner() {
             data-testid="top-banner"
             data-type={item.type}
             data-phase={leaving ? 'leaving' : 'visible'}
-            className={`fixed inset-x-0 top-0 z-[10000] pointer-events-none pt-[env(safe-area-inset-top)] text-white shadow-lg ${leaving ? 'vit-banner-out' : 'vit-banner-in'} ${backgrounds[item.type] || backgrounds.info}`}
+            className={`fixed inset-x-0 top-0 z-[10000] pointer-events-none pt-[env(safe-area-inset-top)] text-on-color shadow-lg ${leaving ? 'vit-banner-out' : 'vit-banner-in'} ${backgrounds[item.type] || backgrounds.info}`}
         >
             <div className="flex items-center gap-3 px-5 py-3">
                 <Icon size={20} className="shrink-0" />
@@ -101,14 +101,14 @@ export function TopBanner() {
                 <div className="flex flex-1 flex-col items-start">
                     <span className="font-bold text-sm">{item.message}</span>
                     {item.description && (
-                        <span className="text-xs text-white/90">{item.description}</span>
+                        <span className="text-xs text-on-color/90">{item.description}</span>
                     )}
                 </div>
                 {item.action && (
                     <button
                         type="button"
                         onClick={handleAction}
-                        className={`${leaving ? '' : 'pointer-events-auto '}shrink-0 rounded-full bg-white/20 px-3 py-1 text-sm font-bold hover:bg-white/30 transition-colors`}
+                        className={`${leaving ? '' : 'pointer-events-auto '}shrink-0 rounded-full bg-on-color/20 px-3 py-1 text-sm font-bold hover:bg-on-color/30 transition-colors`}
                     >
                         {item.action.label}
                     </button>

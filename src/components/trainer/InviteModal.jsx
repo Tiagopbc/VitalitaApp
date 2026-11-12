@@ -23,7 +23,7 @@ export function InviteModal({ invite, inviteCode, inviteLoading, copied, onCopy,
                     </button>
 
                     <div className="w-16 h-16 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-full flex items-center justify-center mb-5 shadow-[0_0_20px_rgba(6,182,212,0.3)]">
-                        <UserPlus size={30} className="text-white ml-0.5" />
+                        <UserPlus size={30} className="text-on-color ml-0.5" />
                     </div>
 
                     <h2 className="text-xl font-bold text-white mb-2">Convidar Aluno</h2>
@@ -75,7 +75,7 @@ export function InviteModal({ invite, inviteCode, inviteLoading, copied, onCopy,
                     </Button>
                     <Button
                         onClick={onClose}
-                        className="w-full h-12 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl shadow-lg shadow-blue-600/20 tracking-wide uppercase text-xs"
+                        className="w-full h-12 bg-blue-600 hover:bg-blue-500 text-on-color font-bold rounded-xl shadow-lg shadow-blue-600/20 tracking-wide uppercase text-xs"
                     >
                         Entendi, Fechar
                     </Button>
