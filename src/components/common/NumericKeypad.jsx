@@ -2,21 +2,29 @@ import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Delete, Check, X } from 'lucide-react';
 
+const comoTexto = (initialValue) => (initialValue ? String(initialValue) : '');
+
 export function NumericKeypad({ isOpen, onClose, onConfirm, initialValue = '', title = '' }) {
-    const [value, setValue] = useState(initialValue);
+    const [value, setValue] = useState(() => (isOpen ? comoTexto(initialValue) : initialValue));
     const [animateShow, setAnimateShow] = useState(false);
 
+    // A cada abertura o valor recomeça do initialValue daquela abertura; ao
+    // fechar, a animação volta ao início. Ajuste feito comparando com o isOpen
+    // anterior durante o render (padrão do React para estado que reage a uma
+    // prop), não num efeito.
+    const [abertoAntes, setAbertoAntes] = useState(isOpen);
+    if (isOpen !== abertoAntes) {
+        setAbertoAntes(isOpen);
+        if (isOpen) setValue(comoTexto(initialValue));
+        else setAnimateShow(false);
+    }
+
     useEffect(() => {
-        if (isOpen) {
-            const newVal = initialValue ? String(initialValue) : '';
-            setValue(newVal);
-            // Pequeno atraso para gatilho da animação
-            requestAnimationFrame(() => setAnimateShow(true));
-        } else {
-            setAnimateShow(false);
-        }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [isOpen]); // Reset only when opening
+        if (!isOpen) return undefined;
+        // Pequeno atraso para gatilho da animação
+        const frame = requestAnimationFrame(() => setAnimateShow(true));
+        return () => cancelAnimationFrame(frame);
+    }, [isOpen]);
 
     const handlePress = (key) => {
         if (key === 'backspace') {
@@ -106,7 +114,7 @@ export function NumericKeypad({ isOpen, onClose, onConfirm, initialValue = '', t
                 {/* Botão de Confirmar */}
                 <button
                     onClick={handleConfirm}
-                    className="w-full h-16 bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 rounded-2xl text-white font-bold text-xl tracking-wide shadow-lg shadow-cyan-500/20 flex items-center justify-center gap-3 active:scale-[0.98] transition-all"
+                    className="w-full h-16 bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 rounded-2xl text-on-color font-bold text-xl tracking-wide shadow-lg shadow-cyan-500/20 flex items-center justify-center gap-3 active:scale-[0.98] transition-all"
                 >
                     <Check size={24} strokeWidth={3} />
                     CONFIRMAR

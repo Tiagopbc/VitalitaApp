@@ -70,6 +70,33 @@ src/
 ### 4.1. Autenticação (`AuthContext`)
 O `AuthContext` monitora o estado do usuário via `onAuthStateChanged` do Firebase. Ele fornece o objeto `user` para toda a aplicação e protege rotas privadas (`ProtectedRoute`).
 
+#### Login com Google no próprio domínio (#149)
+
+O login com Google (`signInWithPopup`) passa pela página do handler do Firebase em
+`/__/auth/handler`. Por padrão ela é servida por `app-treino-17bbf.firebaseapp.com`, um
+domínio diferente do app, e o Safari do iPhone trata essa página como contexto de terceiro:
+às vezes nega o `sessionStorage` dela e o login falha com "Unable to save initial state" ou
+"missing initial state". É intermitente por natureza.
+
+A correção é servir o handler do próprio domínio do app:
+
+- O `vercel.json` repassa `/__/auth/*` ao `firebaseapp.com`. O rewrite vem **antes** do
+  catch-all que manda tudo para `/index.html`, senão o handler vira a página do app.
+- As rotas `/__/auth/*` usam `X-Frame-Options: SAMEORIGIN`; o resto do app segue em `DENY`. O
+  SDK carrega `/__/auth/iframe` num iframe oculto do próprio app, e `DENY` bloqueia até iframe
+  da mesma origem.
+- O service worker do PWA exclui `/__/auth/` do fallback de navegação
+  (`navigateFallbackDenylist` no `vite.config.js`). Sem isso ele responderia a janela do login e
+  o iframe com o `index.html` antes de a requisição chegar à Vercel.
+- `VITE_FIREBASE_AUTH_DOMAIN` na Vercel (produção) aponta para o domínio do app. É `VITE_*`:
+  trocar exige redeploy.
+- O cliente OAuth do Google no Google Cloud precisa listar
+  `https://<domínio-do-app>/__/auth/handler` em "URIs de redirecionamento autorizados", e o
+  domínio precisa estar em Firebase → Authentication → Authorized domains.
+
+`api/vercel-json.test.js` segura o rewrite, o cabeçalho e a exclusão no service worker. Em desenvolvimento o `.env.local`
+continua com o `firebaseapp.com`. Login por e-mail e senha não passa por nada disso.
+
 ### 4.2. Execução de Treino (`WorkoutContext` & `useWorkout`)
 Este é o núcleo do app. O fluxo de treino é robusto contra falhas (ex: recarregar a página).
 - **Persistência:** O ID do treino ativo é salvo no `localStorage` e no Firestore (`active_workouts`).
@@ -138,7 +165,8 @@ equivalente reaparecer, a resposta é conferir as restrições — não gerar um
 
 O que **de fato** precisa ficar fora do repositório são os segredos de servidor: a chave privada
 VAPID, o token do QStash e a `ANTHROPIC_API_KEY` (ver §7.4), todos definidos apenas nas variáveis
-de ambiente da Vercel.
+de ambiente da Vercel. A lista completa das variáveis de servidor, com o papel de cada uma, está
+no fim do `.env.example` — comentada, porque elas nunca vão para esse arquivo.
 
 ### 7.2. Restrições da Browser key
 

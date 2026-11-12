@@ -5,13 +5,11 @@
  * REFATORADO: orquestrador fino — UI em `components/execution/`, lógica em
  * `hooks/workout-execution/` + `hooks/useWorkoutSession`.
  */
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useWorkout } from '../context/WorkoutContext';
-import { CheckCircle2 } from 'lucide-react';
 import { RestTimer } from '../components/execution/RestTimer';
 import { Button } from '../components/design-system/Button';
-import MethodModal from '../MethodModal';
 import { SessionConflictDialog } from '../components/execution/SessionConflictDialog';
 import { Toast } from '../components/design-system/Toast';
 import { SyncStatusBadge } from '../components/design-system/SyncStatusBadge';
@@ -19,11 +17,11 @@ import { ExecutionTopBar } from '../components/execution/ExecutionTopBar';
 import { ExecutionProgressCard } from '../components/execution/ExecutionProgressCard';
 import { FocusModeNav } from '../components/execution/FocusModeNav';
 import { ExecutionSkeleton } from '../components/execution/ExecutionSkeleton';
-import { ExerciseCard } from '../components/execution/ExerciseCard';
-import { ExerciseGroupCard } from '../components/execution/ExerciseGroupCard';
-import { CancelWorkoutModal } from '../components/execution/CancelWorkoutModal';
-import { ConfirmFinishModal } from '../components/execution/ConfirmFinishModal';
-import { WorkoutFinishModal } from '../components/execution/WorkoutFinishModal';
+import { ExecutionExerciseList } from '../components/execution/ExecutionExerciseList';
+import { FinishWorkoutFooter } from '../components/execution/FinishWorkoutFooter';
+import { FinishingSessionOverlay } from '../components/execution/FinishingSessionOverlay';
+import { WorkoutCompletion } from '../components/execution/WorkoutCompletion';
+import { ExecutionDialogs } from '../components/execution/ExecutionDialogs';
 
 // --- HOOKS PERSONALIZADOS ---
 import { useWorkoutTimer } from '../hooks/useWorkoutTimer';
@@ -32,11 +30,10 @@ import { useWakeLock } from '../hooks/useWakeLock';
 import { useExecutionNavigation } from '../hooks/workout-execution/useExecutionNavigation';
 import { useFinishWorkoutFlow } from '../hooks/workout-execution/useFinishWorkoutFlow';
 import { useWorkoutShare } from '../hooks/workout-execution/useWorkoutShare';
-import { computeGroupSegments, focusGroupBehaviorLabel, getGroupRoundPreview } from '../utils/exerciseGroups';
+import { useRestPreferences } from '../hooks/workout-execution/useRestPreferences';
+import { useSessionAutoSync } from '../hooks/workout-execution/useSessionAutoSync';
+import { focusGroupBehaviorLabel } from '../utils/exerciseGroups';
 import { computeSessionStats } from '../utils/computeSessionStats';
-import { userPreferencesService } from '../services/userPreferencesService';
-const AchievementUnlockedModal = React.lazy(() => import('../components/achievements/AchievementUnlockedModal').then(module => ({ default: module.AchievementUnlockedModal })));
-const GymToolsModal = React.lazy(() => import('../components/execution/GymToolsModal').then(module => ({ default: module.GymToolsModal })));
 
 // --- COMPONENTE DA PÁGINA PRINCIPAL ---
 export function WorkoutExecutionPage({ user }) {
@@ -71,8 +68,6 @@ export function WorkoutExecutionPage({ user }) {
     const [selectedMethod, setSelectedMethod] = useState(null);
     const [focusMode, setFocusMode] = useState(false);
     const [isFinished, setIsFinished] = useState(false); // Previne "Sessões Zumbis"
-    const [restDuration, setRestDuration] = useState(90);
-    const [autoStartTimer, setAutoStartTimer] = useState(false);
     const [showGymTools, setShowGymTools] = useState(false);
     const [showCancelModal, setShowCancelModal] = useState(false);
     const [showConfirmFinishModal, setShowConfirmFinishModal] = useState(false);
@@ -80,41 +75,8 @@ export function WorkoutExecutionPage({ user }) {
     // Mantém a tela ligada durante o treino ativo (evita perder o timer de descanso).
     useWakeLock(!loading && !isFinished);
 
-    // --- CARREGAR PREFERÊNCIAS DO USUÁRIO ---
-    useEffect(() => {
-        if (user?.uid) {
-            userPreferencesService.getWorkoutPreferences(user.uid)
-                .then(profile => {
-                    if (profile?.defaultRestTime) {
-                        setRestDuration(profile.defaultRestTime);
-                    }
-                    if (profile?.autoStartTimer !== undefined) {
-                        setAutoStartTimer(profile.autoStartTimer);
-                    }
-                })
-                .catch(console.error);
-        }
-    }, [user?.uid]);
-
-    // --- PERSISTIR PREFERÊNCIA ---
-    const handleRestDurationChange = (newDuration) => {
-        setRestDuration(newDuration);
-        if (user?.uid) {
-            // Atualização "fire and forget"
-            userPreferencesService
-                .updateWorkoutPreferences(user.uid, { defaultRestTime: newDuration })
-                .catch(err => console.error("Failed to save rest preference:", err));
-        }
-    };
-
-    const handleAutoStartChange = (newVal) => {
-        setAutoStartTimer(newVal);
-        if (user?.uid) {
-            userPreferencesService
-                .updateWorkoutPreferences(user.uid, { autoStartTimer: newVal })
-                .catch(err => console.error("Failed to save auto start preference:", err));
-        }
-    };
+    // --- PREFERÊNCIAS DO DESCANSO ---
+    const { restDuration, autoStartTimer, handleRestDurationChange, handleAutoStartChange } = useRestPreferences(user);
 
     // --- NAVEGAÇÃO (Modo Foco, série ativa, avanço bi-set/circuito) ---
     const {
@@ -139,19 +101,8 @@ export function WorkoutExecutionPage({ user }) {
         }
     };
 
-    // Sincronizar tempo decorrido do hook quando carregado
-    useEffect(() => {
-        if (initialElapsed > 0 && elapsedSeconds === 0) {
-            setElapsedSeconds(initialElapsed);
-        }
-    }, [initialElapsed, elapsedSeconds, setElapsedSeconds]);
-
-    // Efeito de Sincronização Contínua
-    useEffect(() => {
-        if (!loading && exercises.length > 0 && !isFinished) {
-            syncSession(exercises, elapsedSeconds);
-        }
-    }, [exercises, elapsedSeconds, loading, isFinished, syncSession]);
+    // --- SINCRONIZAÇÃO CONTÍNUA ---
+    useSessionAutoSync({ loading, exercises, isFinished, initialElapsed, elapsedSeconds, setElapsedSeconds, syncSession });
 
     // --- FLUXO DE FINALIZAÇÃO ---
     const {
@@ -225,44 +176,27 @@ export function WorkoutExecutionPage({ user }) {
             className="flex min-h-[calc(100dvh-env(safe-area-inset-top)-env(safe-area-inset-bottom))] flex-col bg-[#020617] p-4 font-sans text-slate-100 selection:bg-cyan-500/30"
         >
             {/* LOADER DE FINALIZAÇÃO DA SESSÃO */}
-            {isFinishingSession && (
-                <div className="fixed inset-0 z-[300] flex flex-col items-center justify-center p-4 bg-[#020617]/95 backdrop-blur-xl animate-in fade-in duration-300 text-white">
-                    <div className="h-16 w-16 mb-6 rounded-full border-[3px] border-cyan-500/20 border-t-cyan-400 animate-spin" />
-                    <h3 className="text-xl font-bold tracking-widest text-cyan-400 mb-2 uppercase">Finalizando</h3>
-                    <p className="text-slate-400 text-sm font-medium animate-pulse">Salvando o seu esforço de hoje...</p>
-                </div>
-            )}
+            {isFinishingSession && <FinishingSessionOverlay />}
 
-            {/* ACHIEVEMENT MODAL */}
-            {showAchievementModal && newAchievements.length > 0 && (
-                <React.Suspense fallback={
-                    <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/80">
-                        <div className="h-12 w-12 rounded-full border-2 border-cyan-500/30 border-t-cyan-400 animate-spin" />
-                    </div>
-                }>
-                    <AchievementUnlockedModal
-                        achievements={newAchievements}
-                        onClose={() => {
-                            setShowAchievementModal(false);
-                            setShowFinishModal(true);
-                        }}
-                    />
-                </React.Suspense>
-            )}
+            <WorkoutCompletion
+                showAchievementModal={showAchievementModal}
+                newAchievements={newAchievements}
+                onAchievementsClosed={() => {
+                    setShowAchievementModal(false);
+                    setShowFinishModal(true);
+                }}
+                showFinishModal={showFinishModal}
+                sessionData={sessionData}
+                userName={user?.displayName || 'Atleta'}
+                sharing={sharing}
+                onShare={handleShare}
+                shareCardRef={shareCardRef}
+                onFinishModalClosed={() => {
+                    if (onFinish) onFinish();
+                    else window.location.href = '/';
+                }}
+            />
 
-            {showFinishModal && !showAchievementModal && (
-                <WorkoutFinishModal
-                    session={sessionData}
-                    userName={user?.displayName || 'Atleta'}
-                    sharing={sharing}
-                    onShare={handleShare}
-                    onClose={() => {
-                        if (onFinish) onFinish();
-                        else window.location.href = '/';
-                    }}
-                    cardRef={shareCardRef}
-                />
-            )}
             {error && <Toast message={error} type="error" onClose={() => setError(null)} />}
             <SessionConflictDialog
                 conflict={sessionConflict}
@@ -320,35 +254,14 @@ export function WorkoutExecutionPage({ user }) {
                     </div>
                 )}
 
-                {/* `flex-1` absorve a sobra de altura. No Modo Foco a ficha
-                    ainda é centralizada nessa sobra; quando ela é mais alta que
-                    a tela o próprio `flex-1` cresce e a página rola normalmente,
-                    sem cortar o topo. */}
-                <main className={`px-4 mt-2 space-y-4 flex-1 ${focusMode ? 'flex flex-col justify-center' : ''}`}>
-                    {focusMode ? (
-                        exercises.length > 0 && (
-                            <ExerciseCard
-                                key={exercises[currentExerciseIndex].id}
-                                exercise={exercises[currentExerciseIndex]}
-                                activeSetIndices={activeSetIndices}
-                                progression={progression}
-                                handlers={cardHandlers}
-                                groupRound={getGroupRoundPreview(exercises, currentExerciseIndex)}
-                            />
-                        )
-                    ) : (
-                        computeGroupSegments(exercises).map((segment) => (
-                            <ExerciseGroupCard
-                                key={segment.groupId || `seg-${segment.indices[0]}`}
-                                segment={segment}
-                                exercises={exercises}
-                                activeSetIndices={activeSetIndices}
-                                progression={progression}
-                                handlers={cardHandlers}
-                            />
-                        ))
-                    )}
-                </main>
+                <ExecutionExerciseList
+                    focusMode={focusMode}
+                    exercises={exercises}
+                    currentExerciseIndex={currentExerciseIndex}
+                    activeSetIndices={activeSetIndices}
+                    progression={progression}
+                    cardHandlers={cardHandlers}
+                />
 
                 {showTimer && (
                     <RestTimer
@@ -361,77 +274,27 @@ export function WorkoutExecutionPage({ user }) {
                     />
                 )}
 
-                <MethodModal
-                    methodName={selectedMethod}
-                    onClose={() => setSelectedMethod(null)}
+                <ExecutionDialogs
+                    selectedMethod={selectedMethod}
+                    onCloseMethod={() => setSelectedMethod(null)}
+                    showGymTools={showGymTools}
+                    onCloseGymTools={() => setShowGymTools(false)}
+                    showCancelModal={showCancelModal}
+                    onCloseCancel={() => setShowCancelModal(false)}
+                    onConfirmDiscard={confirmDiscard}
+                    showConfirmFinishModal={showConfirmFinishModal}
+                    onCloseConfirmFinish={() => setShowConfirmFinishModal(false)}
+                    onConfirmFinish={() => {
+                        setShowConfirmFinishModal(false);
+                        handleFinishWorkout({ exercises, elapsedSeconds });
+                    }}
                 />
-
-                {showGymTools && (
-                    <React.Suspense fallback={null}>
-                        <GymToolsModal
-                            isOpen={showGymTools}
-                            onClose={() => setShowGymTools(false)}
-                        />
-                    </React.Suspense>
-                )}
-
-                {/* MODAL DE CANCELAMENTO */}
-                {showCancelModal && (
-                    <CancelWorkoutModal
-                        onClose={() => setShowCancelModal(false)}
-                        onConfirm={confirmDiscard}
-                    />
-                )}
-
-                {/* MODAL DE CONFIRMAÇÃO DE FINALIZAÇÃO */}
-                {showConfirmFinishModal && (
-                    <ConfirmFinishModal
-                        onClose={() => setShowConfirmFinishModal(false)}
-                        onConfirm={() => {
-                            setShowConfirmFinishModal(false);
-                            handleFinishWorkout({ exercises, elapsedSeconds });
-                        }}
-                    />
-                )}
 
                 {/* Footer Fim de Treino - Apenas mostra se o modal de finalização NÃO estiver visível */}
                 {!showFinishModal && (
-                    /* `mt-auto` encosta o rodapé na base da tela sem `position:
-                       fixed` — com ficha curta (série de linha única) o
-                       "FINALIZAR TREINO" ficava colado no "CONCLUIR SÉRIE" e
-                       rendia toque errado. O `pb` não repete
-                       `env(safe-area-inset-bottom)`: o `body` já reserva esse
-                       espaço e somar de novo deixava o botão boiando acima do
-                       rodapé real. */
-                    <div
-                        data-testid="workout-finish-footer"
-                        className="w-full mt-auto pt-8 pb-1"
-                    >
-                        <div className="max-w-2xl mx-auto flex justify-center">
-                            <div className="space-y-4 w-full flex flex-col items-center px-4">
-                                <Button
-                                    onClick={() => setShowConfirmFinishModal(true)}
-                                    disabled={saving}
-                                    variant="success"
-                                    className="w-auto min-w-[240px] px-8 font-bold h-12 rounded-full tracking-wide flex items-center justify-center gap-2 shadow-[0_4px_30px_rgba(34,197,94,0.2)]"
-                                >
-                                    {saving ? (
-                                        'SALVANDO...'
-                                    ) : (
-                                        <>
-                                            <CheckCircle2 size={18} strokeWidth={3} />
-                                            FINALIZAR TREINO
-                                        </>
-                                    )}
-                                </Button>
-                            </div>
-                        </div>
-                    </div>
+                    <FinishWorkoutFooter saving={saving} onFinish={() => setShowConfirmFinishModal(true)} />
                 )}
-
             </div>
-
-
-        </div >
+        </div>
     );
 }

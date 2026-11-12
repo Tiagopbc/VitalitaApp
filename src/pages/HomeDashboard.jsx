@@ -1,164 +1,23 @@
 /**
  * HomeDashboard.jsx
- * Visualização principal do painel exibindo progresso do usuário, sequências (streaks) e sugestão de próximo treino.
- * Busca e agrega estatísticas do usuário e modelos de treino do Firestore.
+ * Tela inicial: saudação, progresso da semana, pensamento do dia, próximo
+ * treino sugerido e próxima conquista.
+ *
+ * Orquestrador fino (D17): dados e cache em src/hooks/home/, cada seção em
+ * src/components/home/. Aqui ficam só a saudação, o progresso, a composição e
+ * o modal de cardio.
  */
-import React, { useState, useEffect, useRef } from 'react';
-
-import {
-    Flame,
-    Dumbbell,
-    Plus,
-    History,
-    Zap,
-    Trophy,
-    Play,
-    ArrowRight,
-    Star,
-    Sparkles,
-    BarChart3,
-    Crown,
-    Target,
-    Clock,
-    ChevronRight,
-    ArrowDown,
-    Layers,
-    Info,
-    Minus,
-    Share2,
-    Activity
-} from 'lucide-react';
-import { StreakWeeklyGoalHybrid } from '../StreakWeeklyGoalHybrid';
-import { getFirestoreDeps } from '../firebaseDb';
-import { ShareableQuoteCard } from '../components/sharing/ShareableQuoteCard';
-import { calculateWeeklyStats } from '../utils/workoutStats';
-import { SESSION_LIMITS, workoutService } from '../services/workoutService';
-import { Button } from '../components/design-system/Button';
-import { EmptyState } from '../components/design-system/EmptyState';
+import React, { useMemo, useState } from 'react';
+import { Flame } from 'lucide-react';
+import { StreakWeeklyGoalHybrid } from '../components/StreakWeeklyGoalHybrid';
 import { SectionHeader } from '../components/design-system/SectionHeader';
-import { safeGetJSON, safeSetJSON, safeRemoveItem } from '../utils/storage';
-import { achievementsCatalog } from '../data/achievementsCatalog';
-import { evaluateAchievements, calculateStats } from '../utils/evaluateAchievements';
 import { AddCardioModal } from '../components/AddCardioModal';
-import { notify } from '../utils/notifyStore';
-import { toDate } from '../utils/firestoreDate';
-import { waitWithTimeout } from '../utils/waitWithTimeout';
-
-const HOME_DASHBOARD_CACHE_VERSION = 1;
-
-const MOTIVATIONAL_QUOTES = [
-    "Faça ou não faça. Tentativa não há. — Mestre Yoda",
-    "Ninguém vai bater tão duro quanto a vida. Se trata de quanto você aguenta apanhar e seguir em frente. — Rocky Balboa",
-    "A verdadeira força de um guerreiro não está no tamanho de seus músculos, mas na sua vontade de dar mais um passo. — Mestre dos Magos",
-    "A resistência que você enfrenta na academia constrói a força que você precisa para vencer na vida. — Arnold Schwarzenegger",
-    "Equilíbrio é a chave. Corpo são, mente sã. Respire e foque no movimento. — Sr. Miyagi",
-    "Os limites só existem se você deixar. Eleve o seu ki e quebre todos eles hoje! — Goku",
-    "Não reze por uma vida fácil, reze por força para suportar uma vida difícil. — Bruce Lee",
-    "Tudo o que temos de decidir é o que fazer com o tempo que nos é dado. Faça o seu treino valer a pena. — Gandalf",
-    "Cansado? Lembre-se do seu objetivo e diga a si mesmo: 'Eu posso fazer isso o dia todo'. — Capitão América",
-    "Eu odiava cada minuto de treino, mas dizia: 'Não desista. Sofra agora e viva o resto da vida como um campeão'. — Muhammad Ali",
-    "A dor é apenas o seu corpo dizendo que a fraqueza está indo embora. Vai lá e faz o trabalho. — Wolverine",
-    "Lembre-se de quem você é. Você é muito mais forte do que imagina ser. — Mufasa",
-    "Eu posso aceitar o fracasso, todo mundo falha em alguma coisa. Mas eu não posso aceitar não tentar. — Michael Jordan",
-    "Por que nós caímos? Para aprendermos a nos levantar. Volte para a arena. — Batman",
-    "Você é mais forte do que acredita. Tem mais poder do que jamais imaginou. — Mulher-Maravilha",
-    "O trabalho duro é inútil para aqueles que não acreditam em si mesmos. Esse é o meu jeito ninja! — Naruto",
-    "São as nossas escolhas, mais do que as nossas capacidades, que mostram quem realmente somos. Escolha não desistir hoje. — Alvo Dumbledore",
-    "O maior poder que você possui é a sua própria mente. Quando ela acredita, o corpo simplesmente obedece. — Professor Xavier",
-    "O progresso é como uma xícara de chá quente: leva tempo e paciência, mas aquece a alma de quem persiste. — Tio Iroh",
-    "Não lamente o cansaço. Seja melhor. — Kratos",
-    "Não tente erguer o peso. Apenas perceba a verdade: a força vem da sua própria mente. — Neo",
-    "Quando o treino ficar muito pesado, sabe o que você faz? Continue a treinar, continue a treinar... — Dory",
-    "Quando a sua mente disser que você chegou ao limite, você está apenas em 40% da sua capacidade. Continue. — David Goggins",
-    "Você pode usar os melhores equipamentos, mas o verdadeiro reator principal é a sua força de vontade. — Tony Stark",
-    "A sorte não tem nada a ver com o sucesso. É o resultado de horas e horas de treino. A quadra agora é sua. — Serena Williams",
-    "A pressa é a inimiga da perfeição. Foque na postura, respire fundo e execute o movimento com maestria. — Mestre Splinter",
-    "Eu treinei por quatro anos para correr apenas nove segundos. Não desista se você não vir resultados em poucas semanas. — Usain Bolt",
-    "O segredo da força absoluta... é que não existe ingrediente secreto. O ingrediente é só você! — Po",
-    "Não se contente com o treino de ontem. Ultrapasse as suas metas de hoje. Ao infinito... e além! — Buzz Lightyear",
-    "O sucesso não é um acidente. É trabalho duro, perseverança, aprendizado, sacrifício e amor pelo que você faz. — Pelé",
-    "Em minha longa experiência, não existe isso de sorte. Existe apenas o resultado do seu treinamento. — Obi-Wan Kenobi",
-    "O que fazemos pelo nosso corpo hoje, ecoa na nossa saúde pela eternidade. Força e honra. — Maximus",
-    "Eu nunca olho para o treino de ontem, querido. Distrai do agora. Foco total na sua próxima série! — Edna Moda",
-    "As coisas podem parecer pesadas agora, mas são nessas horas que a gente descobre a força real para continuar. — Samwise Gamgee",
-    "O talento sem trabalho duro e repetição constante não é nada. Prove a sua dedicação hoje. — Cristiano Ronaldo",
-    "O guerreiro mais formidável nunca para de aprimorar suas defesas e ataques. Mostre do que você é feito. — Pantera Negra",
-    "Que a disposição esteja sempre a seu favor. Mas, na dúvida, não confie na sorte, confie no seu treino. — Katniss Everdeen",
-    "Eu só posso lhe mostrar o caminho e a ficha de treino. É você quem tem que suar a camisa. — Morpheus",
-    "Não importa o quão pesada seja a carga, nós não recuamos. Transforme-se e supere seus limites! — Optimus Prime",
-    "A diferença entre o impossível e o possível é só uma questão de quanto suor você está disposto a deixar pelo caminho. — Lara Croft"
-];
-
-const HOME_DASHBOARD_CACHE_TTL_MS = 30 * 60 * 1000;
-
-function getHomeDashboardCacheKey(userId) {
-    return `home_dashboard_snapshot_v${HOME_DASHBOARD_CACHE_VERSION}_${userId}`;
-}
-
-function serializeStatsForCache(stats) {
-    if (!stats || typeof stats !== 'object') return null;
-    const serializeDay = (day) => ({
-        ...day,
-        fullDate: day?.fullDate instanceof Date ? day.fullDate.toISOString() : day?.fullDate ?? null
-    });
-    return {
-        ...stats,
-        weekDays: Array.isArray(stats.weekDays) ? stats.weekDays.map(serializeDay) : [],
-        monthDays: Array.isArray(stats.monthDays) ? stats.monthDays.map(serializeDay) : []
-    };
-}
-
-function deserializeStatsFromCache(cachedStats) {
-    if (!cachedStats || typeof cachedStats !== 'object') return null;
-    const deserializeDay = (day) => {
-        const fullDate = toDate(day?.fullDate);
-        return {
-            ...day,
-            fullDate: fullDate || day?.fullDate || null
-        };
-    };
-    return {
-        ...cachedStats,
-        weekDays: Array.isArray(cachedStats.weekDays) ? cachedStats.weekDays.map(deserializeDay) : [],
-        monthDays: Array.isArray(cachedStats.monthDays) ? cachedStats.monthDays.map(deserializeDay) : []
-    };
-}
-
-function serializeLatestSessionForCache(session) {
-    if (!session || typeof session !== 'object') return null;
-    const sessionDate = toDate(session.date || session.completedAtClient || session.completedAt || session.timestamp);
-    return {
-        ...session,
-        date: sessionDate ? sessionDate.toISOString() : null
-    };
-}
-
-function deserializeLatestSessionFromCache(session) {
-    if (!session || typeof session !== 'object') return null;
-    const parsedDate = toDate(session.date || session.completedAtClient || session.completedAt || session.timestamp);
-    return {
-        ...session,
-        date: parsedDate || new Date()
-    };
-}
-
-function loadHomeDashboardCache(cacheKey) {
-    if (!cacheKey) return null;
-    const parsed = safeGetJSON(cacheKey);
-    if (!parsed) return null;
-
-    const updatedAt = Number(parsed.updatedAt) || 0;
-    if (!updatedAt || (Date.now() - updatedAt > HOME_DASHBOARD_CACHE_TTL_MS)) {
-        safeRemoveItem(cacheKey);
-        return null;
-    }
-    return parsed;
-}
-
-function saveHomeDashboardCache(cacheKey, payload) {
-    if (!cacheKey) return;
-    safeSetJSON(cacheKey, payload);
-}
+import { DailyQuoteCard } from '../components/home/DailyQuoteCard';
+import { SuggestedWorkoutCard } from '../components/home/SuggestedWorkoutCard';
+import { NextAchievementCard } from '../components/home/NextAchievementCard';
+import { getDailyQuote } from '../data/motivationalQuotes';
+import { useHomeDashboardData } from '../hooks/home/useHomeDashboardData';
+import { useShareQuote } from '../hooks/home/useShareQuote';
 
 export function HomeDashboard({
     onNavigateToCreateWorkout,
@@ -167,299 +26,23 @@ export function HomeDashboard({
     onNavigateToAchievements,
     user
 }) {
-
     const hour = new Date().getHours();
     const greeting = hour < 12 ? 'Bom dia' : hour < 18 ? 'Boa tarde' : 'Boa noite';
     const firstName = user?.displayName?.split(' ')[0] || 'Atleta';
 
-    // Determinar frase diária com base no dia do ano
-    const dailyQuote = React.useMemo(() => {
-        const today = new Date();
-        const startOfYear = new Date(today.getFullYear(), 0, 0);
-        const diff = today - startOfYear;
-        const oneDay = 1000 * 60 * 60 * 24;
-        const dayOfYear = Math.floor(diff / oneDay);
-        return MOTIVATIONAL_QUOTES[dayOfYear % MOTIVATIONAL_QUOTES.length];
-    }, []);
+    // Frase do dia, fixa enquanto a tela está montada.
+    const dailyQuote = useMemo(() => getDailyQuote(), []);
+    const { shareQuoteRef, sharingQuote, shareQuote } = useShareQuote(dailyQuote);
 
+    const {
+        stats,
+        nextAchievement,
+        loadingTemplates,
+        loadingStats,
+        suggestedWorkout
+    } = useHomeDashboardData(user);
 
-
-
-
-    // Inicializar com estrutura de estatísticas vazia (7 dias vazios) para prevenir calendário faltando
-    const [stats, setStats] = useState(() => calculateWeeklyStats([], 4));
-    const [nextAchievement, setNextAchievement] = useState(null);
     const [isAddCardioOpen, setIsAddCardioOpen] = useState(false);
-
-
-    const [templates, setTemplates] = useState([]);
-    const [latestSession, setLatestSession] = useState(null);
-
-    const [loadingTemplates, setLoadingTemplates] = useState(true);
-    const [loadingStats, setLoadingStats] = useState(true);
-
-    const shareQuoteRef = useRef(null);
-    const [sharingQuote, setSharingQuote] = useState(false);
-
-    const handleShareQuote = async () => {
-        if (sharingQuote) return;
-        if (!shareQuoteRef.current) {
-            notify.error("Card de compartilhamento indisponível.");
-            return;
-        }
-
-        if (!window.isSecureContext) {
-            notify.error("O compartilhamento requer conexão segura. Use HTTPS ou localhost.");
-            return;
-        }
-
-        setSharingQuote(true);
-        try {
-            await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
-            if (document.fonts && document.fonts.ready) {
-                await waitWithTimeout(document.fonts.ready, 2000);
-            }
-
-            const canvas = shareQuoteRef.current;
-            if (!canvas || !canvas.toBlob) {
-                throw new Error('Canvas não disponível para exportação.');
-            }
-
-            const blob = await new Promise((resolve, reject) => {
-                canvas.toBlob((b) => {
-                    if (b) resolve(b);
-                    else reject(new Error('Falha gerar blob do canvas'));
-                }, 'image/jpeg', 0.88);
-            });
-
-            const file = new File([blob], 'pensamento_do_dia.jpg', { type: 'image/jpeg' });
-
-            if (navigator.canShare && navigator.canShare({ files: [file] })) {
-                try {
-                    await navigator.share({
-                        title: 'Pensamento do Dia',
-                        text: dailyQuote,
-                        files: [file]
-                    });
-                    return;
-                } catch (err) {
-                    if (err?.name === 'AbortError') return;
-                    console.warn('Share failed, falling back to download:', err);
-                }
-            }
-
-            const blobUrl = URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.download = `pensamento_${new Date().toISOString().slice(0, 10)}.jpg`;
-            link.href = blobUrl;
-            link.click();
-            URL.revokeObjectURL(blobUrl);
-        } catch (err) {
-            console.error("Error sharing:", err);
-            notify.error("Erro ao gerar imagem de compartilhamento.");
-        } finally {
-            setSharingQuote(false);
-        }
-    };
-    const cacheHydratedRef = useRef(false);
-    const cacheKey = user?.uid ? getHomeDashboardCacheKey(user.uid) : null;
-
-    // 1. Lógica de Sugestão de Treino (Derivado via useMemo)
-    const suggestedWorkout = React.useMemo(() => {
-        const activeTemplates = templates ? templates.filter(t => !t.isArchived) : [];
-        
-        if (activeTemplates.length === 0) {
-            return null;
-        }
-
-        if (!latestSession) {
-            return activeTemplates[0];
-        }
-
-        const lastIndex = activeTemplates.findIndex(t =>
-            t.id === latestSession.templateId ||
-            (t.name && latestSession.templateName && t.name === latestSession.templateName)
-        );
-
-        let nextIndex = 0;
-        if (lastIndex !== -1) {
-            nextIndex = (lastIndex + 1) % activeTemplates.length;
-        }
-
-        return activeTemplates[nextIndex];
-
-    }, [templates, latestSession]);
-
-    useEffect(() => {
-        cacheHydratedRef.current = false;
-    }, [cacheKey]);
-
-    useEffect(() => {
-        if (!user || !cacheKey || cacheHydratedRef.current) return;
-        cacheHydratedRef.current = true;
-
-        const cached = loadHomeDashboardCache(cacheKey);
-        if (!cached) return;
-
-        const hydrateId = window.setTimeout(() => {
-            if (Array.isArray(cached.templates)) {
-                setTemplates(cached.templates);
-                setLoadingTemplates(false);
-            }
-
-            if (cached.latestSession) {
-                setLatestSession(deserializeLatestSessionFromCache(cached.latestSession));
-            }
-
-            const cachedStats = deserializeStatsFromCache(cached.stats);
-            if (cachedStats) {
-                setStats(cachedStats);
-                setLoadingStats(false);
-            }
-
-            if (cached.nextAchievement !== undefined) {
-                setNextAchievement(cached.nextAchievement);
-            }
-        }, 0);
-
-        return () => window.clearTimeout(hydrateId);
-    }, [cacheKey, user]);
-
-    // 2. Data Fetching & Subscriptions
-    useEffect(() => {
-        let unsubscribeTemplates = null;
-        let unsubscribeSessions = null;
-
-        async function fetchData() {
-            if (!user) return;
-            let effectiveGoal = 4;
-            let latestSessionsSnapshot = [];
-            let latestRecentStats = calculateWeeklyStats([], effectiveGoal);
-            let recentSessionCount = 0;
-
-            const publishStats = () => {
-                setStats({
-                    ...latestRecentStats,
-                    totalSessions: recentSessionCount
-                });
-            };
-
-            const publishNextAchievement = () => {
-                const fullStats = calculateStats(latestSessionsSnapshot);
-                const allAchievements = evaluateAchievements(achievementsCatalog, fullStats, {});
-                const locked = allAchievements.filter(a => !a.isUnlocked);
-
-                locked.sort((a, b) => b.progressRatio - a.progressRatio);
-                setNextAchievement(locked[0] || null);
-            };
-
-            // 0. Buscar Meta do Usuário (Single Fetch, não precisa ser real-time crítico)
-            try {
-                const { db, doc, getDoc } = await getFirestoreDeps();
-                const userRef = doc(db, 'users', user.uid);
-                const userSnap = await getDoc(userRef);
-                if (userSnap.exists() && userSnap.data().weeklyGoal) {
-                    effectiveGoal = parseInt(userSnap.data().weeklyGoal, 10) || 4;
-                }
-            } catch (err) {
-                console.error("Error fetching user goal:", err);
-            }
-
-            // A. Inscrever-se em Treinos (Templates)
-            try {
-                unsubscribeTemplates = await workoutService.subscribeToTemplates(user.uid, (data) => {
-                    setTemplates(data || []);
-                    setLoadingTemplates(false);
-                });
-            } catch (err) {
-                console.error("Template subscription error:", err);
-                setLoadingTemplates(false);
-            }
-
-            // B. Inscrever-se apenas no histórico recente para manter o calendário leve.
-            try {
-                unsubscribeSessions = await workoutService.subscribeToRecentSessions(user.uid, (data) => {
-                    const sessions = data.map(d => {
-                        let dateObj = new Date();
-                        // Lógica defensiva para parse de data
-                        try {
-                            const raw = d.completedAtClient || d.completedAt || d.date || d.createdAt || d.timestamp;
-                            const parsedDate = toDate(raw);
-                            if (parsedDate) dateObj = parsedDate;
-                        } catch (e) { console.warn("Date parsing error", d.id, e); }
-
-                        if (isNaN(dateObj.getTime())) dateObj = new Date();
-                        return { ...d, date: dateObj };
-                    });
-
-                    // Ordenar por data (Mais recente primeiro)
-                    sessions.sort((a, b) => b.date - a.date);
-
-                    // Atualizar Última Sessão para a lógica de sugestão
-                    if (sessions.length > 0) {
-                        setLatestSession(sessions[0]);
-                    } else {
-                        setLatestSession(null);
-                    }
-
-                    // Calcular Estatísticas Semanais
-                    latestSessionsSnapshot = sessions;
-                    latestRecentStats = calculateWeeklyStats(sessions, effectiveGoal);
-                    recentSessionCount = sessions.length;
-                    publishStats();
-                    publishNextAchievement();
-                    setLoadingStats(false);
-                }, SESSION_LIMITS.dashboardRecent);
-            } catch (err) {
-                console.error("Subscription Error:", err);
-                publishStats();
-                publishNextAchievement();
-                setLoadingStats(false);
-            }
-        }
-
-        fetchData();
-
-        return () => {
-            if (unsubscribeTemplates) unsubscribeTemplates();
-            if (unsubscribeSessions) unsubscribeSessions();
-        };
-    }, [user]);
-
-    useEffect(() => {
-        if (!user || !cacheKey || (loadingTemplates && loadingStats)) return undefined;
-        if (typeof window === 'undefined') return undefined;
-
-        let cancelled = false;
-        const payload = {
-            updatedAt: Date.now(),
-            templates,
-            latestSession: serializeLatestSessionForCache(latestSession),
-            stats: serializeStatsForCache(stats),
-            nextAchievement
-        };
-
-        const persistCache = () => {
-            if (cancelled) return;
-            saveHomeDashboardCache(cacheKey, payload);
-        };
-
-        if ('requestIdleCallback' in window) {
-            const idleId = window.requestIdleCallback(persistCache, { timeout: 1400 });
-            return () => {
-                cancelled = true;
-                window.cancelIdleCallback(idleId);
-            };
-        }
-
-        const timeoutId = window.setTimeout(persistCache, 260);
-        return () => {
-            cancelled = true;
-            window.clearTimeout(timeoutId);
-        };
-    }, [cacheKey, loadingStats, loadingTemplates, latestSession, nextAchievement, stats, templates, user]);
-
-
 
     return (
         <div className="pb-4 lg:pb-8 max-w-3xl mx-auto w-full">
@@ -474,8 +57,6 @@ export function HomeDashboard({
                         Pronto para o próximo treino?
                     </p>
                 </div>
-
-
 
                 {/* 2. PROGRESSO */}
                 <div className="mb-8">
@@ -504,188 +85,34 @@ export function HomeDashboard({
                     </div>
                 </div>
 
-                {/* 3. MOTIVACIONAL */}
-                <div className="mb-6 p-5 lg:mb-8 lg:p-6 rounded-2xl text-center bg-gradient-to-br from-blue-500/5 to-cyan-500/5 border border-blue-500/10 relative group">
-                    <Star size={20} className="text-cyan-400 mx-auto mb-3" />
-                    <p className="text-sm text-slate-300 italic font-medium">
-                        &quot;{dailyQuote}&quot;
-                    </p>
-                    <button
-                        onClick={handleShareQuote}
-                        disabled={sharingQuote}
-                        className="absolute top-3 right-3 p-2 rounded-full bg-slate-800/50 hover:bg-cyan-500/20 text-slate-400 hover:text-cyan-400 transition-colors"
-                        title="Compartilhar pensamento"
-                    >
-                        {sharingQuote ? (
-                            <div className="w-4 h-4 border-2 border-cyan-400/30 border-t-cyan-400 rounded-full animate-spin" />
-                        ) : (
-                            <Share2 size={16} />
-                        )}
-                    </button>
-                </div>
-
-                <ShareableQuoteCard
-                    ref={shareQuoteRef}
+                <DailyQuoteCard
                     quote={dailyQuote}
                     userName={user?.displayName || 'Atleta'}
-                    isVisible={false}
+                    sharing={sharingQuote}
+                    onShare={shareQuote}
+                    shareRef={shareQuoteRef}
                 />
 
-                {/* 4. SEÇÃO HERO - PRÓXIMO TREINO */}
-                <div className="mb-6 lg:mb-8">
-                    <SectionHeader
-                        icon={<Target size={18} />}
-                        title="Próximo Treino Sugerido"
-                    />
+                <SuggestedWorkoutCard
+                    loading={loadingTemplates}
+                    workout={suggestedWorkout}
+                    onStart={onNavigateToWorkout}
+                    onCreate={onNavigateToCreateWorkout}
+                    onAddCardio={() => setIsAddCardioOpen(true)}
+                />
 
-                    {loadingTemplates ? (
-                        <div className="w-full h-40 bg-slate-900/50 rounded-3xl animate-pulse border border-slate-800" />
-                    ) : suggestedWorkout ? (
-                        <button
-                            onClick={() => onNavigateToWorkout(suggestedWorkout.id, suggestedWorkout.name)}
-                            className="w-full p-6 rounded-3xl relative overflow-hidden cursor-pointer hover:scale-[1.01] active:scale-[0.99] transition-all duration-300 text-left group
-                            bg-gradient-to-br from-[#0f172a] to-[#020617] border border-cyan-500/20 shadow-[0_0_20px_rgba(6,182,212,0.1)] hover:shadow-[0_0_30px_rgba(6,182,212,0.2)]"
-                        >
-                            <div className="flex items-center justify-between relative z-10">
-                                <div className="flex-1">
-                                    <p className="text-[10px] font-bold uppercase tracking-widest text-cyan-400 mb-1">
-                                        Sugerido
-                                    </p>
-                                    <h2 className="text-lg lg:text-3xl font-heading font-bold text-white mb-3 group-hover:text-cyan-400 transition-colors">
-                                        {suggestedWorkout.name}
-                                    </h2>
-                                    <div className="flex flex-wrap items-center gap-4 text-sm text-slate-300 font-medium">
-                                        <div className="flex items-center gap-1.5">
-                                            <Dumbbell size={16} className="text-cyan-500" />
-                                            <span>{suggestedWorkout.exercises?.length || 0} exercícios</span>
-                                        </div>
-                                        <div className="flex items-center gap-1.5">
-                                            <Clock size={16} className="text-cyan-500" />
-                                            <span>~60 min</span>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-r from-cyan-400 to-blue-600 group-hover:scale-110 transition-transform shadow-[0_0_15px_rgba(6,182,212,0.5)] ml-4 border border-white/20">
-                                    <Play size={24} fill="white" className="text-white ml-1" />
-                                </div>
-                            </div>
-                            {/* AmbientGlow */}
-                            <div className="absolute -top-10 -right-10 w-40 h-40 bg-cyan-500/5 rounded-full blur-3xl group-hover:bg-cyan-500/10 transition-colors"></div>
-                            <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-blue-600/5 rounded-full blur-3xl group-hover:bg-blue-600/10 transition-colors"></div>
-                        </button>
-                    ) : (
-                        <EmptyState
-                            icon={<Dumbbell size={26} />}
-                            title="Nenhum treino criado"
-                            description="Crie sua primeira ficha para começar a treinar com acompanhamento."
-                            action={
-                                <Button
-                                    onClick={onNavigateToCreateWorkout}
-                                    size="sm"
-                                    className="rounded-xl"
-                                    leftIcon={<Plus size={16} />}
-                                >
-                                    Criar Treino
-                                </Button>
-                            }
-                        />
-                    )}
-                    
-                    <button
-                        onClick={() => setIsAddCardioOpen(true)}
-                        className="mt-4 w-full p-4 rounded-2xl bg-slate-900 border border-slate-800 hover:border-slate-700 flex items-center justify-center gap-2 text-slate-300 hover:text-white transition-all group"
-                    >
-                        <Activity size={18} className="text-cyan-500 group-hover:scale-110 transition-transform" />
-                        <span className="font-semibold text-sm">Registrar Cardio Manual</span>
-                    </button>
-                </div>
-
-
-
-                {/* 5. GAMIFICAÇÃO - DESAFIO ATIVO (SMART) */}
-                <div className="mb-8">
-                    <SectionHeader
-                        icon={<Trophy size={18} className="text-amber-400" />}
-                        title="Próxima Conquista"
-                        action={
-                            <button
-                                onClick={onNavigateToAchievements}
-                                className="text-xs text-cyan-400 hover:text-cyan-300 flex items-center gap-1 transition-colors"
-                            >
-                                Ver todas <ChevronRight size={14} />
-                            </button>
-                        }
-                    />
-
-                    {loadingStats ? (
-                        <div className="w-full h-24 bg-slate-900/50 rounded-3xl animate-pulse border border-slate-800" />
-                    ) : nextAchievement ? (
-                        <div
-                            onClick={onNavigateToAchievements}
-                            className="rounded-2xl relative overflow-hidden cursor-pointer hover:scale-[1.01] active:scale-[0.99] transition-transform bg-gradient-to-br from-slate-900 to-slate-950 border border-slate-800 hover:border-slate-700"
-                        >
-                            <div className="relative z-10 p-4 flex gap-4 items-center">
-                                {/* Ícone / Badge */}
-                                <div className="w-14 h-14 rounded-2xl bg-slate-800 flex items-center justify-center shrink-0 border border-slate-700 shadow-inner relative overflow-hidden">
-                                    {/* Background Glow baseada na categoria */}
-                                    <div className={`absolute inset-0 opacity-20 ${nextAchievement.category === 'Volume' ? 'bg-purple-500' :
-                                        nextAchievement.category === 'Força' ? 'bg-emerald-500' :
-                                            'bg-blue-500'
-                                        }`} />
-
-                                    <Trophy size={24} className={`${nextAchievement.category === 'Volume' ? 'text-purple-400' :
-                                        nextAchievement.category === 'Força' ? 'text-emerald-400' :
-                                            'text-blue-400'
-                                        }`} />
-                                </div>
-
-                                <div className="flex-1 min-w-0">
-                                    <div className="flex items-center justify-between mb-1">
-                                        <h4 className="font-bold text-white text-sm truncate">{nextAchievement.title}</h4>
-                                        <span className="text-[10px] font-bold text-slate-500 bg-slate-800 px-2 py-0.5 rounded-full border border-slate-700">
-                                            {Math.floor(nextAchievement.progressRatio * 100)}%
-                                        </span>
-                                    </div>
-                                    <p className="text-xs text-slate-400 mb-3 truncate">{nextAchievement.description}</p>
-
-                                    {/* Barra de Progresso */}
-                                    <div className="h-2 w-full bg-slate-800 rounded-full overflow-hidden border border-slate-700/50">
-                                        <div
-                                            className={`h-full rounded-full transition-all duration-1000 ${nextAchievement.category === 'Volume' ? 'bg-purple-500' :
-                                                nextAchievement.category === 'Força' ? 'bg-emerald-500' :
-                                                    'bg-blue-500'
-                                                }`}
-                                            style={{ width: `${Math.max(5, nextAchievement.progressRatio * 100)}%` }}
-                                        />
-                                    </div>
-                                    <p className="text-[10px] text-slate-500 mt-1 text-right font-mono">
-                                        {nextAchievement.progressText}
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                    ) : (
-                        <div className="p-6 rounded-2xl bg-slate-900/40 border border-slate-800 flex items-center gap-4">
-                            <div className="w-12 h-12 rounded-full bg-yellow-500/10 flex items-center justify-center text-yellow-500">
-                                <Crown size={24} />
-                            </div>
-                            <div>
-                                <h4 className="font-bold text-white">Lendário!</h4>
-                                <p className="text-xs text-slate-400">Você desbloqueou todas as conquistas disponíveis.</p>
-                            </div>
-                        </div>
-                    )}
-                </div>
-
-
+                <NextAchievementCard
+                    loading={loadingStats}
+                    achievement={nextAchievement}
+                    onOpen={onNavigateToAchievements}
+                />
             </div>
-            
-            <AddCardioModal 
-                isOpen={isAddCardioOpen} 
-                onClose={() => setIsAddCardioOpen(false)} 
-                user={user} 
+
+            <AddCardioModal
+                isOpen={isAddCardioOpen}
+                onClose={() => setIsAddCardioOpen(false)}
+                user={user}
             />
         </div>
     );
 }
-

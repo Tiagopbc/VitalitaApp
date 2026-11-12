@@ -319,6 +319,24 @@ describe('RestTimer — aviso de falha silenciosa', () => {
 
         expect(screen.getByRole('status')).toHaveTextContent(/Adicionar à Tela de Início/i);
     });
+
+    // O aviso descreve o agendamento DESTE descanso: ao reabrir o timer, a
+    // falha do descanso anterior não pode aparecer antes do novo agendamento.
+    it('ao reabrir, não mostra o aviso da falha do descanso anterior', async () => {
+        scheduleRestPush.mockReturnValue(recusado('server'));
+        const { rerender } = await renderRodando();
+        expect(screen.getByRole('status')).toHaveTextContent(/Mantenha esta tela aberta/i);
+
+        rerender(<RestTimer initialTime={90} isOpen={false} onComplete={vi.fn()} onClose={vi.fn()} />);
+        await act(async () => { await vi.advanceTimersByTimeAsync(0); });
+
+        // O novo agendamento fica pendente: o que aparecer agora é resto do anterior.
+        scheduleRestPush.mockReturnValue(new Promise(() => {}));
+        rerender(<RestTimer initialTime={90} isOpen onComplete={vi.fn()} onClose={vi.fn()} />);
+        await act(async () => { await vi.advanceTimersByTimeAsync(0); });
+
+        expect(screen.queryByRole('status')).not.toBeInTheDocument();
+    });
 });
 
 describe('RestTimer — alertas locais', () => {
@@ -408,5 +426,50 @@ describe('RestTimer — alertas locais', () => {
         await renderRodando();
         expect(screen.getByRole('button', { name: 'Diminuir 10 segundos' })).toBeInTheDocument();
         expect(screen.getByRole('button', { name: 'Aumentar 10 segundos' })).toBeInTheDocument();
+    });
+});
+
+
+describe('RestTimer — iniciar ao concluir série', () => {
+    beforeEach(() => {
+        vi.clearAllMocks();
+        vi.useFakeTimers();
+        setVisibility('visible');
+        scheduleRestPush.mockReturnValue(agendado());
+        describePushContext.mockReturnValue({ isIOS: false, reason: null });
+        ensureNotificationPermission.mockResolvedValue(true);
+        warmRestPushSubscription.mockResolvedValue(true);
+    });
+
+    afterEach(() => {
+        vi.useRealTimers();
+        setVisibility('visible');
+    });
+
+    // A opção fica junto do título, antes do anel e dos controles do descanso.
+    it('mostra a caixa logo abaixo do título, antes dos controles', async () => {
+        await renderRodando({ autoStartTimer: true, onAutoStartChange: vi.fn() });
+
+        const titulo = screen.getByText('Tempo de Descanso');
+        const caixa = screen.getByRole('checkbox', { name: 'Iniciar timer ao concluir série' });
+        const controle = screen.getByRole('button', { name: /Pausar descanso|Iniciar descanso/ });
+
+        expect(titulo.compareDocumentPosition(caixa) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+        expect(caixa.compareDocumentPosition(controle) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    });
+
+    it('a caixa continua ligando e desligando a opção', async () => {
+        const onAutoStartChange = vi.fn();
+        await renderRodando({ autoStartTimer: true, onAutoStartChange });
+
+        const caixa = screen.getByRole('checkbox', { name: 'Iniciar timer ao concluir série' });
+        expect(caixa).toBeChecked();
+        fireEvent.click(caixa);
+        expect(onAutoStartChange).toHaveBeenCalledWith(false);
+    });
+
+    it('sem quem controle a opção, a caixa não aparece', async () => {
+        await renderRodando();
+        expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
     });
 });

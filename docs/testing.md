@@ -16,6 +16,10 @@ npm run build
 - O CI executa lint, knip, Vitest, regras do Firestore, build e coverage em pull requests para `main`.
 - `npm run knip` reprova se um arquivo, export ou dependência ficar sem importador. Os pontos de entrada que ele não descobre sozinho — funções da Vercel em `api/`, o service worker de push e a suíte de rules — estão declarados no `knip.json`.
 - `tests/security/firestore.rules.test.js` roda contra o Firebase Emulator.
+- `npm run test:coverage` reprova abaixo do piso definido em `vitest.config.js` (linhas 53%, statements 51%, funções 49%, branches 47%).
+- O CI roda `npm audit --omit=dev --audit-level=critical`. O nível fica em `critical` porque o `@firebase/firestore` fixa um `@grpc/grpc-js` com avisos *high* do lado servidor do gRPC, que o bundle do navegador não usa (ver `CLAUDE.md`).
+- Não há teste de ponta a ponta: o Cypress saiu por estar quebrado e fora do CI (ADR-0005).
+- Páginas grandes seguem o padrão orquestrador + sub-hooks, e as regras puras de cada uma têm teste próprio ao lado do hook (`src/hooks/<página>/*.test.js`). Ao refatorar, os testes da página passam sem edição; quando a mudança não altera comportamento, um teste de caracterização escrito antes deve passar antes e depois.
 
 ## Próxima Evolução
 

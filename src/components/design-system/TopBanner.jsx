@@ -25,15 +25,14 @@
  * O timer do auto-dismiss mora no `notifyStore`, não aqui: as regras de tempo
  * ficam testáveis sem depender do ciclo de animação dentro do jsdom.
  *
- * `mode="wait"` no `AnimatePresence`: no modo padrão (`sync`) a troca de um
- * aviso por outro deixa as duas barras montadas por ~200ms, ambas em
+ * A barra nova espera a saída da anterior (antes, `mode="wait"` do
+ * AnimatePresence; desde o R06, CSS e o estado abaixo). Sem isso a troca de um
+ * aviso por outro deixaria as duas barras montadas por ~200ms, ambas em
  * `fixed inset-x-0 top-0 z-[10000]` — uma subindo e a outra descendo pelo mesmo
  * espaço. Acontece de verdade ao salvar ficha ("Treino salvo." → `onBack()` →
- * a lista monta → `getTemplates` falha → erro). O custo é a barra nova esperar
- * a saída da anterior, que é justamente o comportamento desejado.
+ * a lista monta → `getTemplates` falha → erro).
  */
-import { useSyncExternalStore } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
+import { useEffect, useState, useSyncExternalStore } from 'react';
 import { CheckCircle2, AlertCircle } from 'lucide-react';
 import { notify, subscribeToNotify, getNotifySnapshot } from '../../utils/notifyStore';
 
@@ -42,6 +41,9 @@ const backgrounds = {
     error: 'bg-red-600',
     info: 'bg-blue-600'
 };
+
+// Tempo da animação de saída (.vit-banner-out no index.css).
+const EXIT_MS = 200;
 
 const icons = {
     success: CheckCircle2,
@@ -52,53 +54,66 @@ const icons = {
 export function TopBanner() {
     const current = useSyncExternalStore(subscribeToNotify, getNotifySnapshot, () => null);
 
-    const isError = current?.type === 'error';
-    const Icon = current ? (icons[current.type] || AlertCircle) : null;
+    // `shown` é o aviso que está na tela; `leavingItem`, o que está saindo.
+    // Quando o store muda, o aviso de antes sai primeiro e só depois o novo
+    // entra. Ajuste feito durante o render, comparando com o anterior.
+    const [shown, setShown] = useState(current);
+    const [leavingItem, setLeavingItem] = useState(null);
+    if ((current?.id ?? null) !== (shown?.id ?? null)) {
+        if (shown && !leavingItem) setLeavingItem(shown);
+        setShown(current);
+    }
+
+    useEffect(() => {
+        if (!leavingItem) return undefined;
+        const timer = setTimeout(() => setLeavingItem(null), EXIT_MS);
+        return () => clearTimeout(timer);
+    }, [leavingItem]);
+
+    const item = leavingItem ?? shown;
+    const leaving = Boolean(leavingItem);
+    const isError = item?.type === 'error';
+    const Icon = item ? (icons[item.type] || AlertCircle) : null;
 
     function handleAction() {
-        const onClick = current?.action?.onClick;
+        const onClick = item?.action?.onClick;
         notify.dismiss();
         if (typeof onClick === 'function') onClick();
     }
 
+    if (!item) return null;
+
     return (
-        <AnimatePresence mode="wait">
-            {current && (
-                <motion.div
-                    key={current.id}
-                    initial={{ y: '-100%' }}
-                    animate={{ y: 0 }}
-                    exit={{ y: '-100%', transition: { duration: 0.2, ease: 'easeIn' } }}
-                    transition={{ duration: 0.26, ease: 'easeOut' }}
-                    role={isError ? 'alert' : 'status'}
-                    aria-live={isError ? 'assertive' : 'polite'}
-                    data-testid="top-banner"
-                    data-type={current.type}
-                    className={`fixed inset-x-0 top-0 z-[10000] pointer-events-none pt-[env(safe-area-inset-top)] text-white shadow-lg ${backgrounds[current.type] || backgrounds.info}`}
-                >
-                    <div className="flex items-center gap-3 px-5 py-3">
-                        <Icon size={20} className="shrink-0" />
-                        {/* Coluna única para message + description: mesma coluna do
-                            título, à esquerda do botão de ação. Sem description, o
-                            `<span>` sobra sozinho e o layout não muda em nada. */}
-                        <div className="flex flex-1 flex-col items-start">
-                            <span className="font-bold text-sm">{current.message}</span>
-                            {current.description && (
-                                <span className="text-xs text-white/90">{current.description}</span>
-                            )}
-                        </div>
-                        {current.action && (
-                            <button
-                                type="button"
-                                onClick={handleAction}
-                                className="pointer-events-auto shrink-0 rounded-full bg-white/20 px-3 py-1 text-sm font-bold hover:bg-white/30 transition-colors"
-                            >
-                                {current.action.label}
-                            </button>
-                        )}
-                    </div>
-                </motion.div>
-            )}
-        </AnimatePresence>
+        <div
+            key={item.id}
+            role={isError ? 'alert' : 'status'}
+            aria-live={isError ? 'assertive' : 'polite'}
+            data-testid="top-banner"
+            data-type={item.type}
+            data-phase={leaving ? 'leaving' : 'visible'}
+            className={`fixed inset-x-0 top-0 z-[10000] pointer-events-none pt-[env(safe-area-inset-top)] text-on-color shadow-lg ${leaving ? 'vit-banner-out' : 'vit-banner-in'} ${backgrounds[item.type] || backgrounds.info}`}
+        >
+            <div className="flex items-center gap-3 px-5 py-3">
+                <Icon size={20} className="shrink-0" />
+                {/* Coluna única para message + description: mesma coluna do
+                    título, à esquerda do botão de ação. Sem description, o
+                    `<span>` sobra sozinho e o layout não muda em nada. */}
+                <div className="flex flex-1 flex-col items-start">
+                    <span className="font-bold text-sm">{item.message}</span>
+                    {item.description && (
+                        <span className="text-xs text-on-color/90">{item.description}</span>
+                    )}
+                </div>
+                {item.action && (
+                    <button
+                        type="button"
+                        onClick={handleAction}
+                        className={`${leaving ? '' : 'pointer-events-auto '}shrink-0 rounded-full bg-on-color/20 px-3 py-1 text-sm font-bold hover:bg-on-color/30 transition-colors`}
+                    >
+                        {item.action.label}
+                    </button>
+                )}
+            </div>
+        </div>
     );
 }

@@ -1,34 +1,24 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+/**
+ * HistoryPage.jsx
+ * Histórico de treinos em duas abas: Diário (sessões concluídas) e Evolução
+ * (carga por exercício ao longo do tempo).
+ *
+ * Orquestrador fino (D16): o estado e a busca moram em src/hooks/history/ e
+ * o JSX de cada aba em src/components/history/. Aqui ficam só a aba ativa, o
+ * modal de detalhes e a composição.
+ */
+import React, { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import {
-    TrendingUp,
-    History,
-    Activity
-} from 'lucide-react';
-import { PremiumCard } from '../components/design-system/PremiumCard';
-import { EmptyState } from '../components/design-system/EmptyState';
+import { History, Activity } from 'lucide-react';
 import { PageHeader } from '../components/design-system/PageHeader';
-import { SESSION_LIMITS, workoutService } from '../services/workoutService';
-import { getJournalWindowConfig, recordJournalRenderMetric } from '../utils/performanceTuning';
-import { sortWorkoutTemplates } from '../utils/workoutTemplateOrder';
+import { JournalSection } from '../components/history/JournalSection';
+import { useJournal } from '../hooks/history/useJournal';
+import { useAnalyticsFilters } from '../hooks/history/useAnalyticsFilters';
+import { useGlobalSessions } from '../hooks/history/useGlobalSessions';
+import { useExerciseHistory } from '../hooks/history/useExerciseHistory';
 
-import { Button } from '../components/design-system/Button';
 const HistoryAnalyticsSection = React.lazy(() => import('../components/history/HistoryAnalyticsSection').then(module => ({ default: module.HistoryAnalyticsSection })));
 const WorkoutDetailsModal = React.lazy(() => import('../components/history/WorkoutDetailsModal').then(module => ({ default: module.WorkoutDetailsModal })));
-const TEMPLATE_ANALYTICS_PAGE_SIZE = 100;
-
-function extractExerciseNamesFromSessions(docs) {
-    const uniqueNames = new Set();
-    docs.forEach(data => {
-        const results = data.results || data.exercises || [];
-        if (Array.isArray(results)) {
-            results.forEach(e => { if (e.name) uniqueNames.add(e.name); });
-        } else {
-            Object.keys(results).forEach(key => uniqueNames.add(key));
-        }
-    });
-    return Array.from(uniqueNames).sort();
-}
 
 function HistoryPage({ user, isEmbedded = false }) {
     const navigate = useNavigate();
@@ -36,494 +26,43 @@ function HistoryPage({ user, isEmbedded = false }) {
     const initialTemplate = searchParams.get('template');
     const initialExercise = searchParams.get('exercise');
     const onBack = () => navigate(-1);
-    // Estado da Aba: 'journal' | 'analytics'
-    const [activeTab, setActiveTab] = useState('analytics');
-    const journalWindowConfig = useMemo(() => getJournalWindowConfig(), []);
 
-    // --- ESTADO DO DIÁRIO ---
-    const [sessions, setSessions] = useState([]);
-    const [fetchingMore, setFetchingMore] = useState(false);
-    const [loadingSessions, setLoadingSessions] = useState(false);
-    const lastDocJournalRef = useRef(null);
-    const [hasMoreJournal, setHasMoreJournal] = useState(false);
-    const [visibleJournalCount, setVisibleJournalCount] = useState(journalWindowConfig.initial);
-    const journalRenderSentinelRef = useRef(null);
+    // Aba: 'journal' | 'analytics'. A escolha guarda a chave dos parâmetros da
+    // URL com que foi feita: se os parâmetros mudaram e trazem filtro, a aba
+    // efetiva é Evolução até a próxima escolha. Derivado, sem efeito.
+    const filtroDaUrl = `${initialTemplate ?? ''}|${initialExercise ?? ''}`;
+    const [abaEscolhida, setAbaEscolhida] = useState({ chave: filtroDaUrl, valor: 'analytics' });
+    const urlTrouxeFiltro = Boolean(initialTemplate || initialExercise);
+    const activeTab = abaEscolhida.chave !== filtroDaUrl && urlTrouxeFiltro
+        ? 'analytics'
+        : abaEscolhida.valor;
+    const setActiveTab = (valor) => setAbaEscolhida({ chave: filtroDaUrl, valor });
 
-    // --- ESTADO DO MODAL ---
+    // --- MODAL ---
     const [selectedSessionForDetails, setSelectedSessionForDetails] = useState(null);
 
-    // --- ESTADO DE ANÁLISE ---
-    const [templates, setTemplates] = useState([]);
-    const [selectedTemplate, setSelectedTemplate] = useState('');
-    const [exerciseOptions, setExerciseOptions] = useState([]);
-    const [selectedExercise, setSelectedExercise] = useState('');
-    const [historyRows, setHistoryRows] = useState([]);
-    const [prRows, setPrRows] = useState([]);
-    const [loadingTemplates, setLoadingTemplates] = useState(true);
-    const [loadingHistory, setLoadingHistory] = useState(false);
-    
-    // --- ESTADO DA BUSCA INTELIGENTE ---
-    const [searchMode, setSearchMode] = useState('template'); // 'template' | 'global'
-    const [globalSearchTerm, setGlobalSearchTerm] = useState('');
-    const [selectedGlobalExercises, setSelectedGlobalExercises] = useState([]);
-    const [allUserExercises, setAllUserExercises] = useState([]);
-    const [globalSessionsCache, setGlobalSessionsCache] = useState(null);
-    const globalSessionsLastDocRef = useRef(null);
-    const [hasMoreGlobalSessions, setHasMoreGlobalSessions] = useState(false);
-    const [loadingMoreGlobalSessions, setLoadingMoreGlobalSessions] = useState(false);
-
-    const toggleGlobalExercise = (exName) => {
-        setSelectedGlobalExercises(prev => 
-            prev.includes(exName)
-                ? prev.filter(n => n !== exName)
-                : [...prev, exName]
-        );
+    // --- DIÁRIO ---
+    const journal = useJournal({ user, active: activeTab === 'journal' });
+    const openJournal = () => {
+        setActiveTab('journal');
+        if (journal.sessions.length === 0) journal.loadJournal(true);
     };
 
-    // --- ESTADO DO GRÁFICO ---
-    const [chartData, setChartData] = useState([]);
-    const [chartRange, setChartRange] = useState('3M');
-
-    const hasAppliedInitialFilters = useRef(false);
-
-    const loadMoreGlobalSessions = React.useCallback(async () => {
-        if (!user || loadingMoreGlobalSessions || !hasMoreGlobalSessions) return;
-
-        setLoadingMoreGlobalSessions(true);
-        try {
-            const result = await workoutService.getHistory(
-                user.uid,
-                null,
-                globalSessionsLastDocRef.current,
-                SESSION_LIMITS.analyticsGlobalPage
-            );
-
-            globalSessionsLastDocRef.current = result.lastDoc;
-            setHasMoreGlobalSessions(result.hasMore);
-            setGlobalSessionsCache(prev => {
-                const merged = [...(prev || []), ...result.data];
-                setAllUserExercises(extractExerciseNamesFromSessions(merged));
-                return merged;
-            });
-        } catch (err) {
-            console.error("Error loading more global history:", err);
-        } finally {
-            setLoadingMoreGlobalSessions(false);
-        }
-    }, [hasMoreGlobalSessions, loadingMoreGlobalSessions, user]);
-
-    useEffect(() => {
-        setGlobalSessionsCache(null);
-        setAllUserExercises([]);
-        setHasMoreGlobalSessions(false);
-        globalSessionsLastDocRef.current = null;
-    }, [user?.uid]);
-
-    // Layout de Filtro Inicial
-    useEffect(() => {
-        if (initialTemplate || initialExercise) {
-            setActiveTab('analytics');
-        }
-    }, [initialTemplate, initialExercise]);
-
-    // ================= LÓGICA DO DIÁRIO =================
-
-
-    const loadJournal = React.useCallback(async (reset = false) => {
-        if (!user) return;
-        if (loadingSessions) return; // Prevent double load
-        if (reset) setLoadingSessions(true);
-        else setFetchingMore(true);
-        try {
-            const startDoc = reset ? null : lastDocJournalRef.current;
-            const result = await workoutService.getHistory(user.uid, null, startDoc, 20);
-
-            const loadedSessions = result.data.map(data => ({
-                id: data.id,
-                ...data,
-                completedAt: data.completedAt?.toDate ? data.completedAt.toDate() : (data.completedAt ? new Date(data.completedAt) : null),
-                duration: data.duration || '0min',
-                exercisesCount: data.exercises ? data.exercises.length : 0
-            }));
-
-            if (reset) {
-                setSessions(loadedSessions);
-                setVisibleJournalCount(Math.min(journalWindowConfig.initial, loadedSessions.length));
-            } else {
-                setSessions(prev => [...prev, ...loadedSessions]);
-            }
-
-            lastDocJournalRef.current = result.lastDoc;
-            setHasMoreJournal(result.hasMore);
-
-        } catch (err) {
-            console.error("Error fetching sessions:", err);
-        } finally {
-            setLoadingSessions(false);
-            setFetchingMore(false);
-        }
-    }, [journalWindowConfig.initial, user, loadingSessions]); // Removed fluctuating dependencies
-
-    useEffect(() => {
-        if (activeTab === 'journal' && sessions.length === 0) {
-            loadJournal(true);
-        }
-    }, [activeTab, loadJournal, sessions.length]); // Run only on tab change / initial load
-
-    function formatDate(date) {
-        if (!date) return '';
-        try {
-            // Safe parse: handles Timestamp, Date object, strings, or numbers
-            const d = date?.toDate ? date.toDate() : new Date(date);
-            if (isNaN(d.getTime())) return '-'; // Invalid date
-            return new Intl.DateTimeFormat('pt-BR', {
-                day: '2-digit',
-                month: 'short',
-                weekday: 'short'
-            }).format(d);
-        } catch (error) {
-            console.error(error);
-            return '-';
-        }
-    }
-
-    const visibleSessions = useMemo(
-        () => sessions.slice(0, visibleJournalCount),
-        [sessions, visibleJournalCount]
-    );
-
-    // --- LÓGICA DE AGRUPAMENTO ---
-    const groupedSessions = useMemo(() => {
-        if (!visibleSessions.length) return {};
-        const groups = {};
-        visibleSessions.forEach(session => {
-            if (!session.completedAt) return;
-            const date = session.completedAt;
-            const monthKey = date.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
-            const formatted = monthKey.charAt(0).toUpperCase() + monthKey.slice(1);
-
-            if (!groups[formatted]) groups[formatted] = [];
-            groups[formatted].push(session);
-        });
-        return groups;
-    }, [visibleSessions]);
-
-    const hasLocallyHiddenSessions = sessions.length > visibleJournalCount;
-
-    const revealMoreRenderedSessions = React.useCallback(() => {
-        setVisibleJournalCount((prev) => Math.min(prev + journalWindowConfig.step, sessions.length));
-    }, [journalWindowConfig.step, sessions.length]);
-
-    useEffect(() => {
-        if (activeTab !== 'journal') return;
-        if (visibleSessions.length === 0) return;
-        if (typeof window === 'undefined' || typeof window.requestAnimationFrame !== 'function') return;
-        if (typeof performance === 'undefined' || typeof performance.now !== 'function') return;
-
-        const start = performance.now();
-        let raf2 = null;
-        const raf1 = window.requestAnimationFrame(() => {
-            raf2 = window.requestAnimationFrame(() => {
-                const elapsed = performance.now() - start;
-                recordJournalRenderMetric(elapsed);
-            });
-        });
-
-        return () => {
-            window.cancelAnimationFrame(raf1);
-            if (raf2 !== null) {
-                window.cancelAnimationFrame(raf2);
-            }
-        };
-    }, [activeTab, visibleSessions.length]);
-
-    useEffect(() => {
-        if (activeTab !== 'journal' || !hasLocallyHiddenSessions) return;
-        if (typeof IntersectionObserver === 'undefined') return;
-
-        const sentinel = journalRenderSentinelRef.current;
-        if (!sentinel) return;
-
-        const observer = new IntersectionObserver((entries) => {
-            const shouldReveal = entries.some((entry) => entry.isIntersecting);
-            if (shouldReveal) {
-                revealMoreRenderedSessions();
-            }
-        }, {
-            root: null,
-            rootMargin: '240px 0px',
-            threshold: 0.01
-        });
-
-        observer.observe(sentinel);
-
-        return () => observer.disconnect();
-    }, [activeTab, hasLocallyHiddenSessions, revealMoreRenderedSessions]);
-
-    const getSessionHighlight = (session) => {
-        if (session.isCardio) {
-            let details = [];
-            if (session.durationMin) details.push(`${session.durationMin} min`);
-            if (session.distanceKm) details.push(`${session.distanceKm} km`);
-            if (session.intensity) details.push(session.intensity);
-            const metrics = details.join(' • ');
-            return metrics ? `${metrics}` : 'Sessão de Cardio';
-        }
-
-        let maxWeight = 0;
-        let maxExName = '';
-
-        let exerciseList = [];
-        if (session.exercises && Array.isArray(session.exercises)) {
-            exerciseList = session.exercises;
-        } else if (session.results) {
-            exerciseList = Object.entries(session.results).map(([k, v]) => ({ name: k, ...v }));
-        }
-
-        exerciseList.forEach(ex => {
-            let localMax = 0;
-            if (ex.sets && Array.isArray(ex.sets)) {
-                ex.sets.forEach(s => {
-                    const w = parseFloat(s.weight);
-                    if (w > localMax) localMax = w;
-                });
-            } else if (ex.weight) {
-                localMax = parseFloat(ex.weight);
-            }
-
-            if (localMax > maxWeight) {
-                maxWeight = localMax;
-                maxExName = ex.name;
-            }
-        });
-
-        if (maxWeight > 0) return `Destaque: ${maxExName.toUpperCase()} (${maxWeight}kg)`;
-        return `${session.exercisesCount || exerciseList.length} exercícios`;
-    };
-
-    // ================= LÓGICA DE ANÁLISE =================
-    useEffect(() => {
-        async function fetchTemplates() {
-            if (activeTab !== 'analytics') return;
-
-            setLoadingTemplates(true);
-            try {
-                const list = sortWorkoutTemplates(await workoutService.getTemplates(user.uid));
-                setTemplates(list);
-
-                if (list.length > 0 && !selectedTemplate) {
-                    const firstActiveTemplate = list.find(template => !template.isArchived);
-                    let defaultTemplateName = firstActiveTemplate?.name || list[0].name;
-                    if (initialTemplate) {
-                        const found = list.find((t) => t.name === initialTemplate);
-                        if (found) defaultTemplateName = found.name;
-                    }
-                    setSelectedTemplate(defaultTemplateName);
-                }
-            } catch (err) {
-                console.error('Erro ao carregar templates do histórico', err);
-            } finally {
-                setLoadingTemplates(false);
-            }
-        }
-
-        fetchTemplates();
-    }, [activeTab, initialTemplate, user?.uid, selectedTemplate]);
-
-    useEffect(() => {
-        if (!selectedTemplate) {
-            setExerciseOptions([]);
-            setSelectedExercise('');
-            return;
-        }
-        const template = templates.find((t) => t.name === selectedTemplate);
-        const options = template && Array.isArray(template.exercises)
-            ? template.exercises.map((ex) => ex.name)
-            : [];
-        setExerciseOptions(options);
-
-        if (!options.length) {
-            setSelectedExercise('');
-            return;
-        }
-
-        if (!hasAppliedInitialFilters.current && activeTab === 'analytics') {
-            let defaultExercise = options[0];
-            if (initialExercise && options.includes(initialExercise)) {
-                defaultExercise = initialExercise;
-            }
-            setSelectedExercise(defaultExercise);
-            hasAppliedInitialFilters.current = true;
-        } else if (!options.includes(selectedExercise)) {
-            setSelectedExercise(options[0]);
-        }
-    }, [selectedTemplate, templates, initialExercise, selectedExercise, activeTab]);
-
-    useEffect(() => {
-        async function fetchHistory() {
-            if (activeTab !== 'analytics' || !user) return;
-
-            if (searchMode === 'template' && (!selectedTemplate || !selectedExercise)) {
-                return;
-            }
-
-            if (searchMode === 'global' && selectedGlobalExercises.length === 0 && (!globalSearchTerm || globalSearchTerm.length < 2)) {
-                setHistoryRows([]);
-                setPrRows([]);
-                setChartData([]);
-                return;
-            }
-
-            setLoadingHistory(true);
-            try {
-                let docs = [];
-
-                if (searchMode === 'global') {
-                    if (globalSessionsCache) {
-                        docs = globalSessionsCache;
-                    } else {
-                        const result = await workoutService.getHistory(
-                            user.uid,
-                            null,
-                            null,
-                            SESSION_LIMITS.analyticsGlobalPage
-                        );
-                        docs = result.data;
-                        setGlobalSessionsCache(docs);
-                        setAllUserExercises(extractExerciseNamesFromSessions(docs));
-                        globalSessionsLastDocRef.current = result.lastDoc;
-                        setHasMoreGlobalSessions(result.hasMore);
-                    }
-                } else {
-                    const result = await workoutService.getHistory(user.uid, selectedTemplate, null, TEMPLATE_ANALYTICS_PAGE_SIZE);
-                    docs = result.data;
-                }
-
-                const rows = [];
-                const prMap = new Map();
-
-                docs.forEach((data) => {
-                    const results = data.results || data.exercises || [];
-                    let matchedExercises = [];
-
-                    if (searchMode === 'global') {
-                        if (selectedGlobalExercises.length > 0) {
-                            if (Array.isArray(results)) {
-                                matchedExercises = results.filter(e => selectedGlobalExercises.includes(e.name));
-                            } else {
-                                Object.keys(results).forEach(key => {
-                                    if (selectedGlobalExercises.includes(key)) {
-                                        matchedExercises.push({ name: key, ...results[key] });
-                                    }
-                                });
-                            }
-                        }
-                    } else {
-                        // Template Mode
-                        let exerciseData = null;
-                        if (Array.isArray(results)) {
-                            exerciseData = results.find(e => e.name === selectedExercise);
-                        } else {
-                            exerciseData = results[selectedExercise];
-                        }
-                        if (exerciseData) {
-                            matchedExercises.push({ name: selectedExercise, ...exerciseData });
-                        }
-                    }
-
-                    if (matchedExercises.length === 0) return;
-                    
-                    const completedAt = data.completedAt?.toDate?.() || null;
-                    if (!completedAt) return;
-
-                    // Find the absolute best among all matched exercises in this session
-                    let sessionBestWeight = 0;
-                    let sessionBestReps = 0;
-                    let bestExerciseName = '';
-                    let bestNotes = '';
-
-                    matchedExercises.forEach(exerciseData => {
-                        let localBestWeight = 0;
-                        let localBestReps = 0;
-
-                        if (exerciseData.sets && Array.isArray(exerciseData.sets)) {
-                            exerciseData.sets.forEach(s => {
-                                if (!s.completed) return;
-                                
-                                if (Number(s.weight) > localBestWeight) {
-                                    localBestWeight = Number(s.weight);
-                                    localBestReps = Number(s.reps);
-                                }
-                                
-                                if (s.drops && Array.isArray(s.drops)) {
-                                    s.drops.forEach(d => {
-                                        if (Number(d.weight) > localBestWeight) {
-                                            localBestWeight = Number(d.weight);
-                                            localBestReps = Number(d.reps);
-                                        }
-                                    });
-                                }
-                            });
-                        } else if (exerciseData.weight) {
-                            localBestWeight = Number(exerciseData.weight);
-                            localBestReps = Number(exerciseData.reps);
-                        }
-
-                        if (localBestWeight > sessionBestWeight) {
-                            sessionBestWeight = localBestWeight;
-                            sessionBestReps = localBestReps;
-                            bestExerciseName = exerciseData.name || '';
-                            bestNotes = exerciseData.notes || '';
-                        }
-                    });
-
-                    if (sessionBestWeight === 0) return;
-
-                    rows.push({
-                        id: data.id,
-                        date: completedAt,
-                        weight: sessionBestWeight,
-                        reps: sessionBestReps,
-                        notes: bestNotes,
-                        originalName: bestExerciseName
-                    });
-
-                    const key = String(sessionBestWeight);
-                    const existing = prMap.get(key);
-                    if (!existing || sessionBestReps > existing.reps) {
-                        prMap.set(key, { weight: sessionBestWeight, reps: sessionBestReps });
-                    }
-                });
-
-                const now = new Date();
-                const rangeDate = new Date();
-                if (chartRange === '1M') rangeDate.setMonth(now.getMonth() - 1);
-                if (chartRange === '3M') rangeDate.setMonth(now.getMonth() - 3);
-                if (chartRange === '6M') rangeDate.setMonth(now.getMonth() - 6);
-                if (chartRange === '1Y') rangeDate.setFullYear(now.getFullYear() - 1);
-                if (chartRange === 'ALL') rangeDate.setFullYear(1900);
-
-                const filteredRows = rows.filter(r => r.date >= rangeDate);
-                setHistoryRows(rows);
-
-                const chartDataParsed = filteredRows
-                    .sort((a, b) => a.date - b.date)
-                    .map(r => ({
-                        dateStr: r.date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }),
-                        weight: r.weight,
-                        fullDate: r.date
-                    }));
-
-                setChartData(chartDataParsed);
-                setPrRows(Array.from(prMap.values()).sort((a, b) => a.weight - b.weight));
-            } catch (err) {
-                console.error('Erro ao carregar histórico', err);
-            } finally {
-                setLoadingHistory(false);
-            }
-        }
-        fetchHistory();
-    }, [selectedTemplate, selectedExercise, user, activeTab, chartRange, searchMode, globalSearchTerm, selectedGlobalExercises, globalSessionsCache]);
+    // --- EVOLUÇÃO ---
+    const filters = useAnalyticsFilters({ user, activeTab, initialTemplate, initialExercise });
+    const global = useGlobalSessions(user);
+    const history = useExerciseHistory({
+        user,
+        activeTab,
+        searchMode: filters.searchMode,
+        selectedTemplate: filters.selectedTemplate,
+        selectedExercise: filters.selectedExercise,
+        selectedGlobalExercises: filters.selectedGlobalExercises,
+        globalSearchTerm: filters.globalSearchTerm,
+        chartRange: filters.chartRange,
+        globalSessions: global.globalSessions,
+        primeGlobalSessions: global.primeGlobalSessions
+    });
 
     return (
         <div
@@ -545,9 +84,8 @@ function HistoryPage({ user, isEmbedded = false }) {
 
                     {/* ABAS */}
                     <div className="grid grid-cols-2 bg-[#0f172a] p-1.5 rounded-full border border-slate-800 relative">
-                        {/* Background slider could be added here for animation, keeping simple for now */}
                         <button
-                            onClick={() => setActiveTab('journal')}
+                            onClick={openJournal}
                             className={`py-2.5 rounded-full text-sm font-bold transition-all duration-300 ${activeTab === 'journal'
                                 ? 'bg-[#1e293b] text-white shadow-lg shadow-black/20'
                                 : 'text-slate-500 hover:text-slate-300'
@@ -571,108 +109,18 @@ function HistoryPage({ user, isEmbedded = false }) {
             <div className="mx-auto w-full min-w-0 max-w-5xl px-4 py-6">
                 {/* === VISÃO DE DIÁRIO === */}
                 {activeTab === 'journal' && (
-                    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-
-                        {/* 2. LISTA */}
-                        {loadingSessions ? (
-                            <div className="py-20 text-center">
-                                <Activity className="animate-spin w-8 h-8 text-cyan-500 mx-auto mb-4" />
-                                <p className="text-slate-500 text-sm">Carregando diário...</p>
-                            </div>
-                        ) : sessions.length === 0 ? (
-                            <EmptyState
-                                icon={<History size={28} />}
-                                title="Nenhum treino registrado"
-                                description="Quando você finalizar um treino, ele aparecerá aqui com detalhes e evolução."
-                                className="my-8"
-                            />
-                        ) : (
-                            <div className="space-y-6">
-                                {Object.entries(groupedSessions).map(([month, monthSessions]) => (
-                                    <div key={month}>
-                                        <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3 px-1 sticky top-32 bg-[#020617]/90 py-2 z-10 backdrop-blur-sm">
-                                            {month}
-                                        </h3>
-                                        <div className="space-y-3">
-                                            {monthSessions.map((session, idx) => (
-                                                <PremiumCard
-                                                    key={session.id}
-                                                    className="border-slate-800/60 bg-slate-900/40 relative overflow-hidden group cursor-pointer transition-transform active:scale-[0.98]"
-                                                    style={{ animationDelay: `${idx * 50}ms` }}
-                                                    onClick={() => setSelectedSessionForDetails(session)}
-                                                >
-                                                    {/* Sobreposição de gradiente decorativo no hover */}
-                                                    <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/0 via-cyan-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
-
-                                                    <div className="flex justify-between items-start mb-3 relative z-10">
-                                                        <div>
-                                                            <div className="flex items-center gap-2 mb-1">
-                                                                <span className="text-xs font-bold text-cyan-500 uppercase tracking-wider">
-                                                                    {formatDate(session.completedAt)}
-                                                                </span>
-                                                                <span className="w-1 h-1 rounded-full bg-slate-700"></span>
-                                                                <span className="text-[10px] text-slate-400 font-medium">
-                                                                    {session.duration}
-                                                                </span>
-                                                            </div>
-                                                            <h3 className="text-base font-bold text-white leading-tight">
-                                                                {session.templateName || session.workoutName || 'Treino Sem Nome'}
-                                                            </h3>
-                                                        </div>
-                                                    </div>
-
-                                                    {/* Destaque / Estatísticas */}
-                                                    <div className="flex items-center gap-2 relative z-10">
-                                                        <div className="px-2.5 py-1.5 rounded-lg bg-slate-950/50 border border-slate-800/50 flex items-center gap-2">
-                                                            <TrendingUp size={12} className="text-slate-400" />
-                                                            <span className="text-xs font-medium text-slate-300">
-                                                                {getSessionHighlight(session)}
-                                                            </span>
-                                                        </div>
-                                                    </div>
-                                                </PremiumCard>
-                                            ))}
-                                        </div>
-                                    </div>
-                                ))}
-
-                                {hasMoreJournal && (
-                                    <div className="text-center pt-4 pb-8">
-                                        <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            onClick={() => loadJournal(false)}
-                                            disabled={fetchingMore}
-                                            className="text-slate-400 hover:text-white"
-                                        >
-                                            {fetchingMore ? (
-                                                <Activity className="animate-spin w-4 h-4 mr-2" />
-                                            ) : (
-                                                <History size={16} className="mr-2" />
-                                            )}
-                                            {fetchingMore ? 'Carregando...' : 'Carregar mais antigos'}
-                                        </Button>
-                                    </div>
-                                )}
-
-                                {hasLocallyHiddenSessions && (
-                                    <>
-                                        <div ref={journalRenderSentinelRef} className="h-1 w-full" />
-                                        <div className="text-center pb-8">
-                                            <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                onClick={revealMoreRenderedSessions}
-                                                className="text-slate-500 hover:text-slate-300"
-                                            >
-                                                Renderizar mais itens
-                                            </Button>
-                                        </div>
-                                    </>
-                                )}
-                            </div>
-                        )}
-                    </div>
+                    <JournalSection
+                        loadingSessions={journal.loadingSessions}
+                        sessions={journal.sessions}
+                        groupedSessions={journal.groupedSessions}
+                        hasMoreJournal={journal.hasMoreJournal}
+                        fetchingMore={journal.fetchingMore}
+                        onLoadMore={() => journal.loadJournal(false)}
+                        hasLocallyHiddenSessions={journal.hasLocallyHiddenSessions}
+                        onRevealMore={journal.revealMoreRenderedSessions}
+                        sentinelRef={journal.journalRenderSentinelRef}
+                        onSelectSession={setSelectedSessionForDetails}
+                    />
                 )}
 
                 {/* === VISÃO DE ANÁLISE === */}
@@ -684,30 +132,30 @@ function HistoryPage({ user, isEmbedded = false }) {
                         </div>
                     }>
                         <HistoryAnalyticsSection
-                            loadingTemplates={loadingTemplates}
-                            templates={templates}
-                            selectedTemplate={selectedTemplate}
-                            onTemplateChange={setSelectedTemplate}
-                            selectedExercise={selectedExercise}
-                            onExerciseChange={setSelectedExercise}
-                            exerciseOptions={exerciseOptions}
-                            chartRange={chartRange}
-                            onChartRangeChange={setChartRange}
-                            chartData={chartData}
-                            loadingHistory={loadingHistory}
-                            historyRows={historyRows}
-                            prRows={prRows}
-                            searchMode={searchMode}
-                            onSearchModeChange={setSearchMode}
-                            globalSearchTerm={globalSearchTerm}
-                            onGlobalSearchChange={setGlobalSearchTerm}
-                            allUserExercises={allUserExercises}
-                            selectedGlobalExercises={selectedGlobalExercises}
-                            toggleGlobalExercise={toggleGlobalExercise}
-                            globalHistorySessionCount={globalSessionsCache?.length || 0}
-                            hasMoreGlobalHistory={hasMoreGlobalSessions}
-                            loadingMoreGlobalHistory={loadingMoreGlobalSessions}
-                            onLoadMoreGlobalHistory={loadMoreGlobalSessions}
+                            loadingTemplates={filters.loadingTemplates}
+                            templates={filters.templates}
+                            selectedTemplate={filters.selectedTemplate}
+                            onTemplateChange={filters.setSelectedTemplate}
+                            selectedExercise={filters.selectedExercise}
+                            onExerciseChange={filters.setSelectedExercise}
+                            exerciseOptions={filters.exerciseOptions}
+                            chartRange={filters.chartRange}
+                            onChartRangeChange={filters.setChartRange}
+                            chartData={history.chartData}
+                            loadingHistory={history.loadingHistory}
+                            historyRows={history.historyRows}
+                            prRows={history.prRows}
+                            searchMode={filters.searchMode}
+                            onSearchModeChange={filters.setSearchMode}
+                            globalSearchTerm={filters.globalSearchTerm}
+                            onGlobalSearchChange={filters.setGlobalSearchTerm}
+                            allUserExercises={global.allUserExercises}
+                            selectedGlobalExercises={filters.selectedGlobalExercises}
+                            toggleGlobalExercise={filters.toggleGlobalExercise}
+                            globalHistorySessionCount={global.globalSessions?.length || 0}
+                            hasMoreGlobalHistory={global.hasMoreGlobalSessions}
+                            loadingMoreGlobalHistory={global.loadingMoreGlobalSessions}
+                            onLoadMoreGlobalHistory={global.loadMoreGlobalSessions}
                         />
                     </React.Suspense>
                 )}
@@ -726,7 +174,7 @@ function HistoryPage({ user, isEmbedded = false }) {
                     />
                 </React.Suspense>
             )}
-        </div >
+        </div>
     );
 }
 

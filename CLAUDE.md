@@ -47,12 +47,12 @@ Vitest tem duas configurações: `vitest.config.js` (jsdom; cobre `src/**` e `ap
 
 PWA em React 19 + Vite, com Firebase Auth e Cloud Firestore direto do cliente. Não há servidor próprio além de três funções serverless na Vercel (`api/`) para push. Detalhes em [docs/architecture.md](docs/architecture.md) e [MANUAL_TECNICO.md](MANUAL_TECNICO.md).
 
-- `src/AppAuthed.jsx` — árvore de rotas autenticadas e preload de telas.
-- `src/context/WorkoutContext.jsx` — treino ativo, persistência e detecção de sessão fantasma.
+- `src/AppAuthed.jsx` — árvore de rotas autenticadas e preload de telas. A raiz de `src/` é só isso, `App.jsx`, `main.jsx`, a inicialização do Firebase e do Sentry e o CSS global; componente e contexto moram em `src/components/` e `src/context/` (`src/estrutura.test.js` garante).
+- `src/context/AuthContext.jsx` — usuário autenticado e perfil; `src/context/WorkoutContext.jsx` — treino ativo, persistência e detecção de sessão fantasma.
 - `src/services/` — todo acesso a Firebase e regra de negócio compartilhada.
 - `src/utils/` — helpers puros (estatísticas, storage, observabilidade).
 
-**Padrão orquestrador + sub-hooks.** Hooks grandes são um orquestrador fino compondo sub-hooks num diretório irmão: `useWorkoutSession.js` compõe `hooks/workout-session/*` (loader, sync, ações de série, finalização). O mesmo vale para `services/sessions/`, `hooks/workout-execution/` e `hooks/profile/`. Ao quebrar página ou hook grande, siga esse formato em vez de criar um arquivo novo solto.
+**Padrão orquestrador + sub-hooks.** Hooks grandes são um orquestrador fino compondo sub-hooks num diretório irmão: `useWorkoutSession.js` compõe `hooks/workout-session/*` (loader, sync, ações de série, finalização). O mesmo vale para `services/sessions/`, `hooks/workout-execution/`, `hooks/profile/` e para as quatro páginas quebradas na revisão geral: `HistoryPage` (`hooks/history/`), `HomeDashboard` (`hooks/home/`), `CreateWorkoutPage` (`hooks/create-workout/`) e `WorkoutsPage` (`hooks/workouts/`), cada uma com os componentes em `components/<página>/` — e, depois do milestone, `LoginPage` (`hooks/login/`, UI em `components/auth/`), `TrainerDashboard` (`hooks/trainer/`) e `WorkoutExecutionPage` (que já compunha `hooks/workout-execution/`). Nenhuma página passa de ~300 linhas. Ao quebrar página ou hook grande, siga esse formato em vez de criar um arquivo novo solto.
 
 **Integrações são defensivas.** Sentry e App Check são opcionais e inicializados sob demanda; falha em qualquer um deles nunca pode impedir o boot do app.
 
@@ -68,13 +68,15 @@ Ler antes de "consertar" algo que parece quebrado — vários destes já foram d
 
 **Portas de dev são fixas de propósito.** A API key restringe referrers e o console do Google rejeita curinga de porta, então `5175` (dev) e `4173` (preview) estão fixados em `vite.config.js` e registrados na chave. Não os altere.
 
+**O login com Google passa pelo próprio domínio do app, via rewrite.** Desde a #149, o `vercel.json` repassa `/__/auth/*` ao handler do Firebase e `VITE_FIREBASE_AUTH_DOMAIN` (produção) aponta para o domínio do app — com o `firebaseapp.com`, o Safari do iPhone tratava o handler como terceiro e negava o `sessionStorage` de forma intermitente. Não mova o rewrite para depois do catch-all do `index.html`, não volte `/__/auth/*` para `X-Frame-Options: DENY` (o SDK emoldura `/__/auth/iframe` no próprio app) e não tire `/__/auth/` do `navigateFallbackDenylist` do Workbox (o service worker serviria o app no lugar do handler). `api/vercel-json.test.js` cobre os três. Detalhes em [MANUAL_TECNICO.md](MANUAL_TECNICO.md) §4.1.
+
 **Previews da Vercel não autenticam nem leem o Firestore.** Curinga parcial de subdomínio (`vitalita-*.vercel.app`) não é aceito pelo console. Antes de concluir que um PR quebrou o app em preview, verifique se não é isso.
 
 **`VITE_*` é embutida em tempo de build.** Mudar variável na Vercel não tem efeito sem redeploy.
 
 **Três configurações não chegam pelo service worker e exigem reinstalar o app:** o `apple-mobile-web-app-status-bar-style`, o `apple-touch-icon` e o nome do atalho (`apple-mobile-web-app-title`, ou o `<title>`). O iOS as lê ao *montar a janela*, na instalação — nem "Atualizar Agora" nem matar o app aplicam; só remover o ícone da tela de início e adicionar de novo pelo Safari. Todo o resto chega normalmente pelo precache. Desde 18/08/2026 o app avisa sozinho: o `vite.config.js` extrai do `index.html` uma assinatura dessas três coisas e o `PwaReinstallNotice` compara com a que valia na instalação. A assinatura é derivada dos valores reais, então **não há número para lembrar de bumpar** — e editar comentário no `index.html` não dispara aviso falso. A detecção vale da *próxima* mudança em diante: o iOS não expõe o que leu, então quem já está com a janela velha hoje não é avisado. Ver `src/utils/windowConfig.js`.
 
-**`user_stats` não existe mais no servidor.** A Cloud Function que recalculava o agregado, a flag `VITE_ENABLE_SERVER_USER_STATS` e o `userStatsService` foram removidos em 09/11/2026 (ADR-0006). Totais, streaks e conquistas são calculados no cliente a partir das sessões recentes (`publishStats` em `HomeDashboard.jsx` e `hooks/profile/useAchievements.js`), e essa é a única fonte. Não recrie a coleção nem a leitura dela sem ADR novo.
+**`user_stats` não existe mais no servidor.** A Cloud Function que recalculava o agregado, a flag `VITE_ENABLE_SERVER_USER_STATS` e o `userStatsService` foram removidos em 09/11/2026 (ADR-0006). Totais, streaks e conquistas são calculados no cliente a partir das sessões recentes (`publishStats` em `hooks/home/useHomeDashboardData.js` e `hooks/profile/useAchievements.js`), e essa é a única fonte. Não recrie a coleção nem a leitura dela sem ADR novo.
 
 **Nunca importe `firebase/auth` (ou qualquer pacote do Firebase) dinamicamente.** Todo o app importa esses pacotes de forma estática (`src/firebaseAuth.js`, `src/firebaseDb.js`). Um único `await import('firebase/auth')` faz o `manualChunks` do `vite.config.js` emitir o `vendor-firebase-app` com dependência circular, e o app **não passa da tela "Carregando..."** em produção, com `Cannot access 're' before initialization`. Aconteceu em 23/07/2026 e derrubou produção.
 

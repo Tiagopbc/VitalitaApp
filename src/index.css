@@ -31,6 +31,11 @@
     --color-slate-900: #0f172a;
     --color-slate-950: #020617;
 
+    /* Branco que continua branco nos dois temas: texto e ícone sobre fundo
+       colorido (botões, avatares, barras de aviso). O tema claro redefine
+       --color-white como tinta escura, mas não este (textoSobreCor.test.js). */
+    --color-on-color: #ffffff;
+
     /* Font Families */
     --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
     --font-heading: 'Outfit', system-ui, sans-serif;
@@ -138,8 +143,8 @@
     --color-gray-300: #334155;
     --color-gray-400: #475569;
 
-    /* Texto "branco" vira tinta escura em superfícies claras. Botões com
-       gradiente saturado usam text-[#fff] literal e não são afetados. */
+    /* Texto "branco" vira tinta escura em superfícies claras. Texto sobre
+       fundo colorido usa text-on-color, que não é afetado. */
     --color-white: #0f172a;
 
     /* Ciano de destaque um tom mais escuro para contraste em fundo claro */
@@ -328,7 +333,8 @@
 
     /*
      * Usuários com preferência por movimento reduzido: praticamente elimina
-     * animações e transições (CSS e framer-motion via MotionConfig no app).
+     * animações e transições — inclusive as classes vit-* abaixo, que
+     * substituíram o framer-motion fora do arrasto de exercícios (R06).
      */
     @media (prefers-reduced-motion: reduce) {
 
@@ -355,3 +361,66 @@
         display: none;
     }
 }
+
+/*
+ * Animações que substituíram o framer-motion (R06). Ele ficou só no arrasto de
+ * exercícios da criação de treino; o resto é CSS, fora do bundle do boot.
+ * Saídas usam `forwards` e um usePresence que desmonta quando a animação acaba.
+ */
+@keyframes vit-banner-in { from { transform: translateY(-100%); } to { transform: translateY(0); } }
+@keyframes vit-banner-out { from { transform: translateY(0); } to { transform: translateY(-100%); } }
+.vit-banner-in { animation: vit-banner-in 260ms ease-out; }
+.vit-banner-out { animation: vit-banner-out 200ms ease-in forwards; }
+
+@keyframes vit-fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes vit-fade-out { from { opacity: 1; } to { opacity: 0; } }
+.vit-fade-in { animation: vit-fade-in 220ms ease-out; }
+.vit-fade-out { animation: vit-fade-out 200ms ease-in forwards; }
+
+@keyframes vit-pop-in { from { opacity: 0; transform: scale(0.95) translateY(20px); } to { opacity: 1; transform: none; } }
+@keyframes vit-pop-out { from { opacity: 1; transform: none; } to { opacity: 0; transform: scale(0.95) translateY(20px); } }
+.vit-pop-in { animation: vit-pop-in 260ms ease-out; }
+.vit-pop-out { animation: vit-pop-out 200ms ease-in forwards; }
+
+/* Sanfona: grid de 0fr a 1fr anima a altura até o conteúdo, sem medir nada. */
+@keyframes vit-expand { from { grid-template-rows: 0fr; opacity: 0; } to { grid-template-rows: 1fr; opacity: 1; } }
+@keyframes vit-collapse { from { grid-template-rows: 1fr; opacity: 1; } to { grid-template-rows: 0fr; opacity: 0; } }
+.vit-expand { display: grid; animation: vit-expand 300ms ease-out; }
+.vit-collapse { display: grid; animation: vit-collapse 250ms ease-in forwards; }
+
+@keyframes vit-scale-in { from { transform: scale(0); } to { transform: scale(1); } }
+.vit-scale-in { animation: vit-scale-in 320ms cubic-bezier(0.34, 1.56, 0.64, 1); }
+
+/* Barra de progresso: entra crescendo de zero até o transform do estilo. */
+@keyframes vit-grow-x { from { transform: scaleX(0); } }
+.vit-grow-x {
+    animation: vit-grow-x 900ms cubic-bezier(0.22, 1, 0.36, 1);
+    transition: transform 900ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/*
+ * Fundos da tela de login (e de cadastro e recuperação de senha, que usam o
+ * mesmo contêiner). Antes eram gradientes escuros no style da LoginPage e não
+ * mudavam de tema: no claro, o texto, que inverte, ficava escuro sobre escuro.
+ * Os valores escuros abaixo são os mesmos de antes (loginTema.test.jsx).
+ */
+.vit-auth-bg {
+    background: radial-gradient(circle at top, #020617 0%, #000 55%);
+}
+.vit-auth-card {
+    background:
+        radial-gradient(circle at top left, rgba(59, 130, 246, 0.25), transparent 55%),
+        radial-gradient(circle at top right, rgba(14, 165, 233, 0.2), transparent 60%),
+        linear-gradient(135deg, #020617 0%, #000 70%);
+}
+:root[data-theme="light"] .vit-auth-bg {
+    background: radial-gradient(circle at top, #ffffff 0%, #e2e8f0 70%);
+}
+:root[data-theme="light"] .vit-auth-card {
+    background:
+        radial-gradient(circle at top left, rgba(59, 130, 246, 0.1), transparent 55%),
+        radial-gradient(circle at top right, rgba(14, 165, 233, 0.08), transparent 60%),
+        linear-gradient(135deg, #ffffff 0%, #f8fafc 70%);
+    box-shadow: var(--vit-shadow-card);
+}
+

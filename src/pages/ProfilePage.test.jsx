@@ -1,12 +1,12 @@
 import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import ProfilePage from './ProfilePage';
-import { useAuth } from '../AuthContext';
+import { useAuth } from '../context/AuthContext';
 import { userService } from '../services/userService';
 import { workoutService } from '../services/workoutService';
 
 // Mocks
-vi.mock('../AuthContext');
+vi.mock('../context/AuthContext');
 vi.mock('../services/userService');
 
 // Mock workoutService

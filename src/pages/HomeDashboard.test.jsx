@@ -5,7 +5,7 @@ import { HomeDashboard } from './HomeDashboard';
 import { workoutService } from '../services/workoutService';
 import { getDoc, doc } from 'firebase/firestore';
 
-vi.mock('../StreakWeeklyGoalHybrid', () => ({
+vi.mock('../components/StreakWeeklyGoalHybrid', () => ({
     StreakWeeklyGoalHybrid: () => <div>StreakWidget</div>
 }));
 

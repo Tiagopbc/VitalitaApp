@@ -13,7 +13,7 @@ vi.mock('../services/workoutService', () => ({
     workoutService: { addCardioSession: vi.fn() }
 }));
 
-import MethodModal from '../MethodModal';
+import MethodModal from './MethodModal';
 import { AddCardioModal } from './AddCardioModal';
 import { NumericKeypad } from './common/NumericKeypad';
 import { Toast } from './design-system/Toast';

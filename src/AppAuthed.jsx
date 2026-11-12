@@ -4,11 +4,10 @@
  */
 import React, { useEffect, useMemo, useState, Suspense, useCallback } from 'react';
 import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
-import { DesktopSidebar } from './DesktopSidebar';
+import { DesktopSidebar } from './components/navigation/DesktopSidebar';
 import { ProtectedRoute } from './components/ProtectedRoute';
-import { useAuth } from './AuthContext';
+import { useAuth } from './context/AuthContext';
 import { WorkoutProvider, useWorkout } from './context/WorkoutContext';
-import { MotionPreferences } from './components/common/MotionPreferences';
 import { TopBanner } from './components/design-system/TopBanner';
 import { safeGetItem, safeRemoveItem, safeGetJSON, safeSetJSON } from './utils/storage';
 
@@ -23,7 +22,7 @@ const loadWorkoutExecutionPage = () => import('./pages/WorkoutExecutionPage').th
 const loadTrainerDashboard = () => import('./pages/TrainerDashboard').then(module => ({ default: module.TrainerDashboard }));
 const loadPrivacyPolicyPage = () => import('./pages/PrivacyPolicyPage');
 const loadTermsOfUsePage = () => import('./pages/TermsOfUsePage');
-const loadBottomNavEnhanced = () => import('./BottomNavEnhanced').then(module => ({ default: module.BottomNavEnhanced }));
+const loadBottomNavEnhanced = () => import('./components/navigation/BottomNavEnhanced').then(module => ({ default: module.BottomNavEnhanced }));
 const loadPwaUpdatePrompt = () => import('./components/PwaUpdatePrompt').then(module => ({ default: module.PwaUpdatePrompt }));
 const loadPwaReinstallNotice = () => import('./components/PwaReinstallNotice').then(module => ({ default: module.PwaReinstallNotice }));
 
@@ -125,10 +124,10 @@ function AppAuthedContent() {
 
     // Verificar Status de Treinador
     useEffect(() => {
-        if (!userId) {
-            setIsTrainer(false);
-            return;
-        }
+        // Sem usuário não há o que buscar. O status volta a falso no cleanup da
+        // execução anterior (logout ou troca de usuário), e não no corpo do
+        // efeito: setState síncrono em efeito dispara render em cascata.
+        if (!userId) return undefined;
 
         async function checkTrainerStatus() {
             try {
@@ -141,6 +140,7 @@ function AppAuthedContent() {
         }
 
         checkTrainerStatus();
+        return () => setIsTrainer(false);
     }, [userId]);
 
     useEffect(() => {
@@ -473,10 +473,8 @@ function AppAuthedContent() {
 
 export default function AppAuthed() {
     return (
-        <MotionPreferences>
-            <WorkoutProvider>
-                <AppAuthedContent />
-            </WorkoutProvider>
-        </MotionPreferences>
+        <WorkoutProvider>
+            <AppAuthedContent />
+        </WorkoutProvider>
     );
 }

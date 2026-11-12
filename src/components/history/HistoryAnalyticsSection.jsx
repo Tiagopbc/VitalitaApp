@@ -1,7 +1,9 @@
 import React from 'react';
 import { TrendingUp, Activity } from 'lucide-react';
 
-const EvolutionChart = React.lazy(() => import('../analytics/EvolutionChart').then(module => ({ default: module.EvolutionChart })));
+// Importado direto: depois do R05 o gráfico é SVG próprio de ~5 KB, e um
+// Suspense aninhado aqui atrasava a revelação da seção (que já é lazy).
+import { EvolutionChart } from '../analytics/EvolutionChart';
 
 export function HistoryAnalyticsSection({
     loadingTemplates,
@@ -195,13 +197,7 @@ export function HistoryAnalyticsSection({
                                     ))}
                                 </div>
                             </div>
-                            <React.Suspense fallback={
-                                <div className="h-72 flex items-center justify-center border border-dashed border-slate-800 rounded-2xl bg-slate-900/20">
-                                    <p className="text-slate-500 text-sm">Carregando gráfico...</p>
-                                </div>
-                            }>
-                                <EvolutionChart data={chartData} />
-                            </React.Suspense>
+                            <EvolutionChart data={chartData} />
                         </div>
                     )}
 
