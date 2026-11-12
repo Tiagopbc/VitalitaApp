@@ -74,9 +74,13 @@ export function BottomNavEnhanced({ activeTab, onTabChange }) {
 
         place(true);
         // A largura dos botões depende do rótulo: medido antes de a fonte
-        // carregar, o indicador sairia 1 px maior. Reposiciona quando ela chega.
+        // carregar, o indicador sairia 1 px maior. Reposiciona quando ela chega
+        // — só se ainda estiver carregando: com a fonte pronta, `ready` já está
+        // resolvida e o reposicionamento apagaria a transição do deslize.
         let ativo = true;
-        document.fonts?.ready.then(() => { if (ativo) place(false); });
+        if (document.fonts?.status === 'loading') {
+            document.fonts.ready.then(() => { if (ativo) place(false); });
+        }
         const onResize = () => place(false);
         window.addEventListener('resize', onResize);
         return () => {
