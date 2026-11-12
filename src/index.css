@@ -328,7 +328,8 @@
 
     /*
      * Usuários com preferência por movimento reduzido: praticamente elimina
-     * animações e transições (CSS e framer-motion via MotionConfig no app).
+     * animações e transições — inclusive as classes vit-* abaixo, que
+     * substituíram o framer-motion fora do arrasto de exercícios (R06).
      */
     @media (prefers-reduced-motion: reduce) {
 
@@ -355,3 +356,40 @@
         display: none;
     }
 }
+
+/*
+ * Animações que substituíram o framer-motion (R06). Ele ficou só no arrasto de
+ * exercícios da criação de treino; o resto é CSS, fora do bundle do boot.
+ * Saídas usam `forwards` e um usePresence que desmonta quando a animação acaba.
+ */
+@keyframes vit-banner-in { from { transform: translateY(-100%); } to { transform: translateY(0); } }
+@keyframes vit-banner-out { from { transform: translateY(0); } to { transform: translateY(-100%); } }
+.vit-banner-in { animation: vit-banner-in 260ms ease-out; }
+.vit-banner-out { animation: vit-banner-out 200ms ease-in forwards; }
+
+@keyframes vit-fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes vit-fade-out { from { opacity: 1; } to { opacity: 0; } }
+.vit-fade-in { animation: vit-fade-in 220ms ease-out; }
+.vit-fade-out { animation: vit-fade-out 200ms ease-in forwards; }
+
+@keyframes vit-pop-in { from { opacity: 0; transform: scale(0.95) translateY(20px); } to { opacity: 1; transform: none; } }
+@keyframes vit-pop-out { from { opacity: 1; transform: none; } to { opacity: 0; transform: scale(0.95) translateY(20px); } }
+.vit-pop-in { animation: vit-pop-in 260ms ease-out; }
+.vit-pop-out { animation: vit-pop-out 200ms ease-in forwards; }
+
+/* Sanfona: grid de 0fr a 1fr anima a altura até o conteúdo, sem medir nada. */
+@keyframes vit-expand { from { grid-template-rows: 0fr; opacity: 0; } to { grid-template-rows: 1fr; opacity: 1; } }
+@keyframes vit-collapse { from { grid-template-rows: 1fr; opacity: 1; } to { grid-template-rows: 0fr; opacity: 0; } }
+.vit-expand { display: grid; animation: vit-expand 300ms ease-out; }
+.vit-collapse { display: grid; animation: vit-collapse 250ms ease-in forwards; }
+
+@keyframes vit-scale-in { from { transform: scale(0); } to { transform: scale(1); } }
+.vit-scale-in { animation: vit-scale-in 320ms cubic-bezier(0.34, 1.56, 0.64, 1); }
+
+/* Barra de progresso: entra crescendo de zero até o transform do estilo. */
+@keyframes vit-grow-x { from { transform: scaleX(0); } }
+.vit-grow-x {
+    animation: vit-grow-x 900ms cubic-bezier(0.22, 1, 0.36, 1);
+    transition: transform 900ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+

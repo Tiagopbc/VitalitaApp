@@ -167,3 +167,44 @@ describe('TopBanner', () => {
         );
     });
 });
+
+
+// A barra entra descendo e sai subindo (antes, AnimatePresence com mode="wait").
+// A troca de aviso espera a saída da barra anterior: duas barras full-bleed em
+// z-10000 nunca ficam montadas juntas.
+describe('TopBanner — entrada e saída', () => {
+    beforeEach(() => {
+        resetNotifyStore();
+        vi.useFakeTimers();
+    });
+
+    afterEach(() => {
+        vi.useRealTimers();
+        resetNotifyStore();
+    });
+
+    it('a barra nova entra só depois que a anterior termina de sair', () => {
+        render(<TopBanner />);
+        act(() => { notify.error('Erro ao salvar treino.'); });
+        expect(screen.getByRole('alert')).toHaveAttribute('data-phase', 'visible');
+
+        act(() => { notify.success('Treino salvo.'); });
+        expect(screen.getByRole('alert')).toHaveAttribute('data-phase', 'leaving');
+        expect(screen.queryByRole('status')).not.toBeInTheDocument();
+
+        act(() => { vi.advanceTimersByTime(200); });
+        expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+        expect(screen.getByRole('status')).toHaveAttribute('data-phase', 'visible');
+    });
+
+    it('ao dispensar, a barra sai subindo e só então desmonta', () => {
+        render(<TopBanner />);
+        act(() => { notify.success('Treino salvo.'); });
+
+        act(() => { notify.dismiss(); });
+        expect(screen.getByRole('status')).toHaveAttribute('data-phase', 'leaving');
+
+        act(() => { vi.advanceTimersByTime(200); });
+        expect(screen.queryByTestId('top-banner')).not.toBeInTheDocument();
+    });
+});

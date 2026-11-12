@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
 import { Target, Trophy, Flame, Check, ChevronDown, Moon, AlertCircle } from 'lucide-react';
 
 export function StreakWeeklyGoalHybrid({
@@ -146,15 +145,12 @@ export function StreakWeeklyGoalHybrid({
                         {/* Container da Barra de Progresso */}
                         <div className="h-4 w-full bg-slate-900/80 rounded-full overflow-hidden border border-white/5 relative shadow-inner">
                             {/* Barra Animada */}
-                            <motion.div
-                                className="h-full w-full bg-gradient-to-r from-cyan-400 to-blue-600 rounded-full relative overflow-hidden shadow-[0_0_20px_rgba(34,211,238,0.3)] will-change-transform"
-                                initial={{ scaleX: 0 }}
-                                animate={{ scaleX: progressScale }}
-                                transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
-                                style={{ transformOrigin: '0% 50%' }}
+                            <div
+                                className="vit-grow-x h-full w-full bg-gradient-to-r from-cyan-400 to-blue-600 rounded-full relative overflow-hidden shadow-[0_0_20px_rgba(34,211,238,0.3)] will-change-transform"
+                                style={{ transformOrigin: '0% 50%', transform: `scaleX(${progressScale})` }}
                             >
                                 <div className="absolute inset-0 bg-white/20 animate-pulse" />
-                            </motion.div>
+                            </div>
                         </div>
 
                         {/* Texto de Rodapé */}
