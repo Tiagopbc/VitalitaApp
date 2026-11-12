@@ -59,7 +59,7 @@ export function StudentDetail({
                 {/* Informações de Perfil Centralizadas */}
                 <div className="flex flex-col items-center justify-center animate-in fade-in slide-in-from-top-2 duration-700 mb-6">
                     <div className="relative mb-3">
-                        <div className="w-20 h-20 rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center text-3xl font-bold text-white shadow-lg shadow-cyan-500/20 ring-4 ring-black/50">
+                        <div className="w-20 h-20 rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center text-3xl font-bold text-on-color shadow-lg shadow-cyan-500/20 ring-4 ring-black/50">
                             {student.displayName?.charAt(0)}
                         </div>
                         <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-green-500 border-[3px] border-[#020617] shadow-sm"></div>

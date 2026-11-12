@@ -110,7 +110,7 @@ export function DesktopSidebar({ activeTab, onTabChange, user, isTrainer }) {
                         onClick={() => onTabChange('profile')}
                         className="w-full flex items-center gap-3 p-3 rounded-xl bg-slate-900/50 border border-slate-800/50 hover:bg-slate-800 transition-colors text-left cursor-pointer group"
                     >
-                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-xs font-bold text-white group-hover:scale-105 transition-transform">
+                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-xs font-bold text-on-color group-hover:scale-105 transition-transform">
                             {user.displayName?.charAt(0) || 'U'}
                         </div>
                         <div className="flex flex-col overflow-hidden">

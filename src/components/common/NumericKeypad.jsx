@@ -114,7 +114,7 @@ export function NumericKeypad({ isOpen, onClose, onConfirm, initialValue = '', t
                 {/* Botão de Confirmar */}
                 <button
                     onClick={handleConfirm}
-                    className="w-full h-16 bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 rounded-2xl text-white font-bold text-xl tracking-wide shadow-lg shadow-cyan-500/20 flex items-center justify-center gap-3 active:scale-[0.98] transition-all"
+                    className="w-full h-16 bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 rounded-2xl text-on-color font-bold text-xl tracking-wide shadow-lg shadow-cyan-500/20 flex items-center justify-center gap-3 active:scale-[0.98] transition-all"
                 >
                     <Check size={24} strokeWidth={3} />
                     CONFIRMAR

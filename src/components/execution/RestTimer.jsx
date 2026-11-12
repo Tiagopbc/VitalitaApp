@@ -464,7 +464,7 @@ export function RestTimer({ initialTime = 90, onComplete, isOpen, onClose, onDur
                         <button
                             onClick={handlePlayPause}
                             aria-label={status === 'running' ? 'Pausar descanso' : 'Iniciar descanso'}
-                            className={`w-20 h-20 rounded-full flex items-center justify-center text-white transition-all duration-200 shadow-lg hover:scale-105 active:scale-95
+                            className={`w-20 h-20 rounded-full flex items-center justify-center text-on-color transition-all duration-200 shadow-lg hover:scale-105 active:scale-95
                                 ${status === 'running'
                                     ? 'bg-cyan-500 shadow-[0_0_20px_rgba(6,182,212,0.4)]'
                                     : status === 'complete'
