@@ -43,7 +43,7 @@ export default function MethodModal({ methodName, onClose }) {
                 {/* Cabeçalho */}
                 <div className="flex items-center gap-4 mb-6">
                     <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center shadow-lg shadow-blue-500/20">
-                        <Icon size={24} className="text-white" />
+                        <Icon size={24} className="text-on-color" />
                     </div>
                     <h3 className="text-xl font-bold text-white">{methodData.name}</h3>
                 </div>

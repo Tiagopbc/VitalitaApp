@@ -118,7 +118,7 @@ export function EditProfileModal({ profile, saving, onClose, onChange, onSave, o
                     <Button
                         onClick={onSave}
                         loading={saving}
-                        className="w-full py-3.5 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl shadow-lg shadow-blue-500/20"
+                        className="w-full py-3.5 bg-blue-600 hover:bg-blue-500 text-on-color font-bold rounded-xl shadow-lg shadow-blue-500/20"
                     >
                         Salvar Alterações
                     </Button>

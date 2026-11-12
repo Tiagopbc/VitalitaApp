@@ -46,7 +46,7 @@ export function SuggestedWorkoutCard({ loading, workout, onStart, onCreate, onAd
                             </div>
                         </div>
                         <div className="flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-r from-cyan-400 to-blue-600 group-hover:scale-110 transition-transform shadow-[0_0_15px_rgba(6,182,212,0.5)] ml-4 border border-white/20">
-                            <Play size={24} fill="white" className="text-white ml-1" />
+                            <Play size={24} fill="white" className="text-on-color ml-1" />
                         </div>
                     </div>
                     {/* AmbientGlow */}

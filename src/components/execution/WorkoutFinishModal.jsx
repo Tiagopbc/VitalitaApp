@@ -31,7 +31,7 @@ export function WorkoutFinishModal({ session, userName, sharing, onShare, onClos
                         <Button
                             onClick={onShare}
                             disabled={sharing}
-                            className="w-full h-12 bg-gradient-to-r from-cyan-500 via-blue-500 to-blue-600 hover:from-cyan-400 hover:via-blue-400 hover:to-blue-500 text-white font-bold rounded-2xl shadow-lg shadow-cyan-500/25 flex items-center justify-center gap-2"
+                            className="w-full h-12 bg-gradient-to-r from-cyan-500 via-blue-500 to-blue-600 hover:from-cyan-400 hover:via-blue-400 hover:to-blue-500 text-on-color font-bold rounded-2xl shadow-lg shadow-cyan-500/25 flex items-center justify-center gap-2"
                         >
                             {sharing ? 'Gerando...' : (
                                 <>

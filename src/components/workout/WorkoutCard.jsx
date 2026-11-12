@@ -56,7 +56,7 @@ export function WorkoutCard({
             <div className="flex items-start justify-between gap-3 mb-4">
                 <div className="flex items-center gap-4">
                     {/* Avatar */}
-                    <div className="w-14 h-14 rounded-2xl bg-linear-to-br from-cyan-500 to-blue-600 flex items-center justify-center shadow-lg shadow-cyan-500/20 shrink-0 text-white text-xl font-bold">
+                    <div className="w-14 h-14 rounded-2xl bg-linear-to-br from-cyan-500 to-blue-600 flex items-center justify-center shadow-lg shadow-cyan-500/20 shrink-0 text-on-color text-xl font-bold">
                         {workout.name.charAt(0).toUpperCase()}
                     </div>
 
@@ -187,7 +187,7 @@ export function WorkoutCard({
 
                     <Button variant="unstyled" haptic="medium"
                         onClick={onOpen}
-                        className="flex-1 py-3 bg-linear-to-r from-cyan-500 to-blue-600 hover:to-blue-500 rounded-xl text-white text-xs font-bold shadow-lg shadow-cyan-500/20 flex items-center justify-center gap-2"
+                        className="flex-1 py-3 bg-linear-to-r from-cyan-500 to-blue-600 hover:to-blue-500 rounded-xl text-on-color text-xs font-bold shadow-lg shadow-cyan-500/20 flex items-center justify-center gap-2"
                     >
                         <Play size={14} fill="currentColor" /> INICIAR
                     </Button>

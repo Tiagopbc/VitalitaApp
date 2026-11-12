@@ -82,7 +82,7 @@ export function LoginForm({
             <div className="flex flex-col gap-2 items-center">
                 <button
                     type="button"
-                    className="w-full rounded-full inline-flex items-center justify-center gap-3 px-6 py-[10px] bg-white border border-[#747775] font-medium text-sm text-[#1f1f1f] cursor-pointer transition-all hover:bg-[#f7f8f8] hover:shadow-google-hover hover:-translate-y-px disabled:opacity-70"
+                    className="w-full rounded-full inline-flex items-center justify-center gap-3 px-6 py-[10px] bg-[#fff] border border-[#747775] font-medium text-sm text-[#1f1f1f] cursor-pointer transition-all hover:bg-[#f7f8f8] hover:shadow-google-hover hover:-translate-y-px disabled:opacity-70"
                     onClick={onGoogleSignIn}
                     disabled={loading}
                 >
