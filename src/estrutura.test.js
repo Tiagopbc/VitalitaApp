@@ -17,6 +17,7 @@ const PERMITIDOS = new Set([
     'firebaseAuth.js',
     'firebaseDb.js',
     'sentry.js',
+    'sentry.test.js',
     'index.css',
     'fonts.css',
     'fonts.test.js',
