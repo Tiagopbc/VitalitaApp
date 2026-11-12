@@ -42,7 +42,17 @@ export function initializeSentry() {
         release: appVersion === 'local' ? undefined : `vitalita@${appVersion}`,
         integrations,
         tracesSampleRate: enableTracing ? 0.1 : 0,
-        sendDefaultPii: false,
+        // Explícito de propósito: o Sentry 11 ignora o antigo `sendDefaultPii` e,
+        // sem isto, liga a dedução de IP pelo servidor (`infer_ip: "auto"`).
+        // O `beforeSend` abaixo continua limpando `user` e `request` dos eventos.
+        dataCollection: {
+            userInfo: false,
+            cookies: false,
+            // Por direção: a 10.x não entende `httpHeaders: false` e cai no padrão.
+            httpHeaders: { request: false, response: false },
+            httpBodies: [],
+            urlQueryParams: false
+        },
         beforeBreadcrumb: sanitizeSentryBreadcrumb,
         beforeSend: sanitizeSentryEvent
     });
