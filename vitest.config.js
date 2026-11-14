@@ -10,7 +10,9 @@ export default defineConfig({
         setupFiles: './src/test/setup.js',
         include: [
             'src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}',
-            'api/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts}'
+            'api/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts}',
+            // Configuração de build na raiz (divisão de chunks do Rolldown).
+            'vite.config.test.js'
         ],
         coverage: {
             // json-summary grava coverage/coverage-summary.json, para consultar
