@@ -39,6 +39,8 @@ export default defineConfig({
     resolve: {
         alias: {
             '@': path.resolve('./src'),
+            // Módulo virtual do vite-plugin-pwa, que só existe no build.
+            'virtual:pwa-register/react': path.resolve('./src/test/pwaRegisterStub.js'),
         },
     },
 });
