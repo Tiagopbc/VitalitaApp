@@ -1,12 +1,11 @@
-import { CalendarDays, Moon, PencilLine, Sun, User, Users } from 'lucide-react';
+import { CalendarDays, Palette, PencilLine, User, Users } from 'lucide-react';
 import { Button } from '../design-system/Button';
-import { ThemeSwitch } from '../design-system/ThemeSwitch';
-import { THEMES } from '../../utils/theme';
+import { ThemeSelector } from '../design-system/ThemeSelector';
 import { XP_PER_LEVEL } from '../../utils/xpLevel';
 
 /**
  * Cartão de cabeçalho do perfil: avatar + nível, nome, data de ingresso,
- * ações primárias (editar / personal), alternância de tema e barra de XP.
+ * ações primárias (editar / personal), seletor de tema e barra de XP.
  * Totalmente controlado por props — nenhum estado próprio.
  */
 export function ProfileHeaderCard({
@@ -18,7 +17,7 @@ export function ProfileHeaderCard({
     xpProgress,
     onEditProfile,
     onLinkTrainer,
-    onToggleTheme
+    onThemeChange
 }) {
     return (
         <div className="bg-slate-900/50 rounded-3xl p-5 sm:p-6 border border-slate-800 relative overflow-hidden">
@@ -81,20 +80,16 @@ export function ProfileHeaderCard({
                 </Button>
             </div>
 
-            {/* Tema do aplicativo */}
-            <div className="relative z-10 mt-4 flex items-center justify-between rounded-2xl border border-slate-800/60 bg-slate-950/40 px-4 py-3">
-                <div className="flex items-center gap-2 text-slate-400">
-                    {appTheme === THEMES.light
-                        ? <Sun size={15} className="text-amber-500" />
-                        : <Moon size={15} className="text-cyan-400" />}
-                    <span className="text-xs font-bold uppercase tracking-wider">
-                        {appTheme === THEMES.light ? 'Modo claro' : 'Modo escuro'}
-                    </span>
+            {/* Tema do aplicativo: Escuro | Claro | Auto (segue o aparelho).
+                Para o seletor caber no celular, a palavra "Tema" só aparece a
+                partir de 400 px e o ícone a partir de 360 px; o grupo já se
+                anuncia como "Tema do aplicativo" para leitor de tela. */}
+            <div className="relative z-10 mt-4 flex items-center justify-between gap-3 rounded-2xl border border-slate-800/60 bg-slate-950/40 px-4 py-3 max-[359px]:justify-center">
+                <div className="flex items-center gap-2 text-slate-400 max-[359px]:hidden">
+                    <Palette size={15} className="text-cyan-400" />
+                    <span className="text-xs font-bold uppercase tracking-wider max-[399px]:hidden">Tema</span>
                 </div>
-                <ThemeSwitch
-                    isLight={appTheme === THEMES.light}
-                    onToggle={onToggleTheme}
-                />
+                <ThemeSelector value={appTheme} onChange={onThemeChange} />
             </div>
 
             {/* Experience Bar */}

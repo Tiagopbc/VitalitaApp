@@ -58,7 +58,7 @@ export function HistoryAnalyticsSection({
                                 onClick={() => onSearchModeChange('template')}
                                 className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all ${
                                     searchMode === 'template' 
-                                        ? 'bg-slate-800 text-cyan-400 shadow-sm' 
+                                        ? 'bg-slate-800 text-cyan-300 shadow-sm' 
                                         : 'text-slate-500 hover:text-slate-300'
                                 }`}
                             >
@@ -68,7 +68,7 @@ export function HistoryAnalyticsSection({
                                 onClick={() => onSearchModeChange('global')}
                                 className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all ${
                                     searchMode === 'global' 
-                                        ? 'bg-slate-800 text-cyan-400 shadow-sm' 
+                                        ? 'bg-slate-800 text-cyan-300 shadow-sm' 
                                         : 'text-slate-500 hover:text-slate-300'
                                 }`}
                             >
@@ -188,7 +188,7 @@ export function HistoryAnalyticsSection({
                                             key={range}
                                             onClick={() => onChartRangeChange(range)}
                                             className={`px-2 py-1 rounded text-[10px] font-bold transition-all ${chartRange === range
-                                                ? 'bg-slate-700 text-cyan-400 shadow-sm'
+                                                ? 'bg-slate-700 text-cyan-300 shadow-sm'
                                                 : 'text-slate-500 hover:text-slate-300'
                                                 }`}
                                         >
