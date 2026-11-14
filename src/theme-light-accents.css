@@ -1,0 +1,210 @@
+/*
+ * theme-light-accents.css
+ * Destaques no tema claro. Texto em tom claro de destaque (text-cyan-400,
+ * text-amber-200...) foi escolhido para fundo escuro e some sobre fundo claro;
+ * tinta escura de fundo (bg-emerald-900/40...) vira um borrão. Aqui cada classe
+ * usada no app ganha, só no tema claro, a mesma cor num tom escuro:
+ *   - texto 400 e 500 -> 700; texto 100 a 300 -> 800 (contraste >= 4,5 no branco);
+ *   - tinta 800 a 950 -> tom 500 translúcido (ou 50, se for painel quase opaco).
+ * Variantes com opacidade (/80) mantêm a opacidade. Fundos e gradientes de
+ * botão não mudam: só a cor do texto e as tintas escuras.
+ * src/temaClaroDestaques.test.js reprova se uma classe nova ficar de fora.
+ */
+
+/* Texto de destaque */
+:root[data-theme="light"] [class~="text-amber-100"]:not(.theme-dark-locked, .theme-dark-locked *) {
+    color: #92400e;
+}
+
+:root[data-theme="light"] [class~="text-amber-200/70"]:not(.theme-dark-locked, .theme-dark-locked *) {
+    color: rgba(146, 64, 14, 0.7);
+}
+
+:root[data-theme="light"] [class~="text-amber-200/80"]:not(.theme-dark-locked, .theme-dark-locked *) {
+    color: rgba(146, 64, 14, 0.8);
+}
+
+:root[data-theme="light"] [class~="text-amber-200/90"]:not(.theme-dark-locked, .theme-dark-locked *) {
+    color: rgba(146, 64, 14, 0.9);
+}
+
+:root[data-theme="light"] [class~="text-amber-200"]:not(.theme-dark-locked, .theme-dark-locked *) {
+    color: #92400e;
+}
+
+:root[data-theme="light"] [class~="text-amber-300"]:not(.theme-dark-locked, .theme-dark-locked *) {
+    color: #92400e;
+}
+
+:root[data-theme="light"] [class~="text-amber-400/90"]:not(.theme-dark-locked, .theme-dark-locked *) {
+    color: rgba(180, 83, 9, 0.9);
+}
+
+:root[data-theme="light"] [class~="text-amber-400"]:not(.theme-dark-locked, .theme-dark-locked *) {
+    color: #b45309;
+}
+
+:root[data-theme="light"] [class~="text-amber-500/70"]:not(.theme-dark-locked, .theme-dark-locked *) {
+    color: rgba(180, 83, 9, 0.7);
+}
+
+:root[data-theme="light"] [class~="text-amber-500/80"]:not(.theme-dark-locked, .theme-dark-locked *) {
+    color: rgba(180, 83, 9, 0.8);
+}
+
+:root[data-theme="light"] [class~="text-amber-500"]:not(.theme-dark-locked, .theme-dark-locked *) {
+    color: #b45309;
+}
+
+:root[data-theme="light"] [class~="text-blue-200"]:not(.theme-dark-locked, .theme-dark-locked *) {
+    color: #1e40af;
+}
+
+:root[data-theme="light"] [class~="text-blue-400"]:not(.theme-dark-locked, .theme-dark-locked *) {
+    color: #1d4ed8;
+}
+
+:root[data-theme="light"] [class~="text-blue-500"]:not(.theme-dark-locked, .theme-dark-locked *) {
+    color: #1d4ed8;
+}
+
+:root[data-theme="light"] [class~="text-cyan-200/70"]:not(.theme-dark-locked, .theme-dark-locked *) {
+    color: rgba(21, 94, 117, 0.7);
+}
+
+:root[data-theme="light"] [class~="text-cyan-200"]:not(.theme-dark-locked, .theme-dark-locked *) {
+    color: #155e75;
+}
+
+:root[data-theme="light"] [class~="text-cyan-300/80"]:not(.theme-dark-locked, .theme-dark-locked *) {
+    color: rgba(21, 94, 117, 0.8);
+}
+
+:root[data-theme="light"] [class~="text-cyan-300/90"]:not(.theme-dark-locked, .theme-dark-locked *) {
+    color: rgba(21, 94, 117, 0.9);
+}
+
+:root[data-theme="light"] [class~="text-cyan-300"]:not(.theme-dark-locked, .theme-dark-locked *) {
+    color: #155e75;
+}
+
+:root[data-theme="light"] [class~="text-cyan-400/80"]:not(.theme-dark-locked, .theme-dark-locked *) {
+    color: rgba(14, 116, 144, 0.8);
+}
+
+:root[data-theme="light"] [class~="text-cyan-400"]:not(.theme-dark-locked, .theme-dark-locked *) {
+    color: #0e7490;
+}
+
+:root[data-theme="light"] [class~="text-cyan-500/80"]:not(.theme-dark-locked, .theme-dark-locked *) {
+    color: rgba(14, 116, 144, 0.8);
+}
+
+:root[data-theme="light"] [class~="text-cyan-500"]:not(.theme-dark-locked, .theme-dark-locked *) {
+    color: #0e7490;
+}
+
+:root[data-theme="light"] [class~="text-emerald-200"]:not(.theme-dark-locked, .theme-dark-locked *) {
+    color: #065f46;
+}
+
+:root[data-theme="light"] [class~="text-emerald-300"]:not(.theme-dark-locked, .theme-dark-locked *) {
+    color: #065f46;
+}
+
+:root[data-theme="light"] [class~="text-emerald-400"]:not(.theme-dark-locked, .theme-dark-locked *) {
+    color: #047857;
+}
+
+:root[data-theme="light"] [class~="text-emerald-500"]:not(.theme-dark-locked, .theme-dark-locked *) {
+    color: #047857;
+}
+
+:root[data-theme="light"] [class~="text-green-400"]:not(.theme-dark-locked, .theme-dark-locked *) {
+    color: #15803d;
+}
+
+:root[data-theme="light"] [class~="text-green-500/90"]:not(.theme-dark-locked, .theme-dark-locked *) {
+    color: rgba(21, 128, 61, 0.9);
+}
+
+:root[data-theme="light"] [class~="text-green-500"]:not(.theme-dark-locked, .theme-dark-locked *) {
+    color: #15803d;
+}
+
+:root[data-theme="light"] [class~="text-indigo-200"]:not(.theme-dark-locked, .theme-dark-locked *) {
+    color: #3730a3;
+}
+
+:root[data-theme="light"] [class~="text-indigo-400/60"]:not(.theme-dark-locked, .theme-dark-locked *) {
+    color: rgba(67, 56, 202, 0.6);
+}
+
+:root[data-theme="light"] [class~="text-indigo-400"]:not(.theme-dark-locked, .theme-dark-locked *) {
+    color: #4338ca;
+}
+
+:root[data-theme="light"] [class~="text-orange-400"]:not(.theme-dark-locked, .theme-dark-locked *) {
+    color: #c2410c;
+}
+
+:root[data-theme="light"] [class~="text-purple-400"]:not(.theme-dark-locked, .theme-dark-locked *) {
+    color: #7e22ce;
+}
+
+:root[data-theme="light"] [class~="text-purple-500"]:not(.theme-dark-locked, .theme-dark-locked *) {
+    color: #7e22ce;
+}
+
+:root[data-theme="light"] [class~="text-red-200/60"]:not(.theme-dark-locked, .theme-dark-locked *) {
+    color: rgba(153, 27, 27, 0.6);
+}
+
+:root[data-theme="light"] [class~="text-red-200/80"]:not(.theme-dark-locked, .theme-dark-locked *) {
+    color: rgba(153, 27, 27, 0.8);
+}
+
+:root[data-theme="light"] [class~="text-red-200"]:not(.theme-dark-locked, .theme-dark-locked *) {
+    color: #991b1b;
+}
+
+:root[data-theme="light"] [class~="text-red-300"]:not(.theme-dark-locked, .theme-dark-locked *) {
+    color: #991b1b;
+}
+
+:root[data-theme="light"] [class~="text-red-400"]:not(.theme-dark-locked, .theme-dark-locked *) {
+    color: #b91c1c;
+}
+
+:root[data-theme="light"] [class~="text-violet-300"]:not(.theme-dark-locked, .theme-dark-locked *) {
+    color: #5b21b6;
+}
+
+:root[data-theme="light"] [class~="text-yellow-400"]:not(.theme-dark-locked, .theme-dark-locked *) {
+    color: #a16207;
+}
+
+:root[data-theme="light"] [class~="text-yellow-500"]:not(.theme-dark-locked, .theme-dark-locked *) {
+    color: #a16207;
+}
+
+/* Tinta escura de fundo */
+:root[data-theme="light"] [class~="bg-amber-950/95"]:not(.theme-dark-locked, .theme-dark-locked *) {
+    background-color: rgba(255, 251, 235, 0.95);
+}
+
+:root[data-theme="light"] [class~="bg-cyan-950/30"]:not(.theme-dark-locked, .theme-dark-locked *) {
+    background-color: rgba(6, 182, 212, 0.105);
+}
+
+:root[data-theme="light"] [class~="bg-emerald-900/20"]:not(.theme-dark-locked, .theme-dark-locked *) {
+    background-color: rgba(16, 185, 129, 0.07);
+}
+
+:root[data-theme="light"] [class~="bg-emerald-900/40"]:not(.theme-dark-locked, .theme-dark-locked *) {
+    background-color: rgba(16, 185, 129, 0.14);
+}
+
+:root[data-theme="light"] [class~="bg-purple-900/20"]:not(.theme-dark-locked, .theme-dark-locked *) {
+    background-color: rgba(168, 85, 247, 0.07);
+}
