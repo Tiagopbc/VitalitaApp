@@ -24,6 +24,7 @@ const PERMITIDOS = new Set([
     'fonts.css',
     'fonts.test.js',
     'theme-light-compat.css',
+    'cssComentarios.test.js',
     'estrutura.test.js'
 ]);
 
