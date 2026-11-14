@@ -10,7 +10,9 @@ export default defineConfig({
         setupFiles: './src/test/setup.js',
         include: [
             'src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}',
-            'api/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts}'
+            'api/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts}',
+            // Configuração de build na raiz (divisão de chunks do Rolldown).
+            'vite.config.test.js'
         ],
         coverage: {
             // json-summary grava coverage/coverage-summary.json, para consultar
@@ -39,6 +41,8 @@ export default defineConfig({
     resolve: {
         alias: {
             '@': path.resolve('./src'),
+            // Módulo virtual do vite-plugin-pwa, que só existe no build.
+            'virtual:pwa-register/react': path.resolve('./src/test/pwaRegisterStub.js'),
         },
     },
 });
