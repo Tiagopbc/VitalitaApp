@@ -5,7 +5,12 @@
  * ao agendar (somente /api/schedule-rest-push o conhece).
  */
 import crypto from 'node:crypto';
-import webpush from 'web-push';
+import * as webPushModule from 'web-push';
+
+// O web-push 3 (CommonJS) só expõe as funções pelo `default`; o 4 (ESM) só
+// pelos exports com nome. Assim a função roda com os dois — com
+// `import webpush from 'web-push'`, o 4 derrubava a função antes da 1ª linha.
+const webpush = webPushModule.default ?? webPushModule;
 
 function secretMatches(provided, expected) {
     if (typeof provided !== 'string' || typeof expected !== 'string') return false;
