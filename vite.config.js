@@ -154,24 +154,31 @@ export default defineConfig(({ mode }) => {
     modulePreload: {
       resolveDependencies: (_filename, deps) => deps.filter(dep => !dep.includes('vendor-framer'))
     },
-    rollupOptions: {
+    // Grupos do Rolldown (vite 8). Cada grupo leva junto as dependências dos
+    // módulos que captura (`includeDependenciesRecursively`, padrão do Rolldown
+    // e o que evita chunk circular), então a PRIORIDADE segue a direção das
+    // dependências: quem é dependência vem antes de quem depende dele. Medido
+    // em 13/11/2026: só com o React na frente, o grupo do Firestore arrastava a
+    // base do Firebase e o chunk inteiro (165 KB gzip) entrava no boot.
+    //
+    // O `vendor-firebase-app` casa `app/` com a barra de propósito: sem ela,
+    // `@firebase/app-check` caía no grupo e carregava no boot, quando o
+    // appCheckService o importa sob demanda. `vite.config.test.js` trava isso.
+    rolldownOptions: {
       output: {
-        onlyExplicitManualChunks: true,
-        manualChunks(id) {
-          if (!id.includes('node_modules')) return undefined
-
-          const packageId = id.split('node_modules/').pop()
-
-          if (packageId.startsWith('react/') || packageId.startsWith('react-dom/') || packageId.startsWith('scheduler/')) {
-            return 'vendor-react'
-          }
-          if (packageId.startsWith('react-router/') || packageId.startsWith('react-router-dom/')) return 'vendor-router'
-          if (packageId.startsWith('firebase/app') || packageId.startsWith('@firebase/app')) return 'vendor-firebase-app'
-          if (packageId.startsWith('firebase/auth') || packageId.startsWith('@firebase/auth')) return 'vendor-firebase-auth'
-          if (packageId.startsWith('firebase/firestore') || packageId.startsWith('@firebase/firestore')) return 'vendor-firebase-firestore'
-          if (packageId.startsWith('lucide-react/')) return 'vendor-lucide'
-
-          return undefined
+        codeSplitting: {
+          groups: [
+            { name: 'vendor-react', test: /node_modules[\\/](react|react-dom|scheduler)[\\/]/, priority: 60 },
+            {
+              name: 'vendor-firebase-app',
+              test: /node_modules[\\/](firebase[\\/]app[\\/]|@firebase[\\/](app|util|component|logger)[\\/]|idb[\\/])/,
+              priority: 55
+            },
+            { name: 'vendor-router', test: /node_modules[\\/](react-router|react-router-dom)[\\/]/, priority: 50 },
+            { name: 'vendor-firebase-auth', test: /node_modules[\\/](firebase[\\/]auth|@firebase[\\/]auth)[\\/]/, priority: 40 },
+            { name: 'vendor-firebase-firestore', test: /node_modules[\\/](firebase[\\/]firestore|@firebase[\\/]firestore)[\\/]/, priority: 40 },
+            { name: 'vendor-lucide', test: /node_modules[\\/]lucide-react[\\/]/, priority: 10 },
+          ],
         },
       },
     },
