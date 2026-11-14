@@ -9,13 +9,20 @@ updates:
       interval: weekly
     open-pull-requests-limit: 10
     groups:
-      # Par que não sobe separado. Fica antes do minor-e-patch porque o
+      # Pares que não sobem separados. Ficam antes do minor-e-patch porque o
       # Dependabot põe cada dependência no primeiro grupo que casar: o
       # coverage-v8 exige a mesma versão do vitest.
       vitest:
         patterns:
           - vitest
           - "@vitest/*"
+      # O @firebase/rules-unit-testing (testes das firestore.rules) acompanha o
+      # major do firebase: o 6 exige o firebase 13, e cada um sozinho quebra o
+      # `npm ci` com ERESOLVE (visto no #194, 14/11/2026).
+      firebase:
+        patterns:
+          - firebase
+          - "@firebase/*"
       minor-e-patch:
         update-types: [minor, patch]
 
