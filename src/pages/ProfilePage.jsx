@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { notify } from '../utils/notifyStore';
 
 import { Loader2, LogOut, Users } from 'lucide-react';
-import { getStoredTheme, setTheme, THEMES } from '../utils/theme';
+import { getStoredTheme, setTheme } from '../utils/theme';
 import { Button } from '../components/design-system/Button';
 import { computeXpLevel } from '../utils/xpLevel';
 import { useProfileData } from '../hooks/profile/useProfileData';
@@ -156,7 +156,7 @@ export default function ProfilePage({ user, onLogout, onNavigateToHistory, onNav
                 xpProgress={xpProgress}
                 onEditProfile={() => setShowEditModal(true)}
                 onLinkTrainer={() => setShowLinkTrainer(true)}
-                onToggleTheme={() => handleThemeChange(appTheme === THEMES.dark ? THEMES.light : THEMES.dark)}
+                onThemeChange={handleThemeChange}
             />
 
             {/* --- ÁREA DO TREINADOR (Apenas Mobile - Faixa) --- */}

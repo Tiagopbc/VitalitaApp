@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { THEMES, getStoredTheme, initTheme, setTheme } from './theme';
 
 const CHAVE = 'vitalita_theme_v1';
@@ -60,5 +60,82 @@ describe('theme', () => {
         metaThemeColor().remove();
         expect(() => setTheme(THEMES.light)).not.toThrow();
         expect(document.documentElement.dataset.theme).toBe('light');
+    });
+
+    describe('Automático (segue o sistema)', () => {
+        // jsdom não tem matchMedia: simula o "prefers-color-scheme" com
+        // ouvintes de verdade, para dá para disparar a troca do sistema.
+        let sistemaClaro;
+        let ouvintes;
+
+        function trocarSistema(claro) {
+            sistemaClaro = claro;
+            ouvintes.forEach((fn) => fn({ matches: claro }));
+        }
+
+        beforeEach(() => {
+            sistemaClaro = false;
+            ouvintes = new Set();
+            vi.stubGlobal('matchMedia', (query) => ({
+                get matches() { return query.includes('light') && sistemaClaro; },
+                media: query,
+                addEventListener: (_tipo, fn) => ouvintes.add(fn),
+                removeEventListener: (_tipo, fn) => ouvintes.delete(fn)
+            }));
+        });
+
+        afterEach(() => {
+            setTheme(THEMES.dark);
+            vi.unstubAllGlobals();
+        });
+
+        it('salva a preferência "system" e devolve ela para a tela', () => {
+            expect(setTheme(THEMES.system)).toBe(THEMES.system);
+            expect(localStorage.getItem(CHAVE)).toBe('system');
+            expect(getStoredTheme()).toBe(THEMES.system);
+        });
+
+        it('com o sistema no claro, aplica o tema claro, inclusive na barra', () => {
+            sistemaClaro = true;
+            setTheme(THEMES.system);
+            expect(document.documentElement.dataset.theme).toBe('light');
+            expect(metaThemeColor()).toHaveAttribute('content', '#f1f5f9');
+        });
+
+        it('com o sistema no escuro, fica no escuro', () => {
+            setTheme(THEMES.system);
+            expect(document.documentElement.dataset.theme).toBeUndefined();
+        });
+
+        it('acompanha a troca do sistema em tempo real', () => {
+            setTheme(THEMES.system);
+            trocarSistema(true);
+            expect(document.documentElement.dataset.theme).toBe('light');
+            trocarSistema(false);
+            expect(document.documentElement.dataset.theme).toBeUndefined();
+        });
+
+        it('ao sair do Automático, para de acompanhar o sistema', () => {
+            setTheme(THEMES.system);
+            setTheme(THEMES.dark);
+            trocarSistema(true);
+            expect(document.documentElement.dataset.theme).toBeUndefined();
+            expect(ouvintes.size).toBe(0);
+        });
+
+        it('ao abrir o app com Automático salvo, aplica e passa a acompanhar', () => {
+            localStorage.setItem(CHAVE, 'system');
+            sistemaClaro = true;
+            initTheme();
+            expect(document.documentElement.dataset.theme).toBe('light');
+            trocarSistema(false);
+            expect(document.documentElement.dataset.theme).toBeUndefined();
+        });
+
+        it('sem matchMedia (navegador antigo), Automático vale como escuro e não quebra', () => {
+            vi.stubGlobal('matchMedia', undefined);
+            expect(() => setTheme(THEMES.system)).not.toThrow();
+            expect(document.documentElement.dataset.theme).toBeUndefined();
+        });
     });
 });
