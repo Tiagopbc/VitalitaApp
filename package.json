@@ -24,7 +24,7 @@
     "@vercel/speed-insights": "^2.1.0",
     "canvas-confetti": "^1.9.4",
     "firebase": "^13.2.0",
-    "framer-motion": "^12.29.0",
+    "framer-motion": "^14.12.0",
     "html-to-image": "^1.11.13",
     "jose": "^6.2.17",
     "lucide-react": "^1.72.0",
