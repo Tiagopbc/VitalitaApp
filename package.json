@@ -18,7 +18,7 @@
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.135.0",
+    "@anthropic-ai/sdk": "^1.8.0",
     "@sentry/react": "^11.12.0",
     "@tailwindcss/postcss": "^4.3.5",
     "@vercel/speed-insights": "^2.1.0",
