@@ -16,14 +16,14 @@ const PERMITIDOS = new Set([
     'firebaseApp.js',
     'firebaseAuth.js',
     'firebaseDb.js',
+    'theme-light-accents.css',
+    'temaClaroDestaques.test.js',
     'sentry.js',
     'sentry.test.js',
     'index.css',
     'fonts.css',
     'fonts.test.js',
     'theme-light-compat.css',
-    'theme-light-accents.css',
-    'temaClaroDestaques.test.js',
     'estrutura.test.js'
 ]);
 
