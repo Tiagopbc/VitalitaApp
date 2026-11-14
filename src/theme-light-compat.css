@@ -4,7 +4,7 @@
  * compilam para hex literal (não var()), então precisam de override explícito.
  * Usa color-mix com var(--color-slate-*) para que .theme-dark-locked possa
  * re-fixar a paleta escura em subárvores (cards de compartilhamento).
- * Regenerar se novas classes slate-*/opacidade forem adicionadas ao código.
+ * Regenerar se novas classes slate com opacidade forem adicionadas ao código.
  */
 
 :root[data-theme="light"] [class~="bg-slate-400/20"] {
