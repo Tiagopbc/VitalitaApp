@@ -117,6 +117,20 @@ describe('ProfilePage Integration', () => {
         // For now, ensuring the service is called prevents the silent error.
     });
 
+    it('troca o tema pelo seletor de três opções e salva a preferência', async () => {
+        await renderProfile();
+
+        fireEvent.click(screen.getByRole('button', { name: 'Claro' }));
+        expect(document.documentElement.dataset.theme).toBe('light');
+        expect(localStorage.getItem('vitalita_theme_v1')).toBe('light');
+        expect(screen.getByRole('button', { name: 'Claro' })).toHaveAttribute('aria-pressed', 'true');
+
+        fireEvent.click(screen.getByRole('button', { name: 'Escuro' }));
+        expect(document.documentElement.dataset.theme).toBeUndefined();
+        expect(localStorage.getItem('vitalita_theme_v1')).toBe('dark');
+        localStorage.removeItem('vitalita_theme_v1');
+    });
+
     it('opens Edit Profile modal when button is clicked', async () => {
         await renderProfile();
 
