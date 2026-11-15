@@ -17,9 +17,11 @@ A **única funcionalidade paga** do app. Ler antes de mexer no fluxo.
 
 `api/parse-workout-pdf.js` chama a API da Anthropic (`claude-opus-5`) para ler a
 ficha. O preço por token é o mesmo do `claude-opus-4-8` que ele substituiu
-(US$ 5 / US$ 25 por milhão), mas desde 27/08/2026 o modelo **pensa** — então o
-~US$ 0,04 por PDF herdado da estimativa antiga vale como piso, não como média,
-enquanto não houver medição real. Exige três variáveis:
+(US$ 5 / US$ 25 por milhão), mas desde 27/08/2026 o modelo **pensa** — e o custo
+medido no console é de **~US$ 0,08 por PDF** (US$ 0,07 em 19/10/2026 e US$ 0,08 em
+15/11/2026, já com o SDK 1.8), o dobro da estimativa antiga. O mesmo PDF custou
+US$ 0,31 em 21/10/2026, faturado como "Claude Opus 5.5", sem explicação no código
+(ver MANUAL_TECNICO §7.4). Exige três variáveis:
 
 - `ANTHROPIC_API_KEY` e `FIREBASE_PROJECT_ID` — **servidor**, nunca `VITE_*`.
 - `VITE_ENABLE_PDF_IMPORT=true` — **build**, para exibir o botão. O cliente não

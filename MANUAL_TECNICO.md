@@ -387,7 +387,12 @@ A mensagem de saldo é **deliberadamente neutra** — o aluno não deve ver deta
 único caso que pede contato com o suporte. Quem precisa saber que é saldo é o operador: o log da
 função na Vercel registra `pdf_import_sem_saldo` com a ação corretiva explícita.
 
-**Custo:** cerca de US$ 0,04 por PDF (~5k tokens de entrada + ~700 de saída). PDFs escaneados
+**Custo:** cerca de US$ 0,08 por PDF, medido no console da Anthropic com o `claude-opus-5` pensando
+(US$ 0,07 em 19/10/2026 e US$ 0,08 em 15/11/2026, este já com o `@anthropic-ai/sdk` 1.8). O
+~US$ 0,04 da estimativa antiga, de antes do pensamento adaptativo, não vale mais. Ponto fora da
+curva sem explicação: o **mesmo PDF** de 15/11 custou US$ 0,31 em 21/10/2026, faturado como
+"Claude Opus 5.5" — embora a função nunca tenha pedido outro modelo além de `claude-opus-5`. Se
+voltar a aparecer barra de Opus 5.5 depois de uma importação, investigar. PDFs escaneados
 custam mais que os de texto nativo. Como a importação acontece uma vez por prescrição — não por
-treino executado — o gasto mensal fica na casa de poucos dólares. Meça com `count_tokens` num PDF
-real antes de assumir qualquer número.
+treino executado — o gasto mensal fica na casa de poucos dólares. Para conferir, filtre a página
+Custo do console pela chave de API do Vitalità.
