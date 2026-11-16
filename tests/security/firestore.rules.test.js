@@ -221,6 +221,19 @@ describe('firestore.rules', () => {
         }));
     });
 
+    it('aceita o modo de execucao normal ou foco no perfil, e nada alem disso', async () => {
+        const db = authedDb('student-1');
+
+        // userPreferencesService.updateWorkoutPreferences: setDoc com merge,
+        // que cai no create quando o perfil ainda nao existe.
+        await assertSucceeds(setDoc(doc(db, 'users/student-1'), { executionMode: 'foco' }, { merge: true }));
+        await assertSucceeds(setDoc(doc(db, 'users/student-1'), { executionMode: 'normal' }, { merge: true }));
+
+        await assertFails(updateDoc(doc(db, 'users/student-1'), { executionMode: 'turbo' }));
+        await assertFails(updateDoc(doc(db, 'users/student-1'), { executionMode: true }));
+        await assertFails(setDoc(doc(authedDb('student-2'), 'users/student-2'), { executionMode: 'turbo' }));
+    });
+
     it('active_workouts: o dono le e escreve, terceiro nao', async () => {
         const payload = {
             userId: 'student-1',

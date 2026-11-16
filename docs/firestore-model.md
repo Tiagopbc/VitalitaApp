@@ -13,7 +13,7 @@ Campos comuns:
 - `activeWorkoutId`
 - `weight`, `height`, `age`, `gender`, `goal`, `weeklyGoal`
 - `birthDate`, `heightCm`, `weightKg`
-- `defaultRestTime`, `autoStartTimer`
+- `defaultRestTime`, `autoStartTimer`, `executionMode` (`normal` ou `foco`: último modo de execução escolhido)
 - `achievements`
 - `privacyConsent`
 
