@@ -66,7 +66,6 @@ export function WorkoutExecutionPage({ user }) {
     // --- ESTADO DA UI ---
     const [showTimer, setShowTimer] = useState(false);
     const [selectedMethod, setSelectedMethod] = useState(null);
-    const [focusMode, setFocusMode] = useState(false);
     const [isFinished, setIsFinished] = useState(false); // Previne "Sessões Zumbis"
     const [showGymTools, setShowGymTools] = useState(false);
     const [showCancelModal, setShowCancelModal] = useState(false);
@@ -75,8 +74,15 @@ export function WorkoutExecutionPage({ user }) {
     // Mantém a tela ligada durante o treino ativo (evita perder o timer de descanso).
     useWakeLock(!loading && !isFinished);
 
-    // --- PREFERÊNCIAS DO DESCANSO ---
-    const { restDuration, autoStartTimer, handleRestDurationChange, handleAutoStartChange } = useRestPreferences(user);
+    // --- PREFERÊNCIAS DE EXECUÇÃO (descanso e modo normal/Foco lembrado) ---
+    const {
+        restDuration,
+        autoStartTimer,
+        focusMode,
+        handleRestDurationChange,
+        handleAutoStartChange,
+        toggleFocusMode
+    } = useRestPreferences(user);
 
     // --- NAVEGAÇÃO (Modo Foco, série ativa, avanço bi-set/circuito) ---
     const {
@@ -213,7 +219,7 @@ export function WorkoutExecutionPage({ user }) {
                     showTimer={showTimer}
                     onToggleTimer={() => setShowTimer(!showTimer)}
                     focusMode={focusMode}
-                    onToggleFocus={() => setFocusMode(!focusMode)}
+                    onToggleFocus={toggleFocusMode}
                 />
 
                 {/* Reserva no fluxo a altura que a ExecutionTopBar ocupa fixa,

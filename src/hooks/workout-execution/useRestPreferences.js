@@ -1,15 +1,20 @@
 /**
  * useRestPreferences.js
- * Preferências do descanso do usuário: tempo padrão e "iniciar o timer ao
- * concluir série". Carrega do perfil ao abrir o treino e salva cada mudança
- * em segundo plano. Lógica movida de WorkoutExecutionPage sem mudança.
+ * Preferências de execução do usuário: tempo padrão de descanso, "iniciar o
+ * timer ao concluir série" e o modo (normal ou Foco). Carrega do perfil ao
+ * abrir o treino e salva cada mudança em segundo plano. O modo fica no perfil,
+ * não no localStorage, porque o Safari e o app instalado não compartilham
+ * armazenamento: o treino abre no último modo escolhido em qualquer um deles.
  */
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { userPreferencesService } from '../../services/userPreferencesService';
 
 export function useRestPreferences(user) {
     const [restDuration, setRestDuration] = useState(90);
     const [autoStartTimer, setAutoStartTimer] = useState(false);
+    const [focusMode, setFocusMode] = useState(false);
+    // Troca feita antes de o perfil responder vale mais que o modo salvo.
+    const modeChangedByUser = useRef(false);
 
     // --- CARREGAR PREFERÊNCIAS DO USUÁRIO ---
     useEffect(() => {
@@ -21,6 +26,9 @@ export function useRestPreferences(user) {
                     }
                     if (profile?.autoStartTimer !== undefined) {
                         setAutoStartTimer(profile.autoStartTimer);
+                    }
+                    if (profile?.executionMode && !modeChangedByUser.current) {
+                        setFocusMode(profile.executionMode === 'foco');
                     }
                 })
                 .catch(console.error);
@@ -47,5 +55,23 @@ export function useRestPreferences(user) {
         }
     };
 
-    return { restDuration, autoStartTimer, handleRestDurationChange, handleAutoStartChange };
+    const toggleFocusMode = () => {
+        const next = !focusMode;
+        modeChangedByUser.current = true;
+        setFocusMode(next);
+        if (user?.uid) {
+            userPreferencesService
+                .updateWorkoutPreferences(user.uid, { executionMode: next ? 'foco' : 'normal' })
+                .catch(err => console.error("Failed to save execution mode:", err));
+        }
+    };
+
+    return {
+        restDuration,
+        autoStartTimer,
+        focusMode,
+        handleRestDurationChange,
+        handleAutoStartChange,
+        toggleFocusMode
+    };
 }

@@ -1,10 +1,11 @@
 import React from 'react';
-import { render, screen, fireEvent, act } from '@testing-library/react';
+import { render, screen, fireEvent, act, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { WorkoutExecutionPage } from './WorkoutExecutionPage';
 import { useWorkoutSession } from '../hooks/useWorkoutSession';
 import { useWorkoutTimer } from '../hooks/useWorkoutTimer';
 import { checkNewAchievements } from '../utils/evaluateAchievements';
+import { userPreferencesService } from '../services/userPreferencesService';
 
 vi.mock('../hooks/useWorkoutSession', () => ({
     useWorkoutSession: vi.fn()
@@ -323,5 +324,44 @@ describe('WorkoutExecutionPage', () => {
         fireEvent.click(screen.getByRole('button', { name: 'FOCO' }));
 
         expect(main.className).toContain('justify-center');
+    });
+
+    // O modo de execução (normal ou Foco) é lembrado no perfil: o próximo
+    // treino abre no último modo escolhido, em qualquer aparelho.
+    it('abre no Modo Foco quando o último modo salvo é foco', async () => {
+        userPreferencesService.getWorkoutPreferences.mockResolvedValueOnce({ executionMode: 'foco' });
+        render(<WorkoutExecutionPage user={{ uid: 'u1' }} />);
+
+        await waitFor(() => {
+            expect(screen.getByTestId('workout-execution-page')).toHaveAttribute('data-focus-mode', 'true');
+        });
+    });
+
+    it('abre no modo normal quando não há modo salvo', async () => {
+        render(<WorkoutExecutionPage user={{ uid: 'u1' }} />);
+
+        await act(async () => { await Promise.resolve(); });
+        expect(screen.getByTestId('workout-execution-page')).toHaveAttribute('data-focus-mode', 'false');
+    });
+
+    it('salva o modo escolhido a cada troca', () => {
+        render(<WorkoutExecutionPage user={{ uid: 'u1' }} />);
+
+        fireEvent.click(screen.getByRole('button', { name: 'FOCO' }));
+        expect(userPreferencesService.updateWorkoutPreferences).toHaveBeenLastCalledWith('u1', { executionMode: 'foco' });
+
+        fireEvent.click(screen.getByRole('button', { name: 'FOCO' }));
+        expect(userPreferencesService.updateWorkoutPreferences).toHaveBeenLastCalledWith('u1', { executionMode: 'normal' });
+    });
+
+    it('não sobrescreve a troca feita antes de a preferência carregar', async () => {
+        let resolvePrefs;
+        userPreferencesService.getWorkoutPreferences.mockReturnValueOnce(new Promise(r => { resolvePrefs = r; }));
+        render(<WorkoutExecutionPage user={{ uid: 'u1' }} />);
+
+        fireEvent.click(screen.getByRole('button', { name: 'FOCO' }));
+        await act(async () => { resolvePrefs({ executionMode: 'normal' }); await Promise.resolve(); });
+
+        expect(screen.getByTestId('workout-execution-page')).toHaveAttribute('data-focus-mode', 'true');
     });
 });

@@ -40,6 +40,7 @@ service cloud.firestore {
         'weightKg',
         'defaultRestTime',
         'autoStartTimer',
+        'executionMode',
         'achievements',
         'privacyConsent',
         'photoURL'
@@ -65,6 +66,7 @@ service cloud.firestore {
         'weightKg',
         'defaultRestTime',
         'autoStartTimer',
+        'executionMode',
         'achievements',
         'privacyConsent',
         'photoURL'
@@ -88,7 +90,9 @@ service cloud.firestore {
         && userKeyIs(keys, 'email', 'string')
         && userKeyIs(keys, 'weight', 'scalar')
         && userKeyIs(keys, 'height', 'scalar')
-        && userKeyIs(keys, 'age', 'scalar');
+        && userKeyIs(keys, 'age', 'scalar')
+        && (!keys.hasAny(['executionMode'])
+          || request.resource.data.executionMode in ['normal', 'foco']);
     }
 
     function templateCreateFields() {

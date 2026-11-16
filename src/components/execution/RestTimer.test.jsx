@@ -458,6 +458,22 @@ describe('RestTimer — iniciar ao concluir série', () => {
         expect(caixa.compareDocumentPosition(controle) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     });
 
+    // Respiro entre título e caixa (16/11/2026): a opção vira uma pílula
+    // separada do título e com mais folga antes do anel.
+    it('separa a caixa do título numa pílula, com folga antes do anel', async () => {
+        await renderRodando({ autoStartTimer: true, onAutoStartChange: vi.fn() });
+
+        const caixa = screen.getByRole('checkbox', { name: 'Iniciar timer ao concluir série' });
+        const pilula = caixa.closest('label');
+        const cabecalho = pilula.parentElement;
+
+        expect(pilula.className).toContain('rounded-full');
+        expect(pilula.className).toContain('bg-slate-800/40');
+        expect(pilula.className).toContain('border-slate-700/50');
+        expect(cabecalho.className).toContain('gap-5');
+        expect(cabecalho.className).toContain('pb-6');
+    });
+
     it('a caixa continua ligando e desligando a opção', async () => {
         const onAutoStartChange = vi.fn();
         await renderRodando({ autoStartTimer: true, onAutoStartChange });

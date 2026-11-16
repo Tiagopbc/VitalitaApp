@@ -355,15 +355,15 @@ export function RestTimer({ initialTime = 90, onComplete, isOpen, onClose, onDur
                 onClick={e => e.stopPropagation()}>
 
                 {/* Cabeçalho */}
-                <div className="pt-8 pb-4 flex flex-col items-center gap-3">
+                <div className="pt-8 pb-6 flex flex-col items-center gap-5">
                     <div className="flex items-center gap-2 text-white/90">
                         <Timer size={16} className="text-cyan-400" />
                         <span className="text-sm font-medium tracking-wide">Tempo de Descanso</span>
                     </div>
 
-                    {/* Checkbox Auto-Start: junto do título, antes do anel e dos controles */}
+                    {/* Checkbox Auto-Start: numa pílula abaixo do título, antes do anel e dos controles */}
                     {onAutoStartChange !== undefined && (
-                        <label className="flex items-center gap-3 cursor-pointer group">
+                        <label className="flex items-center gap-3 px-4 py-2 rounded-full bg-slate-800/40 border border-slate-700/50 cursor-pointer group">
                             <div className="relative flex items-center justify-center">
                                 <input 
                                     type="checkbox" 

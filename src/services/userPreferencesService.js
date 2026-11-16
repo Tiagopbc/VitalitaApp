@@ -1,11 +1,19 @@
 import { getFirestoreDeps } from '../firebaseDb';
 
+// Modo em que a execução do treino abre: o último que o aluno escolheu.
+const EXECUTION_MODES = ['normal', 'foco'];
+
+function isExecutionMode(value) {
+    return EXECUTION_MODES.includes(value);
+}
+
 function pickWorkoutPreferences(profile) {
     if (!profile) return {};
 
     return {
         defaultRestTime: profile.defaultRestTime,
-        autoStartTimer: profile.autoStartTimer
+        autoStartTimer: profile.autoStartTimer,
+        executionMode: isExecutionMode(profile.executionMode) ? profile.executionMode : undefined
     };
 }
 
@@ -29,6 +37,9 @@ export const userPreferencesService = {
         }
         if (Object.prototype.hasOwnProperty.call(preferences, 'autoStartTimer')) {
             allowedUpdates.autoStartTimer = preferences.autoStartTimer;
+        }
+        if (isExecutionMode(preferences.executionMode)) {
+            allowedUpdates.executionMode = preferences.executionMode;
         }
 
         if (Object.keys(allowedUpdates).length === 0) return;
