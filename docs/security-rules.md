@@ -35,7 +35,9 @@ função do app. Fica para decidir junto com o que o `TrainerDashboard` mostra a
 
 ## Limite Conhecido
 
-O fluxo de convite agora usa `trainer_invites` com código revogável, expiração e consumo em batch. Ainda falta mover criação, aceite e revogação para Cloud Functions para ganhar auditoria centralizada, rate limit e prevenção mais forte contra abuso.
+O fluxo de convite usa `trainer_invites` com código revogável, expiração e consumo em batch, tudo validado pelas rules e coberto em `tests/security/firestore.rules.test.js` (convite expirado, revogação por terceiro, código diferente do ID, convite legado, enumeração, vínculo sem convite consumido e vínculo em nome de outro aluno).
+
+**Decisão (16/11/2026): criação, aceite e revogação continuam no cliente, sem Cloud Functions.** Mover para o servidor traria auditoria centralizada e rate limit, mas recolocaria uma função no Firebase só para isso, contra o [ADR-0001](adr/0001-firestore-direto-sem-backend-proprio.md) e a remoção feita no [ADR-0006](adr/0006-remocao-user-stats-servidor.md). O que as rules já barram cobre o risco real hoje; o que fica de fora (limite de tentativas por usuário e trilha de auditoria) só pesa com volume ou abuso. Reabrir se aparecer tentativa de adivinhar códigos, se o número de personais crescer a ponto de exigir auditoria, ou se surgir exigência formal de registro.
 
 ## Convites Aluno-Personal
 
