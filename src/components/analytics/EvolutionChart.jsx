@@ -9,7 +9,7 @@
  * Cores vêm das variáveis do Tailwind (`--color-*`), que o tema claro já
  * redefine — o gráfico troca de tema junto com o resto do app.
  */
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { LineChart } from 'lucide-react';
 
 const ALTURA = 256;
@@ -29,11 +29,11 @@ const formatKg = (valor) => `${valor.toLocaleString('pt-BR', { maximumFractionDi
 
 /** Largura do contêiner via ResizeObserver; sem ele (jsdom), a de reserva. */
 function useLarguraDoContainer() {
-    const ref = useRef(null);
+    // Ref de callback: o contêiner só existe quando há dados, e pode sumir e voltar.
+    const [el, ref] = useState(null);
     const [largura, setLargura] = useState(LARGURA_RESERVA);
 
     useEffect(() => {
-        const el = ref.current;
         if (!el || typeof ResizeObserver === 'undefined') return undefined;
         const observer = new ResizeObserver(([entry]) => {
             const w = Math.round(entry.contentRect.width);
@@ -41,7 +41,7 @@ function useLarguraDoContainer() {
         });
         observer.observe(el);
         return () => observer.disconnect();
-    }, []);
+    }, [el]);
 
     return [ref, largura];
 }

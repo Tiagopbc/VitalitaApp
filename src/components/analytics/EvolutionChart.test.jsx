@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { EvolutionChart } from './EvolutionChart';
 
@@ -72,6 +72,22 @@ describe('EvolutionChart', () => {
         fireEvent.pointerLeave(svg);
         expect(screen.queryByTestId('chart-tooltip')).not.toBeInTheDocument();
         expect(container.querySelector('[data-chart="cursor"]')).not.toBeInTheDocument();
+    });
+
+    it('mede a largura do contêiner quando os dados chegam depois do estado vazio', () => {
+        // O histórico monta o gráfico vazio e preenche os dados em seguida.
+        vi.stubGlobal('ResizeObserver', class {
+            constructor(callback) { this.callback = callback; }
+            observe() { this.callback([{ contentRect: { width: 320 } }]); }
+            disconnect() {}
+        });
+        try {
+            const { rerender } = render(<EvolutionChart data={[]} />);
+            rerender(<EvolutionChart data={serie} />);
+            expect(screen.getByRole('img').getAttribute('viewBox')).toBe('0 0 320 256');
+        } finally {
+            vi.unstubAllGlobals();
+        }
     });
 
     it('formata carga fracionada com vírgula', () => {
