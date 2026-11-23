@@ -212,10 +212,11 @@ describe('userService', () => {
         });
 
         it('traduz leitura negada pelas rules em PERSONAL_NOT_FOUND', async () => {
-            getDoc.mockRejectedValueOnce(Object.assign(new Error('denied'), { code: 'permission-denied' }));
+            const denied = Object.assign(new Error('denied'), { code: 'permission-denied' });
+            getDoc.mockRejectedValueOnce(denied);
 
             await expect(userService.linkTrainer('studentId', 'ABC12345'))
-                .rejects.toThrow('PERSONAL_NOT_FOUND');
+                .rejects.toMatchObject({ message: 'PERSONAL_NOT_FOUND', cause: denied });
         });
 
         it('deixa falha de rede subir, em vez de virar convite invalido', async () => {
@@ -258,11 +259,12 @@ describe('userService', () => {
             getDoc
                 .mockResolvedValueOnce(activeInvite())
                 .mockResolvedValueOnce({ exists: () => false });
-            mockBatch.commit.mockRejectedValueOnce(new Error('permission-denied'));
+            const commitError = new Error('permission-denied');
+            mockBatch.commit.mockRejectedValueOnce(commitError);
 
             try {
                 await expect(userService.linkTrainer('studentId', 'ABC12345'))
-                    .rejects.toThrow('LINK_TRAINER_FAILED');
+                    .rejects.toMatchObject({ message: 'LINK_TRAINER_FAILED', cause: commitError });
             } finally {
                 consoleSpy.mockRestore();
             }

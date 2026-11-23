@@ -88,7 +88,8 @@ describe('authService', () => {
             createUserWithEmailAndPassword.mockResolvedValue({ user });
             updateProfile.mockResolvedValue();
             doc.mockReturnValue({ path: 'users/uid-3' });
-            setDoc.mockRejectedValue(new Error('firestore fail'));
+            const firestoreError = new Error('firestore fail');
+            setDoc.mockRejectedValue(firestoreError);
 
             try {
                 await expect(
@@ -98,7 +99,7 @@ describe('authService', () => {
                         'Test User',
                         { gender: 'male' }
                     )
-                ).rejects.toThrow('Cadastro falhou. Tente novamente.');
+                ).rejects.toMatchObject({ message: 'Cadastro falhou. Tente novamente.', cause: firestoreError });
 
                 expect(user.delete).toHaveBeenCalled();
             } finally {
