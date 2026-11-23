@@ -61,18 +61,45 @@ export const ShareableWorkoutCard = forwardRef(({ session, isVisible = false, us
             // Desenha a imagem cobrindo o canvas
             drawImageCover(ctx, img, canvasWidth, canvasHeight);
 
-            // Escurecer sutilmente o fundo para os textos destacarem mais
-            ctx.fillStyle = 'rgba(2, 6, 23, 0.2)';
+            // Véus escuros: a foto continua, mas o texto nunca fica sobre o halter claro
+            ctx.fillStyle = 'rgba(2, 6, 23, 0.45)';
             ctx.fillRect(0, 0, canvasWidth, canvasHeight);
-
-
+            const fillVerticalGradient = (y0, y1, stops) => {
+                const gradient = ctx.createLinearGradient(0, y0, 0, y1);
+                stops.forEach(([pos, color]) => gradient.addColorStop(pos, color));
+                ctx.fillStyle = gradient;
+                ctx.fillRect(0, y0, canvasWidth, y1 - y0);
+            };
+            fillVerticalGradient(0, 560, [[0, 'rgba(2, 6, 23, 0.95)'], [1, 'rgba(2, 6, 23, 0)']]);
+            const centerVeil = ctx.createRadialGradient(canvasWidth / 2, 860, 60, canvasWidth / 2, 860, 560);
+            centerVeil.addColorStop(0, 'rgba(2, 6, 23, 0.7)');
+            centerVeil.addColorStop(1, 'rgba(2, 6, 23, 0)');
+            ctx.fillStyle = centerVeil;
+            ctx.fillRect(0, 300, canvasWidth, 1100);
+            fillVerticalGradient(1280, canvasHeight, [[0, 'rgba(2, 6, 23, 0)'], [0.35, 'rgba(2, 6, 23, 0.92)'], [1, '#020617']]);
 
             ctx.textBaseline = 'middle';
             ctx.textAlign = 'center';
 
-            // 1. LOGO DO APP (Com clip path arredondado para evitar bordas pretas do PNG)
+            const drawPill = (x, y, text, { fill, stroke, color, font, height, padding }) => {
+                ctx.font = font;
+                const width = ctx.measureText(text).width + padding * 2;
+                ctx.beginPath();
+                ctx.roundRect(x - width / 2, y - height / 2, width, height, height / 2);
+                ctx.fillStyle = fill;
+                ctx.fill();
+                if (stroke) {
+                    ctx.strokeStyle = stroke;
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                }
+                ctx.fillStyle = color;
+                ctx.fillText(text, x, y);
+            };
+
+            // 1. LOGO DO APP (clip arredondado para evitar bordas pretas do PNG)
             const logoSize = 130;
-            const logoY = 130;
+            const logoY = 120;
             if (logoImg.width > 0) {
                 ctx.save();
                 ctx.beginPath();
@@ -82,103 +109,46 @@ export const ShareableWorkoutCard = forwardRef(({ session, isVisible = false, us
                 ctx.restore();
             }
 
-            // 2. TREINO CONCLUÍDO (Cápsula)
-            const labelY = 340;
-            ctx.font = '700 28px "Inter", sans-serif';
-            const labelText = 'TREINO CONCLUÍDO';
-            
-            const labelMetrics = ctx.measureText(labelText);
-            const labelWidth = labelMetrics.width + 80; // Padding horizontal seguro
-            const labelHeight = 54;
-
-            ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-            ctx.roundRect((canvasWidth / 2) - (labelWidth / 2), labelY - (labelHeight / 2), labelWidth, labelHeight, 27);
-            ctx.stroke();
-
-            applyGlow(ctx, '#e2f8ff', 'rgba(0,0,0,0.5)', { blur: 4, y: 2 });
-            ctx.fillText(labelText, canvasWidth / 2, labelY);
-            resetShadow(ctx);
+            // 2. TREINO CONCLUÍDO (etiqueta ciano preenchida)
+            drawPill(canvasWidth / 2, 340, 'TREINO CONCLUÍDO', {
+                fill: cyanAccent, color: '#04121a', font: '800 30px "Inter", sans-serif', height: 64, padding: 36
+            });
 
             // 3. NOME DO ATLETA
-            const nameY = 415;
-            applyGlow(ctx, '#ffffff', 'rgba(0,0,0,0.7)', { blur: 12, y: 4 });
-            ctx.font = '800 48px "Outfit", "Inter", sans-serif'; 
-            ctx.fillText(displayName, canvasWidth / 2, nameY);
-            resetShadow(ctx);
+            ctx.fillStyle = '#ffffff';
+            ctx.font = '800 56px "Outfit", "Inter", sans-serif';
+            ctx.fillText(displayName, canvasWidth / 2, 440);
 
             // 4. VOLUME GIGANTE
-            const volumeY = 800;
-            applyGlow(ctx, '#ffffff', 'rgba(0,0,0,0.6)', { blur: 20, y: 8 });
+            applyGlow(ctx, '#ffffff', 'rgba(0, 0, 0, 0.6)', { blur: 30, y: 6 });
             ctx.font = `900 ${volumeFontSize}px "Outfit", "Inter", sans-serif`;
-            ctx.fillText(volumeValue, canvasWidth / 2, volumeY);
+            ctx.fillText(volumeValue, canvasWidth / 2, 840);
             resetShadow(ctx);
 
-            // 5. KILOS (Texto Vazado)
-            const kilosY = 1040;
-            ctx.font = '900 130px "Outfit", "Inter", sans-serif';
-            ctx.strokeStyle = '#ffffff';
-            ctx.lineWidth = 4;
-            ctx.shadowColor = 'rgba(0,0,0,0.5)';
-            ctx.shadowBlur = 12;
-            ctx.shadowOffsetY = 6;
-            ctx.strokeText('KILOS', canvasWidth / 2, kilosY);
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.05)';
-            ctx.fillText('KILOS', canvasWidth / 2, kilosY);
-            resetShadow(ctx);
+            // 5. UNIDADE, em texto sólido (o antigo "KILOS" vazado sumia sobre os halteres)
+            ctx.fillStyle = cyanAccent;
+            ctx.font = '800 64px "Outfit", "Inter", sans-serif';
+            ctx.letterSpacing = '10px';
+            ctx.fillText('KG LEVANTADOS', canvasWidth / 2, 1010);
+            ctx.letterSpacing = '0px';
 
-            // 6. VOLUME EMPILHADO
-            const subtitleVolY = 1250;
-            applyGlow(ctx, '#94a3b8', 'rgba(0,0,0,0.6)', { blur: 4, y: 2 });
-            ctx.font = '600 38px "Inter", sans-serif';
-            ctx.fillText('VOLUME EMPILHADO', canvasWidth / 2, subtitleVolY);
-            resetShadow(ctx);
-
-            // 7. TÍTULO DO TREINO
-            const titleY = 1520;
-            applyGlow(ctx, cyanAccent, 'rgba(0,0,0,0.8)', { blur: 8, y: 4 });
-            ctx.font = '800 56px "Outfit", "Inter", sans-serif';
-            ctx.fillText(templateTitle, canvasWidth / 2, titleY);
-            resetShadow(ctx);
-
-            // 8. SUBTÍTULO DO TREINO
+            // 6. TÍTULO E SUBTÍTULO DO TREINO
+            ctx.fillStyle = cyanAccent;
+            ctx.font = '800 72px "Outfit", "Inter", sans-serif';
+            ctx.fillText(templateTitle, canvasWidth / 2, 1530);
             if (templateSubtitle) {
-                const subTitleY = 1600;
-                applyGlow(ctx, '#94a3b8', 'rgba(0,0,0,0.65)', { blur: 4, y: 2 });
-                ctx.font = '600 41px "Inter", sans-serif';
-                ctx.fillText(templateSubtitle, canvasWidth / 2, subTitleY);
-                resetShadow(ctx);
+                ctx.fillStyle = '#e2e8f0';
+                ctx.font = '600 46px "Inter", sans-serif';
+                ctx.fillText(templateSubtitle, canvasWidth / 2, 1610);
             }
 
-            // 9. CÁPSULAS DE TEMPO E EXERCÍCIOS
-            const capsY = 1750;
-            const capsHeight = 74;
-            
-            const leftX = canvasWidth / 2 - 210;
-            const rightX = canvasWidth / 2 + 210;
-
-            const drawPill = (x, y, text) => {
-                ctx.font = '700 34px "Inter", sans-serif';
-                const metrics = ctx.measureText(text);
-                const capsWidth = Math.max(160, metrics.width + 70); // Mais justo ao texto
-                
-                ctx.fillStyle = 'rgba(15, 23, 42, 0.4)'; 
-                ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
-                ctx.lineWidth = 2;
-                
-                ctx.beginPath();
-                ctx.roundRect(x - (capsWidth / 2), y - (capsHeight / 2), capsWidth, capsHeight, capsHeight / 2);
-                ctx.fill();
-                ctx.stroke();
-
-                applyGlow(ctx, '#f8fafc', 'rgba(0,0,0,0.65)', { blur: 4, y: 2 });
-                ctx.fillText(text, x, y);
-                resetShadow(ctx);
+            // 7. CÁPSULAS DE TEMPO E EXERCÍCIOS
+            const pillStyle = {
+                fill: 'rgba(15, 23, 42, 0.85)', stroke: 'rgba(255, 255, 255, 0.25)', color: '#ffffff',
+                font: '700 36px "Inter", sans-serif', height: 84, padding: 44
             };
-
-            drawPill(leftX, capsY, session.duration);
-            drawPill(rightX, capsY, `${session.exercisesCount} EXERCÍCIOS`);
+            drawPill(canvasWidth / 2 - 200, 1760, String(session.duration).replace(/(\d)min$/, '$1 min'), pillStyle);
+            drawPill(canvasWidth / 2 + 180, 1760, `${session.exercisesCount} exercícios`, pillStyle);
         };
 
         loadImagesThenDraw(
