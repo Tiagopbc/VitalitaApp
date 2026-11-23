@@ -138,7 +138,7 @@ export const LinearCardCompactV2 = memo(function LinearCardCompactV2({
     const cardEndRef = useRef(null);
 
     const handleAddDrop = () => {
-        let newDrops = [];
+        let newDrops;
         if (!hasDrops) {
             newDrops = [
                 { id: generateId(), weight: weight || '', reps: actualReps || '', weightMode, baseWeight },

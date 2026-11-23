@@ -133,7 +133,7 @@ export const userService = {
             // As rules negam a leitura de convite inexistente, revogado ou expirado.
             // Falha de rede continua subindo, para nao virar "convite invalido".
             if (error?.code !== 'permission-denied') throw error;
-            throw new Error("PERSONAL_NOT_FOUND");
+            throw new Error("PERSONAL_NOT_FOUND", { cause: error });
         }
 
         if (!inviteSnap.exists() || !isRedeemableInvite(inviteSnap)) {
@@ -171,7 +171,7 @@ export const userService = {
             await batch.commit();
         } catch (error) {
             console.error("Error linking trainer:", error);
-            throw new Error("LINK_TRAINER_FAILED");
+            throw new Error("LINK_TRAINER_FAILED", { cause: error });
         }
     },
 

@@ -76,7 +76,7 @@ export const authService = {
             } catch (deleteErr) {
                 console.error("Critical: Failed to rollback auth user:", deleteErr);
             }
-            throw new Error("Cadastro falhou. Tente novamente.");
+            throw new Error("Cadastro falhou. Tente novamente.", { cause: error });
         }
 
         return user;
