@@ -8,6 +8,14 @@ updates:
     schedule:
       interval: weekly
     open-pull-requests-limit: 10
+    ignore:
+      # O eslint-plugin-react 7.37.5 só aceita ESLint até o 9; o 10 quebra o
+      # npm install com ERESOLVE (#214). Tirar quando
+      # `npm view eslint-plugin-react peerDependencies.eslint` incluir ^10.
+      - dependency-name: eslint
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@eslint/js"
+        update-types: ["version-update:semver-major"]
     groups:
       # Pares que não sobem separados. Ficam antes do minor-e-patch porque o
       # Dependabot põe cada dependência no primeiro grupo que casar: o
